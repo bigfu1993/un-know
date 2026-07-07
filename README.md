@@ -6,6 +6,7 @@
 
 - [用户端计划](docs/client-plan.md)
 - [管理端计划](docs/admin-plan.md)
+- [商户端待补充](docs/商户待补充.md)
 
 ## 多角色模块
 
