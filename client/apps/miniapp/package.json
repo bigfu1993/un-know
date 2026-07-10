@@ -1,0 +1,35 @@
+{
+  "name": "@unknown/client-miniapp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "taro build --type weapp --watch",
+    "build": "taro build --type weapp",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.59.16",
+    "@tarojs/components": "latest",
+    "@tarojs/plugin-framework-react": "latest",
+    "@tarojs/plugin-platform-weapp": "latest",
+    "@tarojs/react": "latest",
+    "@tarojs/runtime": "latest",
+    "@tarojs/shared": "latest",
+    "@tarojs/taro": "latest",
+    "@unknown/api-client": "0.1.0",
+    "@unknown/domain": "0.1.0",
+    "@unknown/hooks": "0.1.0",
+    "@unknown/ui-tokens": "0.1.0",
+    "react": "^18.3.1",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@babel/preset-react": "^7.26.3",
+    "@tarojs/cli": "latest",
+    "@tarojs/webpack5-runner": "latest",
+    "@types/react": "^18.3.11",
+    "babel-preset-taro": "latest",
+    "typescript": "^5.6.3"
+  }
+}

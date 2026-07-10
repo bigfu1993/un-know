@@ -1,0 +1,55 @@
+.registration-profile-card {
+  margin-top: 20px;
+}
+
+.registration-profile-title {
+  display: grid;
+  gap: 8px;
+}
+
+.registration-profile-title text:first-child {
+  color: #17202a;
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.registration-profile-title text:last-child {
+  color: #687385;
+  font-size: 24px;
+}
+
+.registration-profile-field {
+  gap: 12px;
+}
+
+.registration-area-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.registration-area-options button {
+  border: 0;
+  border-radius: 14px;
+  background: #eef4f7;
+  color: #176b87;
+  font-size: 24px;
+  line-height: 1;
+  padding: 16px 8px;
+}
+
+.registration-profile-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.skip-button {
+  border: 0;
+  border-radius: 16px;
+  background: #f3f6f9;
+  color: #425066;
+  font-size: 28px;
+  line-height: 1;
+  padding: 20px 10px;
+}

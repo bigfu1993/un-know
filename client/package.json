@@ -1,0 +1,22 @@
+{
+  "name": "unknown-client-workspace",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev:miniapp",
+    "dev:miniapp": "npm --workspace @unknown/client-miniapp run dev",
+    "dev:h5": "npm --workspace @unknown/client-h5 run dev -- --host 127.0.0.1",
+    "build:miniapp": "npm --workspace @unknown/client-miniapp run build",
+    "build:h5": "npm --workspace @unknown/client-h5 run build",
+    "typecheck:miniapp": "npm --workspace @unknown/client-miniapp run typecheck",
+    "typecheck:h5": "npm --workspace @unknown/client-h5 run typecheck",
+    "build": "npm --workspaces --if-present run build",
+    "typecheck": "npm --workspaces --if-present run typecheck"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

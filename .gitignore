@@ -1,0 +1,17 @@
+﻿# Runtime logs
+*.log
+log/**
+!log/
+!log/.gitkeep
+!log/client/
+!log/client/.gitkeep
+!log/server/
+!log/server/.gitkeep
+
+# Local secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.ppk
+*.key

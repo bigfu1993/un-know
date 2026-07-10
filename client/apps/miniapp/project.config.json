@@ -1,0 +1,12 @@
+{
+  "appid": "touristappid",
+  "projectname": "unknown-client-miniapp",
+  "miniprogramRoot": "dist/",
+  "compileType": "miniprogram",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "postcss": true,
+    "minified": true
+  }
+}

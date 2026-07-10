@@ -1,0 +1,49 @@
+.registration-profile-card {
+  gap: 12px;
+}
+
+.registration-profile-fields {
+  display: grid;
+  gap: 10px;
+}
+
+.registration-profile-field {
+  display: grid;
+  gap: 7px;
+}
+
+.registration-profile-field span {
+  color: #475466;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.registration-profile-field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  box-sizing: border-box;
+  border: 1px solid #d9e1e8;
+  border-radius: 8px;
+  outline: 0;
+  background: #fff;
+  color: #17212b;
+  padding: 10px 11px;
+  font-size: 14px;
+}
+
+.registration-profile-field input:focus {
+  border-color: #175e75;
+  box-shadow: 0 0 0 3px rgba(23, 94, 117, 0.12);
+}
+
+.registration-profile-field.missing input {
+  border-color: #f4d59d;
+  background: #fffaf0;
+}
+
+.registration-profile-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
