@@ -13,6 +13,10 @@
     "build:h5": "npm --workspace @unknown/client-h5 run build",
     "typecheck:miniapp": "npm --workspace @unknown/client-miniapp run typecheck",
     "typecheck:h5": "npm --workspace @unknown/client-h5 run typecheck",
+    "lint:h5": "npm --workspace @unknown/client-h5 run lint",
+    "lint:fix:h5": "npm --workspace @unknown/client-h5 run lint:fix",
+    "format:h5": "npm --workspace @unknown/client-h5 run format",
+    "format:check:h5": "npm --workspace @unknown/client-h5 run format:check",
     "build": "npm --workspaces --if-present run build",
     "typecheck": "npm --workspaces --if-present run typecheck"
   },

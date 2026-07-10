@@ -11,29 +11,54 @@ declare global {
   const App: typeof import('@h5/App').App
   const ArrowLeft: typeof import('lucide-react').ArrowLeft
   const BadgeCheck: typeof import('lucide-react').BadgeCheck
+  const BottomTabs: typeof import('../components/AppShell/index').BottomTabs
   const BriefcaseBusiness: typeof import('lucide-react').BriefcaseBusiness
+  const BrowserRouter: typeof import('react-router-dom').BrowserRouter
   const CalendarClock: typeof import('lucide-react').CalendarClock
   const CheckCircle2: typeof import('lucide-react').CheckCircle2
+  const CheckoutSheet: typeof import('../components/WorkflowDialogs/index').CheckoutSheet
   const ChevronRight: typeof import('lucide-react').ChevronRight
   const CircleDollarSign: typeof import('lucide-react').CircleDollarSign
   const ClipboardCheck: typeof import('lucide-react').ClipboardCheck
   const Crosshair: typeof import('lucide-react').Crosshair
+  const Delegation: typeof import('../pages/Delegation/index').Delegation
+  const Featured: typeof import('../pages/Featured/index').Featured
   const Fragment: typeof import('react').Fragment
   const GraduationCap: typeof import('lucide-react').GraduationCap
+  const Header: typeof import('../components/AppShell/index').Header
   const Heart: typeof import('lucide-react').Heart
   const Home: typeof import('lucide-react').Home
   const KeyRound: typeof import('lucide-react').KeyRound
   const LogOut: typeof import('lucide-react').LogOut
+  const Login: typeof import('../pages/Login/index').Login
   const LoginRegisterCard: typeof import('../components/LoginRegisterCard/index').LoginRegisterCard
+  const Marketing: typeof import('../pages/Marketing/index').Marketing
   const Megaphone: typeof import('lucide-react').Megaphone
+  const MerchantSales: typeof import('../pages/MerchantSales/index').MerchantSales
   const MessageCircle: typeof import('lucide-react').MessageCircle
   const MessageToast: typeof import('../components/MessageToast/index').MessageToast
+  const Metric: typeof import('../components/PageWidgets/index').Metric
+  const Mine: typeof import('../pages/Mine/index').Mine
+  const MinePopover: typeof import('../components/AppShell/index').MinePopover
+  const Navigate: typeof import('react-router-dom').Navigate
+  const OngoingOrdersDialog: typeof import('../components/WorkflowDialogs/index').OngoingOrdersDialog
+  const Orders: typeof import('../pages/Orders/index').Orders
   const PackageCheck: typeof import('lucide-react').PackageCheck
+  const PageShell: typeof import('../components/AppShell/index').PageShell
+  const PartTime: typeof import('../pages/PartTime/index').PartTime
+  const PartTimeJobCard: typeof import('../components/PageWidgets/index').PartTimeJobCard
   const Plus: typeof import('lucide-react').Plus
+  const ProductListCard: typeof import('../components/PageWidgets/index').ProductListCard
+  const ProfileCompletionDialog: typeof import('../components/WorkflowDialogs/index').ProfileCompletionDialog
+  const ProfileContextCard: typeof import('../components/AppShell/index').ProfileContextCard
   const QueryClient: typeof import('@tanstack/react-query').QueryClient
   const QueryClientProvider: typeof import('@tanstack/react-query').QueryClientProvider
   const RegistrationProfileCompletion: typeof import('../components/RegistrationProfileCompletion/index').RegistrationProfileCompletion
+  const Route: typeof import('react-router-dom').Route
+  const Routes: typeof import('react-router-dom').Routes
+  const SectionHeader: typeof import('../components/PageWidgets/index').SectionHeader
   const Settings: typeof import('lucide-react').Settings
+  const SettingsView: typeof import('../pages/Settings/index').SettingsView
   const ShieldCheck: typeof import('lucide-react').ShieldCheck
   const ShoppingBag: typeof import('lucide-react').ShoppingBag
   const Smartphone: typeof import('lucide-react').Smartphone
@@ -41,12 +66,17 @@ declare global {
   const StrictMode: typeof import('react').StrictMode
   const Suspense: typeof import('react').Suspense
   const Truck: typeof import('lucide-react').Truck
+  const Tutor: typeof import('../pages/Tutor/index').Tutor
   const UserRound: typeof import('lucide-react').UserRound
+  const Wallet: typeof import('../pages/Wallet/index').Wallet
   const WalletCards: typeof import('lucide-react').WalletCards
+  const WorkbenchInfoCard: typeof import('../components/PageWidgets/index').WorkbenchInfoCard
+  const WorkbenchQuickEntryCard: typeof import('../components/PageWidgets/index').WorkbenchQuickEntryCard
   const XCircle: typeof import('lucide-react').XCircle
   const accountStatusLabels: typeof import('@unknown/domain').accountStatusLabels
   const cache: typeof import('react').cache
   const cacheSignal: typeof import('react').cacheSignal
+  const campusAreaOptions: typeof import('../shared/clientPageModel').campusAreaOptions
   const clearStoredClientAuthSession: typeof import('@unknown/api-client').clearStoredClientAuthSession
   const clientPrimaryTabs: typeof import('@unknown/domain').clientPrimaryTabs
   const clientPublishPlatformLabels: typeof import('@unknown/domain').clientPublishPlatformLabels
@@ -54,17 +84,42 @@ declare global {
   const createRef: typeof import('react').createRef
   const createRoot: typeof import('react-dom/client').createRoot
   const deliveryModeLabels: typeof import('@unknown/domain').deliveryModeLabels
+  const filterProducts: typeof import('../shared/clientPageModel').filterProducts
+  const formatCurrency: typeof import('../shared/clientPageModel').formatCurrency
   const forwardRef: typeof import('react').forwardRef
+  const getDefaultDeliveryMode: typeof import('../shared/clientPageModel').getDefaultDeliveryMode
   const getDefaultPrimaryTab: typeof import('@unknown/domain').getDefaultPrimaryTab
+  const getDefaultRouteForRole: typeof import('../shared/clientPageModel').getDefaultRouteForRole
+  const getDeliveryFee: typeof import('../shared/clientPageModel').getDeliveryFee
   const getErrorMessage: typeof import('../components/MessageToast/index').getErrorMessage
+  const getFilledProfileDraft: typeof import('../shared/clientPageModel').getFilledProfileDraft
+  const getProductFilterLabel: typeof import('../shared/clientPageModel').getProductFilterLabel
+  const getProfileRequirement: typeof import('../shared/clientPageModel').getProfileRequirement
+  const getProfileRequirementTemplate: typeof import('../shared/clientPageModel').getProfileRequirementTemplate
+  const getRoleHint: typeof import('../shared/clientPageModel').getRoleHint
+  const getRouteForTab: typeof import('../shared/clientPageModel').getRouteForTab
   const getStoredClientAuthSession: typeof import('@unknown/api-client').getStoredClientAuthSession
+  const getStoredProfileDraft: typeof import('../shared/clientPageModel').getStoredProfileDraft
+  const getTabFromRoute: typeof import('../shared/clientPageModel').getTabFromRoute
+  const getTabTitle: typeof import('../shared/clientPageModel').getTabTitle
+  const jobFilters: typeof import('../shared/clientPageModel').jobFilters
   const lazy: typeof import('react').lazy
   const memo: typeof import('react').memo
   const mineEntryLabels: typeof import('@unknown/domain').mineEntryLabels
+  const moduleRoutePaths: typeof import('../shared/clientPageModel').moduleRoutePaths
   const paymentMethodLabels: typeof import('@unknown/domain').paymentMethodLabels
+  const phonePattern: typeof import('../shared/clientPageModel').phonePattern
+  const productFilters: typeof import('../shared/clientPageModel').productFilters
+  const profileDraftStorageKey: typeof import('../shared/clientPageModel').profileDraftStorageKey
+  const profileRequirementTemplates: typeof import('../shared/clientPageModel').profileRequirementTemplates
+  const registrationProfileTemplates: typeof import('../shared/clientPageModel').registrationProfileTemplates
   const roleLabels: typeof import('@unknown/domain').roleLabels
+  const roles: typeof import('../shared/clientPageModel').roles
   const setStoredClientAuthSession: typeof import('@unknown/api-client').setStoredClientAuthSession
+  const setStoredProfileDraft: typeof import('../shared/clientPageModel').setStoredProfileDraft
   const startTransition: typeof import('react').startTransition
+  const tabIcons: typeof import('../shared/clientPageModel').tabIcons
+  const tutorSorts: typeof import('../shared/clientPageModel').tutorSorts
   const use: typeof import('react').use
   const useActionState: typeof import('react').useActionState
   const useCallback: typeof import('react').useCallback
@@ -81,8 +136,10 @@ declare global {
   const useImperativeHandle: typeof import('react').useImperativeHandle
   const useInsertionEffect: typeof import('react').useInsertionEffect
   const useLayoutEffect: typeof import('react').useLayoutEffect
+  const useLocation: typeof import('react-router-dom').useLocation
   const useMemo: typeof import('react').useMemo
   const useMessageToast: typeof import('../components/MessageToast/index').useMessageToast
+  const useNavigate: typeof import('react-router-dom').useNavigate
   const useOptimistic: typeof import('react').useOptimistic
   const useProducts: typeof import('@unknown/hooks').useProducts
   const usePurchaseProduct: typeof import('@unknown/hooks').usePurchaseProduct

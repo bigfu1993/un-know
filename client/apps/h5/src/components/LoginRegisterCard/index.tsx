@@ -13,18 +13,26 @@ export function LoginRegisterCard({
   onSubmit
 }: LoginRegisterCardProps) {
   return (
-    <form className="login-card login-register-card" onSubmit={onSubmit}>
-      <div className="login-mode-tabs" aria-label="选择登录或注册">
-        <button className={authMode === "login" ? "active" : ""} onClick={() => onAuthModeChange("login")} type="button">
+    <form className="login-card login-register-card grid w-full min-w-0 gap-[14px] p-[16px]" onSubmit={onSubmit}>
+      <div className="login-mode-tabs flex min-w-0 gap-[8px] p-[4px]" aria-label="选择登录或注册">
+        <button
+          className={authMode === "login" ? "active" : ""}
+          onClick={() => onAuthModeChange("login")}
+          type="button"
+        >
           登录
         </button>
-        <button className={authMode === "register" ? "active" : ""} onClick={() => onAuthModeChange("register")} type="button">
+        <button
+          className={authMode === "register" ? "active" : ""}
+          onClick={() => onAuthModeChange("register")}
+          type="button"
+        >
           注册
         </button>
       </div>
 
       {authMode === "register" ? (
-        <div className="login-role-tabs" aria-label="选择注册身份">
+        <div className="login-role-tabs grid min-w-0 gap-[8px]" aria-label="选择注册身份">
           {roles.map((item) => (
             <button
               className={loginRole === item ? "active" : ""}
@@ -38,7 +46,7 @@ export function LoginRegisterCard({
         </div>
       ) : null}
 
-      <label className="login-field">
+      <label className="login-field grid min-w-0 gap-[7px]">
         <span>手机号</span>
         <div>
           <Smartphone size={18} />
@@ -52,7 +60,7 @@ export function LoginRegisterCard({
         </div>
       </label>
 
-      <label className="login-field">
+      <label className="login-field grid min-w-0 gap-[7px]">
         <span>验证码</span>
         <div>
           <KeyRound size={18} />
@@ -69,22 +77,38 @@ export function LoginRegisterCard({
         </div>
       </label>
 
-      <p className="login-tip">
+      <p className="login-tip m-0 text-[13px] leading-[1.5] text-[#657181]">
         本地联调验证码固定为 123456；登录成功后 token 会写入本地存储，后续请求自动携带。
       </p>
 
-      <p className="login-tip">
-        {authMode === "register" ? "注册成功后会自动登录；学生和商户身份不能用同一手机号同时注册。" : "未注册手机号需要先切换到注册入口完成开户。"}
+      <p className="login-tip m-0 text-[13px] leading-[1.5] text-[#657181]">
+        {authMode === "register"
+          ? "注册成功后会自动登录；学生和商户身份不能用同一手机号同时注册。"
+          : "未注册手机号需要先切换到注册入口完成开户。"}
       </p>
 
       <button
-        aria-label={isAuthPending ? (authMode === "register" ? "注册中" : "登录中") : authMode === "register" ? "注册并补充资料" : "登录并进入"}
-        className={`primary-button full auth-submit-button ${authMode === "register" ? "register-mode" : ""}`}
+        aria-label={
+          isAuthPending
+            ? authMode === "register"
+              ? "注册中"
+              : "登录中"
+            : authMode === "register"
+              ? "注册并补充资料"
+              : "登录并进入"
+        }
+        className={`primary-button auth-submit-button full inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092] ${authMode === "register" ? "register-mode" : ""}`}
         disabled={isAuthPending}
         type="submit"
       >
         <ShieldCheck size={16} />
-        {isAuthPending ? (authMode === "register" ? "注册中" : "登录中") : authMode === "register" ? "注册并补充资料" : "登录并进入"}
+        {isAuthPending
+          ? authMode === "register"
+            ? "注册中"
+            : "登录中"
+          : authMode === "register"
+            ? "注册并补充资料"
+            : "登录并进入"}
       </button>
     </form>
   );

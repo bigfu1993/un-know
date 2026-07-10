@@ -1,4 +1,4 @@
-const defaultMessageDuration = 2000;
+﻿const defaultMessageDuration = 2000;
 const messageToastMeta: Record<MessageToastType, { label: string; color: string; icon: LucideIcon }> = {
   success: { label: "成功", color: "#176b50", icon: CheckCircle2 },
   warning: { label: "提醒", color: "#b7791f", icon: AlertCircle },
@@ -61,10 +61,10 @@ export function MessageToast({ onClose, toast }: MessageToastProps) {
   const accentColor = toast.color ?? meta.color;
 
   return (
-    <div className="message-toast-viewport">
+    <div className="message-toast-viewport w-[min(512px,calc(100vw-28px))]">
       <div
         aria-live={type === "error" ? "assertive" : "polite"}
-        className={`message-toast ${type}`}
+        className={`message-toast grid items-center gap-[10px] p-[12px] text-[#17212b] leading-none mb-0 ml-0 mr-0 ${type}`}
         key={toast.id}
         role={type === "error" ? "alert" : "status"}
         style={{ "--message-toast-color": accentColor } as CSSProperties}
