@@ -1,8 +1,20 @@
+import { useGlobalUser } from "@h5/store/global";
+import { HuntingCertificationCard } from "../HuntingCertificationCard";
+import {
+  getHuntingCertificationCardMode,
+  getHuntingCertificationDataFromDraft
+} from "../HuntingCertificationCard/model";
+import { AccountSummaryCard, WalletSummaryCard } from "../SummaryCards";
+import { TutorCard } from "../TutorCard";
+import { getTutorCardDataFromDraft, getTutorCardMode } from "../TutorCard/model";
+
 /**
  * App shell widgets: navigation chrome, profile context, secondary page shell, and mine shortcuts.
- * These components receive prepared data and never fetch business data directly.
+ * These components read global user context but never fetch business data directly.
  */
-export function Header({ role, activeTab }: { role: Role; activeTab: ClientModuleKey }) {
+export function Header({ activeTab }: { activeTab: ClientModuleKey }) {
+  const { role } = useGlobalUser();
+
   return (
     <section className="top-bar grid gap-[14px] p-[14px] text-white">
       <div className="top-title min-w-0">
@@ -21,47 +33,31 @@ export function Header({ role, activeTab }: { role: Role; activeTab: ClientModul
   );
 }
 
-/** Shows scene-level missing profile fields and opens the global completion dialog. */
+/** Prompts users to complete required profile fields and opens the global completion dialog. */
 export function ProfileContextCard({
-  role,
-  description,
   requirement,
   onOpenCompletion
 }: {
-  role: Role;
-  description: string;
   requirement: ProfileRequirement | null;
   onOpenCompletion: () => void;
 }) {
+  if (!requirement) {
+    return null;
+  }
+
   return (
-    <section
-      className={`context-card flex items-start justify-between gap-[12px] p-[12px] ${requirement ? "needs-profile" : "profile-ready"}`}
-    >
+    <section className="context-card needs-profile flex items-center justify-between gap-[12px] p-[12px]">
       <div className="context-card-main grid min-w-0 gap-[8px]">
-        <strong>{getRoleHint(role)}</strong>
-        <p>{description}</p>
-        {requirement ? (
-          <div className="context-missing flex flex-wrap items-center justify-between gap-[8px]">
-            <span>
-              <AlertCircle size={14} />
-              缺少：{requirement.missingFields.map((field) => field.label).join("、")}
-            </span>
-            <button
-              className="context-action inline-flex min-h-[32px] items-center justify-center px-[10px] py-[7px] text-[13px] font-bold text-white"
-              onClick={onOpenCompletion}
-              type="button"
-            >
-              补充资料
-            </button>
-          </div>
-        ) : (
-          <div className="context-ready inline-flex items-center gap-[5px] text-[13px] font-bold text-[#1d6f55]">
-            <CheckCircle2 size={14} />
-            <span>当前模块资料已补齐</span>
-          </div>
-        )}
+        <strong>补充资料后继续使用</strong>
+        <p>完善当前场景所需信息，可继续购买、报名或发布。</p>
       </div>
-      {requirement ? <AlertCircle size={20} /> : <BadgeCheck size={20} />}
+      <button
+        className="context-action inline-flex min-h-[32px] shrink-0 items-center justify-center px-[10px] py-[7px] text-[13px] font-bold text-white"
+        onClick={onOpenCompletion}
+        type="button"
+      >
+        补充资料
+      </button>
     </section>
   );
 }
@@ -101,45 +97,41 @@ export function PageShell({
 
 /** Floating avatar popover for shortcuts; the full account center lives at /mine. */
 export function MinePopover({
-  role,
-  profileName,
-  accountStatus,
-  creditScore,
   walletSummary,
   onClose,
   onLogout,
   onOpenTab,
   onNavigate
 }: {
-  role: Role;
-  profileName: string;
-  accountStatus: string;
-  creditScore: number;
   walletSummary: WalletSummary;
   onClose: () => void;
   onLogout: () => void;
   onOpenTab: (tab: ClientModuleKey) => void;
   onNavigate: (surface: PageSurface) => void;
 }) {
+  const { accountStatusText, creditScore, phone, profileDraft, profileName, role } = useGlobalUser();
+  const tutorCardData = getTutorCardDataFromDraft(profileDraft);
+  const tutorCardMode = getTutorCardMode(tutorCardData.certificationStatus, "simple");
+  const huntingCertificationData = getHuntingCertificationDataFromDraft(profileDraft);
+  const huntingCertificationMode = getHuntingCertificationCardMode(huntingCertificationData.certificationStatus);
   const actions =
     role === "student"
       ? [
-          { label: "狩猎", icon: Crosshair, action: () => onOpenTab("hunting") },
           { label: "发布", icon: Plus, action: () => onOpenTab("hunting") },
-          { label: "余额", icon: WalletCards, action: () => onNavigate("wallet") },
+          { label: "建议/投诉", icon: ClipboardCheck, action: () => onNavigate("mine") },
           { label: "更多", icon: UserRound, action: () => onNavigate("mine") }
         ]
       : role === "merchant"
         ? [
             { label: "商品", icon: Plus, action: () => onOpenTab("merchantSales") },
             { label: "消息", icon: MessageCircle, action: () => onOpenTab("merchantSales") },
-            { label: "余额", icon: WalletCards, action: () => onNavigate("wallet") },
+            { label: "建议/投诉", icon: ClipboardCheck, action: () => onNavigate("mine") },
             { label: "更多", icon: UserRound, action: () => onNavigate("mine") }
           ]
         : [
             { label: "家教", icon: GraduationCap, action: () => onOpenTab("tutor") },
             { label: "孩子", icon: UserRound, action: () => onNavigate("settings") },
-            { label: "余额", icon: WalletCards, action: () => onNavigate("wallet") },
+            { label: "建议/投诉", icon: ClipboardCheck, action: () => onNavigate("mine") },
             { label: "更多", icon: UserRound, action: () => onNavigate("mine") }
           ];
 
@@ -148,52 +140,71 @@ export function MinePopover({
       className="mine-popover grid w-[min(360px,calc(100vw-28px))] gap-[12px] p-[12px]"
       aria-label="我的快捷入口"
     >
-      <article className="popover-account grid items-center gap-[10px] p-[10px]">
-        <div className="popover-avatar grid h-[40px] w-[40px] place-items-center">
-          <UserRound size={21} />
-        </div>
-        <div className="min-w-0">
-          <div className="popover-account-title flex min-w-0 items-center gap-[6px]">
-            <strong>{profileName}</strong>
-            <span>{roleLabels[role]}</span>
-          </div>
-          <p>{mineEntryLabels[role]}</p>
-          <div className="popover-tags mt-[7px] flex flex-wrap gap-[5px]">
-            <span>{accountStatus}</span>
-            <span>信用值 {creditScore}</span>
-          </div>
-        </div>
-        <button
-          className="popover-logout inline-flex items-center justify-center gap-[4px] px-[8px] py-[7px] text-[12px] text-[#8a2534]"
-          onClick={() => {
-            onClose();
-            onLogout();
-          }}
-          type="button"
-        >
-          <LogOut size={14} />
-          退出
-        </button>
-      </article>
+      <AccountSummaryCard
+        accountStatus={accountStatusText}
+        birthday={profileDraft.birthday}
+        className="popover-account p-[10px]"
+        creditScore={creditScore}
+        followerCount={0}
+        followingCount={0}
+        nickname={profileName}
+        phone={phone}
+        roleLabel={roleLabels[role]}
+        trailingAction={
+          <button
+            className="popover-logout inline-flex items-center justify-center gap-[4px] px-[8px] py-[7px] text-[12px] text-[#8a2534]"
+            onClick={() => {
+              onClose();
+              onLogout();
+            }}
+            type="button"
+          >
+            <LogOut size={14} />
+            退出
+          </button>
+        }
+        variant="simple"
+      />
 
-      <button
-        className="popover-wallet-card grid w-full items-center gap-[5px] p-[10px] pr-[34px] text-left"
-        onClick={() => {
+      <WalletSummaryCard
+        className="popover-wallet-card p-[10px]"
+        onOpen={() => {
           onNavigate("wallet");
           onClose();
         }}
-        type="button"
-      >
-        <span>
-          <WalletCards size={18} />
-          钱包
-        </span>
-        <strong>{walletSummary.withdrawable}</strong>
-        <em>
-          观察期 {walletSummary.observation} · 押金/保证金 {walletSummary.deposit}
-        </em>
-        <ChevronRight size={17} />
-      </button>
+        walletSummary={walletSummary}
+        variant="simple"
+      />
+
+      <TutorCard
+        {...tutorCardData}
+        className="popover-tutor-card p-[10px]"
+        mode={tutorCardMode}
+        onOpenCalendar={() => {
+          onOpenTab("tutor");
+          onClose();
+        }}
+        onOpenMessages={() => {
+          onNavigate("mine");
+          onClose();
+        }}
+        onStartCertification={() => {
+          onNavigate("tutorCertification");
+          onClose();
+        }}
+      />
+
+      {role === "student" ? (
+        <HuntingCertificationCard
+          {...huntingCertificationData}
+          className="popover-hunting-certification-card p-[10px]"
+          mode={huntingCertificationMode}
+          onStartCertification={() => {
+            onNavigate("huntingCertification");
+            onClose();
+          }}
+        />
+      ) : null}
 
       <strong>快捷入口</strong>
       <div className="popover-actions grid gap-[7px]">
@@ -220,14 +231,14 @@ export function MinePopover({
 
 /** Primary module navigation for all roles; Mine intentionally remains a floating entry. */
 export function BottomTabs({
-  role,
   activeTab,
   onChange
 }: {
-  role: Role;
   activeTab: ClientModuleKey;
   onChange: (tab: ClientModuleKey) => void;
 }) {
+  const { role } = useGlobalUser();
+
   return (
     <nav
       className="bottom-tabs mx-auto flex max-w-[540px] px-[10px] pb-[calc(7px+env(safe-area-inset-bottom))] pt-[7px]"
@@ -235,6 +246,7 @@ export function BottomTabs({
     >
       {clientPrimaryTabs[role].map((tab) => {
         const Icon = tabIcons[tab.key] ?? Home;
+        const label = tab.key === "hunting" ? "委托" : tab.label;
         return (
           <button
             className={activeTab === tab.key ? "active" : ""}
@@ -243,7 +255,7 @@ export function BottomTabs({
             type="button"
           >
             <Icon size={18} />
-            <span>{tab.label}</span>
+            <span>{label}</span>
           </button>
         );
       })}

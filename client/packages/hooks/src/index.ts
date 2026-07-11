@@ -6,9 +6,17 @@ import {
   loginClient,
   miniappOneTapLogin,
   purchaseProduct,
-  registerClient
+  registerClient,
+  selectClientRole
 } from "@unknown/api-client";
-import { LoginRequest, MiniappOneTapLoginRequest, PurchaseRequest, RegisterRequest, Role } from "@unknown/domain";
+import {
+  LoginRequest,
+  MiniappOneTapLoginRequest,
+  PurchaseRequest,
+  RegisterRequest,
+  Role,
+  SelectRoleRequest
+} from "@unknown/domain";
 
 export function useClientHome(role: Role, enabled = true) {
   return useQuery({
@@ -43,6 +51,13 @@ export function useClientLogin() {
 export function useClientRegister() {
   return useMutation({
     mutationFn: (payload: RegisterRequest) => registerClient(payload)
+  });
+}
+
+export function useSelectClientRole() {
+  return useMutation({
+    mutationFn: (payload: SelectRoleRequest & { accessToken: string }) =>
+      selectClientRole({ role: payload.role }, payload.accessToken)
   });
 }
 

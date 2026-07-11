@@ -29,6 +29,7 @@ public class ClientHomeAppService {
     List<RoleProfile> profiles = jdbcTemplate.query(
         """
             SELECT u.nickname, u.account_label, u.credit_score, u.status,
+                   COALESCE(u.tutor_certification_status, 'pending') AS tutor_certification_status,
                    COALESCE(w.withdrawable_cents, 0) AS withdrawable_cents
             FROM app_user u
             LEFT JOIN wallet_account w ON w.user_id = u.id
@@ -42,7 +43,8 @@ public class ClientHomeAppService {
             rs.getString("account_label"),
             rs.getInt("credit_score"),
             balanceText(role, rs.getLong("withdrawable_cents")),
-            accountStatus(rs.getString("status"))
+            accountStatus(rs.getString("status")),
+            tutorCertificationStatus(rs.getString("tutor_certification_status"))
         ),
         role.name()
     );
@@ -98,6 +100,15 @@ public class ClientHomeAppService {
       case "MUTED" -> "muted";
       case "BANNED" -> "banned";
       default -> "normal";
+    };
+  }
+
+  private String tutorCertificationStatus(String status) {
+    return switch (status == null ? "pending" : status) {
+      case "reviewing" -> "reviewing";
+      case "normal" -> "normal";
+      case "frozen" -> "frozen";
+      default -> "pending";
     };
   }
 }

@@ -1,14 +1,20 @@
+/** Props consumed by the H5 login/register card component. */
 export interface LoginRegisterCardProps {
   authMode: import("./app").AuthMode;
   code: string;
+  defaultCode: string;
+  invitationCode: string;
   isAuthPending: boolean;
-  loginRole: import("@unknown/domain").Role;
+  loginCredentialMode: import("./app").LoginCredentialMode;
+  password: string;
   phone: string;
-  roles: import("@unknown/domain").Role[];
   onAuthModeChange: (mode: import("./app").AuthMode) => void;
   onCodeChange: (code: string) => void;
   onFillDefaultCode: () => void;
+  onForgotPassword: () => void;
+  onInvitationCodeChange: (invitationCode: string) => void;
+  onLoginCredentialModeChange: (mode: import("./app").LoginCredentialMode) => void;
+  onPasswordChange: (password: string) => void;
   onPhoneChange: (phone: string) => void;
-  onRoleChange: (role: import("@unknown/domain").Role) => void;
   onSubmit: (event: import("react").FormEvent<HTMLFormElement>) => void;
 }

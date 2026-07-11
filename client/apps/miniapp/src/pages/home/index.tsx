@@ -119,7 +119,7 @@ export default function HomePage() {
   const [role, setRole] = useState<Role>(() => authSession?.role ?? "student");
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [phone, setPhone] = useState("13800000000");
-  const [code, setCode] = useState("123456");
+  const [code, setCode] = useState("000000");
   const [pendingRegisterSession, setPendingRegisterSession] = useState<LoginResponse | null>(null);
   const [registrationDraft, setRegistrationDraft] = useState<ProfileDraftState>({});
   const { hideMessage, showMessage, toast } = useMessageToast();

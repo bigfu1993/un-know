@@ -1,17 +1,37 @@
+import { normalizeByKey } from "../../tools/validation";
+
+/** Renders the shared login/register form and delegates auth actions to the login route. */
 export function LoginRegisterCard({
   authMode,
   code,
+  defaultCode,
+  invitationCode,
   isAuthPending,
-  loginRole,
+  loginCredentialMode,
+  password,
   phone,
-  roles,
   onAuthModeChange,
   onCodeChange,
   onFillDefaultCode,
+  onForgotPassword,
+  onInvitationCodeChange,
+  onLoginCredentialModeChange,
+  onPasswordChange,
   onPhoneChange,
-  onRoleChange,
   onSubmit
 }: LoginRegisterCardProps) {
+  const shouldShowCodeField = authMode === "register" || loginCredentialMode === "code";
+  const shouldShowPasswordField = authMode === "login" && loginCredentialMode === "password";
+  const submitLabel = isAuthPending
+    ? authMode === "register"
+      ? "注册中"
+      : "登录中"
+    : authMode === "register"
+      ? "注册"
+      : loginCredentialMode === "password"
+        ? "密码登录"
+        : "验证码登录";
+
   return (
     <form className="login-card login-register-card grid w-full min-w-0 gap-[14px] p-[16px]" onSubmit={onSubmit}>
       <div className="login-mode-tabs flex min-w-0 gap-[8px] p-[4px]" aria-label="选择登录或注册">
@@ -31,18 +51,22 @@ export function LoginRegisterCard({
         </button>
       </div>
 
-      {authMode === "register" ? (
-        <div className="login-role-tabs grid min-w-0 gap-[8px]" aria-label="选择注册身份">
-          {roles.map((item) => (
-            <button
-              className={loginRole === item ? "active" : ""}
-              key={item}
-              onClick={() => onRoleChange(item)}
-              type="button"
-            >
-              {roleLabels[item]}
-            </button>
-          ))}
+      {authMode === "login" ? (
+        <div className="login-method-tabs flex min-w-0 gap-[8px] p-[4px]" aria-label="选择登录方式">
+          <button
+            className={loginCredentialMode === "code" ? "active" : ""}
+            onClick={() => onLoginCredentialModeChange("code")}
+            type="button"
+          >
+            验证码登录
+          </button>
+          <button
+            className={loginCredentialMode === "password" ? "active" : ""}
+            onClick={() => onLoginCredentialModeChange("password")}
+            type="button"
+          >
+            密码登录
+          </button>
         </div>
       ) : null}
 
@@ -53,62 +77,92 @@ export function LoginRegisterCard({
           <input
             inputMode="numeric"
             maxLength={11}
-            onChange={(event) => onPhoneChange(event.target.value.replace(/\D/g, ""))}
+            onChange={(event) => onPhoneChange(normalizeByKey("phone", event.target.value))}
             placeholder="请输入手机号"
             value={phone}
           />
         </div>
       </label>
 
-      <label className="login-field grid min-w-0 gap-[7px]">
-        <span>验证码</span>
-        <div>
-          <KeyRound size={18} />
-          <input
-            inputMode="numeric"
-            maxLength={6}
-            onChange={(event) => onCodeChange(event.target.value.replace(/\D/g, ""))}
-            placeholder="本地验证码 123456"
-            value={code}
-          />
-          <button onClick={onFillDefaultCode} type="button">
-            填入
-          </button>
-        </div>
-      </label>
+      {shouldShowCodeField ? (
+        <label className="login-field grid min-w-0 gap-[7px]">
+          <span>验证码</span>
+          <div>
+            <KeyRound size={18} />
+            <input
+              inputMode="numeric"
+              maxLength={6}
+              onChange={(event) => onCodeChange(event.target.value.replace(/\D/g, ""))}
+              placeholder={`本地验证码 ${defaultCode}`}
+              value={code}
+            />
+            <button onClick={onFillDefaultCode} type="button">
+              填入
+            </button>
+          </div>
+        </label>
+      ) : null}
+
+      {authMode === "register" ? (
+        <label className="login-field grid min-w-0 gap-[7px]">
+          <span>邀请码（选填）</span>
+          <div>
+            <KeyRound size={18} />
+            <input
+              autoCapitalize="characters"
+              maxLength={20}
+              onChange={(event) => onInvitationCodeChange(event.target.value.trim().toUpperCase())}
+              placeholder="请输入邀请码"
+              value={invitationCode}
+            />
+          </div>
+        </label>
+      ) : null}
+
+      {shouldShowPasswordField ? (
+        <label className="login-field grid min-w-0 gap-[7px]">
+          <span>密码</span>
+          <div>
+            <KeyRound size={18} />
+            <input
+              autoComplete="current-password"
+              onChange={(event) => onPasswordChange(event.target.value)}
+              placeholder="请输入登录密码"
+              type="password"
+              value={password}
+            />
+          </div>
+        </label>
+      ) : null}
 
       <p className="login-tip m-0 text-[13px] leading-[1.5] text-[#657181]">
-        本地联调验证码固定为 123456；登录成功后 token 会写入本地存储，后续请求自动携带。
+        {authMode === "login" && loginCredentialMode === "password"
+          ? "密码会先在本地校验，测试环境继续使用现有登录接口进入。"
+          : `本地联调验证码固定为 ${defaultCode}；登录成功后 token 会写入本地存储，后续请求自动携带。`}
       </p>
 
       <p className="login-tip m-0 text-[13px] leading-[1.5] text-[#657181]">
         {authMode === "register"
-          ? "注册成功后会自动登录；学生和商户身份不能用同一手机号同时注册。"
-          : "未注册手机号需要先切换到注册入口完成开户。"}
+          ? "注册成功后需要先选择角色，再补充基础信息后进入。"
+          : loginCredentialMode === "password"
+            ? "未设置密码时可切换验证码登录，或注册后在补充页设置密码。"
+            : "未注册手机号需要先切换到注册入口完成开户。"}
       </p>
 
+      {authMode === "login" ? (
+        <button className="text-link-button justify-self-end" onClick={onForgotPassword} type="button">
+          忘记密码？
+        </button>
+      ) : null}
+
       <button
-        aria-label={
-          isAuthPending
-            ? authMode === "register"
-              ? "注册中"
-              : "登录中"
-            : authMode === "register"
-              ? "注册并补充资料"
-              : "登录并进入"
-        }
+        aria-label={submitLabel}
         className={`primary-button auth-submit-button full inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092] ${authMode === "register" ? "register-mode" : ""}`}
         disabled={isAuthPending}
         type="submit"
       >
         <ShieldCheck size={16} />
-        {isAuthPending
-          ? authMode === "register"
-            ? "注册中"
-            : "登录中"
-          : authMode === "register"
-            ? "注册并补充资料"
-            : "登录并进入"}
+        {submitLabel}
       </button>
     </form>
   );

@@ -1,5 +1,7 @@
-export type PageSurface = "mine" | "wallet" | "orders" | "settings";
+export type PageSurface = "mine" | "wallet" | "orders" | "settings" | "tutorCertification" | "huntingCertification";
 export type AuthMode = "login" | "register";
+/** Login credential mode supported by the H5 login form. */
+export type LoginCredentialMode = "code" | "password";
 export type ProductFilter = "selfRun" | "stock" | "hourly" | "latest";
 export type JobFilter = "latest" | "hourly";
 export type TutorSort = "recommended" | "favorite" | "hired" | "duration";

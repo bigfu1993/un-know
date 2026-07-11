@@ -8,7 +8,7 @@ public record RoleProfile(
     String label,
     int creditScore,
     String balanceText,
-    String accountStatus
+    String accountStatus,
+    String tutorCertificationStatus
 ) {
 }
-

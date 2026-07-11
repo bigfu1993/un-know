@@ -1,4 +1,5 @@
 import "./styles.less";
+import { GlobalStoreProvider } from "@h5/store/GlobalStoreProvider";
 
 const queryClient = new QueryClient();
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
@@ -9,10 +10,12 @@ if (apiBaseUrl) {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </QueryClientProvider>
+    <GlobalStoreProvider>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </QueryClientProvider>
+    </GlobalStoreProvider>
   </StrictMode>
 );

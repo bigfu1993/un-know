@@ -24,6 +24,7 @@ declare global {
 
   type PageSurface = import("./app").PageSurface;
   type AuthMode = import("./app").AuthMode;
+  type LoginCredentialMode = import("./app").LoginCredentialMode;
   type ProductFilter = import("./app").ProductFilter;
   type JobFilter = import("./app").JobFilter;
   type TutorSort = import("./app").TutorSort;
@@ -36,8 +37,11 @@ declare global {
   type MessageToastOptions = import("./message-toast").MessageToastOptions;
   type MessageToastProps = import("./message-toast").MessageToastProps;
 
+  type ProfileRequirementField = import("./profile").ProfileRequirementField;
   type ProfileRequirementTemplate = import("./profile").ProfileRequirementTemplate;
   type ProfileRequirement = import("./profile").ProfileRequirement;
   type ProfileDraftState = import("./profile").ProfileDraftState;
+  type AddressBookItem = import("./profile").AddressBookItem;
+  type AddressInfoFormProps = import("./profile").AddressInfoFormProps;
   type RegistrationProfileCompletionProps = import("./profile").RegistrationProfileCompletionProps;
 }

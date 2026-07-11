@@ -4,6 +4,32 @@
  */
 export const roles: Role[] = ["student", "merchant", "parent"];
 export const profileDraftStorageKey = "unknown_client_profile_completion_v1";
+/** Local H5 address-book storage key; stores settings-page address cards before backend APIs exist. */
+export const addressBookStorageKey = "unknown_client_address_book_v1";
+/** Local H5 password credential storage key; stores salted hashes, never plaintext passwords. */
+export const passwordCredentialStorageKey = "unknown_client_password_credentials_v1";
+/** Local H5 pending registration storage key; keeps accounts from bypassing role selection. */
+export const pendingRegistrationStorageKey = "unknown_client_pending_registration_v1";
+
+/** Salted local password credential used before backend password APIs are available. */
+export interface StoredPasswordCredential {
+  salt: string;
+  passwordHash: string;
+  updatedAt: string;
+}
+
+/** Local password credentials indexed by phone number. */
+export type PasswordCredentialStore = Record<string, StoredPasswordCredential>;
+
+/** Local pending registration marker keyed by the raw phone number used in the form. */
+export interface PendingRegistrationRecord {
+  phone: string;
+  createdAt: string;
+}
+
+/** Pending registration markers indexed by raw phone number. */
+export type PendingRegistrationStore = Record<string, PendingRegistrationRecord>;
+
 export const campusAreaOptions = [
   "宿舍区",
   "教学区",
@@ -32,7 +58,6 @@ export const tutorSorts: Array<{ key: TutorSort; label: string }> = [
   { key: "hired", label: "受聘次数" },
   { key: "duration", label: "可兼职时长" }
 ];
-export const phonePattern = /^1[3-9]\d{9}$/;
 
 // Single source of truth for bottom-tab routes and default redirects.
 export const moduleRoutePaths: Partial<Record<ClientModuleKey, string>> = {
@@ -44,139 +69,46 @@ export const moduleRoutePaths: Partial<Record<ClientModuleKey, string>> = {
   tutor: "/tutor"
 };
 
+/** Unified address fields shared by registration completion, scene profile completion, and settings preview. */
+export const addressInfoFields: ProfileRequirementField[] = [
+  { key: "contactName", label: "姓名", placeholder: "请输入姓名" },
+  { key: "campusArea", label: "常用区域", placeholder: "选择或输入常用区域", kind: "area" },
+  { key: "buildingFloor", label: "楼栋楼层", placeholder: "例如 8 号楼 5 层 / 8-512" },
+  { key: "deliveryAddress", label: "收货地址", placeholder: "请输入详细收货地址" },
+  { key: "contactPhone", label: "联系电话", placeholder: "请输入手机号", inputMode: "tel" }
+];
+
+/** Unified address template used wherever H5 asks the user to supplement account information. */
+export const addressInfoTemplate: ProfileRequirementTemplate = {
+  title: "补充地址信息",
+  description: "请补充姓名、常用区域、楼栋楼层、收货地址和联系电话。",
+  fields: addressInfoFields
+};
+
 // Scene-level profile requirements consumed by App and login/profile completion flows.
 export const profileRequirementTemplates: Record<Role, Partial<Record<ClientModuleKey, ProfileRequirementTemplate>>> = {
   student: {
-    featured: {
-      title: "补充优选购买信息",
-      description: "优选购买、配送和售后需要先确认校内位置与联系方式。",
-      fields: [
-        { key: "studentName", label: "姓名", placeholder: "请输入真实姓名" },
-        { key: "studentCampusArea", label: "常用区域", placeholder: "选择或输入校内区域", kind: "area" },
-        { key: "studentDormLocation", label: "楼栋楼层", placeholder: "例如 8 号楼 5 层 / 8-512" },
-        { key: "studentDeliveryAddress", label: "收货位置", placeholder: "例如 8 号楼 512 / 校门口" },
-        { key: "studentContactPhone", label: "联系电话", placeholder: "请输入手机号", inputMode: "tel" }
-      ]
-    },
-    partTime: {
-      title: "补充兼职报名信息",
-      description: "兼职报名需要基础学籍与联系方式，报名快照会随报名记录保存。",
-      fields: [
-        { key: "studentName", label: "姓名", placeholder: "请输入真实姓名" },
-        { key: "studentSchool", label: "学校", placeholder: "请输入学校" },
-        { key: "studentMajor", label: "专业", placeholder: "请输入专业" },
-        { key: "studentGrade", label: "年级", placeholder: "例如 大二" },
-        { key: "studentContactPhone", label: "联系电话", placeholder: "请输入手机号", inputMode: "tel" }
-      ]
-    },
-    hunting: {
-      title: "补充委托/狩猎信息",
-      description: "发布委托、上线狩猎和接单需要学生认证、押金状态与校内位置。",
-      fields: [
-        { key: "studentName", label: "姓名", placeholder: "请输入真实姓名" },
-        { key: "studentVerifyStatus", label: "学生认证状态", placeholder: "例如 待审核 / 已通过" },
-        { key: "studentDepositStatus", label: "押金状态", placeholder: "例如 已缴纳 100 元" },
-        { key: "studentCampusArea", label: "常用区域", placeholder: "选择或输入校内区域", kind: "area" },
-        { key: "studentDormLocation", label: "楼栋楼层", placeholder: "例如 8 号楼 5 层 / 8-512" },
-        { key: "studentContactPhone", label: "联系电话", placeholder: "请输入手机号", inputMode: "tel" }
-      ]
-    },
-    tutor: {
-      title: "补充家教资格信息",
-      description: "学生承接家教前需要展示家教资格、学校、专业等基础信息。",
-      fields: [
-        { key: "studentName", label: "姓名", placeholder: "请输入真实姓名" },
-        { key: "studentSchool", label: "学校", placeholder: "请输入学校" },
-        { key: "studentMajor", label: "专业", placeholder: "请输入专业" },
-        { key: "studentGpa", label: "绩点", placeholder: "例如 3.7/4.0" },
-        { key: "studentTutorSubjects", label: "可家教学科", placeholder: "例如 数学、英语" }
-      ]
-    }
+    featured: addressInfoTemplate,
+    partTime: addressInfoTemplate,
+    hunting: addressInfoTemplate,
+    tutor: addressInfoTemplate
   },
   merchant: {
-    merchantSales: {
-      title: "补充销售工作台信息",
-      description: "商品上架、配送处理和售后沟通需要确认店铺与对接信息。",
-      fields: [
-        { key: "merchantStoreName", label: "门店名称", placeholder: "请输入门店名称" },
-        { key: "merchantContactName", label: "负责人", placeholder: "请输入负责人姓名" },
-        { key: "merchantContactPhone", label: "联系电话", placeholder: "请输入手机号", inputMode: "tel" },
-        { key: "merchantCampusArea", label: "服务区域", placeholder: "选择或输入主要服务区域", kind: "area" },
-        { key: "merchantStoreAddress", label: "门店位置", placeholder: "请输入门店地址或校内位置" },
-        { key: "merchantCreditDeposit", label: "店铺信用金", placeholder: "例如 已缴纳 / 待缴纳" }
-      ]
-    },
-    partTime: {
-      title: "补充兼职发布信息",
-      description: "商户发布兼职前需要联系人、结算和岗位保证金等信息。",
-      fields: [
-        { key: "merchantCompanyName", label: "发布主体", placeholder: "请输入公司或门店名称" },
-        { key: "merchantRecruiterName", label: "招聘负责人", placeholder: "请输入负责人姓名" },
-        { key: "merchantContactPhone", label: "联系电话", placeholder: "请输入手机号", inputMode: "tel" },
-        { key: "merchantSettlementRule", label: "结算规则", placeholder: "例如 结束后 3 天结算" },
-        { key: "merchantJobDeposit", label: "岗位保证金", placeholder: "例如 已缴纳 / 发布时缴纳" }
-      ]
-    },
-    marketing: {
-      title: "补充营销配置基础信息",
-      description: "营销入口暂为预留模块，先维护门店与运营联系人。",
-      fields: [
-        { key: "merchantStoreName", label: "门店名称", placeholder: "请输入门店名称" },
-        { key: "merchantOperatorName", label: "运营联系人", placeholder: "请输入联系人姓名" },
-        { key: "merchantContactPhone", label: "联系电话", placeholder: "请输入手机号", inputMode: "tel" }
-      ]
-    }
+    merchantSales: addressInfoTemplate,
+    partTime: addressInfoTemplate,
+    marketing: addressInfoTemplate
   },
   parent: {
-    featured: {
-      title: "补充快递收货信息",
-      description: "家长端商品固定快递配送，需要完整收货信息。",
-      fields: [
-        { key: "parentName", label: "收货人", placeholder: "请输入收货人姓名" },
-        { key: "parentContactPhone", label: "联系电话", placeholder: "请输入手机号", inputMode: "tel" },
-        { key: "parentExpressAddress", label: "快递地址", placeholder: "请输入详细快递地址" }
-      ]
-    },
-    tutor: {
-      title: "补充家教招募信息",
-      description: "发布家教需求前需要至少维护一个孩子档案和学科偏好。",
-      fields: [
-        { key: "parentName", label: "联系人", placeholder: "请输入联系人姓名" },
-        { key: "parentContactPhone", label: "联系电话", placeholder: "请输入手机号", inputMode: "tel" },
-        { key: "childGrade", label: "孩子年级", placeholder: "例如 初二 / 高一" },
-        { key: "childSubjects", label: "学科", placeholder: "例如 数学、英语" }
-      ]
-    }
+    featured: addressInfoTemplate,
+    tutor: addressInfoTemplate
   }
 };
 
 // Registration completion templates can be skipped, but later scene actions re-check requirements.
 export const registrationProfileTemplates: Record<Role, ProfileRequirementTemplate> = {
-  student: {
-    title: "补充学生信息",
-    description: "先填写常用宿舍位置，后续购买、配送和发布需求会优先使用。",
-    fields: [
-      { key: "studentCampusArea", label: "常用区域", placeholder: "选择或输入校内区域", kind: "area" },
-      { key: "studentDormLocation", label: "楼栋楼层", placeholder: "例如 8 号楼 5 层 / 8-512" }
-    ]
-  },
-  merchant: {
-    title: "补充商户信息",
-    description: "先填写基础经营信息，认证资料后续可在设置中继续完善。",
-    fields: [
-      { key: "merchantType", label: "商户类型", placeholder: "校园店铺 / 个人商户 / 校外服务商 / 校企合作" },
-      { key: "merchantCampusArea", label: "服务区域", placeholder: "选择或输入主要服务区域", kind: "area" },
-      { key: "merchantStoreName", label: "门店名称", placeholder: "请输入门店或主体名称" }
-    ]
-  },
-  parent: {
-    title: "补充孩子信息",
-    description: "先维护孩子年级和学科，后续发布家教需求时会强校验。",
-    fields: [
-      { key: "childGrade", label: "孩子年级", placeholder: "例如 初二 / 高一" },
-      { key: "childSubjects", label: "学科", placeholder: "例如 数学、英语" }
-    ]
-  }
+  student: addressInfoTemplate,
+  merchant: addressInfoTemplate,
+  parent: addressInfoTemplate
 };
 
 // UI-only mapping from module key to navigation icon.
@@ -212,6 +144,141 @@ export function setStoredProfileDraft(profileDraft: ProfileDraftState) {
   }
 
   window.localStorage.setItem(profileDraftStorageKey, JSON.stringify(profileDraft));
+}
+
+/** Creates a local address-book item from an address draft. */
+export function createAddressBookItem(profileDraft: ProfileDraftState, isCurrent = false): AddressBookItem {
+  const now = new Date().toISOString();
+
+  return {
+    id: globalThis.crypto?.randomUUID?.() ?? `address_${Date.now()}`,
+    draft: getFilledProfileDraft(profileDraft),
+    isCurrent,
+    createdAt: now,
+    updatedAt: now
+  };
+}
+
+/** Ensures address-book items have at most one current address and stable item dates. */
+export function normalizeAddressBookItems(items: AddressBookItem[]) {
+  const currentIndex = items.findIndex((item) => item.isCurrent);
+  const normalizedCurrentIndex = currentIndex >= 0 ? currentIndex : 0;
+
+  return items.map((item, index) => {
+    return {
+      ...item,
+      isCurrent: index === normalizedCurrentIndex,
+      draft: getFilledProfileDraft(item.draft),
+      createdAt: item.createdAt || new Date().toISOString(),
+      updatedAt: item.updatedAt || item.createdAt || new Date().toISOString()
+    };
+  });
+}
+
+/** Reads local H5 address-book items and falls back to the current profile draft when present. */
+export function getStoredAddressBook(fallbackDraft: ProfileDraftState = {}) {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const stored = window.localStorage.getItem(addressBookStorageKey);
+    const parsedItems = stored ? (JSON.parse(stored) as AddressBookItem[]) : [];
+
+    if (parsedItems.length > 0) {
+      return normalizeAddressBookItems(parsedItems);
+    }
+  } catch {
+    // Fall back to the current profile draft below.
+  }
+
+  const hasFallbackAddress = addressInfoFields.some((field) => fallbackDraft[field.key]?.trim());
+  return hasFallbackAddress ? [createAddressBookItem(fallbackDraft, true)] : [];
+}
+
+/** Persists local H5 address-book items after normalizing current-address state. */
+export function setStoredAddressBook(items: AddressBookItem[]) {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  const normalizedItems = normalizeAddressBookItems(items);
+  window.localStorage.setItem(addressBookStorageKey, JSON.stringify(normalizedItems));
+  return normalizedItems;
+}
+
+/** Reads all local H5 password credentials from storage with corrupt-data tolerance. */
+function getStoredPasswordCredentials(): PasswordCredentialStore {
+  if (typeof window === "undefined") {
+    return {};
+  }
+
+  try {
+    const stored = window.localStorage.getItem(passwordCredentialStorageKey);
+    return stored ? (JSON.parse(stored) as PasswordCredentialStore) : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Gets the local H5 password credential for one phone number. */
+export function getStoredPasswordCredential(phone: string) {
+  return getStoredPasswordCredentials()[phone] ?? null;
+}
+
+/** Saves the local H5 password credential for one phone number. */
+export function setStoredPasswordCredential(phone: string, credential: StoredPasswordCredential) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const credentials = getStoredPasswordCredentials();
+  credentials[phone] = credential;
+  window.localStorage.setItem(passwordCredentialStorageKey, JSON.stringify(credentials));
+}
+
+/** Reads pending post-registration role markers with corrupt-data tolerance. */
+function getStoredPendingRegistrations(): PendingRegistrationStore {
+  if (typeof window === "undefined") {
+    return {};
+  }
+
+  try {
+    const stored = window.localStorage.getItem(pendingRegistrationStorageKey);
+    return stored ? (JSON.parse(stored) as PendingRegistrationStore) : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Records that a registered phone must complete role selection before entering H5. */
+export function setStoredPendingRegistration(phone: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const pendingRegistrations = getStoredPendingRegistrations();
+  pendingRegistrations[phone] = {
+    phone,
+    createdAt: new Date().toISOString()
+  };
+  window.localStorage.setItem(pendingRegistrationStorageKey, JSON.stringify(pendingRegistrations));
+}
+
+/** Checks whether the raw phone number still has an unfinished post-registration role step. */
+export function hasStoredPendingRegistration(phone: string) {
+  return Boolean(getStoredPendingRegistrations()[phone]);
+}
+
+/** Clears the unfinished post-registration role marker after role confirmation succeeds. */
+export function clearStoredPendingRegistration(phone: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const pendingRegistrations = getStoredPendingRegistrations();
+  delete pendingRegistrations[phone];
+  window.localStorage.setItem(pendingRegistrationStorageKey, JSON.stringify(pendingRegistrations));
 }
 
 // Normalize profile drafts before persistence so empty whitespace does not pass validation.

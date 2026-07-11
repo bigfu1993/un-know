@@ -6,8 +6,10 @@ import com.unknown.platform.modules.auth.model.LoginRequest;
 import com.unknown.platform.modules.auth.model.LoginResponse;
 import com.unknown.platform.modules.auth.model.MiniappOneTapLoginRequest;
 import com.unknown.platform.modules.auth.model.RegisterRequest;
+import com.unknown.platform.modules.auth.model.SelectRoleRequest;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,9 +43,21 @@ public class AuthAppService {
     }
 
     assertCanRegister(request.phone());
-    long userId = createUser(request.phone(), request.role(), request.displayName());
-    ensureWalletAccount(userId, request.role());
-    return issueSession(userId, request.phone(), request.role());
+    ClientRole role = request.role() == null ? ClientRole.student : request.role();
+    long userId = createUser(request.phone(), role, request.displayName());
+    ensureWalletAccount(userId, role);
+    return issueSession(userId, request.phone(), role);
+  }
+
+  @Transactional
+  public LoginResponse selectRole(String authorization, SelectRoleRequest request) {
+    long userId = userIdFromAuthorization(authorization);
+    ClientRole role = request.role();
+    String phone = phone(userId);
+
+    updateUserRole(userId, role);
+    syncWalletAccount(userId, role);
+    return issueSession(userId, phone, role);
   }
 
   @Transactional
@@ -89,7 +103,7 @@ public class AuthAppService {
   }
 
   private boolean isVerificationCodeValid(String phone, String code) {
-    if ("123456".equals(code)) {
+    if ("000000".equals(code)) {
       return true;
     }
 
@@ -169,6 +183,90 @@ public class AuthAppService {
         role == ClientRole.merchant ? 241800 : role == ClientRole.student ? 12600 : 0,
         role == ClientRole.student ? 1800 : 0,
         role == ClientRole.merchant ? 100000 : 10000
+    );
+  }
+
+  private void syncWalletAccount(long userId, ClientRole role) {
+    int updatedRows = jdbcTemplate.update(
+        """
+            UPDATE wallet_account
+            SET withdrawable_cents = ?,
+                protected_cents = ?,
+                deposit_cents = ?
+            WHERE user_id = ?
+            """,
+        role == ClientRole.merchant ? 241800 : role == ClientRole.student ? 12600 : 0,
+        role == ClientRole.student ? 1800 : 0,
+        role == ClientRole.merchant ? 100000 : 10000,
+        userId
+    );
+
+    if (updatedRows == 0) {
+      ensureWalletAccount(userId, role);
+    }
+  }
+
+  private void updateUserRole(long userId, ClientRole role) {
+    jdbcTemplate.update(
+        """
+            UPDATE app_user
+            SET role = ?,
+                nickname = ?,
+                credit_score = ?,
+                profile_completion_required = ?,
+                account_label = ?,
+                updated_at = NOW()
+            WHERE id = ?
+            """,
+        role.name(),
+        defaultDisplayName(role),
+        role == ClientRole.student ? 10 : 0,
+        role != ClientRole.merchant,
+        roleLabel(role),
+        userId
+    );
+  }
+
+  private long userIdFromAuthorization(String authorization) {
+    String token = bearerToken(authorization);
+
+    if (!StringUtils.hasText(token)) {
+      throw new BusinessException("AUTH_SESSION_REQUIRED", "请先完成注册");
+    }
+
+    try {
+      return jdbcTemplate.queryForObject(
+          """
+              SELECT user_id
+              FROM auth_session
+              WHERE access_token = ?
+                AND expires_at > NOW()
+              ORDER BY id DESC
+              LIMIT 1
+              """,
+          Long.class,
+          token
+      );
+    } catch (EmptyResultDataAccessException exception) {
+      throw new BusinessException("AUTH_SESSION_EXPIRED", "注册会话已过期，请重新注册");
+    }
+  }
+
+  private String bearerToken(String authorization) {
+    if (!StringUtils.hasText(authorization)) {
+      return "";
+    }
+    if (authorization.startsWith("Bearer ")) {
+      return authorization.substring("Bearer ".length()).trim();
+    }
+    return authorization.trim();
+  }
+
+  private String phone(long userId) {
+    return jdbcTemplate.queryForObject(
+        "SELECT phone FROM app_user WHERE id = ?",
+        String.class,
+        userId
     );
   }
 

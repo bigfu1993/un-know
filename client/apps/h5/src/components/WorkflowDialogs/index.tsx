@@ -2,6 +2,9 @@
  * Cross-page workflow dialogs.
  * Dialogs collect or display data; mutations and navigation stay in the caller.
  */
+import { AddressInfoForm } from "../AddressInfoForm";
+import { validateByKey } from "../../tools/validation";
+
 export function OngoingOrdersDialog({
   orders,
   onClose,
@@ -75,12 +78,14 @@ export function ProfileCompletionDialog({
   onClose: () => void;
   onSave: () => void;
 }) {
-  const hasMissingFields = template.fields.some((field) => !profileDraft[field.key]?.trim());
+  const hasInvalidFields = template.fields.some(
+    (field) => !validateByKey(field.key, profileDraft[field.key] ?? "", { label: field.label, required: true }).isValid
+  );
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!hasMissingFields) {
+    if (!hasInvalidFields) {
       onSave();
     }
   }
@@ -108,32 +113,13 @@ export function ProfileCompletionDialog({
           </button>
         </div>
 
-        <div className="profile-field-list grid gap-[10px]">
-          {template.fields.map((field) => {
-            const value = profileDraft[field.key] ?? "";
-            const isMissing = !value.trim();
-
-            return (
-              <label className={`profile-field grid gap-[7px] ${isMissing ? "missing" : ""}`} key={field.key}>
-                <span>{field.label}</span>
-                <input
-                  inputMode={field.inputMode ?? "text"}
-                  list={field.kind === "area" ? `profile-area-${field.key}` : undefined}
-                  onChange={(event) => onChange(field.key, event.target.value)}
-                  placeholder={field.placeholder}
-                  value={value}
-                />
-                {field.kind === "area" ? (
-                  <datalist id={`profile-area-${field.key}`}>
-                    {campusAreaOptions.map((area) => (
-                      <option key={area} value={area} />
-                    ))}
-                  </datalist>
-                ) : null}
-              </label>
-            );
-          })}
-        </div>
+        <AddressInfoForm
+          areaOptions={campusAreaOptions}
+          draft={profileDraft}
+          fields={template.fields}
+          mode="edit"
+          onChange={onChange}
+        />
 
         <div className="sheet-actions grid gap-[8px]">
           <button
@@ -145,7 +131,7 @@ export function ProfileCompletionDialog({
           </button>
           <button
             className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
-            disabled={hasMissingFields}
+            disabled={hasInvalidFields}
             type="submit"
           >
             <CheckCircle2 size={16} />

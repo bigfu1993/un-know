@@ -2,6 +2,9 @@ export type Role = "student" | "merchant" | "parent";
 
 export type AccountStatus = "normal" | "frozen" | "supervised" | "muted" | "banned";
 
+/** 家教资格认证状态，与服务端 app_user.tutor_certification_status 保持一致。 */
+export type TutorCertificationStatus = "pending" | "reviewing" | "normal" | "frozen";
+
 export type ClientModuleKey =
   | "featured"
   | "partTime"
@@ -40,6 +43,7 @@ export interface RoleProfile {
   creditScore: number;
   balanceText: string;
   accountStatus: AccountStatus;
+  tutorCertificationStatus: TutorCertificationStatus;
 }
 
 export interface ClientHomePayload {
@@ -56,8 +60,12 @@ export interface LoginRequest {
 export interface RegisterRequest {
   phone: string;
   code: string;
-  role: Role;
+  role?: Role;
   displayName?: string;
+}
+
+export interface SelectRoleRequest {
+  role: Role;
 }
 
 export interface MiniappOneTapLoginRequest {

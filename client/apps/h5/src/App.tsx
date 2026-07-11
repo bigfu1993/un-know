@@ -1,4 +1,8 @@
-﻿/**
+﻿import { useGlobalStore, useGlobalUser } from "@h5/store/global";
+import { HuntingCertification } from "./pages/HuntingCertification";
+import { TutorCertification } from "./pages/TutorCertification";
+
+/**
  * Page metadata for stack-based secondary surfaces.
  * Routed pages own their page headers in pages/*.
  */
@@ -12,7 +16,13 @@ function getPageMeta(page: PageSurface, role: Role) {
   if (page === "orders") {
     return { title: "订单详情", eyebrow: "订单与配送" };
   }
-  return { title: "设置", eyebrow: "账户与绑定信息" };
+  if (page === "tutorCertification") {
+    return { title: "家教认证", eyebrow: "资格认证" };
+  }
+  if (page === "huntingCertification") {
+    return { title: "狩猎认证", eyebrow: "资格认证" };
+  }
+  return { title: "设置", eyebrow: "昵称与安全" };
 }
 
 /**
@@ -22,19 +32,25 @@ function getPageMeta(page: PageSurface, role: Role) {
 export function App() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [authSession, setAuthSession] = useState<LoginResponse | null>(() => getStoredClientAuthSession());
-  const [role, setRole] = useState<Role>(() => getStoredClientAuthSession()?.role ?? "student");
-  const [activeTab, setActiveTab] = useState<ClientModuleKey>(() =>
-    getDefaultPrimaryTab(authSession?.role ?? "student")
-  );
+  const user = useGlobalUser();
+  const setUserSession = useGlobalStore((state) => state.setUserSession);
+  const syncUserProfile = useGlobalStore((state) => state.syncUserProfile);
+  const setUserProfileDraft = useGlobalStore((state) => state.setUserProfileDraft);
+  const clearUser = useGlobalStore((state) => state.clearUser);
+  const role = user.role;
+  const isAuthenticated = user.isAuthenticated;
+  const [activeTab, setActiveTab] = useState<ClientModuleKey>(() => getDefaultPrimaryTab(role));
   const [pageStack, setPageStack] = useState<PageSurface[]>([]);
   const [isOngoingOpen, setIsOngoingOpen] = useState(false);
   const [isMineOpen, setIsMineOpen] = useState(false);
+  const [isQuickDockExpanded, setIsQuickDockExpanded] = useState(true);
+  const avatarClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const avatarLastClickAt = useRef(0);
   const { hideMessage, showMessage, toast } = useMessageToast();
   const [checkout, setCheckout] = useState<CheckoutState | null>(null);
+  const [savedProfileDraft, setSavedProfileDraft] = useState<ProfileDraftState>(() => getStoredProfileDraft());
   const [profileDraft, setProfileDraft] = useState<ProfileDraftState>(() => getStoredProfileDraft());
   const [isProfileCompletionOpen, setIsProfileCompletionOpen] = useState(false);
-  const isAuthenticated = authSession !== null;
   // Role-level data is shared across routes; page-local filters stay inside page modules.
   const { data: homeData, error: homeError, isLoading: isHomeLoading } = useClientHome(role, isAuthenticated);
   const {
@@ -49,23 +65,86 @@ export function App() {
     [workspaceResponse?.orders, role]
   );
   const hasPaymentRisk = roleOrders.some((order) => order.risk === "payment");
-  const activeDescription =
-    clientPrimaryTabs[role].find((tab) => tab.key === activeTab)?.description ?? getRoleHint(role);
-  const profileRequirement = getProfileRequirement(role, activeTab, profileDraft);
+  const profileRequirement = getProfileRequirement(role, activeTab, savedProfileDraft);
   const profileCompletionTemplate = getProfileRequirementTemplate(role, activeTab);
   const activePage = pageStack.length > 0 ? pageStack[pageStack.length - 1] : null;
   const dataError = homeError ?? workspaceError;
   const isInitialDataLoading = isHomeLoading || isWorkspaceLoading;
 
-  function handleLoginSuccess(session: LoginResponse) {
-    setAuthSession(session);
-    setRole(session.role);
-    setActiveTab(getDefaultPrimaryTab(session.role));
+  function clearAvatarClickTimer() {
+    if (!avatarClickTimer.current) {
+      return;
+    }
+
+    clearTimeout(avatarClickTimer.current);
+    avatarClickTimer.current = null;
+  }
+
+  function handleAvatarClick() {
+    const now = Date.now();
+
+    clearAvatarClickTimer();
+    if (now - avatarLastClickAt.current < 320) {
+      avatarLastClickAt.current = 0;
+      setIsMineOpen(false);
+      setIsQuickDockExpanded((value) => !value);
+      return;
+    }
+
+    avatarLastClickAt.current = now;
+    avatarClickTimer.current = setTimeout(() => {
+      avatarLastClickAt.current = 0;
+      setIsMineOpen((value) => !value);
+      avatarClickTimer.current = null;
+    }, 260);
+  }
+
+  function handleOpenHuntingShortcut() {
+    if (!handleRequestHuntingOnline()) {
+      setIsMineOpen(false);
+      return;
+    }
+
+    setActiveTab("hunting");
     setPageStack([]);
     setIsOngoingOpen(false);
     setIsMineOpen(false);
     setIsProfileCompletionOpen(false);
-    setProfileDraft(getStoredProfileDraft());
+    navigate(getRouteForTab("hunting"));
+  }
+
+  /** 家教认证提交完成后回到当前主模块首页，并用全局提示承接提交结果。 */
+  function handleTutorCertificationSubmitted() {
+    setPageStack([]);
+    setIsMineOpen(false);
+    setIsOngoingOpen(false);
+    setIsQuickDockExpanded(true);
+    showMessage("家教认证已提交，当前状态为认证中。", { type: "success" });
+    navigate(getRouteForTab(activeTab), { replace: true });
+  }
+
+  /** 狩猎认证提交完成后回到当前主模块首页，并用全局提示承接提交结果。 */
+  function handleHuntingCertificationSubmitted() {
+    setPageStack([]);
+    setIsMineOpen(false);
+    setIsOngoingOpen(false);
+    setIsQuickDockExpanded(true);
+    showMessage("狩猎认证已提交，当前状态为认证中。", { type: "success" });
+    navigate(getRouteForTab(activeTab), { replace: true });
+  }
+
+  function handleLoginSuccess(session: LoginResponse) {
+    const storedProfileDraft = getStoredProfileDraft();
+
+    setUserSession(session);
+    setActiveTab(getDefaultPrimaryTab(session.role));
+    setPageStack([]);
+    setIsOngoingOpen(false);
+    setIsMineOpen(false);
+    setIsQuickDockExpanded(true);
+    setIsProfileCompletionOpen(false);
+    setSavedProfileDraft(storedProfileDraft);
+    setProfileDraft(storedProfileDraft);
     showMessage(session.profileCompletionRequired ? "登录成功，可稍后进入设置补充资料。" : "登录成功。", {
       type: "success"
     });
@@ -74,13 +153,12 @@ export function App() {
   }
 
   function handleLogout() {
-    clearStoredClientAuthSession();
-    setAuthSession(null);
-    setRole("student");
+    clearUser();
     setActiveTab(getDefaultPrimaryTab("student"));
     setPageStack([]);
     setIsOngoingOpen(false);
     setIsMineOpen(false);
+    setIsQuickDockExpanded(true);
     setIsProfileCompletionOpen(false);
     hideMessage();
     setCheckout(null);
@@ -92,16 +170,20 @@ export function App() {
     setPageStack([]);
     setIsOngoingOpen(false);
     setIsMineOpen(false);
+    setIsQuickDockExpanded(true);
     setIsProfileCompletionOpen(false);
     navigate(getRouteForTab(tab));
   }
 
   function handleNavigate(page: PageSurface) {
     if (page === "settings" || page === "mine") {
-      navigate(page === "settings" ? "/settings" : "/mine");
+      navigate(page === "settings" ? "/settings" : "/mine", {
+        state: page === "settings" && location.pathname === "/mine" ? { from: "mine" } : undefined
+      });
       setPageStack([]);
       setIsMineOpen(false);
       setIsOngoingOpen(false);
+      setIsQuickDockExpanded(true);
       setIsProfileCompletionOpen(false);
       return;
     }
@@ -109,18 +191,20 @@ export function App() {
     setPageStack((stack) => [...stack, page]);
     setIsMineOpen(false);
     setIsOngoingOpen(false);
+    setIsQuickDockExpanded(true);
     setIsProfileCompletionOpen(false);
   }
 
   function handleBack() {
     setPageStack((stack) => stack.slice(0, -1));
     setIsMineOpen(false);
+    setIsQuickDockExpanded(true);
     setIsProfileCompletionOpen(false);
   }
 
   // Checkout is guarded here because profile completion is a cross-module flow.
   function handleOpenCheckout(product: ProductSummary) {
-    const featuredRequirement = getProfileRequirement(role, "featured", profileDraft);
+    const featuredRequirement = getProfileRequirement(role, "featured", savedProfileDraft);
 
     if (featuredRequirement) {
       showMessage(`请先补充${featuredRequirement.missingFields.map((field) => field.label).join("、")}`, {
@@ -146,7 +230,14 @@ export function App() {
 
   function handleSaveProfileDraft() {
     try {
-      setStoredProfileDraft(profileDraft);
+      const nextProfileDraft = {
+        ...savedProfileDraft,
+        ...getFilledProfileDraft(profileDraft)
+      };
+
+      setSavedProfileDraft(nextProfileDraft);
+      setProfileDraft(nextProfileDraft);
+      setUserProfileDraft(nextProfileDraft);
       setIsProfileCompletionOpen(false);
       showMessage("资料已保存，当前模块可以继续操作。", { type: "success" });
     } catch {
@@ -155,14 +246,16 @@ export function App() {
   }
 
   function handleOpenProfileCompletion() {
+    setProfileDraft(savedProfileDraft);
     setIsMineOpen(false);
     setIsOngoingOpen(false);
+    setIsQuickDockExpanded(true);
     setIsProfileCompletionOpen(true);
   }
 
   // Delegation owns the online toggle; App only answers whether the user may go online.
   function handleRequestHuntingOnline() {
-    const huntingRequirement = getProfileRequirement(role, "hunting", profileDraft);
+    const huntingRequirement = getProfileRequirement(role, "hunting", savedProfileDraft);
 
     if (huntingRequirement) {
       showMessage(`请先补充${huntingRequirement.missingFields.map((field) => field.label).join("、")}`, {
@@ -206,12 +299,22 @@ export function App() {
     );
   }
 
-  const profileName = homeData?.profile.name ?? roleLabels[role];
-  const accountStatus = homeData ? accountStatusLabels[homeData.profile.accountStatus] : "正常";
-  const creditScore = homeData?.profile.creditScore ?? 0;
   const pageMeta = activePage ? getPageMeta(activePage, role) : null;
   const isSettingsRoute = location.pathname === "/settings";
   const isMineRoute = location.pathname === "/mine";
+  const settingsRouteState = location.state as { from?: string } | null;
+  const settingsBackRoute = settingsRouteState?.from === "mine" ? "/mine" : getRouteForTab(activeTab);
+
+  useEffect(() => {
+    if (isAuthenticated && homeData?.profile) {
+      syncUserProfile(homeData.profile);
+    }
+  }, [homeData?.profile, isAuthenticated, syncUserProfile]);
+
+  useEffect(() => {
+    setSavedProfileDraft(user.profileDraft);
+    setProfileDraft(user.profileDraft);
+  }, [user.profileDraft]);
 
   // Browser routes drive the active module; activeTab mirrors only primary module routes.
   useEffect(() => {
@@ -233,14 +336,24 @@ export function App() {
       setPageStack([]);
       setIsMineOpen(false);
       setIsOngoingOpen(false);
+      setIsQuickDockExpanded(true);
       setIsProfileCompletionOpen(false);
     }
   }, [activeTab, isAuthenticated, location.pathname, navigate, role]);
 
+  useEffect(
+    () => () => {
+      if (avatarClickTimer.current) {
+        clearTimeout(avatarClickTimer.current);
+      }
+    },
+    []
+  );
+
   if (!isAuthenticated) {
     return (
       <Routes>
-        <Route path="/login" element={<Login initialRole={role} onLoginSuccess={handleLoginSuccess} />} />
+        <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
         <Route path="*" element={<Navigate replace to="/login" />} />
       </Routes>
     );
@@ -303,25 +416,29 @@ export function App() {
             <Wallet walletRecords={workspaceData.walletRecords} walletSummary={workspaceData.walletSummary} />
           ) : activePage === "orders" ? (
             <Orders orders={roleOrders} />
+          ) : activePage === "tutorCertification" ? (
+            <TutorCertification onBack={handleBack} onSubmitted={handleTutorCertificationSubmitted} />
+          ) : activePage === "huntingCertification" ? (
+            <HuntingCertification onBack={handleBack} onSubmitted={handleHuntingCertificationSubmitted} />
           ) : null}
         </PageShell>
       ) : isMineRoute ? (
         <Mine
-          role={role}
           onBack={() => navigate(getRouteForTab(activeTab), { replace: true })}
           onNavigate={handleNavigate}
+          onOpenTab={handleOpenTab}
+          orders={roleOrders}
+          walletSummary={workspaceData.walletSummary}
         />
       ) : isSettingsRoute ? (
-        <SettingsView role={role} onBack={() => navigate(getRouteForTab(activeTab), { replace: true })} />
+        <SettingsView onBack={() => navigate(settingsBackRoute, { replace: true })} />
       ) : (
         <>
-          <Header activeTab={activeTab} role={role} />
+          <Header activeTab={activeTab} />
 
           <ProfileContextCard
-            description={activeDescription}
             onOpenCompletion={handleOpenProfileCompletion}
             requirement={profileRequirement}
-            role={role}
           />
 
           <Routes>
@@ -367,41 +484,54 @@ export function App() {
 
           {isMineOpen ? (
             <MinePopover
-              accountStatus={accountStatus}
-              creditScore={creditScore}
               onClose={() => setIsMineOpen(false)}
               onLogout={handleLogout}
               onNavigate={handleNavigate}
               onOpenTab={handleOpenTab}
-              profileName={profileName}
-              role={role}
               walletSummary={workspaceData.walletSummary}
             />
           ) : null}
 
-          {roleOrders.length > 0 ? (
+          <div
+            className={`quick-action-dock ${isQuickDockExpanded ? "expanded" : "collapsed"}`}
+            aria-label="我的快捷操作"
+          >
             <button
-              className={`order-shortcut grid h-[46px] w-[46px] place-items-center font-extrabold text-white ${hasPaymentRisk ? "danger" : ""}`}
+              className={`quick-action-button quick-action-order order-shortcut grid h-[46px] w-[46px] place-items-center font-extrabold text-white ${hasPaymentRisk ? "danger" : ""}`}
               onClick={() => {
                 setIsOngoingOpen(true);
                 setIsMineOpen(false);
               }}
               type="button"
+              aria-label="查看进行中事项"
             >
               <PackageCheck size={18} />
-              {roleOrders.length}
+              <span className="quick-action-badge">{roleOrders.length}</span>
             </button>
-          ) : null}
+
+            {role === "student" ? (
+              <button
+                className="quick-action-button quick-action-hunting hunting-shortcut grid h-[46px] w-[46px] place-items-center font-extrabold text-white"
+                onClick={handleOpenHuntingShortcut}
+                type="button"
+                aria-label="进入狩猎快捷入口"
+              >
+                <Crosshair size={18} />
+              </button>
+            ) : null}
+          </div>
 
           <button
             className="floating-avatar grid h-[54px] w-[54px] place-items-center text-[#17212b]"
-            onClick={() => setIsMineOpen((value) => !value)}
+            onClick={handleAvatarClick}
             type="button"
+            aria-expanded={isQuickDockExpanded}
+            aria-label="我的"
           >
             <UserRound size={22} />
           </button>
 
-          <BottomTabs role={role} activeTab={activeTab} onChange={handleOpenTab} />
+          <BottomTabs activeTab={activeTab} onChange={handleOpenTab} />
         </>
       )}
 

@@ -6,7 +6,9 @@
 // biome-ignore lint: disable
 export {}
 declare global {
+  const AccountSummaryCard: typeof import('../components/SummaryCards/index').AccountSummaryCard
   const Activity: typeof import('react').Activity
+  const AddressInfoForm: typeof import('../components/AddressInfoForm/index').AddressInfoForm
   const AlertCircle: typeof import('lucide-react').AlertCircle
   const App: typeof import('@h5/App').App
   const ArrowLeft: typeof import('lucide-react').ArrowLeft
@@ -28,6 +30,8 @@ declare global {
   const Header: typeof import('../components/AppShell/index').Header
   const Heart: typeof import('lucide-react').Heart
   const Home: typeof import('lucide-react').Home
+  const HuntingCertification: typeof import('../pages/HuntingCertification/index').HuntingCertification
+  const HuntingCertificationCard: typeof import('../components/HuntingCertificationCard/index').HuntingCertificationCard
   const KeyRound: typeof import('lucide-react').KeyRound
   const LogOut: typeof import('lucide-react').LogOut
   const Login: typeof import('../pages/Login/index').Login
@@ -42,6 +46,7 @@ declare global {
   const MinePopover: typeof import('../components/AppShell/index').MinePopover
   const Navigate: typeof import('react-router-dom').Navigate
   const OngoingOrdersDialog: typeof import('../components/WorkflowDialogs/index').OngoingOrdersDialog
+  const OrderModuleCard: typeof import('../components/OrderModuleCard/index').OrderModuleCard
   const Orders: typeof import('../pages/Orders/index').Orders
   const PackageCheck: typeof import('lucide-react').PackageCheck
   const PageShell: typeof import('../components/AppShell/index').PageShell
@@ -67,19 +72,27 @@ declare global {
   const Suspense: typeof import('react').Suspense
   const Truck: typeof import('lucide-react').Truck
   const Tutor: typeof import('../pages/Tutor/index').Tutor
+  const TutorCard: typeof import('../components/TutorCard/index').TutorCard
+  const TutorCertification: typeof import('../pages/TutorCertification/index').TutorCertification
   const UserRound: typeof import('lucide-react').UserRound
   const Wallet: typeof import('../pages/Wallet/index').Wallet
   const WalletCards: typeof import('lucide-react').WalletCards
+  const WalletSummaryCard: typeof import('../components/SummaryCards/index').WalletSummaryCard
   const WorkbenchInfoCard: typeof import('../components/PageWidgets/index').WorkbenchInfoCard
   const WorkbenchQuickEntryCard: typeof import('../components/PageWidgets/index').WorkbenchQuickEntryCard
   const XCircle: typeof import('lucide-react').XCircle
   const accountStatusLabels: typeof import('@unknown/domain').accountStatusLabels
+  const addressBookStorageKey: typeof import('../shared/clientPageModel').addressBookStorageKey
+  const addressInfoFields: typeof import('../shared/clientPageModel').addressInfoFields
+  const addressInfoTemplate: typeof import('../shared/clientPageModel').addressInfoTemplate
   const cache: typeof import('react').cache
   const cacheSignal: typeof import('react').cacheSignal
   const campusAreaOptions: typeof import('../shared/clientPageModel').campusAreaOptions
   const clearStoredClientAuthSession: typeof import('@unknown/api-client').clearStoredClientAuthSession
+  const clearStoredPendingRegistration: typeof import('../shared/clientPageModel').clearStoredPendingRegistration
   const clientPrimaryTabs: typeof import('@unknown/domain').clientPrimaryTabs
   const clientPublishPlatformLabels: typeof import('@unknown/domain').clientPublishPlatformLabels
+  const createAddressBookItem: typeof import('../shared/clientPageModel').createAddressBookItem
   const createContext: typeof import('react').createContext
   const createRef: typeof import('react').createRef
   const createRoot: typeof import('react-dom/client').createRoot
@@ -93,32 +106,47 @@ declare global {
   const getDeliveryFee: typeof import('../shared/clientPageModel').getDeliveryFee
   const getErrorMessage: typeof import('../components/MessageToast/index').getErrorMessage
   const getFilledProfileDraft: typeof import('../shared/clientPageModel').getFilledProfileDraft
+  const getHuntingCertificationCardMode: typeof import('../components/HuntingCertificationCard/model').getHuntingCertificationCardMode
+  const getHuntingCertificationDataFromDraft: typeof import('../components/HuntingCertificationCard/model').getHuntingCertificationDataFromDraft
+  const getOrderModuleCounts: typeof import('../components/OrderModuleCard/model').getOrderModuleCounts
   const getProductFilterLabel: typeof import('../shared/clientPageModel').getProductFilterLabel
   const getProfileRequirement: typeof import('../shared/clientPageModel').getProfileRequirement
   const getProfileRequirementTemplate: typeof import('../shared/clientPageModel').getProfileRequirementTemplate
   const getRoleHint: typeof import('../shared/clientPageModel').getRoleHint
   const getRouteForTab: typeof import('../shared/clientPageModel').getRouteForTab
+  const getStoredAddressBook: typeof import('../shared/clientPageModel').getStoredAddressBook
   const getStoredClientAuthSession: typeof import('@unknown/api-client').getStoredClientAuthSession
+  const getStoredPasswordCredential: typeof import('../shared/clientPageModel').getStoredPasswordCredential
   const getStoredProfileDraft: typeof import('../shared/clientPageModel').getStoredProfileDraft
   const getTabFromRoute: typeof import('../shared/clientPageModel').getTabFromRoute
   const getTabTitle: typeof import('../shared/clientPageModel').getTabTitle
+  const getTutorCardDataFromDraft: typeof import('../components/TutorCard/model').getTutorCardDataFromDraft
+  const getTutorCardMode: typeof import('../components/TutorCard/model').getTutorCardMode
+  const hasStoredPendingRegistration: typeof import('../shared/clientPageModel').hasStoredPendingRegistration
+  const huntingCertificationStatusLabels: typeof import('../components/HuntingCertificationCard/model').huntingCertificationStatusLabels
   const jobFilters: typeof import('../shared/clientPageModel').jobFilters
   const lazy: typeof import('react').lazy
   const memo: typeof import('react').memo
   const mineEntryLabels: typeof import('@unknown/domain').mineEntryLabels
   const moduleRoutePaths: typeof import('../shared/clientPageModel').moduleRoutePaths
+  const normalizeAddressBookItems: typeof import('../shared/clientPageModel').normalizeAddressBookItems
+  const passwordCredentialStorageKey: typeof import('../shared/clientPageModel').passwordCredentialStorageKey
   const paymentMethodLabels: typeof import('@unknown/domain').paymentMethodLabels
-  const phonePattern: typeof import('../shared/clientPageModel').phonePattern
+  const pendingRegistrationStorageKey: typeof import('../shared/clientPageModel').pendingRegistrationStorageKey
   const productFilters: typeof import('../shared/clientPageModel').productFilters
   const profileDraftStorageKey: typeof import('../shared/clientPageModel').profileDraftStorageKey
   const profileRequirementTemplates: typeof import('../shared/clientPageModel').profileRequirementTemplates
   const registrationProfileTemplates: typeof import('../shared/clientPageModel').registrationProfileTemplates
   const roleLabels: typeof import('@unknown/domain').roleLabels
   const roles: typeof import('../shared/clientPageModel').roles
+  const setStoredAddressBook: typeof import('../shared/clientPageModel').setStoredAddressBook
   const setStoredClientAuthSession: typeof import('@unknown/api-client').setStoredClientAuthSession
+  const setStoredPasswordCredential: typeof import('../shared/clientPageModel').setStoredPasswordCredential
+  const setStoredPendingRegistration: typeof import('../shared/clientPageModel').setStoredPendingRegistration
   const setStoredProfileDraft: typeof import('../shared/clientPageModel').setStoredProfileDraft
   const startTransition: typeof import('react').startTransition
   const tabIcons: typeof import('../shared/clientPageModel').tabIcons
+  const tutorCertificationStatusLabels: typeof import('../components/TutorCard/model').tutorCertificationStatusLabels
   const tutorSorts: typeof import('../shared/clientPageModel').tutorSorts
   const use: typeof import('react').use
   const useActionState: typeof import('react').useActionState
@@ -148,4 +176,31 @@ declare global {
   const useState: typeof import('react').useState
   const useSyncExternalStore: typeof import('react').useSyncExternalStore
   const useTransition: typeof import('react').useTransition
+}
+// for type re-export
+declare global {
+  // @ts-ignore
+  export type { HuntingCertificationCardProps } from '../components/HuntingCertificationCard/index'
+  import('../components/HuntingCertificationCard/index')
+  // @ts-ignore
+  export type { HuntingCertificationStatus, HuntingCertificationCardMode, HuntingCertificationCardData } from '../components/HuntingCertificationCard/model'
+  import('../components/HuntingCertificationCard/model')
+  // @ts-ignore
+  export type { OrderModuleCardVariant, OrderModuleCardProps } from '../components/OrderModuleCard/index'
+  import('../components/OrderModuleCard/index')
+  // @ts-ignore
+  export type { OrderModuleCounts } from '../components/OrderModuleCard/model'
+  import('../components/OrderModuleCard/model')
+  // @ts-ignore
+  export type { SummaryCardVariant, AccountSummaryCardProps, WalletSummaryCardProps } from '../components/SummaryCards/index'
+  import('../components/SummaryCards/index')
+  // @ts-ignore
+  export type { TutorCardProps } from '../components/TutorCard/index'
+  import('../components/TutorCard/index')
+  // @ts-ignore
+  export type { TutorCardMode, TutorCardData, TutorCertificationStatus } from '../components/TutorCard/model'
+  import('../components/TutorCard/model')
+  // @ts-ignore
+  export type { StoredPasswordCredential, PasswordCredentialStore, PendingRegistrationRecord, PendingRegistrationStore } from '../shared/clientPageModel'
+  import('../shared/clientPageModel')
 }

@@ -1,13 +1,26 @@
+import { useGlobalUser } from "@h5/store/global";
+import { OrderModuleCard } from "../../components/OrderModuleCard";
+import { AccountSummaryCard, WalletSummaryCard } from "../../components/SummaryCards";
+import { TutorCard } from "../../components/TutorCard";
+import { getTutorCardDataFromDraft, getTutorCardMode } from "../../components/TutorCard/model";
+
 /** Account center route for all roles; cross-page navigation is delegated back to App. */
 export function Mine({
-  role,
   onBack,
-  onNavigate
+  onNavigate,
+  onOpenTab,
+  orders,
+  walletSummary
 }: {
-  role: Role;
   onBack: () => void;
   onNavigate: (surface: PageSurface) => void;
+  onOpenTab: (tab: ClientModuleKey) => void;
+  orders: ClientOrder[];
+  walletSummary: WalletSummary;
 }) {
+  const { accountStatusText, creditScore, phone, profileDraft, profileName, role } = useGlobalUser();
+  const tutorCardData = getTutorCardDataFromDraft(profileDraft);
+  const tutorCardMode = getTutorCardMode(tutorCardData.certificationStatus, "default");
   const isStudent = role === "student";
   const isMerchant = role === "merchant";
   const tradeItems = isStudent
@@ -36,36 +49,52 @@ export function Mine({
 
       <section className="module-stack grid gap-[10px]">
         <SectionHeader countText="独立页面" eyebrow={mineEntryLabels[role]} title="账户中心" />
-        <article className="mine-account grid gap-[12px] p-[14px] pr-[54px]">
-          <button
-            className="settings-icon grid h-[34px] w-[34px] place-items-center text-[#475466]"
-            onClick={() => onNavigate("settings")}
-            type="button"
-            aria-label="设置"
-          >
-            <Settings size={20} />
-          </button>
-          <div>
-            <strong>{roleLabels[role]}账户</strong>
-            <p>
-              认证标签：{isMerchant ? "商户认证通过" : isStudent ? "学生认证通过" : "家长资料待完善"} · 信用值{" "}
-              {isStudent ? "10" : "0"}
-            </p>
-          </div>
-          <button
-            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
-            onClick={() => onNavigate("wallet")}
-            type="button"
-          >
-            <WalletCards size={15} /> 钱包详情
-          </button>
-        </article>
+        <AccountSummaryCard
+          accountStatus={accountStatusText}
+          birthday={profileDraft.birthday}
+          className="mine-account p-[14px]"
+          creditScore={creditScore}
+          followerCount={0}
+          followingCount={0}
+          nickname={profileName}
+          phone={phone}
+          roleLabel={roleLabels[role]}
+          trailingAction={
+            <button
+              className="settings-icon grid h-[34px] w-[34px] place-items-center text-[#475466]"
+              onClick={() => onNavigate("settings")}
+              type="button"
+              aria-label="设置"
+            >
+              <Settings size={20} />
+            </button>
+          }
+        />
+        <WalletSummaryCard
+          className="mine-wallet-card p-[14px]"
+          onOpen={() => onNavigate("wallet")}
+          walletSummary={walletSummary}
+        />
+        <TutorCard
+          {...tutorCardData}
+          className="mine-tutor-card p-[14px]"
+          mode={tutorCardMode}
+          onOpenCalendar={() => onOpenTab("tutor")}
+          onOpenMessages={() => onNavigate("mine")}
+          onStartCertification={() => onNavigate("tutorCertification")}
+        />
+        <OrderModuleCard
+          className="mine-order-card p-[14px]"
+          onOpen={() => onNavigate("orders")}
+          orders={orders}
+          variant="default"
+        />
         <div className="mine-grid grid gap-[10px]">
           <MineCard title="我的交易" items={tradeItems} />
           <MineCard title="我的记录" items={isMerchant ? ["我的关注"] : ["我的收藏", "我的关注", "浏览历史"]} />
           <MineCard
             title="设置绑定"
-            items={["账户信息", settingBinding, "收货地址", "平台协议", "版本&更新", "建议"]}
+            items={["账户信息", settingBinding, "收货地址", "平台协议", "版本&更新"]}
           />
         </div>
         <article className="flow-card p-[14px]">

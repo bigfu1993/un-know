@@ -8,7 +8,8 @@ import {
   PurchaseRequest,
   PurchaseResponse,
   RegisterRequest,
-  Role
+  Role,
+  SelectRoleRequest
 } from "@unknown/domain";
 
 type ApiEnvelope<T> = {
@@ -182,6 +183,16 @@ export async function loginClient(payload: LoginRequest): Promise<LoginResponse>
 export async function registerClient(payload: RegisterRequest): Promise<LoginResponse> {
   return requestJson<LoginResponse>("/api/client/auth/register", {
     method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function selectClientRole(payload: SelectRoleRequest, accessToken: string): Promise<LoginResponse> {
+  return requestJson<LoginResponse>("/api/client/auth/select-role", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`
+    },
     body: JSON.stringify(payload)
   });
 }
