@@ -41,6 +41,24 @@ function getDisplayValue(value: string | number | undefined) {
   return normalizedValue || "未填写";
 }
 
+/** 将钱包金额字符串转换为可计算数值。 */
+function parseWalletAmount(value: string | number | undefined) {
+  const normalizedValue = String(value ?? "");
+  const numericValue = Number(normalizedValue.replace(/[^\d.]/g, ""));
+
+  return Number.isFinite(numericValue) ? numericValue : 0;
+}
+
+/** 计算钱包卡片头展示的总金额。 */
+function getWalletTotalAmount(walletSummary: WalletSummary) {
+  const totalAmount =
+    parseWalletAmount(walletSummary.withdrawable) +
+    parseWalletAmount(walletSummary.observation) +
+    parseWalletAmount(walletSummary.deposit);
+
+  return `¥${totalAmount.toFixed(2)}`;
+}
+
 /** Renders a compact metric grid for reusable summary cards. */
 function SummaryFieldGrid({ fields }: { fields: SummaryCardField[] }) {
   return (
@@ -111,10 +129,8 @@ export function WalletSummaryCard({
   walletSummary
 }: WalletSummaryCardProps) {
   const simpleFields: SummaryCardField[] = [
-    { label: "钱包状态", value: status },
-    { label: "余额", value: walletSummary.withdrawable },
-    { label: "观察期", value: walletSummary.observation },
-    { label: "充值", value: rechargeText }
+    { label: "充值", value: rechargeText },
+    { label: "余额", value: walletSummary.withdrawable }
   ];
   const defaultFields: SummaryCardField[] = [
     ...simpleFields,
@@ -130,8 +146,8 @@ export function WalletSummaryCard({
           <WalletCards size={21} />
         </span>
         <div className="summary-card-title min-w-0 flex-1">
-          <strong>{getDisplayValue(walletSummary.withdrawable)}</strong>
-          <p>{status} · 观察期 {getDisplayValue(walletSummary.observation)}</p>
+          <strong>{getWalletTotalAmount(walletSummary)}</strong>
+          <p>{status}</p>
         </div>
         {onOpen ? <ChevronRight className="summary-card-chevron shrink-0" size={17} /> : null}
       </div>

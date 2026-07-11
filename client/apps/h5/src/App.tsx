@@ -1,6 +1,8 @@
 ﻿import { useGlobalStore, useGlobalUser } from "@h5/store/global";
+import { TutorCalendarDialog, type TutorCalendarTask } from "./components/TutorCalendar";
 import { HuntingCertification } from "./pages/HuntingCertification";
 import { TutorCertification } from "./pages/TutorCertification";
+import { formatTutorSubjects, parseTutorSubjects, tutorSubjectOptions } from "./shared/tutorModel";
 
 /**
  * Page metadata for stack-based secondary surfaces.
@@ -44,6 +46,8 @@ export function App() {
   const [isOngoingOpen, setIsOngoingOpen] = useState(false);
   const [isMineOpen, setIsMineOpen] = useState(false);
   const [isQuickDockExpanded, setIsQuickDockExpanded] = useState(true);
+  const [isTutorCalendarOpen, setIsTutorCalendarOpen] = useState(false);
+  const [isTutorSubjectEditorOpen, setIsTutorSubjectEditorOpen] = useState(false);
   const avatarClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const avatarLastClickAt = useRef(0);
   const { hideMessage, showMessage, toast } = useMessageToast();
@@ -70,6 +74,7 @@ export function App() {
   const activePage = pageStack.length > 0 ? pageStack[pageStack.length - 1] : null;
   const dataError = homeError ?? workspaceError;
   const isInitialDataLoading = isHomeLoading || isWorkspaceLoading;
+  const tutorCalendarTasks = useMemo(() => getTutorCalendarTasks(user.profileDraft), [user.profileDraft]);
 
   function clearAvatarClickTimer() {
     if (!avatarClickTimer.current) {
@@ -78,6 +83,12 @@ export function App() {
 
     clearTimeout(avatarClickTimer.current);
     avatarClickTimer.current = null;
+  }
+
+  /** 关闭家教相关全局弹窗，避免路由切换后残留。 */
+  function closeTutorDialogs() {
+    setIsTutorCalendarOpen(false);
+    setIsTutorSubjectEditorOpen(false);
   }
 
   function handleAvatarClick() {
@@ -110,6 +121,7 @@ export function App() {
     setIsOngoingOpen(false);
     setIsMineOpen(false);
     setIsProfileCompletionOpen(false);
+    closeTutorDialogs();
     navigate(getRouteForTab("hunting"));
   }
 
@@ -119,6 +131,7 @@ export function App() {
     setIsMineOpen(false);
     setIsOngoingOpen(false);
     setIsQuickDockExpanded(true);
+    closeTutorDialogs();
     showMessage("家教认证已提交，当前状态为认证中。", { type: "success" });
     navigate(getRouteForTab(activeTab), { replace: true });
   }
@@ -129,6 +142,7 @@ export function App() {
     setIsMineOpen(false);
     setIsOngoingOpen(false);
     setIsQuickDockExpanded(true);
+    closeTutorDialogs();
     showMessage("狩猎认证已提交，当前状态为认证中。", { type: "success" });
     navigate(getRouteForTab(activeTab), { replace: true });
   }
@@ -143,6 +157,7 @@ export function App() {
     setIsMineOpen(false);
     setIsQuickDockExpanded(true);
     setIsProfileCompletionOpen(false);
+    closeTutorDialogs();
     setSavedProfileDraft(storedProfileDraft);
     setProfileDraft(storedProfileDraft);
     showMessage(session.profileCompletionRequired ? "登录成功，可稍后进入设置补充资料。" : "登录成功。", {
@@ -160,6 +175,7 @@ export function App() {
     setIsMineOpen(false);
     setIsQuickDockExpanded(true);
     setIsProfileCompletionOpen(false);
+    closeTutorDialogs();
     hideMessage();
     setCheckout(null);
     navigate("/login", { replace: true });
@@ -172,6 +188,7 @@ export function App() {
     setIsMineOpen(false);
     setIsQuickDockExpanded(true);
     setIsProfileCompletionOpen(false);
+    closeTutorDialogs();
     navigate(getRouteForTab(tab));
   }
 
@@ -185,6 +202,7 @@ export function App() {
       setIsOngoingOpen(false);
       setIsQuickDockExpanded(true);
       setIsProfileCompletionOpen(false);
+      closeTutorDialogs();
       return;
     }
 
@@ -193,6 +211,7 @@ export function App() {
     setIsOngoingOpen(false);
     setIsQuickDockExpanded(true);
     setIsProfileCompletionOpen(false);
+    closeTutorDialogs();
   }
 
   function handleBack() {
@@ -200,6 +219,7 @@ export function App() {
     setIsMineOpen(false);
     setIsQuickDockExpanded(true);
     setIsProfileCompletionOpen(false);
+    closeTutorDialogs();
   }
 
   // Checkout is guarded here because profile completion is a cross-module flow.
@@ -251,6 +271,39 @@ export function App() {
     setIsOngoingOpen(false);
     setIsQuickDockExpanded(true);
     setIsProfileCompletionOpen(true);
+    closeTutorDialogs();
+  }
+
+  /** 打开家教学科编辑弹窗，供卡片学科模块复用。 */
+  function handleOpenTutorSubjectEditor() {
+    setIsMineOpen(false);
+    setIsOngoingOpen(false);
+    setIsQuickDockExpanded(true);
+    setIsTutorCalendarOpen(false);
+    setIsTutorSubjectEditorOpen(true);
+  }
+
+  /** 保存家教学科并同步全局用户资料草稿。 */
+  function handleSaveTutorSubjects(subjects: string[]) {
+    const nextProfileDraft = {
+      ...user.profileDraft,
+      tutorSubject: formatTutorSubjects(subjects)
+    };
+
+    setUserProfileDraft(nextProfileDraft);
+    setSavedProfileDraft(nextProfileDraft);
+    setProfileDraft(nextProfileDraft);
+    setIsTutorSubjectEditorOpen(false);
+    showMessage("家教学科已更新。", { type: "success" });
+  }
+
+  /** 打开课程日历弹窗，保留家教卡片原课程日历入口。 */
+  function handleOpenTutorCalendar() {
+    setIsMineOpen(false);
+    setIsOngoingOpen(false);
+    setIsQuickDockExpanded(true);
+    setIsTutorSubjectEditorOpen(false);
+    setIsTutorCalendarOpen(true);
   }
 
   // Delegation owns the online toggle; App only answers whether the user may go online.
@@ -425,8 +478,9 @@ export function App() {
       ) : isMineRoute ? (
         <Mine
           onBack={() => navigate(getRouteForTab(activeTab), { replace: true })}
+          onEditTutorSubject={handleOpenTutorSubjectEditor}
           onNavigate={handleNavigate}
-          onOpenTab={handleOpenTab}
+          onOpenTutorCalendar={handleOpenTutorCalendar}
           orders={roleOrders}
           walletSummary={workspaceData.walletSummary}
         />
@@ -485,8 +539,10 @@ export function App() {
           {isMineOpen ? (
             <MinePopover
               onClose={() => setIsMineOpen(false)}
+              onEditTutorSubject={handleOpenTutorSubjectEditor}
               onLogout={handleLogout}
               onNavigate={handleNavigate}
+              onOpenTutorCalendar={handleOpenTutorCalendar}
               onOpenTab={handleOpenTab}
               walletSummary={workspaceData.walletSummary}
             />
@@ -567,6 +623,145 @@ export function App() {
           template={profileCompletionTemplate}
         />
       ) : null}
+
+      {isTutorSubjectEditorOpen ? (
+        <TutorSubjectDialog
+          initialSubject={user.profileDraft.tutorSubject}
+          onClose={() => setIsTutorSubjectEditorOpen(false)}
+          onSave={handleSaveTutorSubjects}
+        />
+      ) : null}
+
+      {isTutorCalendarOpen ? (
+        <TutorCalendarDialog
+          initialDate={getTutorDateKey(new Date())}
+          onClose={() => setIsTutorCalendarOpen(false)}
+          tasks={tutorCalendarTasks}
+        />
+      ) : null}
     </main>
+  );
+}
+
+/** 获取日历使用的日期字符串。 */
+function getTutorDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+/** 根据当前家教学科生成课程日历展示任务，后续可替换为后端课程接口。 */
+function getTutorCalendarTasks(profileDraft: ProfileDraftState): TutorCalendarTask[] {
+  const today = new Date();
+  const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  const thirdDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 3);
+  const subject = parseTutorSubjects(profileDraft.tutorSubject)[0] ?? "数学";
+
+  return [
+    {
+      date: getTutorDateKey(today),
+      duration: "2小时",
+      id: "today-am",
+      location: "常用区域附近",
+      period: "am",
+      subject,
+      time: "09:00-11:00",
+      title: "一对一家教"
+    },
+    {
+      date: getTutorDateKey(tomorrow),
+      duration: "1.5小时",
+      id: "tomorrow-pm",
+      location: "学生家中",
+      period: "pm",
+      subject,
+      time: "15:00-16:30",
+      title: "课后辅导"
+    },
+    {
+      date: getTutorDateKey(thirdDay),
+      duration: "2小时",
+      id: "third-day-pm",
+      location: "线上课程",
+      period: "pm",
+      subject,
+      time: "19:00-21:00",
+      title: "阶段复习"
+    }
+  ];
+}
+
+/** 家教学科编辑弹窗。 */
+function TutorSubjectDialog({
+  initialSubject,
+  onClose,
+  onSave
+}: {
+  initialSubject?: string;
+  onClose: () => void;
+  onSave: (subjects: string[]) => void;
+}) {
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>(() => parseTutorSubjects(initialSubject));
+  const isSaveDisabled = selectedSubjects.length === 0;
+
+  /** 切换学科标签选中状态。 */
+  function handleToggleSubject(subject: string) {
+    setSelectedSubjects((currentSubjects) =>
+      currentSubjects.includes(subject)
+        ? currentSubjects.filter((currentSubject) => currentSubject !== subject)
+        : [...currentSubjects, subject]
+    );
+  }
+
+  return (
+    <section className="checkout-sheet" aria-label="编辑家教学科">
+      <div className="sheet-backdrop" onClick={onClose} />
+      <div className="sheet-panel tutor-subject-sheet mx-auto grid max-h-[86vh] max-w-[540px] gap-[14px] overflow-auto px-[14px] pb-[calc(18px+env(safe-area-inset-bottom))] pt-[16px]">
+        <div className="card-title flex items-center justify-between gap-[10px]">
+          <GraduationCap size={18} />
+          <div>
+            <strong>编辑家教学科</strong>
+            <span>学科会同步到家教卡片展示。</span>
+          </div>
+          <button className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button" aria-label="关闭">
+            <XCircle size={20} />
+          </button>
+        </div>
+
+        <div className="tutor-subject-tags flex flex-wrap gap-[8px]" aria-label="选择可授课学科">
+          {tutorSubjectOptions.map((subject) => (
+            <button
+              className={selectedSubjects.includes(subject) ? "active" : ""}
+              key={subject}
+              onClick={() => handleToggleSubject(subject)}
+              type="button"
+            >
+              {subject}
+            </button>
+          ))}
+        </div>
+
+        <div className="sheet-actions grid gap-[8px]">
+          <button
+            className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+            onClick={onClose}
+            type="button"
+          >
+            取消
+          </button>
+          <button
+            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+            disabled={isSaveDisabled}
+            onClick={() => onSave(selectedSubjects)}
+            type="button"
+          >
+            <CheckCircle2 size={16} />
+            保存学科
+          </button>
+        </div>
+      </div>
+    </section>
   );
 }

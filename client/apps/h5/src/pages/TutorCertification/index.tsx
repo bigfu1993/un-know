@@ -1,5 +1,6 @@
 import { useGlobalStore, useGlobalUser } from "@h5/store/global";
 import { getFilledProfileDraft } from "../../shared/clientPageModel";
+import { parseTutorSubjects, tutorSubjectOptions } from "../../shared/tutorModel";
 import { normalizeByKey, validateByKey } from "../../tools/validation";
 
 /** 家教认证字段配置。 */
@@ -13,9 +14,6 @@ interface TutorCertificationField {
 
 /** 家教认证表单草稿。 */
 type TutorCertificationDraft = Record<string, string>;
-
-/** 家教认证可多选学科标签。 */
-const tutorSubjectOptions = ["语文", "数学", "英语", "物理", "化学", "生物", "历史", "地理", "政治", "编程"];
 
 /** 家教认证必填与选填字段，后续接后端接口时可保持同一字段口径。 */
 const tutorCertificationFields: TutorCertificationField[] = [
@@ -47,7 +45,7 @@ export function TutorCertification({ onBack, onSubmitted }: { onBack: () => void
   const { profileDraft } = useGlobalUser();
   const setUserProfileDraft = useGlobalStore((state) => state.setUserProfileDraft);
   const [draft, setDraft] = useState<TutorCertificationDraft>(() => getInitialTutorCertificationDraft(profileDraft));
-  const selectedSubjects = draft.tutorSubject ? draft.tutorSubject.split("、").filter(Boolean) : [];
+  const selectedSubjects = parseTutorSubjects(draft.tutorSubject);
   const requiredFieldResults = tutorCertificationFields
     .filter((field) => field.required)
     .map((field) => validateByKey(field.key, draft[field.key] ?? "", { label: field.label, required: true }));

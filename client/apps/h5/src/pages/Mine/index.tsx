@@ -7,14 +7,16 @@ import { getTutorCardDataFromDraft, getTutorCardMode } from "../../components/Tu
 /** Account center route for all roles; cross-page navigation is delegated back to App. */
 export function Mine({
   onBack,
+  onEditTutorSubject,
   onNavigate,
-  onOpenTab,
+  onOpenTutorCalendar,
   orders,
   walletSummary
 }: {
   onBack: () => void;
+  onEditTutorSubject: () => void;
   onNavigate: (surface: PageSurface) => void;
-  onOpenTab: (tab: ClientModuleKey) => void;
+  onOpenTutorCalendar: () => void;
   orders: ClientOrder[];
   walletSummary: WalletSummary;
 }) {
@@ -79,7 +81,8 @@ export function Mine({
           {...tutorCardData}
           className="mine-tutor-card p-[14px]"
           mode={tutorCardMode}
-          onOpenCalendar={() => onOpenTab("tutor")}
+          onEditSubject={onEditTutorSubject}
+          onOpenCalendar={onOpenTutorCalendar}
           onOpenMessages={() => onNavigate("mine")}
           onStartCertification={() => onNavigate("tutorCertification")}
         />
@@ -97,23 +100,6 @@ export function Mine({
             items={["账户信息", settingBinding, "收货地址", "平台协议", "版本&更新"]}
           />
         </div>
-        <article className="flow-card p-[14px]">
-          <div className="card-title flex items-center justify-between gap-[10px]">
-            <CalendarClock size={18} />
-            <strong>进行中的列表卡片</strong>
-          </div>
-          <div className="status-flow mt-[10px] grid gap-[8px] text-center">
-            {(isStudent
-              ? ["配送中的商品", "发布委托", "执行狩猎", "兼职中", "家教服务中"]
-              : isMerchant
-                ? ["配送中的卡片", "招募中的兼职卡片"]
-                : ["配送中的卡片", "招募中的家教卡片"]
-            ).map((item) => (
-              <span key={item}>{item}</span>
-            ))}
-          </div>
-          <p>按待处理、即将超时、最近更新的优先级动态排序。</p>
-        </article>
       </section>
     </section>
   );

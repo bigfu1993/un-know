@@ -1,5 +1,6 @@
 import { useGlobalStore, useGlobalUser } from "@h5/store/global";
 import { AddressInfoForm } from "../../components/AddressInfoForm";
+import { tutorCertificationStatusLabels, type TutorCertificationStatus } from "../../components/TutorCard/model";
 import {
   campusAreaOptions,
   createAddressBookItem,
@@ -8,6 +9,7 @@ import {
   registrationProfileTemplates,
   setStoredAddressBook
 } from "../../shared/clientPageModel";
+import { formatTutorSubjects, parseTutorSubjects, tutorSubjectOptions } from "../../shared/tutorModel";
 import { localAuthCode, localPasswordMinLength, saveLocalPasswordCredential } from "../../tools/localAuth";
 import { normalizeByKey, validateByKey } from "../../tools/validation";
 
@@ -27,6 +29,20 @@ interface PasswordResetDraft extends PhoneChangeDraft {
   passwordConfirm: string;
 }
 
+/** 家教资格申请信息只读字段，学科在弹窗中单独可编辑。 */
+const tutorQualificationInfoFields = [
+  { key: "tutorRealName", label: "姓名" },
+  { key: "tutorGender", label: "性别" },
+  { key: "tutorAge", label: "年龄" },
+  { key: "tutorNativePlace", label: "籍贯" },
+  { key: "tutorIdCard", label: "身份证" },
+  { key: "tutorSchool", label: "学校" },
+  { key: "tutorMajor", label: "专业" },
+  { key: "tutorXuexinScreenshot", label: "学信网截图" },
+  { key: "tutorGpa", label: "绩点" },
+  { key: "tutorCertificate", label: "证书" }
+];
+
 /** Settings route for nickname, phone security, address, protocol, version, and feedback entries. */
 export function SettingsView({ onBack }: { onBack: () => void }) {
   const { phone, profileDraft, profileName, role } = useGlobalUser();
@@ -43,6 +59,8 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
   const [nicknameFeedback, setNicknameFeedback] = useState("");
   const [securityDialogMode, setSecurityDialogMode] = useState<SecurityDialogMode | null>(null);
   const [securityFeedback, setSecurityFeedback] = useState("");
+  const [isTutorInfoOpen, setIsTutorInfoOpen] = useState(false);
+  const [tutorSubjectDraft, setTutorSubjectDraft] = useState<string[]>(() => parseTutorSubjects(profileDraft.tutorSubject));
   const [phoneChangeDraft, setPhoneChangeDraft] = useState<PhoneChangeDraft>({ phone: "", code: "" });
   const [passwordResetDraft, setPasswordResetDraft] = useState<PasswordResetDraft>({
     phone: "",
@@ -55,6 +73,8 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
   const completedFieldCount = addressTemplate.fields.filter((field) => currentAddressDraft[field.key]?.trim()).length;
   const addressCountText = addressItems.length > 0 ? `${addressItems.length} 个地址` : "未添加";
   const editableCurrentPhone = validateByKey("phone", phone).isValid ? phone : "";
+  const rawTutorStatus = profileDraft.tutorCertificationStatus as TutorCertificationStatus | undefined;
+  const tutorCertificationStatus = rawTutorStatus && rawTutorStatus in tutorCertificationStatusLabels ? rawTutorStatus : "pending";
 
   useEffect(() => {
     setAddressItems(getStoredAddressBook(profileDraft));
@@ -166,6 +186,34 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
     setSecurityDialogMode("password");
   }
 
+  /** 打开家教资格信息弹窗，并使用最新全局资料初始化学科草稿。 */
+  function handleOpenTutorInfo() {
+    setTutorSubjectDraft(parseTutorSubjects(profileDraft.tutorSubject));
+    setIsTutorInfoOpen(true);
+  }
+
+  /** 切换设置页家教学科标签。 */
+  function handleToggleTutorSubject(subject: string) {
+    setTutorSubjectDraft((currentSubjects) =>
+      currentSubjects.includes(subject)
+        ? currentSubjects.filter((currentSubject) => currentSubject !== subject)
+        : [...currentSubjects, subject]
+    );
+  }
+
+  /** 保存设置页家教学科，其他资格字段保持只读不变。 */
+  function handleSaveTutorSubject() {
+    if (tutorSubjectDraft.length === 0) {
+      return;
+    }
+
+    setUserProfileDraft({
+      ...profileDraft,
+      tutorSubject: formatTutorSubjects(tutorSubjectDraft)
+    });
+    setIsTutorInfoOpen(false);
+  }
+
   /** Changes the local H5 phone after the fixed verification code passes. */
   function handleSavePhoneChange() {
     const phoneValidation = validateByKey("phone", phoneChangeDraft.phone, { label: "手机号", required: true });
@@ -270,6 +318,32 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
         </div>
       </article>
 
+      {role === "student" ? (
+        <>
+          <SectionHeader
+            countText={tutorCertificationStatusLabels[tutorCertificationStatus]}
+            eyebrow="资格申请信息"
+            title="家教卡片"
+          />
+          <article className="flow-card settings-tutor-card p-[14px] compact">
+            <div className="card-title flex items-center justify-between gap-[10px] min-w-0">
+              <GraduationCap size={18} />
+              <div>
+                <strong>家教卡片更多</strong>
+                <span>查看资格申请信息，学科可在审批后继续补充。</span>
+              </div>
+              <button
+                className="ghost-button inline-flex min-h-[34px] shrink-0 items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+                onClick={handleOpenTutorInfo}
+                type="button"
+              >
+                查看
+              </button>
+            </div>
+          </article>
+        </>
+      ) : null}
+
       <SectionHeader
         countText={addressCountText}
         eyebrow={`${completedFieldCount}/${addressTemplate.fields.length} 已填`}
@@ -367,6 +441,16 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
           onSave={handleSavePasswordReset}
         />
       ) : null}
+      {isTutorInfoOpen ? (
+        <TutorQualificationInfoDialog
+          certificationStatus={tutorCertificationStatus}
+          onClose={() => setIsTutorInfoOpen(false)}
+          onSave={handleSaveTutorSubject}
+          onToggleSubject={handleToggleTutorSubject}
+          profileDraft={profileDraft}
+          selectedSubjects={tutorSubjectDraft}
+        />
+      ) : null}
     </section>
   );
 }
@@ -445,6 +529,92 @@ function NicknameEditorDialog({
           </button>
         </div>
       </form>
+    </section>
+  );
+}
+
+/** 家教资格申请信息弹窗，除学科外均为只读展示。 */
+function TutorQualificationInfoDialog({
+  certificationStatus,
+  onClose,
+  onSave,
+  onToggleSubject,
+  profileDraft,
+  selectedSubjects
+}: {
+  certificationStatus: TutorCertificationStatus;
+  onClose: () => void;
+  onSave: () => void;
+  onToggleSubject: (subject: string) => void;
+  profileDraft: ProfileDraftState;
+  selectedSubjects: string[];
+}) {
+  const isSaveDisabled = selectedSubjects.length === 0;
+
+  /** 获取资格申请字段的安全展示值。 */
+  function getDisplayValue(value?: string) {
+    return value?.trim() || "未填写";
+  }
+
+  return (
+    <section className="checkout-sheet" aria-label="家教资格申请信息">
+      <div className="sheet-backdrop" onClick={onClose} />
+      <div className="sheet-panel tutor-qualification-sheet mx-auto grid max-h-[86vh] max-w-[540px] gap-[14px] overflow-auto px-[14px] pb-[calc(18px+env(safe-area-inset-bottom))] pt-[16px]">
+        <div className="card-title flex items-center justify-between gap-[10px]">
+          <GraduationCap size={18} />
+          <div>
+            <strong>家教资格申请信息</strong>
+            <span>当前状态：{tutorCertificationStatusLabels[certificationStatus]}</span>
+          </div>
+          <button className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button" aria-label="关闭">
+            <XCircle size={20} />
+          </button>
+        </div>
+
+        <div className="tutor-subject-section grid gap-[8px]">
+          <strong>可授课学科</strong>
+          <div className="tutor-subject-tags flex flex-wrap gap-[8px]" aria-label="编辑可授课学科">
+            {tutorSubjectOptions.map((subject) => (
+              <button
+                className={selectedSubjects.includes(subject) ? "active" : ""}
+                key={subject}
+                onClick={() => onToggleSubject(subject)}
+                type="button"
+              >
+                {subject}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="tutor-qualification-grid grid gap-[8px]">
+          {tutorQualificationInfoFields.map((field) => (
+            <span key={field.key}>
+              <em>{field.label}</em>
+              <strong>{getDisplayValue(profileDraft[field.key])}</strong>
+            </span>
+          ))}
+        </div>
+
+        <div className="sheet-actions grid gap-[8px]">
+          <button
+            className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+            onClick={onClose}
+            type="button"
+          >
+            取消
+          </button>
+          <button
+            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+            disabled={isSaveDisabled}
+            onClick={onSave}
+            type="button"
+          >
+            <CheckCircle2 size={16} />
+            保存学科
+          </button>
+        </div>
+      </div>
     </section>
   );
 }

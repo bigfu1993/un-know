@@ -386,7 +386,7 @@ body,
   position: fixed;
   right: max(14px, calc((100vw - 540px) / 2 + 14px));
   bottom: calc(140px + env(safe-area-inset-bottom));
-  z-index: 30;
+  z-index: 36;
 }
 
 .popover-wallet-card > svg {
@@ -1302,16 +1302,29 @@ body,
   grid-template-columns: minmax(0, 1fr);
 }
 
-.tutor-card-meta span {
+.tutor-card-meta span,
+.tutor-card-meta .tutor-subject-edit {
   display: grid;
   min-width: 0;
   gap: 4px;
   padding: 9px;
+  border: 0;
   border-radius: 8px;
+  appearance: none;
   background: #f3f6f9;
+  text-align: left;
 }
 
-.tutor-card-meta em {
+.tutor-card-meta .tutor-subject-edit {
+  cursor: pointer;
+}
+
+.tutor-card-meta .tutor-subject-edit:disabled {
+  cursor: default;
+}
+
+.tutor-card-meta em,
+.tutor-card-meta .tutor-subject-edit em {
   overflow: hidden;
   color: #657181;
   font-size: 12px;
@@ -1320,7 +1333,8 @@ body,
   white-space: nowrap;
 }
 
-.tutor-card-meta strong {
+.tutor-card-meta strong,
+.tutor-card-meta .tutor-subject-edit strong {
   overflow-wrap: anywhere;
   color: #17212b;
   font-size: 13px;
@@ -1670,6 +1684,186 @@ body,
 .tutor-subject-tags button.active {
   background: #dceef3;
   color: #175e75;
+}
+
+.wallet-month-selector,
+.wallet-balance-overview {
+  border: 1px solid #d9e1e8;
+  background: #fff;
+}
+
+.wallet-month-input {
+  span {
+    color: #657181;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  input {
+    min-height: 38px;
+    border: 1px solid #d9e1e8;
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: #f8fafc;
+    color: #17212b;
+    font-weight: 800;
+  }
+}
+
+.wallet-monthly-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tutor-subject-section {
+  padding: 10px;
+  border-radius: 8px;
+  background: #f8fafc;
+
+  > strong {
+    color: #17212b;
+    font-size: 14px;
+  }
+}
+
+.tutor-qualification-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  span {
+    display: grid;
+    min-width: 0;
+    gap: 4px;
+    padding: 9px;
+    border-radius: 8px;
+    background: #f3f6f9;
+  }
+
+  em {
+    overflow: hidden;
+    color: #657181;
+    font-size: 12px;
+    font-style: normal;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  strong {
+    overflow-wrap: anywhere;
+    color: #17212b;
+    font-size: 13px;
+  }
+}
+
+.tutor-calendar-toolbar {
+  strong {
+    color: #17212b;
+    font-size: 16px;
+  }
+}
+
+.tutor-calendar-weekdays,
+.tutor-calendar-grid {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.tutor-calendar-weekdays span {
+  color: #657181;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.tutor-calendar-grid {
+  gap: 5px;
+}
+
+.tutor-calendar-day {
+  position: relative;
+  aspect-ratio: 1;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #d9e1e8;
+  border-radius: 8px;
+  appearance: none;
+  background: #fff;
+  color: #17212b;
+  font-weight: 800;
+}
+
+.tutor-calendar-day::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent calc(50% - 0.5px), #d9e1e8 50%, transparent calc(50% + 0.5px));
+  pointer-events: none;
+}
+
+.tutor-calendar-day.empty {
+  border-color: transparent;
+  background: transparent;
+}
+
+.tutor-calendar-day.empty::after {
+  display: none;
+}
+
+.tutor-calendar-day.selected {
+  border-color: #175e75;
+  box-shadow: 0 0 0 2px rgba(23, 94, 117, 0.12);
+}
+
+.tutor-calendar-day.today strong {
+  background: #17212b;
+  color: #fff;
+}
+
+.tutor-calendar-day strong {
+  position: relative;
+  z-index: 2;
+  display: inline-grid;
+  min-width: 22px;
+  min-height: 22px;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.tutor-calendar-half {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: rgba(238, 133, 38, 0.72);
+}
+
+.tutor-calendar-half.am {
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+.tutor-calendar-half.pm {
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+.tutor-calendar-day.has-am .tutor-calendar-half.am,
+.tutor-calendar-day.has-pm .tutor-calendar-half.pm {
+  opacity: 1;
+}
+
+.tutor-calendar-task {
+  display: grid;
+  gap: 5px;
+  border: 1px solid #d9e1e8;
+  border-radius: 8px;
+  background: #fff;
+
+  strong {
+    color: #17212b;
+    font-size: 14px;
+  }
+
+  span {
+    color: #657181;
+    font-size: 12px;
+    line-height: 1.45;
+  }
 }
 
 .address-info-card,

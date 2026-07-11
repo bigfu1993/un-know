@@ -5,6 +5,7 @@ import { tutorCertificationStatusLabels, type TutorCardData, type TutorCardMode 
 export interface TutorCardProps extends TutorCardData {
   className?: string;
   mode: TutorCardMode;
+  onEditSubject?: () => void;
   onOpenCalendar?: () => void;
   onOpenMessages?: () => void;
   onStartCertification?: () => void;
@@ -19,6 +20,7 @@ export function TutorCard({
   level,
   messageCount,
   mode,
+  onEditSubject,
   onOpenCalendar,
   onOpenMessages,
   onStartCertification,
@@ -27,6 +29,7 @@ export function TutorCard({
   const rootClassName = ["tutor-card", `tutor-card--${mode}`, className].filter(Boolean).join(" ");
   const statusText = tutorCertificationStatusLabels[certificationStatus];
   const canOpenMessages = hasChat;
+  const subjectButtonLabel = mode === "simple" ? subject : `${subject} · ${grade}`;
 
   if (mode === "entry") {
     return (
@@ -74,10 +77,10 @@ export function TutorCard({
 
       {mode === "default" ? (
         <div className="tutor-card-meta grid gap-[8px]">
-          <span>
+          <button className="tutor-subject-edit" disabled={!onEditSubject} onClick={onEditSubject} type="button">
             <em>学科/年级</em>
-            <strong>{subject} · {grade}</strong>
-          </span>
+            <strong>{subjectButtonLabel}</strong>
+          </button>
           <span>
             <em>等级</em>
             <strong>{level}</strong>
@@ -85,10 +88,10 @@ export function TutorCard({
         </div>
       ) : (
         <div className="tutor-card-meta grid gap-[8px]">
-          <span>
+          <button className="tutor-subject-edit" disabled={!onEditSubject} onClick={onEditSubject} type="button">
             <em>学科</em>
-            <strong>{subject}</strong>
-          </span>
+            <strong>{subjectButtonLabel}</strong>
+          </button>
         </div>
       )}
 

@@ -99,13 +99,17 @@ export function PageShell({
 export function MinePopover({
   walletSummary,
   onClose,
+  onEditTutorSubject,
   onLogout,
+  onOpenTutorCalendar,
   onOpenTab,
   onNavigate
 }: {
   walletSummary: WalletSummary;
   onClose: () => void;
+  onEditTutorSubject: () => void;
   onLogout: () => void;
+  onOpenTutorCalendar: () => void;
   onOpenTab: (tab: ClientModuleKey) => void;
   onNavigate: (surface: PageSurface) => void;
 }) {
@@ -180,8 +184,12 @@ export function MinePopover({
         {...tutorCardData}
         className="popover-tutor-card p-[10px]"
         mode={tutorCardMode}
+        onEditSubject={() => {
+          onEditTutorSubject();
+          onClose();
+        }}
         onOpenCalendar={() => {
-          onOpenTab("tutor");
+          onOpenTutorCalendar();
           onClose();
         }}
         onOpenMessages={() => {
