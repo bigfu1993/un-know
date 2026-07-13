@@ -21,6 +21,9 @@ public final class HuntingWorkflowStatus {
   public static final String QUOTE_REJECTED = "已拒绝";
   public static final String QUOTE_NOT_SELECTED = "未选中";
 
+  public static final String FULFILLMENT_CANCEL_REQUESTED = "取消待确认";
+  public static final String FULFILLMENT_COMPLETE_REQUESTED = "完成待确认";
+
   private HuntingWorkflowStatus() {
     throw new IllegalStateException("状态常量类不允许实例化");
   }

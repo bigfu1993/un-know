@@ -9,6 +9,7 @@ import {
   getClientHome,
   getClientWorkspace,
   getProducts,
+  handleHuntingTaskFulfillmentAction,
   loginClient,
   miniappOneTapLogin,
   publishHuntingTask,
@@ -23,6 +24,7 @@ import {
 import {
   ClientAddressRequest,
   HuntingQuoteDecisionRequest,
+  HuntingTaskFulfillmentActionRequest,
   LoginRequest,
   MiniappOneTapLoginRequest,
   PublishHuntingTaskRequest,
@@ -158,6 +160,20 @@ export function useDecideHuntingTaskQuote() {
     mutationFn: (payload: HuntingQuoteDecisionRequest & { quoteId: string; taskId: string }) => {
       const { quoteId, taskId, ...decision } = payload;
       return decideHuntingTaskQuote(taskId, quoteId, decision);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["client-workspace"] });
+    }
+  });
+}
+
+export function useHandleHuntingTaskFulfillmentAction() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: HuntingTaskFulfillmentActionRequest & { taskId: string }) => {
+      const { taskId, ...request } = payload;
+      return handleHuntingTaskFulfillmentAction(taskId, request);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["client-workspace"] });

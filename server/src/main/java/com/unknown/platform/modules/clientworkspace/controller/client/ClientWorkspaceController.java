@@ -6,6 +6,7 @@ import com.unknown.platform.modules.clientworkspace.application.ClientWorkspaceA
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.HuntingTask;
 import com.unknown.platform.modules.clientworkspace.model.HuntingQuoteDecisionRequest;
+import com.unknown.platform.modules.clientworkspace.model.HuntingTaskFulfillmentActionRequest;
 import com.unknown.platform.modules.clientworkspace.model.PublishHuntingTaskRequest;
 import com.unknown.platform.modules.clientworkspace.model.QuoteHuntingTaskRequest;
 import jakarta.validation.Valid;
@@ -90,5 +91,15 @@ public class ClientWorkspaceController {
       @RequestHeader(value = "Authorization", required = false) String authorization
   ) {
     return ApiResponse.ok(clientWorkspaceAppService.decideHuntingQuote(taskId, quoteId, request, authorization));
+  }
+
+  /** 履约阶段处理服务方取消/完成申请、发布方确认以及取消后的再次发布。 */
+  @PostMapping("/workspace/hunting-tasks/{taskId}/fulfillment-action")
+  public ApiResponse<HuntingTask> handleHuntingTaskFulfillmentAction(
+      @PathVariable String taskId,
+      @RequestBody HuntingTaskFulfillmentActionRequest request,
+      @RequestHeader(value = "Authorization", required = false) String authorization
+  ) {
+    return ApiResponse.ok(clientWorkspaceAppService.handleHuntingTaskFulfillmentAction(taskId, request, authorization));
   }
 }

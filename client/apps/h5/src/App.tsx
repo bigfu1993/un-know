@@ -4,11 +4,12 @@ import {
   useClientAddresses,
   useCreateClientAddress,
   useDecideHuntingTaskQuote,
+  useHandleHuntingTaskFulfillmentAction,
   usePublishHuntingTask,
   useQuoteHuntingTask,
   useUpdateClientAddress
 } from "@unknown/hooks";
-import type { HuntingCertificationStatus } from "@unknown/domain";
+import type { HuntingCertificationStatus, HuntingTaskFulfillmentActionRequest } from "@unknown/domain";
 import { Banknote, MapPin, RadioTower } from "lucide-react";
 import { getHuntingCertificationDataFromDraft } from "./components/HuntingCertificationCard/model";
 import { PublishInfoDialog } from "./components/PublishInfoDialog";
@@ -69,10 +70,21 @@ function isHuntingFulfillingStatus(task: HuntingTask) {
   return task.status.includes("履约中") || task.status.includes("进行中") || task.status.includes("已领取");
 }
 
+/** 判断委托是否已取消，取消后的发布方卡片可再次发布。 */
+function isHuntingCancelledStatus(task: HuntingTask) {
+  return task.status.includes("取消");
+}
+
 /** 获取进行中弹窗内委托/狩猎卡片展示状态。 */
 function getHuntingOngoingStatus(task: HuntingTask) {
   const hasPendingQuote = isHuntingQuoteStatus(task) && (Boolean(task.isQuotedByMe) || (task.quoteCount ?? 0) > 0);
 
+  if (task.fulfillmentAction) {
+    return "待确认";
+  }
+  if (isHuntingCancelledStatus(task)) {
+    return "取消";
+  }
   if (hasPendingQuote) {
     return "报价确认中";
   }
@@ -99,30 +111,76 @@ function getHuntingOngoingAmountLabel(task: HuntingTask) {
   return formatCurrency(task.fee);
 }
 
+/** 获取履约中委托的对接方展示文案。 */
+function getHuntingFulfillmentContact(task: HuntingTask) {
+  if (task.isMine) {
+    return task.acceptedUserName ? `履约方：${task.acceptedUserName}` : "履约方待确认";
+  }
+
+  return "发布方：" + (task.publisherName || "平台用户");
+}
+
+/** 判断报价是否等待发布方确认，兼容迁移前旧状态文案。 */
+function isHuntingQuoteWaitingPublisher(status?: string) {
+  return Boolean(status?.includes("待发布方确认") || status?.includes("待确认"));
+}
+
+/** 判断报价是否等待服务方确认。 */
+function isHuntingQuoteWaitingHunter(status?: string) {
+  return Boolean(status?.includes("待服务方确认"));
+}
+
+/** 获取服务方在进行中弹窗内可见的报价协商操作文案。 */
+function getHuntingQuoteActionLabel(task: HuntingTask) {
+  if (!task.isMine && task.isQuotedByMe && isHuntingQuoteWaitingHunter(task.pendingQuoteStatus)) {
+    return "协商报价";
+  }
+
+  return undefined;
+}
+
 /** 将当前账号相关的发布方委托或服务方报价/履约任务转换为进行中弹窗展示项。 */
 function getHuntingOngoingOrders(tasks: HuntingTask[], role: Role): ClientOrder[] {
   return tasks.filter((task) => {
     const isDelegationInProgress =
       Boolean(task.isMine) &&
-      (isHuntingPublishedStatus(task) || isHuntingQuoteStatus(task) || isHuntingFulfillingStatus(task));
+      (isHuntingPublishedStatus(task) ||
+        isHuntingQuoteStatus(task) ||
+        isHuntingFulfillingStatus(task) ||
+        isHuntingCancelledStatus(task));
     const isQuotedHunting = Boolean(task.isQuotedByMe) && isHuntingQuoteStatus(task);
     const isHuntingInProgress = Boolean(task.isAcceptedByMe) && isHuntingFulfillingStatus(task);
 
     return isDelegationInProgress || isQuotedHunting || isHuntingInProgress;
-  }).map((task) => ({
-    amount: task.pendingAmount ?? task.fee,
-    amountLabel: getHuntingOngoingAmountLabel(task),
-    category: task.isMine ? "delegation" : "hunting",
-    contact: task.isMine ? "我发布的委托" : isHuntingQuoteStatus(task) ? "我报价的委托" : "我履约的委托",
-    detail: `${task.mode} · ${task.latestTime} · ${task.destination ?? task.location}`,
-    id: task.id,
-    quoteAmount: task.pendingAmount,
-    quoteCount: task.isMine ? task.quoteCount : undefined,
-    quoteId: task.pendingQuoteId,
-    role,
-    status: getHuntingOngoingStatus(task),
-    title: task.title
-  }));
+  }).map((task) => {
+    const isFulfilling = isHuntingFulfillingStatus(task);
+    const isPublisher = Boolean(task.isMine);
+    const isHunter = Boolean(task.isAcceptedByMe) && !isPublisher;
+
+    return {
+      amount: task.pendingAmount ?? task.fee,
+      amountLabel: getHuntingOngoingAmountLabel(task),
+      canCall: isPublisher && isFulfilling,
+      canConfirmCancel: isPublisher && task.fulfillmentAction === "取消待确认" && !task.fulfillmentActionByMe,
+      canConfirmComplete: isPublisher && task.fulfillmentAction === "完成待确认" && !task.fulfillmentActionByMe,
+      canMessage: isFulfilling,
+      canRepublish: isPublisher && isHuntingCancelledStatus(task),
+      canRequestCancel: isHunter && isFulfilling && !task.fulfillmentAction,
+      canRequestComplete: isHunter && isFulfilling && !task.fulfillmentAction,
+      category: isPublisher ? "delegation" : "hunting",
+      contact: isPublisher ? getHuntingFulfillmentContact(task) : isHuntingQuoteStatus(task) ? "我报价的委托" : "我履约的委托",
+      detail: `${task.mode} · ${task.fulfillmentAction ?? task.latestTime} · ${task.destination ?? task.location}`,
+      id: task.id,
+      phoneNumber: isPublisher ? task.acceptedUserPhone ?? undefined : task.publisherPhone,
+      quoteAmount: task.pendingAmount,
+      quoteActionLabel: getHuntingQuoteActionLabel(task),
+      quoteCount: isPublisher ? task.quoteCount : undefined,
+      quoteId: task.pendingQuoteId,
+      role,
+      status: getHuntingOngoingStatus(task),
+      title: task.title
+    };
+  });
 }
 
 /** 获取委托任务金额展示文案，协商任务不展示 0 元。 */
@@ -168,9 +226,51 @@ function canConfirmHuntingQuote(task: HuntingTask | null, quote: HuntingQuote | 
     return false;
   }
   if (task.isMine) {
-    return quote.status.includes("待发布方确认") || quote.status.includes("待确认");
+    return isHuntingQuoteWaitingPublisher(quote.status);
   }
-  return Boolean(task.isQuotedByMe) && quote.status.includes("待服务方确认");
+  return Boolean(task.isQuotedByMe) && isHuntingQuoteWaitingHunter(quote.status);
+}
+
+/** 判断当前账号是否可以向对方发起协商报价。 */
+function canCounterHuntingQuote(task: HuntingTask | null, quote: HuntingQuote | null) {
+  if (!task || !quote || !isNegotiatingHuntingQuote(quote)) {
+    return false;
+  }
+  if (task.isMine) {
+    return isHuntingQuoteWaitingPublisher(quote.status);
+  }
+
+  return Boolean(task.isQuotedByMe) && isHuntingQuoteWaitingHunter(quote.status);
+}
+
+/** 判断输入金额是否构成一次新的协商报价。 */
+function hasValidCounterQuoteAmount(quote: HuntingQuote | null, value: string) {
+  if (!quote) {
+    return false;
+  }
+  const amount = Number(value.trim());
+
+  return Number.isFinite(amount) && amount > 0 && Math.abs(amount - quote.amount) >= 0.01;
+}
+
+/** 判断输入金额是否是无效的协商报价，避免误触发确认。 */
+function hasInvalidCounterQuoteAmount(quote: HuntingQuote | null, value: string) {
+  if (!quote || value.trim() === "") {
+    return false;
+  }
+  const amount = Number(value.trim());
+
+  return !Number.isFinite(amount) || (Math.abs(amount - quote.amount) >= 0.01 && amount <= 0);
+}
+
+/** 判断报价是否已经由发布方协商并等待服务方确认，此时发布方不能再次选择处理。 */
+function isQuoteLockedForPublisher(task: HuntingTask | null, quote: HuntingQuote) {
+  return Boolean(task?.isMine && isHuntingQuoteWaitingHunter(quote.status));
+}
+
+/** 判断报价是否存在协商价，存在时列表同时展示原始报价和当前协商价。 */
+function hasCounterQuoteAmount(quote: HuntingQuote) {
+  return typeof quote.originalAmount === "number" && Math.abs(quote.originalAmount - quote.amount) >= 0.01;
 }
 
 /** React Query 首次返回数据前使用的稳定空地址，避免 effect 因默认数组反复触发。 */
@@ -235,6 +335,7 @@ export function App() {
   const acceptHuntingTaskMutation = useAcceptHuntingTask();
   const quoteHuntingTaskMutation = useQuoteHuntingTask();
   const decideHuntingTaskQuoteMutation = useDecideHuntingTaskQuote();
+  const huntingTaskFulfillmentActionMutation = useHandleHuntingTaskFulfillmentAction();
   const createAddressMutation = useCreateClientAddress();
   const updateAddressMutation = useUpdateClientAddress();
   const addressItems = useMemo(() => clientAddressesToAddressBookItems(clientAddresses), [clientAddresses]);
@@ -788,6 +889,39 @@ export function App() {
     }
   }
 
+  /** 处理履约中委托的取消、完成确认和再次发布动作。 */
+  async function handleHuntingTaskFulfillmentAction(
+    order: ClientOrder,
+    action: HuntingTaskFulfillmentActionRequest["action"]
+  ) {
+    const actionMessages: Record<HuntingTaskFulfillmentActionRequest["action"], string> = {
+      confirm_cancel: "已确认取消委托，可选择再次发布。",
+      confirm_complete: "已确认完成委托。",
+      republish: "委托已再次发布。",
+      request_cancel: "取消委托申请已提交，等待发布方确认。",
+      request_complete: "完成委托申请已提交，等待发布方确认。"
+    };
+
+    try {
+      await huntingTaskFulfillmentActionMutation.mutateAsync({ action, taskId: order.id });
+      showMessage(actionMessages[action], { type: "success" });
+      void refetchWorkspace();
+    } catch (error) {
+      showMessage(getErrorMessage(error, "委托履约操作失败，请稍后重试。"), { type: "error" });
+      throw error;
+    }
+  }
+
+  /** 当前阶段消息按钮用于进入后续沟通能力的提示。 */
+  function handleOngoingOrderMessage(order: ClientOrder) {
+    showMessage(`${order.title} 的消息能力后续接入。`, { type: "warning" });
+  }
+
+  /** 电话按钮展示当前接口返回的脱敏联系电话。 */
+  function handleOngoingOrderCall(order: ClientOrder) {
+    showMessage(order.phoneNumber ? `联系电话：${order.phoneNumber}` : "暂无可用联系电话。", { type: "success" });
+  }
+
   function handleSubmitPurchase() {
     if (!checkout) {
       return;
@@ -938,7 +1072,17 @@ export function App() {
   const selectedOngoingQuote =
     ongoingQuoteTask?.quotes?.find((quote) => quote.id === selectedOngoingQuoteId) ?? null;
   const canConfirmSelectedOngoingQuote = canConfirmHuntingQuote(ongoingQuoteTask, selectedOngoingQuote);
-  const canNegotiateSelectedOngoingQuote = isNegotiatingHuntingQuote(selectedOngoingQuote);
+  const canCounterSelectedOngoingQuote = canCounterHuntingQuote(ongoingQuoteTask, selectedOngoingQuote);
+  const hasCounterInputAmount = hasValidCounterQuoteAmount(selectedOngoingQuote, quoteCounterAmount);
+  const hasInvalidCounterAmount = hasInvalidCounterQuoteAmount(selectedOngoingQuote, quoteCounterAmount);
+  const isCounterOngoingQuoteAction = canCounterSelectedOngoingQuote && hasCounterInputAmount;
+  const canRejectSelectedOngoingQuote = canConfirmSelectedOngoingQuote || canCounterSelectedOngoingQuote;
+  const canSubmitSelectedOngoingQuote =
+    !hasInvalidCounterAmount && (canConfirmSelectedOngoingQuote || isCounterOngoingQuoteAction);
+  const ongoingQuoteActionLabel = isCounterOngoingQuoteAction ? "协商报价" : "确认报价并开始履约";
+  const ongoingQuoteCounterPrompt = ongoingQuoteTask?.isMine
+    ? "输入协商金额后推送给报价方"
+    : "输入协商金额后推送给发布方";
   const hasPrimaryContextCard = Boolean(profileRequirement) && !activePage && !isSettingsRoute && !isMineRoute;
   const isPrimaryListShell =
     (activeTab === "featured" || activeTab === "partTime") && !activePage && !isSettingsRoute && !isMineRoute;
@@ -951,9 +1095,14 @@ export function App() {
       return;
     }
 
+    const initialQuote =
+      order.category === "hunting" && order.quoteId
+        ? task.quotes.find((quote) => quote.id === order.quoteId) ?? null
+        : null;
+
     setOngoingQuoteTaskId(task.id);
-    setSelectedOngoingQuoteId(task.quotes[0].id);
-    setQuoteCounterAmount(String(task.quotes[0].amount));
+    setSelectedOngoingQuoteId(initialQuote?.id ?? "");
+    setQuoteCounterAmount(initialQuote ? String(initialQuote.amount) : "");
   }
 
   /** 关闭进行中入口打开的报价列表弹窗。 */
@@ -963,9 +1112,18 @@ export function App() {
     setQuoteCounterAmount("");
   }
 
-  /** 确认进行中弹窗内选中的委托报价。 */
-  function handleConfirmOngoingQuote() {
+  /** 根据输入金额确认报价或发起协商报价。 */
+  function handleSubmitOngoingQuoteAction() {
     if (!ongoingQuoteTask || !selectedOngoingQuote) {
+      return;
+    }
+
+    if (isCounterOngoingQuoteAction) {
+      const amount = Number(quoteCounterAmount);
+
+      void Promise.resolve(handleCounterHuntingQuote(ongoingQuoteTask, selectedOngoingQuote, amount))
+        .then(handleCloseOngoingQuoteList)
+        .catch(() => undefined);
       return;
     }
 
@@ -981,22 +1139,6 @@ export function App() {
     }
 
     void Promise.resolve(handleRejectHuntingQuote(ongoingQuoteTask, selectedOngoingQuote))
-      .then(handleCloseOngoingQuoteList)
-      .catch(() => undefined);
-  }
-
-  /** 改价后提交给对方确认。 */
-  function handleCounterOngoingQuote() {
-    if (!ongoingQuoteTask || !selectedOngoingQuote) {
-      return;
-    }
-    const amount = Number(quoteCounterAmount);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      showMessage("请输入大于 0 的报价金额。", { type: "warning" });
-      return;
-    }
-
-    void Promise.resolve(handleCounterHuntingQuote(ongoingQuoteTask, selectedOngoingQuote, amount))
       .then(handleCloseOngoingQuoteList)
       .catch(() => undefined);
   }
@@ -1187,8 +1329,15 @@ export function App() {
       {isOngoingOpen ? (
         <OngoingOrdersDialog
           maxHeight="min(72vh, 620px)"
+          onCallOrder={handleOngoingOrderCall}
           onClose={() => setIsOngoingOpen(false)}
+          onConfirmCancel={(order) => void handleHuntingTaskFulfillmentAction(order, "confirm_cancel")}
+          onConfirmComplete={(order) => void handleHuntingTaskFulfillmentAction(order, "confirm_complete")}
+          onMessageOrder={handleOngoingOrderMessage}
           onOpenQuoteList={handleOpenOngoingQuoteList}
+          onRepublish={(order) => void handleHuntingTaskFulfillmentAction(order, "republish")}
+          onRequestCancel={(order) => void handleHuntingTaskFulfillmentAction(order, "request_cancel")}
+          onRequestComplete={(order) => void handleHuntingTaskFulfillmentAction(order, "request_complete")}
           orders={ongoingOrders}
         />
       ) : null}
@@ -1213,27 +1362,38 @@ export function App() {
               </button>
             </div>
             <div className="delegation-quote-list grid gap-[8px]">
-              {(ongoingQuoteTask.quotes ?? []).map((quote) => (
-                <button
-                  className={`delegation-quote-option grid gap-[5px] p-[10px] text-left ${
-                    selectedOngoingQuoteId === quote.id ? "active" : ""
-                  }`}
-                  key={quote.id}
-                  onClick={() => {
-                    setSelectedOngoingQuoteId(quote.id);
-                    setQuoteCounterAmount(String(quote.amount));
-                  }}
-                  type="button"
-                >
-                  <span className="flex items-center justify-between gap-[8px]">
-                    <strong>{quote.bidderName}</strong>
-                    <em>{formatCurrency(quote.amount)}</em>
-                  </span>
-                  <span>
-                    {quote.quoteTime} · {quote.status}
-                  </span>
-                </button>
-              ))}
+              {(ongoingQuoteTask.quotes ?? []).map((quote) => {
+                const isLockedQuote = isQuoteLockedForPublisher(ongoingQuoteTask, quote);
+                const hasQuoteCounterAmount = hasCounterQuoteAmount(quote);
+
+                return (
+                  <button
+                    className={`delegation-quote-option grid gap-[5px] p-[10px] text-left ${
+                      selectedOngoingQuoteId === quote.id ? "active" : ""
+                    } ${isLockedQuote ? "locked" : ""}`}
+                    disabled={isLockedQuote}
+                    key={quote.id}
+                    onClick={() => {
+                      setSelectedOngoingQuoteId(quote.id);
+                      setQuoteCounterAmount(String(quote.amount));
+                    }}
+                    type="button"
+                  >
+                    <span className="flex items-center justify-between gap-[8px]">
+                      <strong>{quote.bidderName}</strong>
+                      <span className="delegation-quote-price inline-flex items-center gap-[6px]">
+                        {hasQuoteCounterAmount ? (
+                          <del>{formatCurrency(quote.originalAmount ?? quote.amount)}</del>
+                        ) : null}
+                        <em className={hasQuoteCounterAmount ? "counter" : ""}>{formatCurrency(quote.amount)}</em>
+                      </span>
+                    </span>
+                    <span>
+                      {quote.quoteTime} · {quote.status}
+                    </span>
+                  </button>
+                );
+              })}
               {(ongoingQuoteTask.quotes ?? []).length === 0 ? (
                 <article className="empty-state p-[14px] text-center">
                   <strong>暂无报价</strong>
@@ -1242,11 +1402,11 @@ export function App() {
               ) : null}
             </div>
             <label className="delegation-quote-counter grid gap-[6px]">
-              <span>{ongoingQuoteTask.isMine ? "修改报价并推送给服务方" : "修改报价并推送给发布方"}</span>
+              <span>{ongoingQuoteCounterPrompt}</span>
               <input
                 inputMode="decimal"
                 onChange={(event) => setQuoteCounterAmount(event.target.value)}
-                placeholder="输入修改后的报价"
+                placeholder="输入协商金额"
                 type="number"
                 value={quoteCounterAmount}
               />
@@ -1254,24 +1414,16 @@ export function App() {
             <div className="delegation-quote-actions grid gap-[8px]">
               <button
                 className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
-                disabled={!canConfirmSelectedOngoingQuote}
-                onClick={handleConfirmOngoingQuote}
+                disabled={!canSubmitSelectedOngoingQuote}
+                onClick={handleSubmitOngoingQuoteAction}
                 type="button"
               >
                 <CheckCircle2 size={16} />
-                确认报价并开始履约
-              </button>
-              <button
-                className="secondary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
-                disabled={!canNegotiateSelectedOngoingQuote}
-                onClick={handleCounterOngoingQuote}
-                type="button"
-              >
-                修改后提交
+                {ongoingQuoteActionLabel}
               </button>
               <button
                 className="danger-outline-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
-                disabled={!canNegotiateSelectedOngoingQuote}
+                disabled={!canRejectSelectedOngoingQuote}
                 onClick={handleRejectOngoingQuote}
                 type="button"
               >

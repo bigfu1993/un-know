@@ -345,6 +345,7 @@ function DelegationPublishFields({
             {draft.depositAmount.trim() && !isPositiveAmount(draft.depositAmount) ? (
               <em>押金金额必须为大于 0 的数字</em>
             ) : null}
+            <em>毁约扣除押金50%。</em>
           </>
         ) : null}
       </label>

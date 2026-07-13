@@ -92,10 +92,6 @@ function getDelegationPublishTime(task: HuntingTask) {
 
 /** 获取委托金额展示文案。 */
 function getDelegationAmountText(task: HuntingTask) {
-  if (task.pendingAmount) {
-    return `报价 ${formatCurrency(task.pendingAmount)}`;
-  }
-
   return task.amountNegotiable || task.fee <= 0 ? "协商" : formatCurrency(task.fee);
 }
 

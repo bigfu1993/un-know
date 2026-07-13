@@ -175,9 +175,18 @@ export interface ClientOrder {
   category?: "delegation" | "featured" | "hunting" | "partTime";
   contact: string;
   detail: string;
+  phoneNumber?: string;
   quoteAmount?: number;
   quoteCount?: number;
+  quoteActionLabel?: string;
   quoteId?: string;
+  canCall?: boolean;
+  canMessage?: boolean;
+  canRequestCancel?: boolean;
+  canRequestComplete?: boolean;
+  canConfirmCancel?: boolean;
+  canConfirmComplete?: boolean;
+  canRepublish?: boolean;
   risk?: "payment" | "refund";
 }
 
@@ -222,6 +231,10 @@ export interface HuntingTask {
   pendingAmount?: number;
   pendingQuoteId?: string;
   pendingQuoteStatus?: string;
+  acceptedUserName?: string | null;
+  acceptedUserPhone?: string | null;
+  fulfillmentAction?: string | null;
+  fulfillmentActionByMe?: boolean;
   publisherName?: string;
   publisherPhone?: string;
   publishTime?: string;
@@ -237,6 +250,7 @@ export interface HuntingQuote {
   id: string;
   bidderName: string;
   amount: number;
+  originalAmount?: number;
   quoteTime: string;
   status: string;
   isSelected?: boolean;
@@ -265,6 +279,10 @@ export interface QuoteHuntingTaskRequest {
 export interface HuntingQuoteDecisionRequest {
   action: "confirm" | "reject" | "counter";
   amount?: number;
+}
+
+export interface HuntingTaskFulfillmentActionRequest {
+  action: "confirm_cancel" | "confirm_complete" | "republish" | "request_cancel" | "request_complete";
 }
 
 export interface TutorApplicant {

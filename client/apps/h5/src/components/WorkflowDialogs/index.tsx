@@ -22,13 +22,27 @@ function getOngoingOrderCategory(order: ClientOrder): Exclude<OngoingOrderFilter
 export function OngoingOrdersDialog({
   maxHeight = "min(72vh, 620px)",
   orders,
+  onCallOrder,
   onClose,
-  onOpenQuoteList
+  onConfirmCancel,
+  onConfirmComplete,
+  onMessageOrder,
+  onOpenQuoteList,
+  onRepublish,
+  onRequestCancel,
+  onRequestComplete
 }: {
   maxHeight?: string;
   orders: ClientOrder[];
+  onCallOrder?: (order: ClientOrder) => void;
   onClose: () => void;
+  onConfirmCancel?: (order: ClientOrder) => void;
+  onConfirmComplete?: (order: ClientOrder) => void;
+  onMessageOrder?: (order: ClientOrder) => void;
   onOpenQuoteList?: (order: ClientOrder) => void;
+  onRepublish?: (order: ClientOrder) => void;
+  onRequestCancel?: (order: ClientOrder) => void;
+  onRequestComplete?: (order: ClientOrder) => void;
 }) {
   const [activeFilter, setActiveFilter] = useState<OngoingOrderFilter>("all");
   const filteredOrders = useMemo(
@@ -97,15 +111,90 @@ export function OngoingOrdersDialog({
                   </button>
                 </div>
               ) : null}
-              {getOngoingOrderCategory(order) === "hunting" && order.quoteId ? (
+              {getOngoingOrderCategory(order) === "hunting" && order.quoteId && order.quoteActionLabel ? (
                 <div className="ongoing-card-actions mt-[10px] flex flex-wrap gap-[8px]">
                   <button
                     className="primary-button delegation-quote-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
                     onClick={() => onOpenQuoteList?.(order)}
                     type="button"
                   >
-                    处理报价
+                    {order.quoteActionLabel}
                   </button>
+                </div>
+              ) : null}
+              {order.canCall ||
+              order.canMessage ||
+              order.canRequestCancel ||
+              order.canRequestComplete ||
+              order.canConfirmCancel ||
+              order.canConfirmComplete ||
+              order.canRepublish ? (
+                <div className="ongoing-card-actions mt-[10px] flex flex-wrap gap-[8px]">
+                  {order.canCall ? (
+                    <button
+                      className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+                      onClick={() => onCallOrder?.(order)}
+                      type="button"
+                    >
+                      电话
+                    </button>
+                  ) : null}
+                  {order.canMessage ? (
+                    <button
+                      className="secondary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+                      onClick={() => onMessageOrder?.(order)}
+                      type="button"
+                    >
+                      <MessageCircle size={15} />
+                      消息
+                    </button>
+                  ) : null}
+                  {order.canRequestCancel ? (
+                    <button
+                      className="danger-outline-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+                      onClick={() => onRequestCancel?.(order)}
+                      type="button"
+                    >
+                      取消
+                    </button>
+                  ) : null}
+                  {order.canRequestComplete ? (
+                    <button
+                      className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+                      onClick={() => onRequestComplete?.(order)}
+                      type="button"
+                    >
+                      完成
+                    </button>
+                  ) : null}
+                  {order.canConfirmCancel ? (
+                    <button
+                      className="danger-outline-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+                      onClick={() => onConfirmCancel?.(order)}
+                      type="button"
+                    >
+                      确认取消
+                    </button>
+                  ) : null}
+                  {order.canConfirmComplete ? (
+                    <button
+                      className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+                      onClick={() => onConfirmComplete?.(order)}
+                      type="button"
+                    >
+                      <CheckCircle2 size={15} />
+                      确认完成
+                    </button>
+                  ) : null}
+                  {order.canRepublish ? (
+                    <button
+                      className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+                      onClick={() => onRepublish?.(order)}
+                      type="button"
+                    >
+                      再次发布
+                    </button>
+                  ) : null}
                 </div>
               ) : null}
             </article>

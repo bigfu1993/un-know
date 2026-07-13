@@ -6,6 +6,8 @@ import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflow
 import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.QUOTE_REJECTED;
 import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.QUOTE_WAITING_HUNTER;
 import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.QUOTE_WAITING_PUBLISHER;
+import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.FULFILLMENT_CANCEL_REQUESTED;
+import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.FULFILLMENT_COMPLETE_REQUESTED;
 import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.TASK_CANCELLED;
 import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.TASK_COMPLETED;
 import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.TASK_EXCEPTION;
@@ -29,6 +31,7 @@ import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceRespons
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.WalletRecord;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.WalletSummary;
 import com.unknown.platform.modules.clientworkspace.model.HuntingQuoteDecisionRequest;
+import com.unknown.platform.modules.clientworkspace.model.HuntingTaskFulfillmentActionRequest;
 import com.unknown.platform.modules.clientworkspace.model.PublishHuntingTaskRequest;
 import com.unknown.platform.modules.clientworkspace.model.QuoteHuntingTaskRequest;
 import java.math.BigDecimal;
@@ -144,12 +147,16 @@ public class ClientWorkspaceAppService {
         normalizedRequirementTags(request.requirementTags()),
         publisher.name(),
         maskPhone(publisher.phone()),
+        null,
+        null,
         currentUserId != null && currentUserId == publisherUserId,
         false,
         false,
         null,
         null,
         null,
+        null,
+        false,
         amountNegotiable,
         depositRequired,
         toAmount(depositCents),
@@ -202,9 +209,9 @@ public class ClientWorkspaceAppService {
     jdbcTemplate.update(
         """
             INSERT INTO hunting_task_quote (
-              public_id, hunting_task_id, quote_user_id, amount_cents, status, updated_at
+              public_id, hunting_task_id, quote_user_id, amount_cents, original_amount_cents, status, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, NOW())
+            VALUES (?, ?, ?, ?, ?, ?, NOW())
             ON CONFLICT (hunting_task_id, quote_user_id)
             DO UPDATE SET amount_cents = EXCLUDED.amount_cents,
                           status = EXCLUDED.status,
@@ -214,6 +221,7 @@ public class ClientWorkspaceAppService {
         nextHuntingQuotePublicId(),
         task.id(),
         currentUserId,
+        amountCents,
         amountCents,
         QUOTE_WAITING_PUBLISHER
     );
@@ -353,6 +361,120 @@ public class ClientWorkspaceAppService {
     return findHuntingTask(task.publicId(), currentUserId);
   }
 
+  /** 处理履约阶段取消、完成确认和再次发布动作。 */
+  @Transactional
+  public HuntingTask handleHuntingTaskFulfillmentAction(
+      String taskId,
+      HuntingTaskFulfillmentActionRequest request,
+      String authorization
+  ) {
+    long currentUserId = clientSessionService.requireUserId(authorization);
+    HuntingTaskRow task = requireHuntingTaskForUpdate(taskId);
+    String action = request == null || request.action() == null ? "" : request.action().strip().toLowerCase();
+
+    return switch (action) {
+      case "request_cancel" -> requestHuntingFulfillmentAction(
+          task, currentUserId, FULFILLMENT_CANCEL_REQUESTED
+      );
+      case "request_complete" -> requestHuntingFulfillmentAction(
+          task, currentUserId, FULFILLMENT_COMPLETE_REQUESTED
+      );
+      case "confirm_cancel" -> confirmHuntingFulfillmentAction(task, currentUserId, FULFILLMENT_CANCEL_REQUESTED);
+      case "confirm_complete" -> confirmHuntingFulfillmentAction(task, currentUserId, FULFILLMENT_COMPLETE_REQUESTED);
+      case "republish" -> republishHuntingTask(task, currentUserId);
+      default -> throw new BusinessException("INVALID_HUNTING_FULFILLMENT_ACTION", "履约动作不正确");
+    };
+  }
+
+  private HuntingTask requestHuntingFulfillmentAction(
+      HuntingTaskRow task,
+      long currentUserId,
+      String fulfillmentAction
+  ) {
+    ensureAcceptedHunter(task, currentUserId);
+    ensureNoPendingFulfillmentAction(task);
+    jdbcTemplate.update(
+        """
+            UPDATE hunting_task
+            SET fulfillment_action = ?,
+                fulfillment_action_user_id = ?,
+                updated_at = NOW()
+            WHERE id = ?
+            """,
+        fulfillmentAction,
+        currentUserId,
+        task.id()
+    );
+
+    return findHuntingTask(task.publicId(), currentUserId);
+  }
+
+  private HuntingTask confirmHuntingFulfillmentAction(
+      HuntingTaskRow task,
+      long currentUserId,
+      String expectedFulfillmentAction
+  ) {
+    ensurePublisher(task, currentUserId);
+    if (!expectedFulfillmentAction.equals(task.fulfillmentAction())) {
+      throw new BusinessException("HUNTING_FULFILLMENT_ACTION_NOT_FOUND", "当前没有可确认的履约申请");
+    }
+    String nextStatus = FULFILLMENT_CANCEL_REQUESTED.equals(expectedFulfillmentAction)
+        ? TASK_CANCELLED
+        : TASK_COMPLETED;
+
+    jdbcTemplate.update(
+        """
+            UPDATE hunting_task
+            SET status = ?,
+                fulfillment_action = NULL,
+                fulfillment_action_user_id = NULL,
+                updated_at = NOW()
+            WHERE id = ?
+            """,
+        nextStatus,
+        task.id()
+    );
+
+    return findHuntingTask(task.publicId(), currentUserId);
+  }
+
+  private HuntingTask republishHuntingTask(HuntingTaskRow task, long currentUserId) {
+    ensurePublisher(task, currentUserId);
+    if (!TASK_CANCELLED.equals(normalizeHuntingTaskStatus(task.status()))) {
+      throw new BusinessException("HUNTING_TASK_REPUBLISH_FORBIDDEN", "仅已取消的委托可再次发布");
+    }
+
+    boolean quoteMode = task.mode().contains("报价");
+    long nextFeeCents = quoteMode ? 0 : task.feeCents();
+    String nextStatus = quoteMode ? TASK_QUOTE : TASK_PUBLISHED;
+    String publicId = nextHuntingTaskPublicId();
+    jdbcTemplate.update(
+        """
+            INSERT INTO hunting_task (
+              public_id, publisher_user_id, title, description, mode, fee_cents,
+              latest_time, location, urgency, status, deposit_required, deposit_cents,
+              enabled, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, NOW())
+            """,
+        publicId,
+        currentUserId,
+        task.title(),
+        defaultText(task.description(), "暂无描述"),
+        task.mode(),
+        nextFeeCents,
+        task.latestTime(),
+        task.location(),
+        task.urgency(),
+        nextStatus,
+        task.depositRequired(),
+        task.depositCents()
+    );
+    jdbcTemplate.update("UPDATE hunting_task SET enabled = FALSE, updated_at = NOW() WHERE id = ?", task.id());
+
+    return findHuntingTask(publicId, currentUserId);
+  }
+
   private List<ClientOrder> orders(ClientRole role) {
     String sql = role == ClientRole.merchant
         ? """
@@ -463,6 +585,7 @@ public class ClientWorkspaceAppService {
             SELECT ht.id, ht.public_id, ht.publisher_user_id, ht.accepted_user_id,
                    ht.title, ht.description, ht.mode, ht.fee_cents, ht.latest_time,
                    ht.location, ht.urgency, ht.status, ht.deposit_required, ht.deposit_cents,
+                   ht.fulfillment_action, ht.fulfillment_action_user_id,
                    TO_CHAR(ht.created_at AT TIME ZONE 'Asia/Shanghai', 'MM-DD HH24:MI') AS publish_time,
                    (
                      SELECT COUNT(*)
@@ -517,6 +640,7 @@ public class ClientWorkspaceAppService {
           String status = normalizeHuntingTaskStatus(rs.getString("status"));
           Long publisherUserId = rs.getObject("publisher_user_id", Long.class);
           Long acceptedUserId = rs.getObject("accepted_user_id", Long.class);
+          Long fulfillmentActionUserId = rs.getObject("fulfillment_action_user_id", Long.class);
           Long pendingQuoteAmountCents = rs.getObject("pending_quote_amount_cents", Long.class);
           boolean isMine = currentUserId != null && currentUserId.equals(publisherUserId);
           boolean isQuotedByMe = rs.getBoolean("is_quoted_by_me");
@@ -539,12 +663,16 @@ public class ClientWorkspaceAppService {
                   .toList(),
               publisherName(publisherUserId),
               maskPhone(publisherPhone(publisherUserId)),
+              acceptedUserName(acceptedUserId),
+              maskPhone(acceptedUserPhone(acceptedUserId)),
               isMine,
               currentUserId != null && currentUserId.equals(acceptedUserId),
               isQuotedByMe,
               pendingQuoteAmountCents == null ? null : toAmount(pendingQuoteAmountCents),
               rs.getString("pending_quote_id"),
               rs.getString("pending_quote_status"),
+              rs.getString("fulfillment_action"),
+              currentUserId != null && currentUserId.equals(fulfillmentActionUserId),
               feeCents == 0 && isHuntingQuoteStatus(status),
               rs.getBoolean("deposit_required"),
               toAmount(rs.getLong("deposit_cents")),
@@ -759,6 +887,7 @@ public class ClientWorkspaceAppService {
             SELECT hq.public_id,
                    COALESCE(NULLIF(u.nickname, ''), u.phone, '平台用户') AS bidder_name,
                    hq.amount_cents,
+                   hq.original_amount_cents,
                    TO_CHAR(hq.updated_at AT TIME ZONE 'Asia/Shanghai', 'MM-DD HH24:MI') AS quote_time,
                    hq.status,
                    hq.confirmed_at IS NOT NULL AS is_selected
@@ -778,6 +907,7 @@ public class ClientWorkspaceAppService {
             rs.getString("public_id"),
             rs.getString("bidder_name"),
             toAmount(rs.getLong("amount_cents")),
+            toAmount(rs.getLong("original_amount_cents")),
             rs.getString("quote_time"),
             rs.getString("status"),
             rs.getBoolean("is_selected")
@@ -790,7 +920,9 @@ public class ClientWorkspaceAppService {
     List<HuntingTaskRow> rows = jdbcTemplate.query(
         """
             SELECT id, public_id, publisher_user_id, accepted_user_id, title,
-                   fee_cents, status, deposit_required, deposit_cents
+                   description, mode, fee_cents, latest_time, location, urgency,
+                   status, deposit_required, deposit_cents,
+                   fulfillment_action, fulfillment_action_user_id
             FROM hunting_task
             WHERE public_id = ?
               AND enabled = TRUE
@@ -802,10 +934,17 @@ public class ClientWorkspaceAppService {
             rs.getObject("publisher_user_id", Long.class),
             rs.getObject("accepted_user_id", Long.class),
             rs.getString("title"),
+            rs.getString("description"),
+            rs.getString("mode"),
             rs.getLong("fee_cents"),
+            rs.getString("latest_time"),
+            rs.getString("location"),
+            rs.getString("urgency"),
             rs.getString("status"),
             rs.getBoolean("deposit_required"),
-            rs.getLong("deposit_cents")
+            rs.getLong("deposit_cents"),
+            rs.getString("fulfillment_action"),
+            rs.getObject("fulfillment_action_user_id", Long.class)
         ),
         publicId
     );
@@ -855,6 +994,27 @@ public class ClientWorkspaceAppService {
     }
   }
 
+  private void ensureAcceptedHunter(HuntingTaskRow task, long currentUserId) {
+    if (!isHuntingFulfillingStatus(task.status()) || task.acceptedUserId() == null) {
+      throw new BusinessException("HUNTING_TASK_NOT_FULFILLING", "委托未处于履约中，不能发起履约申请");
+    }
+    if (!task.acceptedUserId().equals(currentUserId)) {
+      throw new BusinessException("HUNTING_TASK_HUNTER_FORBIDDEN", "仅履约方可发起取消或完成申请");
+    }
+  }
+
+  private void ensurePublisher(HuntingTaskRow task, long currentUserId) {
+    if (task.publisherUserId() == null || !task.publisherUserId().equals(currentUserId)) {
+      throw new BusinessException("HUNTING_TASK_PUBLISHER_FORBIDDEN", "仅发布方可处理该委托");
+    }
+  }
+
+  private void ensureNoPendingFulfillmentAction(HuntingTaskRow task) {
+    if (task.fulfillmentAction() != null && !task.fulfillmentAction().isBlank()) {
+      throw new BusinessException("HUNTING_FULFILLMENT_ACTION_PENDING", "已有待确认的履约申请");
+    }
+  }
+
   /** 校验报价协商动作的当前处理方，确认只能由收到报价的一方发起。 */
   private void ensureQuoteActionAllowed(
       HuntingQuoteRow quote,
@@ -874,13 +1034,13 @@ public class ClientWorkspaceAppService {
     }
 
     if ("counter".equals(action)) {
-      if ((isPublisher && waitingPublisher) || (isQuoteUser && (waitingHunter || waitingPublisher))) {
+      if ((isPublisher && waitingPublisher) || (isQuoteUser && waitingHunter)) {
         return;
       }
       throw new BusinessException("HUNTING_QUOTE_COUNTER_FORBIDDEN", "当前报价不允许由你改价");
     }
 
-    if ((isPublisher && waitingPublisher) || (isQuoteUser && (waitingHunter || waitingPublisher))) {
+    if ((isPublisher && waitingPublisher) || (isQuoteUser && waitingHunter)) {
       return;
     }
     throw new BusinessException("HUNTING_QUOTE_REJECT_FORBIDDEN", "当前报价不允许由你拒绝");
@@ -981,6 +1141,14 @@ public class ClientWorkspaceAppService {
 
   private String publisherPhone(Long publisherUserId) {
     return userContact(publisherUserIdOrFallback(publisherUserId)).phone();
+  }
+
+  private String acceptedUserName(Long acceptedUserId) {
+    return acceptedUserId == null ? null : userContact(acceptedUserId).name();
+  }
+
+  private String acceptedUserPhone(Long acceptedUserId) {
+    return acceptedUserId == null ? null : userContact(acceptedUserId).phone();
   }
 
   private long publisherUserIdOrFallback(Long publisherUserId) {
@@ -1123,10 +1291,17 @@ public class ClientWorkspaceAppService {
       Long publisherUserId,
       Long acceptedUserId,
       String title,
+      String description,
+      String mode,
       long feeCents,
+      String latestTime,
+      String location,
+      String urgency,
       String status,
       boolean depositRequired,
-      long depositCents
+      long depositCents,
+      String fulfillmentAction,
+      Long fulfillmentActionUserId
   ) {
   }
 

@@ -7,6 +7,7 @@ import {
   LoginResponse,
   MiniappOneTapLoginRequest,
   HuntingQuoteDecisionRequest,
+  HuntingTaskFulfillmentActionRequest,
   HuntingTask,
   ProductSummary,
   PublishHuntingTaskRequest,
@@ -290,6 +291,19 @@ export async function decideHuntingTaskQuote(
 ): Promise<HuntingTask> {
   return requestJson<HuntingTask>(
     `/api/client/workspace/hunting-tasks/${encodeURIComponent(taskId)}/quotes/${encodeURIComponent(quoteId)}/decision`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }
+  );
+}
+
+export async function handleHuntingTaskFulfillmentAction(
+  taskId: string,
+  payload: HuntingTaskFulfillmentActionRequest
+): Promise<HuntingTask> {
+  return requestJson<HuntingTask>(
+    `/api/client/workspace/hunting-tasks/${encodeURIComponent(taskId)}/fulfillment-action`,
     {
       method: "POST",
       body: JSON.stringify(payload)
