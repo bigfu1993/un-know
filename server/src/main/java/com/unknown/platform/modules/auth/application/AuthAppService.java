@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+/** 客户端认证应用服务，负责手机号验证码登录、注册、角色选择和小程序一键登录会话签发。 */
 @Service
 public class AuthAppService {
   private final JdbcTemplate jdbcTemplate;
@@ -25,6 +26,7 @@ public class AuthAppService {
     this.wechatMiniappPhoneService = wechatMiniappPhoneService;
   }
 
+  /** 校验验证码并为已存在的单角色账号签发客户端会话。 */
   @Transactional
   public LoginResponse login(LoginRequest request) {
     if (!isVerificationCodeValid(request.phone(), request.code())) {
@@ -36,6 +38,7 @@ public class AuthAppService {
     return issueSession(account.id(), request.phone(), account.role());
   }
 
+  /** 创建账号并签发临时会话；注册后角色确认仍由 selectRole 流程统一承接。 */
   @Transactional
   public LoginResponse register(RegisterRequest request) {
     if (!isVerificationCodeValid(request.phone(), request.code())) {
@@ -49,6 +52,7 @@ public class AuthAppService {
     return issueSession(userId, request.phone(), role);
   }
 
+  /** 注册后或未选角色账号再次登录时确认最终角色，并同步钱包账户角色归属。 */
   @Transactional
   public LoginResponse selectRole(String authorization, SelectRoleRequest request) {
     long userId = userIdFromAuthorization(authorization);
@@ -60,6 +64,7 @@ public class AuthAppService {
     return issueSession(userId, phone, role);
   }
 
+  /** 小程序环境通过微信 phoneCode 获取手机号，已注册则登录，未注册则按传入角色创建账号。 */
   @Transactional
   public LoginResponse miniappOneTapLogin(MiniappOneTapLoginRequest request) {
     String phone = wechatMiniappPhoneService.getPhoneNumber(request.phoneCode());

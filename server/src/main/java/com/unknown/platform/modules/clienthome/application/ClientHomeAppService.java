@@ -11,6 +11,7 @@ import java.util.List;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+/** 客户端首页聚合服务，按角色组装头像账户卡、主模块入口和需要提示的风险/补充信息。 */
 @Service
 public class ClientHomeAppService {
   private final JdbcTemplate jdbcTemplate;
@@ -21,6 +22,7 @@ public class ClientHomeAppService {
     this.clientSessionService = clientSessionService;
   }
 
+  /** 获取当前角色首页数据；已登录时优先读取当前账号，未登录仅用于本地兜底预览。 */
   public ClientHomeResponse getHome(ClientRole role, String authorization) {
     RoleProfile profile = profile(role, authorization);
     List<ModuleCard> modules = modules(role);

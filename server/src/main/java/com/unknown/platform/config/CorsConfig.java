@@ -6,6 +6,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+/** 跨域配置，支持本地 H5、小程序 WebView 和后续管理端在开发阶段访问后端接口。 */
 @Configuration
 public class CorsConfig {
 
@@ -22,4 +23,3 @@ public class CorsConfig {
     return new CorsFilter(source);
   }
 }
-

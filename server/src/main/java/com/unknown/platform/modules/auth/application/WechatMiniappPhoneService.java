@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 
+/** 微信小程序手机号授权适配服务，封装 access_token 获取和 phoneCode 换号流程。 */
 @Service
 public class WechatMiniappPhoneService {
   private static final String ACCESS_TOKEN_URL =
@@ -30,6 +31,12 @@ public class WechatMiniappPhoneService {
     this.appSecret = appSecret;
   }
 
+  /**
+   * 使用微信 phoneCode 换取手机号。
+   *
+   * @param phoneCode 小程序端 wx.login/手机号授权流程返回的临时 code
+   * @return 微信返回的纯手机号
+   */
   public String getPhoneNumber(String phoneCode) {
     if (!StringUtils.hasText(appId) || !StringUtils.hasText(appSecret)) {
       throw new BusinessException("WECHAT_MINIAPP_NOT_CONFIGURED", "未配置微信小程序一键登录参数");

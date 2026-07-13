@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 
+/** Spring Security 基础配置，当前阶段由业务服务校验客户端 token，过滤链保持接口可达。 */
 @Configuration
 public class SecurityConfig {
 
@@ -30,4 +31,3 @@ public class SecurityConfig {
         .build();
   }
 }
-

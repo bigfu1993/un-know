@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+/** 客户端商品接口，承接学生和家长的优选商品列表与购买下单流程。 */
 @RestController
 @RequestMapping("/api/client/products")
 public class ProductClientController {
@@ -24,11 +25,23 @@ public class ProductClientController {
     this.productAppService = productAppService;
   }
 
+  /**
+   * 查询当前角色可见商品。
+   *
+   * @param role 当前角色
+   * @return 商品列表
+   */
   @GetMapping
   public ApiResponse<List<ProductSummary>> list(@RequestParam(defaultValue = "student") ClientRole role) {
     return ApiResponse.ok(productAppService.listProducts(role));
   }
 
+  /**
+   * 创建商品购买订单。
+   *
+   * @param request 购买请求
+   * @return 订单创建结果
+   */
   @PostMapping("/purchase")
   public ApiResponse<PurchaseResponse> purchase(@Valid @RequestBody PurchaseRequest request) {
     return ApiResponse.ok(productAppService.purchase(request));

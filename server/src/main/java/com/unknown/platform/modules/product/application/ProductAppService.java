@@ -14,6 +14,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/** 商品与购买应用服务，负责优选商品列表、家长快递限制和购买下单库存扣减。 */
 @Service
 public class ProductAppService {
   private final JdbcTemplate jdbcTemplate;
@@ -22,6 +23,7 @@ public class ProductAppService {
     this.jdbcTemplate = jdbcTemplate;
   }
 
+  /** 查询当前角色可购买的商品；家长端配送方式强制收敛为快递。 */
   public List<ProductSummary> listProducts(ClientRole role) {
     return jdbcTemplate.query(
         """
@@ -56,6 +58,7 @@ public class ProductAppService {
     );
   }
 
+  /** 创建购买订单并扣减库存，第一版支付结果由前端选择付款方式后同步写入订单快照。 */
   @Transactional
   public PurchaseResponse purchase(PurchaseRequest request) {
     ProductRow product = findProductForUpdate(request.productId());

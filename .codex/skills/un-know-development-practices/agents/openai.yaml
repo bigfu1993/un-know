@@ -1,0 +1,6 @@
+interface:
+  display_name: "un-know 开发实践"
+  short_description: "佚名前后端开发与优化规范"
+  default_prompt: "Use $un-know-development-practices to implement and verify a feature in the un-know project."
+policy:
+  allow_implicit_invocation: true

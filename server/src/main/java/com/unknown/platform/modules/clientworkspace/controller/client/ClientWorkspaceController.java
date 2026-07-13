@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+/** 客户端工作台接口，聚合订单、兼职、委托/狩猎、家教、商户商品和钱包数据。 */
 @RestController
 @RequestMapping("/api/client")
 public class ClientWorkspaceController {
@@ -27,6 +28,13 @@ public class ClientWorkspaceController {
     this.clientWorkspaceAppService = clientWorkspaceAppService;
   }
 
+  /**
+   * 获取客户端工作台聚合数据。
+   *
+   * @param role 当前角色
+   * @param authorization 登录访问令牌，可为空
+   * @return 工作台聚合数据
+   */
   @GetMapping("/workspace")
   public ApiResponse<ClientWorkspaceResponse> workspace(
       @RequestParam(defaultValue = "student") ClientRole role,

@@ -1,5 +1,18 @@
 package com.unknown.platform.modules.clientworkspace.application;
 
+import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.QUOTE_CONFIRMED;
+import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.QUOTE_LEGACY_WAITING;
+import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.QUOTE_NOT_SELECTED;
+import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.QUOTE_REJECTED;
+import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.QUOTE_WAITING_HUNTER;
+import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.QUOTE_WAITING_PUBLISHER;
+import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.TASK_CANCELLED;
+import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.TASK_COMPLETED;
+import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.TASK_EXCEPTION;
+import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.TASK_FULFILLING;
+import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.TASK_PUBLISHED;
+import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.TASK_QUOTE;
+
 import com.unknown.platform.common.exception.BusinessException;
 import com.unknown.platform.common.security.ClientSessionService;
 import com.unknown.platform.modules.auth.model.ClientRole;
@@ -29,20 +42,15 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 客户端工作台聚合服务。
+ *
+ * <p>当前阶段承接订单、兼职、委托/狩猎、家教、商户商品和钱包等移动端首页数据聚合，并直接通过
+ * {@link JdbcTemplate} 访问 PostgreSQL。新增复杂领域时优先拆出独立 AppService 或领域辅助类，避免继续扩大本类职责。</p>
+ */
 @Service
 public class ClientWorkspaceAppService {
   private static final DateTimeFormatter HUNTING_PUBLISH_TIME_FORMATTER = DateTimeFormatter.ofPattern("MM-dd HH:mm");
-  private static final String HUNTING_STATUS_PUBLISHED = "发布";
-  private static final String HUNTING_STATUS_QUOTE = "报价";
-  private static final String HUNTING_STATUS_FULFILLING = "履约中";
-  private static final String HUNTING_STATUS_COMPLETED = "完成";
-  private static final String HUNTING_STATUS_CANCELLED = "取消";
-  private static final String HUNTING_STATUS_EXCEPTION = "异常";
-  private static final String QUOTE_STATUS_WAITING_PUBLISHER = "待发布方确认";
-  private static final String QUOTE_STATUS_WAITING_HUNTER = "待服务方确认";
-  private static final String QUOTE_STATUS_CONFIRMED = "已确认";
-  private static final String QUOTE_STATUS_REJECTED = "已拒绝";
-  private static final String QUOTE_STATUS_NOT_SELECTED = "未选中";
 
   private final JdbcTemplate jdbcTemplate;
   private final ClientSessionService clientSessionService;
@@ -52,6 +60,13 @@ public class ClientWorkspaceAppService {
     this.clientSessionService = clientSessionService;
   }
 
+  /**
+   * 获取客户端工作台聚合数据。
+   *
+   * @param role 当前角色
+   * @param authorization 登录访问令牌，可为空
+   * @return 当前角色工作台数据
+   */
   public ClientWorkspaceResponse getWorkspace(ClientRole role, String authorization) {
     Long currentUserId = clientSessionService.userIdOrNull(authorization);
 
@@ -88,7 +103,7 @@ public class ClientWorkspaceAppService {
     String latestTime = request.latestTime().strip();
     String location = defaultText(defaultText(request.destination(), request.location()), "目的地待补充");
     String requirement = getHuntingRequirement(request.requirementTags(), request.requirement());
-    String status = amountNegotiable ? HUNTING_STATUS_QUOTE : HUNTING_STATUS_PUBLISHED;
+    String status = amountNegotiable ? TASK_QUOTE : TASK_PUBLISHED;
 
     jdbcTemplate.update(
         """
@@ -165,7 +180,7 @@ public class ClientWorkspaceAppService {
             WHERE id = ?
             """,
         currentUserId,
-        HUNTING_STATUS_FULFILLING,
+        TASK_FULFILLING,
         task.id()
     );
 
@@ -200,12 +215,12 @@ public class ClientWorkspaceAppService {
         task.id(),
         currentUserId,
         amountCents,
-        QUOTE_STATUS_WAITING_PUBLISHER
+        QUOTE_WAITING_PUBLISHER
     );
 
     jdbcTemplate.update(
         "UPDATE hunting_task SET status = ?, updated_at = NOW() WHERE id = ?",
-        HUNTING_STATUS_QUOTE,
+        TASK_QUOTE,
         task.id()
     );
     return findHuntingTask(task.publicId(), currentUserId);
@@ -262,8 +277,8 @@ public class ClientWorkspaceAppService {
             WHERE hunting_task_id = ?
             """,
         quote.id(),
-        QUOTE_STATUS_CONFIRMED,
-        QUOTE_STATUS_NOT_SELECTED,
+        QUOTE_CONFIRMED,
+        QUOTE_NOT_SELECTED,
         quote.id(),
         task.id()
     );
@@ -281,7 +296,7 @@ public class ClientWorkspaceAppService {
         quote.quoteUserId(),
         quote.id(),
         quote.amountCents(),
-        HUNTING_STATUS_FULFILLING,
+        TASK_FULFILLING,
         task.id()
     );
 
@@ -303,10 +318,10 @@ public class ClientWorkspaceAppService {
                 updated_at = NOW()
             WHERE id = ?
             """,
-        QUOTE_STATUS_REJECTED,
+        QUOTE_REJECTED,
         quote.id()
     );
-    jdbcTemplate.update("UPDATE hunting_task SET status = ?, updated_at = NOW() WHERE id = ?", HUNTING_STATUS_QUOTE, task.id());
+    jdbcTemplate.update("UPDATE hunting_task SET status = ?, updated_at = NOW() WHERE id = ?", TASK_QUOTE, task.id());
     return findHuntingTask(task.publicId(), currentUserId);
   }
 
@@ -320,7 +335,7 @@ public class ClientWorkspaceAppService {
   ) {
     ensureQuoteActionAllowed(quote, isPublisher, isQuoteUser, "counter");
     long amountCents = toPositiveCents(amount, "INVALID_HUNTING_QUOTE_AMOUNT", "报价金额必须大于 0");
-    String nextStatus = isPublisher ? QUOTE_STATUS_WAITING_HUNTER : QUOTE_STATUS_WAITING_PUBLISHER;
+    String nextStatus = isPublisher ? QUOTE_WAITING_HUNTER : QUOTE_WAITING_PUBLISHER;
     jdbcTemplate.update(
         """
             UPDATE hunting_task_quote
@@ -334,7 +349,7 @@ public class ClientWorkspaceAppService {
         nextStatus,
         quote.id()
     );
-    jdbcTemplate.update("UPDATE hunting_task SET status = ?, updated_at = NOW() WHERE id = ?", HUNTING_STATUS_QUOTE, task.id());
+    jdbcTemplate.update("UPDATE hunting_task SET status = ?, updated_at = NOW() WHERE id = ?", TASK_QUOTE, task.id());
     return findHuntingTask(task.publicId(), currentUserId);
   }
 
@@ -537,25 +552,25 @@ public class ClientWorkspaceAppService {
               huntingQuotes(rowId, isMine, isQuotedByMe, currentUserId)
           );
         },
-        QUOTE_STATUS_WAITING_PUBLISHER,
-        QUOTE_STATUS_WAITING_HUNTER,
+        QUOTE_WAITING_PUBLISHER,
+        QUOTE_WAITING_HUNTER,
         currentUserId,
         currentUserId,
-        QUOTE_STATUS_WAITING_PUBLISHER,
-        QUOTE_STATUS_WAITING_HUNTER,
-        QUOTE_STATUS_CONFIRMED,
+        QUOTE_WAITING_PUBLISHER,
+        QUOTE_WAITING_HUNTER,
+        QUOTE_CONFIRMED,
         currentUserId,
-        QUOTE_STATUS_WAITING_PUBLISHER,
-        QUOTE_STATUS_WAITING_HUNTER,
-        QUOTE_STATUS_CONFIRMED,
+        QUOTE_WAITING_PUBLISHER,
+        QUOTE_WAITING_HUNTER,
+        QUOTE_CONFIRMED,
         currentUserId,
-        QUOTE_STATUS_WAITING_PUBLISHER,
-        QUOTE_STATUS_WAITING_HUNTER,
-        QUOTE_STATUS_CONFIRMED,
+        QUOTE_WAITING_PUBLISHER,
+        QUOTE_WAITING_HUNTER,
+        QUOTE_CONFIRMED,
         currentUserId,
-        QUOTE_STATUS_WAITING_PUBLISHER,
-        QUOTE_STATUS_WAITING_HUNTER,
-        QUOTE_STATUS_CONFIRMED
+        QUOTE_WAITING_PUBLISHER,
+        QUOTE_WAITING_HUNTER,
+        QUOTE_CONFIRMED
     );
   }
 
@@ -722,22 +737,22 @@ public class ClientWorkspaceAppService {
     Object[] parameters = isPublisher
         ? new Object[] {
             huntingTaskId,
-            QUOTE_STATUS_WAITING_PUBLISHER,
-            QUOTE_STATUS_WAITING_HUNTER,
-            QUOTE_STATUS_CONFIRMED,
-            QUOTE_STATUS_REJECTED,
-            QUOTE_STATUS_WAITING_PUBLISHER,
-            QUOTE_STATUS_WAITING_HUNTER
+            QUOTE_WAITING_PUBLISHER,
+            QUOTE_WAITING_HUNTER,
+            QUOTE_CONFIRMED,
+            QUOTE_REJECTED,
+            QUOTE_WAITING_PUBLISHER,
+            QUOTE_WAITING_HUNTER
         }
         : new Object[] {
             huntingTaskId,
             currentUserId,
-            QUOTE_STATUS_WAITING_PUBLISHER,
-            QUOTE_STATUS_WAITING_HUNTER,
-            QUOTE_STATUS_CONFIRMED,
-            QUOTE_STATUS_REJECTED,
-            QUOTE_STATUS_WAITING_PUBLISHER,
-            QUOTE_STATUS_WAITING_HUNTER
+            QUOTE_WAITING_PUBLISHER,
+            QUOTE_WAITING_HUNTER,
+            QUOTE_CONFIRMED,
+            QUOTE_REJECTED,
+            QUOTE_WAITING_PUBLISHER,
+            QUOTE_WAITING_HUNTER
         };
 
     String sql = """
@@ -819,8 +834,8 @@ public class ClientWorkspaceAppService {
         ),
         huntingTaskId,
         quoteId,
-        QUOTE_STATUS_WAITING_PUBLISHER,
-        QUOTE_STATUS_WAITING_HUNTER
+        QUOTE_WAITING_PUBLISHER,
+        QUOTE_WAITING_HUNTER
     );
     if (rows.isEmpty()) {
       throw new BusinessException("HUNTING_QUOTE_NOT_FOUND", "报价不存在或已失效");
@@ -848,8 +863,8 @@ public class ClientWorkspaceAppService {
       String action
   ) {
     String status = quote.status();
-    boolean waitingPublisher = QUOTE_STATUS_WAITING_PUBLISHER.equals(status) || "待确认".equals(status);
-    boolean waitingHunter = QUOTE_STATUS_WAITING_HUNTER.equals(status);
+    boolean waitingPublisher = QUOTE_WAITING_PUBLISHER.equals(status) || QUOTE_LEGACY_WAITING.equals(status);
+    boolean waitingHunter = QUOTE_WAITING_HUNTER.equals(status);
 
     if ("confirm".equals(action)) {
       if ((isPublisher && waitingPublisher) || (isQuoteUser && waitingHunter)) {
@@ -875,39 +890,39 @@ public class ClientWorkspaceAppService {
   private String normalizeHuntingTaskStatus(String status) {
     String value = status == null ? "" : status.strip();
     if (value.contains("报价") || value.contains("待确认")) {
-      return HUNTING_STATUS_QUOTE;
+      return TASK_QUOTE;
     }
     if (value.contains("发布") || value.contains("待领取")) {
-      return HUNTING_STATUS_PUBLISHED;
+      return TASK_PUBLISHED;
     }
     if (value.contains("履约") || value.contains("进行") || value.contains("已领取")) {
-      return HUNTING_STATUS_FULFILLING;
+      return TASK_FULFILLING;
     }
     if (value.contains("完成")) {
-      return HUNTING_STATUS_COMPLETED;
+      return TASK_COMPLETED;
     }
     if (value.contains("取消")) {
-      return HUNTING_STATUS_CANCELLED;
+      return TASK_CANCELLED;
     }
     if (value.contains("异常") || value.contains("争议")) {
-      return HUNTING_STATUS_EXCEPTION;
+      return TASK_EXCEPTION;
     }
-    return value.isBlank() ? HUNTING_STATUS_EXCEPTION : value;
+    return value.isBlank() ? TASK_EXCEPTION : value;
   }
 
   private boolean isHuntingQuoteStatus(String status) {
-    return HUNTING_STATUS_QUOTE.equals(normalizeHuntingTaskStatus(status));
+    return TASK_QUOTE.equals(normalizeHuntingTaskStatus(status));
   }
 
   private boolean isHuntingFulfillingStatus(String status) {
-    return HUNTING_STATUS_FULFILLING.equals(normalizeHuntingTaskStatus(status));
+    return TASK_FULFILLING.equals(normalizeHuntingTaskStatus(status));
   }
 
   private boolean isHuntingClosedStatus(String status) {
     String normalizedStatus = normalizeHuntingTaskStatus(status);
-    return HUNTING_STATUS_COMPLETED.equals(normalizedStatus)
-        || HUNTING_STATUS_CANCELLED.equals(normalizedStatus)
-        || HUNTING_STATUS_EXCEPTION.equals(normalizedStatus);
+    return TASK_COMPLETED.equals(normalizedStatus)
+        || TASK_CANCELLED.equals(normalizedStatus)
+        || TASK_EXCEPTION.equals(normalizedStatus);
   }
 
   private void freezeHuntingDepositIfNeeded(long receiverUserId, HuntingTaskRow task) {
