@@ -1,13 +1,26 @@
 ﻿import { useGlobalStore, useGlobalUser } from "@h5/store/global";
-import { TutorCalendarDialog, type TutorCalendarTask } from "./components/TutorCalendar";
+import { usePublishHuntingTask } from "@unknown/hooks";
+import { Banknote, MapPin, RadioTower } from "lucide-react";
+import { getHuntingCertificationDataFromDraft } from "./components/HuntingCertificationCard/model";
+import { PublishInfoDialog } from "./components/PublishInfoDialog";
+import { TutorCalendarDialog } from "./components/TutorCalendar";
+import {
+  TutorCertificationInfoDialog,
+  type TutorCertificationInfoSaveMode
+} from "./components/TutorCertificationInfoDialog";
 import { HuntingCertification } from "./pages/HuntingCertification";
-import { TutorCertification } from "./pages/TutorCertification";
-import { formatTutorSubjects, parseTutorSubjects, tutorSubjectOptions } from "./shared/tutorModel";
+import { TutorCertification } from "./pages/Tutor/TutorCertification";
+import { getStoredAddressBook } from "./shared/clientPageModel";
+import {
+  buildPublishHuntingTaskRequest,
+  isHuntingTaskPublishType,
+  saveLocalPublishInfoDraft,
+  type PublishInfoDraft,
+  type PublishInfoType
+} from "./tools/publishInfo";
+import { getTutorCalendarTasks, getTutorDateKey } from "./tools/tutorCalendar";
 
-/**
- * Page metadata for stack-based secondary surfaces.
- * Routed pages own their page headers in pages/*.
- */
+/** 获取栈式次级页面的标题信息。 */
 function getPageMeta(page: PageSurface, role: Role) {
   if (page === "mine") {
     return { title: "我的", eyebrow: roleLabels[role] };
@@ -27,10 +40,50 @@ function getPageMeta(page: PageSurface, role: Role) {
   return { title: "设置", eyebrow: "昵称与安全" };
 }
 
-/**
- * Application shell: owns auth, role-level data loading, routing, and global dialogs.
- * Module-specific state should stay in pages/* or components/*.
- */
+/** 将当前账号发布的委托任务转换为进行中弹窗展示项。 */
+function getPublishedHuntingOngoingOrders(tasks: HuntingTask[], role: Role): ClientOrder[] {
+  return tasks.map((task) => ({
+    amount: task.fee,
+    category: "delegation",
+    contact: "我发布的委托",
+    detail: `${task.mode} · ${task.latestTime} · ${task.destination ?? task.location}`,
+    id: task.id,
+    role,
+    status: task.status,
+    title: task.title
+  }));
+}
+
+/** 获取委托任务金额展示文案，协商任务不展示 0 元。 */
+function getHuntingTaskAmountText(task: HuntingTask) {
+  return task.amountNegotiable || task.fee <= 0 ? "协商" : formatCurrency(task.fee);
+}
+
+/** 获取狩猎快捷开启后系统推荐的委托任务。 */
+function getRecommendedHuntingTasks(tasks: HuntingTask[]) {
+  const recommendableStatusKeywords = ["待", "报价", "领取", "已发布"];
+
+  return tasks
+    .filter(
+      (task) =>
+        !task.isMine &&
+        !task.status.includes("进行中") &&
+        recommendableStatusKeywords.some((keyword) => task.status.includes(keyword))
+    )
+    .slice(0, 9);
+}
+
+/** 获取委托发布时间展示文案。 */
+function getHuntingTaskPublishTimeText(date: Date) {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hour = String(date.getHours()).padStart(2, "0");
+  const minute = String(date.getMinutes()).padStart(2, "0");
+
+  return `${month}-${day} ${hour}:${minute}`;
+}
+
+/** H5 根组件，负责登录态、角色数据、路由栈和全局弹窗编排。 */
 export function App() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -47,7 +100,14 @@ export function App() {
   const [isMineOpen, setIsMineOpen] = useState(false);
   const [isQuickDockExpanded, setIsQuickDockExpanded] = useState(true);
   const [isTutorCalendarOpen, setIsTutorCalendarOpen] = useState(false);
-  const [isTutorSubjectEditorOpen, setIsTutorSubjectEditorOpen] = useState(false);
+  const [isTutorCertificationInfoOpen, setIsTutorCertificationInfoOpen] = useState(false);
+  const [isPublishInfoOpen, setIsPublishInfoOpen] = useState(false);
+  const [publishInfoInitialType, setPublishInfoInitialType] = useState<PublishInfoType>("delegation");
+  const [isHuntingRecommendationOpen, setIsHuntingRecommendationOpen] = useState(false);
+  const [isHuntingShortcutConfirmOpen, setIsHuntingShortcutConfirmOpen] = useState(false);
+  const [huntingShortcutConfirmStep, setHuntingShortcutConfirmStep] = useState<1 | 2>(1);
+  const [isHuntingShortcutEnabled, setIsHuntingShortcutEnabled] = useState(false);
+  const [publishedHuntingTasks, setPublishedHuntingTasks] = useState<HuntingTask[]>([]);
   const avatarClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const avatarLastClickAt = useRef(0);
   const { hideMessage, showMessage, toast } = useMessageToast();
@@ -55,18 +115,25 @@ export function App() {
   const [savedProfileDraft, setSavedProfileDraft] = useState<ProfileDraftState>(() => getStoredProfileDraft());
   const [profileDraft, setProfileDraft] = useState<ProfileDraftState>(() => getStoredProfileDraft());
   const [isProfileCompletionOpen, setIsProfileCompletionOpen] = useState(false);
-  // Role-level data is shared across routes; page-local filters stay inside page modules.
+  // 角色级数据在路由间共享，页面局部筛选保留在各页面模块内。
   const { data: homeData, error: homeError, isLoading: isHomeLoading } = useClientHome(role, isAuthenticated);
   const {
     data: workspaceResponse,
     error: workspaceError,
-    isLoading: isWorkspaceLoading
+    isFetching: isWorkspaceFetching,
+    isLoading: isWorkspaceLoading,
+    refetch: refetchWorkspace
   } = useClientWorkspace(role, isAuthenticated);
   const purchaseMutation = usePurchaseProduct();
+  const publishHuntingTaskMutation = usePublishHuntingTask();
 
   const roleOrders = useMemo(
     () => (workspaceResponse?.orders ?? []).filter((order) => order.role === role),
     [workspaceResponse?.orders, role]
+  );
+  const ongoingOrders = useMemo(
+    () => [...getPublishedHuntingOngoingOrders(publishedHuntingTasks, role), ...roleOrders],
+    [publishedHuntingTasks, role, roleOrders]
   );
   const hasPaymentRisk = roleOrders.some((order) => order.risk === "payment");
   const profileRequirement = getProfileRequirement(role, activeTab, savedProfileDraft);
@@ -74,7 +141,15 @@ export function App() {
   const activePage = pageStack.length > 0 ? pageStack[pageStack.length - 1] : null;
   const dataError = homeError ?? workspaceError;
   const isInitialDataLoading = isHomeLoading || isWorkspaceLoading;
+  const huntingCertificationStatus = useMemo(
+    () => getHuntingCertificationDataFromDraft(user.profileDraft).certificationStatus,
+    [user.profileDraft]
+  );
   const tutorCalendarTasks = useMemo(() => getTutorCalendarTasks(user.profileDraft), [user.profileDraft]);
+  const publishAddressItems = useMemo(() => getStoredAddressBook(user.profileDraft), [user.profileDraft]);
+  const refreshWorkspace = useCallback(() => {
+    void refetchWorkspace();
+  }, [refetchWorkspace]);
 
   function clearAvatarClickTimer() {
     if (!avatarClickTimer.current) {
@@ -88,7 +163,14 @@ export function App() {
   /** 关闭家教相关全局弹窗，避免路由切换后残留。 */
   function closeTutorDialogs() {
     setIsTutorCalendarOpen(false);
-    setIsTutorSubjectEditorOpen(false);
+    setIsTutorCertificationInfoOpen(false);
+  }
+
+  /** 关闭狩猎快捷相关弹窗，保持页面切换后的浮层状态一致。 */
+  function closeHuntingShortcutDialogs() {
+    setIsHuntingRecommendationOpen(false);
+    setIsHuntingShortcutConfirmOpen(false);
+    setHuntingShortcutConfirmStep(1);
   }
 
   function handleAvatarClick() {
@@ -111,18 +193,52 @@ export function App() {
   }
 
   function handleOpenHuntingShortcut() {
+    if (isHuntingShortcutEnabled) {
+      setIsHuntingRecommendationOpen(true);
+      setIsHuntingShortcutConfirmOpen(false);
+      setIsMineOpen(false);
+      setIsOngoingOpen(false);
+      return;
+    }
+
     if (!handleRequestHuntingOnline()) {
       setIsMineOpen(false);
       return;
     }
 
+    setHuntingShortcutConfirmStep(1);
+    setIsHuntingShortcutConfirmOpen(true);
+    setIsHuntingRecommendationOpen(false);
+    setIsMineOpen(false);
+    setIsOngoingOpen(false);
+  }
+
+  /** 确认开启狩猎快捷，第二次确认后进入委托页并展示推荐角标。 */
+  function handleConfirmHuntingShortcut() {
+    if (huntingShortcutConfirmStep === 1) {
+      setHuntingShortcutConfirmStep(2);
+      return;
+    }
+
+    setIsHuntingShortcutEnabled(true);
+    setIsHuntingShortcutConfirmOpen(false);
+    setHuntingShortcutConfirmStep(1);
     setActiveTab("hunting");
     setPageStack([]);
     setIsOngoingOpen(false);
     setIsMineOpen(false);
     setIsProfileCompletionOpen(false);
     closeTutorDialogs();
+    closeHuntingShortcutDialogs();
     navigate(getRouteForTab("hunting"));
+    showMessage("狩猎快捷已开启，系统将自动推送推荐委托。", { type: "success" });
+  }
+
+  /** 关闭狩猎快捷推荐推送。 */
+  function handleDisableHuntingShortcut() {
+    setIsHuntingShortcutEnabled(false);
+    setIsHuntingRecommendationOpen(false);
+    showMessage("狩猎快捷已关闭。", { type: "success" });
   }
 
   /** 家教认证提交完成后回到当前主模块首页，并用全局提示承接提交结果。 */
@@ -132,6 +248,7 @@ export function App() {
     setIsOngoingOpen(false);
     setIsQuickDockExpanded(true);
     closeTutorDialogs();
+    closeHuntingShortcutDialogs();
     showMessage("家教认证已提交，当前状态为认证中。", { type: "success" });
     navigate(getRouteForTab(activeTab), { replace: true });
   }
@@ -143,6 +260,7 @@ export function App() {
     setIsOngoingOpen(false);
     setIsQuickDockExpanded(true);
     closeTutorDialogs();
+    closeHuntingShortcutDialogs();
     showMessage("狩猎认证已提交，当前状态为认证中。", { type: "success" });
     navigate(getRouteForTab(activeTab), { replace: true });
   }
@@ -157,7 +275,11 @@ export function App() {
     setIsMineOpen(false);
     setIsQuickDockExpanded(true);
     setIsProfileCompletionOpen(false);
+    setIsPublishInfoOpen(false);
+    setPublishedHuntingTasks([]);
+    setIsHuntingShortcutEnabled(false);
     closeTutorDialogs();
+    closeHuntingShortcutDialogs();
     setSavedProfileDraft(storedProfileDraft);
     setProfileDraft(storedProfileDraft);
     showMessage(session.profileCompletionRequired ? "登录成功，可稍后进入设置补充资料。" : "登录成功。", {
@@ -175,7 +297,11 @@ export function App() {
     setIsMineOpen(false);
     setIsQuickDockExpanded(true);
     setIsProfileCompletionOpen(false);
+    setIsPublishInfoOpen(false);
+    setPublishedHuntingTasks([]);
+    setIsHuntingShortcutEnabled(false);
     closeTutorDialogs();
+    closeHuntingShortcutDialogs();
     hideMessage();
     setCheckout(null);
     navigate("/login", { replace: true });
@@ -188,7 +314,9 @@ export function App() {
     setIsMineOpen(false);
     setIsQuickDockExpanded(true);
     setIsProfileCompletionOpen(false);
+    setIsPublishInfoOpen(false);
     closeTutorDialogs();
+    closeHuntingShortcutDialogs();
     navigate(getRouteForTab(tab));
   }
 
@@ -202,7 +330,9 @@ export function App() {
       setIsOngoingOpen(false);
       setIsQuickDockExpanded(true);
       setIsProfileCompletionOpen(false);
+      setIsPublishInfoOpen(false);
       closeTutorDialogs();
+      closeHuntingShortcutDialogs();
       return;
     }
 
@@ -211,7 +341,9 @@ export function App() {
     setIsOngoingOpen(false);
     setIsQuickDockExpanded(true);
     setIsProfileCompletionOpen(false);
+    setIsPublishInfoOpen(false);
     closeTutorDialogs();
+    closeHuntingShortcutDialogs();
   }
 
   function handleBack() {
@@ -219,10 +351,12 @@ export function App() {
     setIsMineOpen(false);
     setIsQuickDockExpanded(true);
     setIsProfileCompletionOpen(false);
+    setIsPublishInfoOpen(false);
     closeTutorDialogs();
+    closeHuntingShortcutDialogs();
   }
 
-  // Checkout is guarded here because profile completion is a cross-module flow.
+  // 购买前置资料校验属于跨模块流程，因此在根节点统一处理。
   function handleOpenCheckout(product: ProductSummary) {
     const featuredRequirement = getProfileRequirement(role, "featured", savedProfileDraft);
 
@@ -271,42 +405,162 @@ export function App() {
     setIsOngoingOpen(false);
     setIsQuickDockExpanded(true);
     setIsProfileCompletionOpen(true);
+    setIsPublishInfoOpen(false);
     closeTutorDialogs();
+    closeHuntingShortcutDialogs();
   }
 
-  /** 打开家教学科编辑弹窗，供卡片学科模块复用。 */
-  function handleOpenTutorSubjectEditor() {
+  /** 打开发布信息弹窗。 */
+  function handleOpenPublishInfo() {
     setIsMineOpen(false);
     setIsOngoingOpen(false);
     setIsQuickDockExpanded(true);
-    setIsTutorCalendarOpen(false);
-    setIsTutorSubjectEditorOpen(true);
+    setIsProfileCompletionOpen(false);
+    closeTutorDialogs();
+    closeHuntingShortcutDialogs();
+    setPublishInfoInitialType("delegation");
+    setIsPublishInfoOpen(true);
   }
 
-  /** 保存家教学科并同步全局用户资料草稿。 */
-  function handleSaveTutorSubjects(subjects: string[]) {
+  /** 打开回收发布弹窗，复用发布表单但固定为回收类型。 */
+  function handleOpenRecycleInfo() {
+    setIsMineOpen(false);
+    setIsOngoingOpen(false);
+    setIsQuickDockExpanded(true);
+    setIsProfileCompletionOpen(false);
+    closeTutorDialogs();
+    closeHuntingShortcutDialogs();
+    setPublishInfoInitialType("recycle");
+    setIsPublishInfoOpen(true);
+  }
+
+  /** 打开家教认证信息弹窗，供我的页面家教卡片查看和编辑。 */
+  function handleOpenTutorCertificationInfo() {
+    setIsMineOpen(false);
+    setIsOngoingOpen(false);
+    setIsQuickDockExpanded(true);
+    setIsPublishInfoOpen(false);
+    closeHuntingShortcutDialogs();
+    setIsTutorCalendarOpen(false);
+    setIsTutorCertificationInfoOpen(true);
+  }
+
+  /** 切换家教资料公开状态，开启后允许家教认证信息被查看。 */
+  function handleToggleTutorExposure() {
+    const nextEnabled = user.profileDraft.tutorExposureEnabled !== "true";
     const nextProfileDraft = {
       ...user.profileDraft,
-      tutorSubject: formatTutorSubjects(subjects)
+      tutorExposureEnabled: nextEnabled ? "true" : "false"
     };
 
     setUserProfileDraft(nextProfileDraft);
     setSavedProfileDraft(nextProfileDraft);
     setProfileDraft(nextProfileDraft);
-    setIsTutorSubjectEditorOpen(false);
-    showMessage("家教学科已更新。", { type: "success" });
+    showMessage(nextEnabled ? "开启家教，认证信息可被查看，我的-家教卡片可修改信息。" : "已关闭家教资料公开。", {
+      type: "success"
+    });
   }
 
-  /** 打开课程日历弹窗，保留家教卡片原课程日历入口。 */
+  /** 保存家教认证信息弹窗的修改或重新认证草稿。 */
+  function handleSaveTutorCertificationInfo(
+    nextProfileDraft: ProfileDraftState,
+    mode: TutorCertificationInfoSaveMode
+  ) {
+    const shouldRecertify = mode === "recertify";
+    const filledProfileDraft = {
+      ...nextProfileDraft,
+      ...(shouldRecertify
+        ? {
+            tutorCertificationStatus: "reviewing",
+            tutorExposureEnabled: "false"
+          }
+        : {})
+    };
+
+    setUserProfileDraft(filledProfileDraft);
+    setSavedProfileDraft(filledProfileDraft);
+    setProfileDraft(filledProfileDraft);
+    setIsTutorCertificationInfoOpen(false);
+    showMessage(shouldRecertify ? "家教认证已重新提交，当前状态为认证中。" : "家教认证信息已更新。", {
+      type: "success"
+    });
+  }
+
+  /** 打开课程日历弹窗，供认证通过后的快捷入口使用。 */
   function handleOpenTutorCalendar() {
     setIsMineOpen(false);
     setIsOngoingOpen(false);
     setIsQuickDockExpanded(true);
-    setIsTutorSubjectEditorOpen(false);
+    setIsTutorCertificationInfoOpen(false);
+    setIsPublishInfoOpen(false);
+    closeHuntingShortcutDialogs();
     setIsTutorCalendarOpen(true);
   }
 
-  // Delegation owns the online toggle; App only answers whether the user may go online.
+  /** 保存发布信息草稿，暂不进入业务列表。 */
+  function handleSavePublishInfo(draft: PublishInfoDraft) {
+    try {
+      saveLocalPublishInfoDraft(draft, "draft");
+      setIsPublishInfoOpen(false);
+      showMessage("发布草稿已保存。", { type: "success" });
+    } catch {
+      showMessage("发布草稿保存失败，请检查浏览器存储权限。", { type: "error" });
+    }
+  }
+
+  /** 发布委托或回收任务，其他类型当前保存为草稿等待后续接口。 */
+  function handlePublishInfo(draft: PublishInfoDraft) {
+    if (!isHuntingTaskPublishType(draft.type)) {
+      try {
+        saveLocalPublishInfoDraft(draft, "draft");
+        setIsPublishInfoOpen(false);
+        showMessage("当前仅委托和回收接入真实发布，已先保存为草稿。", { type: "warning" });
+      } catch {
+        showMessage("发布草稿保存失败，请检查浏览器存储权限。", { type: "error" });
+      }
+      return;
+    }
+
+    try {
+      const payload = buildPublishHuntingTaskRequest(draft, publishAddressItems);
+      const publishTypeLabel = draft.type === "recycle" ? "回收" : "委托";
+
+      publishHuntingTaskMutation.mutate(payload, {
+        onSuccess: (task) => {
+          const publishedTask: HuntingTask = {
+            ...task,
+            amountNegotiable: Boolean(payload.amountNegotiable),
+            description: payload.description,
+            destination: payload.destination ?? payload.location,
+            fee: payload.amountNegotiable ? 0 : task.fee,
+            isMine: true,
+            publishTime: task.publishTime ?? getHuntingTaskPublishTimeText(new Date()),
+            requirement: payload.requirement,
+            requirementTags: payload.requirementTags ?? [],
+            status: payload.amountNegotiable ? "待协商" : task.status
+          };
+
+          setPublishedHuntingTasks((tasks) => [
+            publishedTask,
+            ...tasks.filter((item) => item.id !== publishedTask.id)
+          ]);
+          setIsPublishInfoOpen(false);
+          showMessage(`${publishTypeLabel}已发布，可在委托列表查看。`, { type: "success" });
+          setActiveTab("hunting");
+          setPageStack([]);
+          navigate(getRouteForTab("hunting"));
+          void refetchWorkspace();
+        },
+        onError: (error) => {
+          showMessage(getErrorMessage(error, `${publishTypeLabel}发布失败，请稍后重试。`), { type: "error" });
+        }
+      });
+    } catch (error) {
+      showMessage(getErrorMessage(error, "发布信息校验失败，请检查表单内容。"), { type: "error" });
+    }
+  }
+
+  // 委托模块负责上线开关，根节点仅判断是否满足上线资料要求。
   function handleRequestHuntingOnline() {
     const huntingRequirement = getProfileRequirement(role, "hunting", savedProfileDraft);
 
@@ -369,7 +623,7 @@ export function App() {
     setProfileDraft(user.profileDraft);
   }, [user.profileDraft]);
 
-  // Browser routes drive the active module; activeTab mirrors only primary module routes.
+  // 浏览器路由驱动当前模块，activeTab 只镜像主模块路由。
   useEffect(() => {
     if (!isAuthenticated) {
       if (location.pathname !== "/login") {
@@ -453,6 +707,13 @@ export function App() {
   }
 
   const workspaceData = workspaceResponse;
+  const mergedHuntingTasks = [
+    ...publishedHuntingTasks,
+    ...workspaceData.huntingTasks.filter(
+      (task) => !publishedHuntingTasks.some((publishedTask) => publishedTask.id === task.id)
+    )
+  ];
+  const recommendedHuntingTasks = getRecommendedHuntingTasks(mergedHuntingTasks);
 
   return (
     <main
@@ -460,7 +721,7 @@ export function App() {
         activePage || isSettingsRoute || isMineRoute
           ? "page-mode pb-[28px]"
           : "pb-[calc(92px+env(safe-area-inset-bottom))]"
-      }`}
+      } ${activeTab === "hunting" && !activePage && !isSettingsRoute && !isMineRoute ? "delegation-shell" : ""}`}
     >
       <MessageToast onClose={hideMessage} toast={toast} />
       {activePage && pageMeta ? (
@@ -478,9 +739,8 @@ export function App() {
       ) : isMineRoute ? (
         <Mine
           onBack={() => navigate(getRouteForTab(activeTab), { replace: true })}
-          onEditTutorSubject={handleOpenTutorSubjectEditor}
           onNavigate={handleNavigate}
-          onOpenTutorCalendar={handleOpenTutorCalendar}
+          onOpenTutorCertificationInfo={handleOpenTutorCertificationInfo}
           orders={roleOrders}
           walletSummary={workspaceData.walletSummary}
         />
@@ -490,10 +750,12 @@ export function App() {
         <>
           <Header activeTab={activeTab} />
 
-          <ProfileContextCard
-            onOpenCompletion={handleOpenProfileCompletion}
-            requirement={profileRequirement}
-          />
+          {activeTab === "hunting" ? null : (
+            <ProfileContextCard
+              onOpenCompletion={handleOpenProfileCompletion}
+              requirement={profileRequirement}
+            />
+          )}
 
           <Routes>
             <Route
@@ -516,9 +778,16 @@ export function App() {
               path="/delegation"
               element={
                 <Delegation
-                  huntingSummary={workspaceData.huntingSummary}
-                  huntingTasks={workspaceData.huntingTasks}
-                  onRequestOnline={handleRequestHuntingOnline}
+                  huntingCertificationStatus={huntingCertificationStatus}
+                  huntingTasks={mergedHuntingTasks}
+                  isRefreshing={isWorkspaceFetching}
+                  onCertificationReviewing={() =>
+                    showMessage("狩猎认证系统审批中...", {
+                      type: "warning"
+                    })
+                  }
+                  onOpenHuntingCertification={() => handleNavigate("huntingCertification")}
+                  onRefreshTasks={refreshWorkspace}
                 />
               }
             />
@@ -539,11 +808,13 @@ export function App() {
           {isMineOpen ? (
             <MinePopover
               onClose={() => setIsMineOpen(false)}
-              onEditTutorSubject={handleOpenTutorSubjectEditor}
               onLogout={handleLogout}
               onNavigate={handleNavigate}
+              onOpenPublish={handleOpenPublishInfo}
+              onOpenRecycle={handleOpenRecycleInfo}
               onOpenTutorCalendar={handleOpenTutorCalendar}
               onOpenTab={handleOpenTab}
+              onToggleTutorExposure={handleToggleTutorExposure}
               walletSummary={workspaceData.walletSummary}
             />
           ) : null}
@@ -562,17 +833,28 @@ export function App() {
               aria-label="查看进行中事项"
             >
               <PackageCheck size={18} />
-              <span className="quick-action-badge">{roleOrders.length}</span>
+              <span className="quick-action-badge">{ongoingOrders.length}</span>
             </button>
 
             {role === "student" ? (
               <button
-                className="quick-action-button quick-action-hunting hunting-shortcut grid h-[46px] w-[46px] place-items-center font-extrabold text-white"
+                className={`quick-action-button quick-action-hunting hunting-shortcut grid h-[46px] w-[46px] place-items-center font-extrabold text-white ${
+                  isHuntingShortcutEnabled ? "active" : ""
+                }`}
                 onClick={handleOpenHuntingShortcut}
                 type="button"
-                aria-label="进入狩猎快捷入口"
+                aria-label={isHuntingShortcutEnabled ? "查看狩猎推荐委托" : "开启狩猎快捷开关"}
               >
-                <Crosshair size={18} />
+                {isHuntingShortcutEnabled ? (
+                  <>
+                    <svg className="hunting-ecg-icon" aria-hidden="true" viewBox="0 0 30 22">
+                      <polyline points="1,12 7,12 10,5 14,18 18,8 21,12 29,12" />
+                    </svg>
+                    <span className="quick-action-badge">{recommendedHuntingTasks.length}</span>
+                  </>
+                ) : (
+                  <Crosshair size={18} />
+                )}
               </button>
             ) : null}
           </div>
@@ -591,14 +873,27 @@ export function App() {
         </>
       )}
 
+      {isHuntingShortcutConfirmOpen ? (
+        <HuntingShortcutConfirmDialog
+          onClose={closeHuntingShortcutDialogs}
+          onConfirm={handleConfirmHuntingShortcut}
+          step={huntingShortcutConfirmStep}
+        />
+      ) : null}
+
+      {isHuntingRecommendationOpen ? (
+        <HuntingRecommendationDialog
+          onClose={() => setIsHuntingRecommendationOpen(false)}
+          onDisable={handleDisableHuntingShortcut}
+          tasks={recommendedHuntingTasks}
+        />
+      ) : null}
+
       {isOngoingOpen ? (
         <OngoingOrdersDialog
+          maxHeight="min(72vh, 620px)"
           onClose={() => setIsOngoingOpen(false)}
-          onOpenOrders={() => {
-            setIsOngoingOpen(false);
-            handleNavigate("orders");
-          }}
-          orders={roleOrders}
+          orders={ongoingOrders}
         />
       ) : null}
 
@@ -624,11 +919,23 @@ export function App() {
         />
       ) : null}
 
-      {isTutorSubjectEditorOpen ? (
-        <TutorSubjectDialog
-          initialSubject={user.profileDraft.tutorSubject}
-          onClose={() => setIsTutorSubjectEditorOpen(false)}
-          onSave={handleSaveTutorSubjects}
+      {isPublishInfoOpen ? (
+        <PublishInfoDialog
+          addressItems={publishAddressItems}
+          initialType={publishInfoInitialType}
+          isPublishing={publishHuntingTaskMutation.isPending}
+          onClose={() => setIsPublishInfoOpen(false)}
+          onPublish={handlePublishInfo}
+          onSave={handleSavePublishInfo}
+          role={role}
+        />
+      ) : null}
+
+      {isTutorCertificationInfoOpen ? (
+        <TutorCertificationInfoDialog
+          onClose={() => setIsTutorCertificationInfoOpen(false)}
+          onSave={handleSaveTutorCertificationInfo}
+          profileDraft={user.profileDraft}
         />
       ) : null}
 
@@ -643,106 +950,42 @@ export function App() {
   );
 }
 
-/** 获取日历使用的日期字符串。 */
-function getTutorDateKey(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
-/** 根据当前家教学科生成课程日历展示任务，后续可替换为后端课程接口。 */
-function getTutorCalendarTasks(profileDraft: ProfileDraftState): TutorCalendarTask[] {
-  const today = new Date();
-  const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-  const thirdDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 3);
-  const subject = parseTutorSubjects(profileDraft.tutorSubject)[0] ?? "数学";
-
-  return [
-    {
-      date: getTutorDateKey(today),
-      duration: "2小时",
-      id: "today-am",
-      location: "常用区域附近",
-      period: "am",
-      subject,
-      time: "09:00-11:00",
-      title: "一对一家教"
-    },
-    {
-      date: getTutorDateKey(tomorrow),
-      duration: "1.5小时",
-      id: "tomorrow-pm",
-      location: "学生家中",
-      period: "pm",
-      subject,
-      time: "15:00-16:30",
-      title: "课后辅导"
-    },
-    {
-      date: getTutorDateKey(thirdDay),
-      duration: "2小时",
-      id: "third-day-pm",
-      location: "线上课程",
-      period: "pm",
-      subject,
-      time: "19:00-21:00",
-      title: "阶段复习"
-    }
-  ];
-}
-
-/** 家教学科编辑弹窗。 */
-function TutorSubjectDialog({
-  initialSubject,
+/** 狩猎快捷开启确认弹窗，使用两步确认降低误触上线概率。 */
+function HuntingShortcutConfirmDialog({
   onClose,
-  onSave
+  onConfirm,
+  step
 }: {
-  initialSubject?: string;
   onClose: () => void;
-  onSave: (subjects: string[]) => void;
+  onConfirm: () => void;
+  step: 1 | 2;
 }) {
-  const [selectedSubjects, setSelectedSubjects] = useState<string[]>(() => parseTutorSubjects(initialSubject));
-  const isSaveDisabled = selectedSubjects.length === 0;
-
-  /** 切换学科标签选中状态。 */
-  function handleToggleSubject(subject: string) {
-    setSelectedSubjects((currentSubjects) =>
-      currentSubjects.includes(subject)
-        ? currentSubjects.filter((currentSubject) => currentSubject !== subject)
-        : [...currentSubjects, subject]
-    );
-  }
+  const isFinalStep = step === 2;
 
   return (
-    <section className="checkout-sheet" aria-label="编辑家教学科">
+    <section className="checkout-sheet" aria-label="开启狩猎快捷确认">
       <div className="sheet-backdrop" onClick={onClose} />
-      <div className="sheet-panel tutor-subject-sheet mx-auto grid max-h-[86vh] max-w-[540px] gap-[14px] overflow-auto px-[14px] pb-[calc(18px+env(safe-area-inset-bottom))] pt-[16px]">
+      <article className="sheet-panel hunting-shortcut-sheet mx-auto grid max-w-[420px] gap-[12px] p-[14px]">
         <div className="card-title flex items-center justify-between gap-[10px]">
-          <GraduationCap size={18} />
+          <RadioTower size={18} />
           <div>
-            <strong>编辑家教学科</strong>
-            <span>学科会同步到家教卡片展示。</span>
+            <strong>{isFinalStep ? "再次确认开启狩猎" : "开启狩猎快捷"}</strong>
+            <span>{isFinalStep ? "系统将开始推荐委托" : "开启后会显示实时推荐数量"}</span>
           </div>
-          <button className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button" aria-label="关闭">
+          <button
+            aria-label="关闭"
+            className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
+            onClick={onClose}
+            type="button"
+          >
             <XCircle size={20} />
           </button>
         </div>
-
-        <div className="tutor-subject-tags flex flex-wrap gap-[8px]" aria-label="选择可授课学科">
-          {tutorSubjectOptions.map((subject) => (
-            <button
-              className={selectedSubjects.includes(subject) ? "active" : ""}
-              key={subject}
-              onClick={() => handleToggleSubject(subject)}
-              type="button"
-            >
-              {subject}
-            </button>
-          ))}
-        </div>
-
+        <p className="hunting-shortcut-copy m-0 text-[13px] leading-[1.55] text-[#657181]">
+          {isFinalStep
+            ? "确认后狩猎快捷按钮进入开启状态，系统推荐的委托数量会显示在角标中。"
+            : "开启狩猎快捷后，平台会基于当前任务池推送推荐委托。请确认你已准备好及时响应。"}
+        </p>
         <div className="sheet-actions grid gap-[8px]">
           <button
             className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
@@ -752,16 +995,94 @@ function TutorSubjectDialog({
             取消
           </button>
           <button
-            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
-            disabled={isSaveDisabled}
-            onClick={() => onSave(selectedSubjects)}
+            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+            onClick={onConfirm}
             type="button"
           >
             <CheckCircle2 size={16} />
-            保存学科
+            {isFinalStep ? "确认开启" : "继续确认"}
           </button>
         </div>
-      </div>
+      </article>
+    </section>
+  );
+}
+
+/** 狩猎快捷开启后的系统推荐委托列表。 */
+function HuntingRecommendationDialog({
+  onClose,
+  onDisable,
+  tasks
+}: {
+  onClose: () => void;
+  onDisable: () => void;
+  tasks: HuntingTask[];
+}) {
+  return (
+    <section className="checkout-sheet" aria-label="狩猎推荐委托">
+      <div className="sheet-backdrop" onClick={onClose} />
+      <article className="sheet-panel hunting-recommendation-panel mx-auto grid max-h-[min(74vh,620px)] max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]">
+        <div className="card-title flex items-center justify-between gap-[10px]">
+          <RadioTower size={18} />
+          <div>
+            <strong>系统推荐委托</strong>
+            <span>{tasks.length} 个推荐任务</span>
+          </div>
+          <button
+            aria-label="关闭"
+            className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
+            onClick={onClose}
+            type="button"
+          >
+            <XCircle size={20} />
+          </button>
+        </div>
+        <div className="hunting-recommendation-list grid gap-[10px]">
+          {tasks.map((task) => (
+            <article className="flow-card compact hunting-recommendation-card grid gap-[8px] p-[12px]" key={task.id}>
+              <div className="card-title flex items-center justify-between gap-[10px]">
+                <div>
+                  <strong>{task.title}</strong>
+                  <span>{task.publishTime || "平台同步"}</span>
+                </div>
+                <em>{task.status}</em>
+              </div>
+              <div className="meta-line flex flex-wrap items-center gap-[6px] text-[13px] leading-[1.45] text-[#657181]">
+                <span>
+                  <MapPin size={13} />
+                  {task.destination || task.location}
+                </span>
+                <span>
+                  <Banknote size={13} />
+                  {getHuntingTaskAmountText(task)}
+                </span>
+              </div>
+            </article>
+          ))}
+          {tasks.length === 0 ? (
+            <article className="empty-state p-[14px] text-center">
+              <strong>暂无推荐委托</strong>
+              <span>保持开启后，系统会继续推送合适任务。</span>
+            </article>
+          ) : null}
+        </div>
+        <div className="sheet-actions grid gap-[8px]">
+          <button
+            className="warning-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+            onClick={onDisable}
+            type="button"
+          >
+            关闭狩猎
+          </button>
+          <button
+            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+            onClick={onClose}
+            type="button"
+          >
+            继续开启
+          </button>
+        </div>
+      </article>
     </section>
   );
 }

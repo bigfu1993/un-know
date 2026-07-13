@@ -13,14 +13,21 @@ import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceRespons
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorDemand;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.WalletRecord;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.WalletSummary;
+import com.unknown.platform.modules.clientworkspace.model.PublishHuntingTaskRequest;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ClientWorkspaceAppService {
+  private static final DateTimeFormatter HUNTING_PUBLISH_TIME_FORMATTER = DateTimeFormatter.ofPattern("MM-dd HH:mm");
+
   private final JdbcTemplate jdbcTemplate;
 
   public ClientWorkspaceAppService(JdbcTemplate jdbcTemplate) {
@@ -38,6 +45,53 @@ public class ClientWorkspaceAppService {
         merchantProducts(),
         walletSummary(role),
         walletRecords(role)
+    );
+  }
+
+  /** 发布委托或回收任务，并返回委托列表可直接展示的任务数据。 */
+  public HuntingTask publishHuntingTask(PublishHuntingTaskRequest request) {
+    String mode = huntingTaskMode(request.type());
+    String publicId = nextHuntingTaskPublicId();
+    String title = request.title().strip();
+    boolean amountNegotiable = Boolean.TRUE.equals(request.amountNegotiable());
+    long feeCents = amountNegotiable ? 0 : toCents(request.amount());
+    String description = defaultText(request.description(), "暂无描述");
+    String latestTime = request.latestTime().strip();
+    String location = defaultText(defaultText(request.destination(), request.location()), "目的地待补充");
+    String requirement = getHuntingRequirement(request.requirementTags(), request.requirement());
+    String status = amountNegotiable ? "待协商" : "已发布";
+
+    jdbcTemplate.update(
+        """
+            INSERT INTO hunting_task (public_id, title, description, mode, fee_cents, latest_time, location, urgency, status, enabled)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)
+            """,
+        publicId,
+        title,
+        description,
+        mode,
+        feeCents,
+        latestTime,
+        location,
+        truncate(requirement, 40),
+        status
+    );
+
+    return new HuntingTask(
+        publicId,
+        title,
+        description,
+        mode,
+        toAmount(feeCents),
+        latestTime,
+        location,
+        truncate(requirement, 40),
+        status,
+        HUNTING_PUBLISH_TIME_FORMATTER.format(LocalDateTime.now()),
+        location,
+        requirement,
+        normalizedRequirementTags(request.requirementTags()),
+        amountNegotiable
     );
   }
 
@@ -148,7 +202,8 @@ public class ClientWorkspaceAppService {
   private List<HuntingTask> huntingTasks() {
     return jdbcTemplate.query(
         """
-            SELECT public_id, title, mode, fee_cents, latest_time, location, urgency, status
+            SELECT public_id, title, description, mode, fee_cents, latest_time, location, urgency, status,
+                   TO_CHAR(created_at AT TIME ZONE 'Asia/Shanghai', 'MM-DD HH24:MI') AS publish_time
             FROM hunting_task
             WHERE enabled = TRUE
             ORDER BY created_at DESC, id DESC
@@ -156,12 +211,21 @@ public class ClientWorkspaceAppService {
         (rs, rowNum) -> new HuntingTask(
             rs.getString("public_id"),
             rs.getString("title"),
+            rs.getString("description"),
             rs.getString("mode"),
             toAmount(rs.getLong("fee_cents")),
             rs.getString("latest_time"),
             rs.getString("location"),
             rs.getString("urgency"),
-            rs.getString("status")
+            rs.getString("status"),
+            rs.getString("publish_time"),
+            rs.getString("location"),
+            rs.getString("urgency"),
+            Arrays.stream(rs.getString("urgency").split("、"))
+                .map(String::strip)
+                .filter((item) -> !item.isBlank())
+                .toList(),
+            rs.getLong("fee_cents") == 0
         )
     );
   }
@@ -332,5 +396,79 @@ public class ClientWorkspaceAppService {
 
   private BigDecimal toAmount(long cents) {
     return BigDecimal.valueOf(cents, 2);
+  }
+
+  /** 将元转换为分，统一保留两位小数。 */
+  private long toCents(BigDecimal amount) {
+    if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+      throw new BusinessException("INVALID_HUNTING_TASK_AMOUNT", "发布金额必须大于 0");
+    }
+
+    return amount.setScale(2, RoundingMode.HALF_UP).movePointRight(2).longValueExact();
+  }
+
+  /** 生成委托任务对外编号。 */
+  private String nextHuntingTaskPublicId() {
+    String randomSuffix = UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
+    return "H" + System.currentTimeMillis() + randomSuffix;
+  }
+
+  /** 根据发布类型获取委托任务模式。 */
+  private String huntingTaskMode(String type) {
+    if ("delegation".equals(type)) {
+      return "委托发布";
+    }
+    if ("recycle".equals(type)) {
+      return "回收发布";
+    }
+
+    throw new BusinessException("UNSUPPORTED_HUNTING_TASK_TYPE", "当前仅支持发布委托和回收");
+  }
+
+  /** 规范化委托要求标签。 */
+  private List<String> normalizedRequirementTags(List<String> requirementTags) {
+    if (requirementTags == null) {
+      return List.of();
+    }
+
+    return requirementTags.stream()
+        .map(String::strip)
+        .filter((tag) -> !tag.isBlank())
+        .limit(4)
+        .toList();
+  }
+
+  /** 获取委托要求展示文案。 */
+  private String getHuntingRequirement(List<String> requirementTags, String fallbackRequirement) {
+    List<String> normalizedTags = normalizedRequirementTags(requirementTags);
+    String customRequirement = fallbackRequirement == null ? "" : fallbackRequirement.strip();
+    List<String> requirementItems = new java.util.ArrayList<>(normalizedTags);
+    if (!customRequirement.isBlank()) {
+      Arrays.stream(customRequirement.split("、|,|，|\\s+"))
+          .map(String::strip)
+          .filter((item) -> !item.isBlank())
+          .filter((item) -> !requirementItems.contains(item))
+          .forEach(requirementItems::add);
+    }
+
+    return requirementItems.isEmpty() ? "无特殊要求" : String.join("、", requirementItems);
+  }
+
+  /** 清理用户输入文本，为空时使用默认展示值。 */
+  private String defaultText(String value, String fallback) {
+    if (value == null || value.isBlank()) {
+      return fallback;
+    }
+
+    return value.strip();
+  }
+
+  /** 按表字段长度裁剪展示文本。 */
+  private String truncate(String value, int maxLength) {
+    if (value.length() <= maxLength) {
+      return value;
+    }
+
+    return value.substring(0, maxLength);
   }
 }

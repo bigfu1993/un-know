@@ -1,7 +1,7 @@
 import { AddressInfoForm } from "../AddressInfoForm";
 import { validateByKey } from "../../tools/validation";
 
-/** Renders post-registration nickname, address, and password setup before entering H5. */
+/** 进入 H5 前渲染注册后的昵称、地址和密码设置表单。 */
 export function RegistrationProfileCompletion({
   areaOptions,
   birthday,
@@ -41,7 +41,7 @@ export function RegistrationProfileCompletion({
         ? "留空资料并进入"
         : "确认并进入";
 
-  /** Submits after required nickname and optional address-field formats pass local validation. */
+  /** 必填昵称和选填地址格式通过本地校验后提交。 */
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isNicknameInvalid || hasInvalidProfileFields) {

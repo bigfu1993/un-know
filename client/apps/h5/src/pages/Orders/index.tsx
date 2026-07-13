@@ -1,4 +1,4 @@
-/** Orders route: displays role-filtered orders and post-completion action entry points. */
+/** 订单页面，展示按角色过滤后的订单和后续处理入口。 */
 export function Orders({ orders }: { orders: ClientOrder[] }) {
   return (
     <section className="module-stack grid gap-[10px]">

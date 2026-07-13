@@ -55,12 +55,18 @@ public record ClientWorkspaceResponse(
   public record HuntingTask(
       String id,
       String title,
+      String description,
       String mode,
       BigDecimal fee,
       String latestTime,
       String location,
       String urgency,
-      String status
+      String status,
+      String publishTime,
+      String destination,
+      String requirement,
+      List<String> requirementTags,
+      Boolean amountNegotiable
   ) {
   }
 

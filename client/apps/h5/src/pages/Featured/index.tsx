@@ -1,4 +1,4 @@
-/** Featured marketplace page: owns product fetching and filter state; App owns checkout. */
+/** 优选商品页面，维护商品筛选状态，购买确认由 App 统一处理。 */
 export function Featured({
   role,
   purchasePending,

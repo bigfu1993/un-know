@@ -4,7 +4,9 @@ import {
   LoginRequest,
   LoginResponse,
   MiniappOneTapLoginRequest,
+  HuntingTask,
   ProductSummary,
+  PublishHuntingTaskRequest,
   PurchaseRequest,
   PurchaseResponse,
   RegisterRequest,
@@ -214,6 +216,13 @@ export async function getProducts(role: Role): Promise<ProductSummary[]> {
 
 export async function getClientWorkspace(role: Role): Promise<ClientWorkspacePayload> {
   return requestJson<ClientWorkspacePayload>(`/api/client/workspace?role=${role}`);
+}
+
+export async function publishHuntingTask(payload: PublishHuntingTaskRequest): Promise<HuntingTask> {
+  return requestJson<HuntingTask>("/api/client/workspace/hunting-tasks", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
 }
 
 export async function purchaseProduct(payload: PurchaseRequest): Promise<PurchaseResponse> {

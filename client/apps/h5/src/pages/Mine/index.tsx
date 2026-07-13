@@ -4,19 +4,17 @@ import { AccountSummaryCard, WalletSummaryCard } from "../../components/SummaryC
 import { TutorCard } from "../../components/TutorCard";
 import { getTutorCardDataFromDraft, getTutorCardMode } from "../../components/TutorCard/model";
 
-/** Account center route for all roles; cross-page navigation is delegated back to App. */
+/** 所有角色共用的账户中心页面，跨页面跳转由 App 统一承接。 */
 export function Mine({
   onBack,
-  onEditTutorSubject,
   onNavigate,
-  onOpenTutorCalendar,
+  onOpenTutorCertificationInfo,
   orders,
   walletSummary
 }: {
   onBack: () => void;
-  onEditTutorSubject: () => void;
   onNavigate: (surface: PageSurface) => void;
-  onOpenTutorCalendar: () => void;
+  onOpenTutorCertificationInfo: () => void;
   orders: ClientOrder[];
   walletSummary: WalletSummary;
 }) {
@@ -81,9 +79,7 @@ export function Mine({
           {...tutorCardData}
           className="mine-tutor-card p-[14px]"
           mode={tutorCardMode}
-          onEditSubject={onEditTutorSubject}
-          onOpenCalendar={onOpenTutorCalendar}
-          onOpenMessages={() => onNavigate("mine")}
+          onOpenInfo={onOpenTutorCertificationInfo}
           onStartCertification={() => onNavigate("tutorCertification")}
         />
         <OrderModuleCard

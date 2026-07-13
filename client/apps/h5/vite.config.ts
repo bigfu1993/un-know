@@ -34,6 +34,7 @@ export default defineConfig({
             "useClientLogin",
             "useClientRegister",
             "useClientWorkspace",
+            "usePublishHuntingTask",
             "useProducts",
             "usePurchaseProduct"
           ],
@@ -86,6 +87,9 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: 5174
+  },
+  optimizeDeps: {
+    exclude: ["@unknown/api-client", "@unknown/domain", "@unknown/hooks", "@unknown/ui-tokens"]
   },
   preview: {
     port: 4174

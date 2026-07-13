@@ -1,4 +1,4 @@
-/** Props consumed by the H5 login/register card component. */
+/** H5 登录/注册卡片组件使用的属性。 */
 export interface LoginRegisterCardProps {
   authMode: import("./app").AuthMode;
   code: string;

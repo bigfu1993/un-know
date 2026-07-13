@@ -1,4 +1,4 @@
-/** Merchant sales workbench: sales metrics, quick entries, and merchant product cards. */
+/** 商户销售工作台，展示经营指标、快捷入口和商品卡片。 */
 export function MerchantSales({
   dashboard,
   merchantProducts

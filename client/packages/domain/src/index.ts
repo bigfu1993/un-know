@@ -128,6 +128,7 @@ export interface ClientOrder {
   title: string;
   status: string;
   amount: number;
+  category?: "delegation" | "featured" | "hunting" | "partTime";
   contact: string;
   detail: string;
   risk?: "payment" | "refund";
@@ -157,14 +158,36 @@ export interface HuntingSummary {
 }
 
 export interface HuntingTask {
+  amountNegotiable?: boolean;
+  description?: string;
+  destination?: string;
   id: string;
   title: string;
   mode: string;
   fee: number;
+  isMine?: boolean;
   latestTime: string;
   location: string;
+  pendingAmount?: number;
+  publishTime?: string;
+  requirement?: string;
+  requirementTags?: string[];
   urgency: string;
   status: string;
+}
+
+/** 委托发布请求，提交后由服务端写入 hunting_task。 */
+export interface PublishHuntingTaskRequest {
+  amount: number | null;
+  amountNegotiable?: boolean;
+  description?: string;
+  latestTime: string;
+  destination?: string;
+  location: string;
+  requirement: string;
+  requirementTags?: string[];
+  title: string;
+  type: "delegation" | "recycle";
 }
 
 export interface TutorApplicant {

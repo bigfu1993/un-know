@@ -1,23 +1,23 @@
 import { getStoredPasswordCredential, setStoredPasswordCredential } from "../shared/clientPageModel";
 
-/** Local H5 test verification code shared by login, register, and settings security flows. */
+/** 登录、注册和设置安全流程共用的 H5 本地测试验证码。 */
 export const localAuthCode = "000000";
 
-/** Minimum password length enforced by the H5 local password setup and reset flows. */
+/** H5 本地密码设置和重置流程要求的最小密码长度。 */
 export const localPasswordMinLength = 6;
 
-/** Byte length of the random salt used for local H5 password hashing. */
+/** H5 本地密码哈希使用的随机盐字节长度。 */
 const localPasswordSaltBytes = 16;
 
-/** Version marker included in local H5 password hashes. */
+/** H5 本地密码哈希中携带的版本标记。 */
 const localPasswordHashVersion = "h5-local-password-v1";
 
-/** Encodes binary hash or salt bytes as hex for localStorage persistence. */
+/** 将二进制哈希或盐值编码为十六进制字符串，便于写入 localStorage。 */
 function encodeHex(bytes: Uint8Array) {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-/** Creates a random salt for the local H5 password credential. */
+/** 为 H5 本地密码凭据生成随机盐值。 */
 function createPasswordSalt() {
   const runtimeCrypto = globalThis.crypto;
 
@@ -30,7 +30,7 @@ function createPasswordSalt() {
   return encodeHex(saltBytes);
 }
 
-/** Hashes the local H5 password with phone and salt; backend password API is not available yet. */
+/** 使用手机号和盐值计算 H5 本地密码哈希，等待后端密码接口接入。 */
 async function createLocalPasswordHash(phone: string, password: string, salt: string) {
   const runtimeCrypto = globalThis.crypto;
 
@@ -43,7 +43,7 @@ async function createLocalPasswordHash(phone: string, password: string, salt: st
   return encodeHex(new Uint8Array(digest));
 }
 
-/** Saves a local H5 password credential as a salted hash. */
+/** 将 H5 本地密码凭据保存为带盐哈希。 */
 export async function saveLocalPasswordCredential(phone: string, password: string) {
   const salt = createPasswordSalt();
   const passwordHash = await createLocalPasswordHash(phone, password, salt);
@@ -55,7 +55,7 @@ export async function saveLocalPasswordCredential(phone: string, password: strin
   });
 }
 
-/** Verifies a local H5 password credential before delegating session creation to the code login API. */
+/** 复用验证码登录接口创建会话前，先校验 H5 本地密码凭据。 */
 export async function verifyLocalPasswordCredential(phone: string, password: string) {
   const credential = getStoredPasswordCredential(phone);
 

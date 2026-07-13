@@ -1,4 +1,4 @@
-/** Reserved marketing route; keeps future campaign entry isolated from App. */
+/** 营销预留页面，隔离后续活动能力入口。 */
 export function Marketing() {
   return (
     <section className="module-stack grid gap-[10px]">

@@ -1,28 +1,51 @@
-/**
- * Cross-page workflow dialogs.
- * Dialogs collect or display data; mutations and navigation stay in the caller.
- */
+/** 跨页面流程弹窗，仅负责采集或展示数据，提交和导航由调用方处理。 */
 import { AddressInfoForm } from "../AddressInfoForm";
 import { validateByKey } from "../../tools/validation";
 
+/** 进行中列表筛选类型。 */
+type OngoingOrderFilter = "all" | "delegation" | "featured" | "hunting";
+
+/** 进行中列表筛选标签配置。 */
+const ongoingOrderFilterOptions: Array<{ label: string; value: OngoingOrderFilter }> = [
+  { label: "全部", value: "all" },
+  { label: "优选", value: "featured" },
+  { label: "委托", value: "delegation" },
+  { label: "狩猎", value: "hunting" }
+];
+
+/** 获取进行中事项分类，未标记的订单默认归入优选。 */
+function getOngoingOrderCategory(order: ClientOrder): Exclude<OngoingOrderFilter, "all"> {
+  return order.category === "delegation" || order.category === "hunting" ? order.category : "featured";
+}
+
+/** 进行中事项弹窗，支持分类筛选和面板高度配置。 */
 export function OngoingOrdersDialog({
+  maxHeight = "min(72vh, 620px)",
   orders,
-  onClose,
-  onOpenOrders
+  onClose
 }: {
+  maxHeight?: string;
   orders: ClientOrder[];
   onClose: () => void;
-  onOpenOrders: () => void;
 }) {
+  const [activeFilter, setActiveFilter] = useState<OngoingOrderFilter>("all");
+  const filteredOrders = useMemo(
+    () => orders.filter((order) => activeFilter === "all" || getOngoingOrderCategory(order) === activeFilter),
+    [activeFilter, orders]
+  );
+
   return (
     <section className="ongoing-dialog" aria-label="进行中的列表">
       <div className="sheet-backdrop" onClick={onClose} />
-      <article className="ongoing-panel mx-auto grid max-h-[min(78vh,680px)] max-w-[540px] gap-[12px] overflow-auto px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]">
+      <article
+        className="ongoing-panel mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]"
+        style={{ maxHeight }}
+      >
         <div className="card-title flex items-center justify-between gap-[10px]">
           <PackageCheck size={18} />
           <div>
             <strong>进行中的列表卡片</strong>
-            <span>{orders.length} 个配送/订单事项</span>
+            <span>{orders.length} 个进行中事项</span>
           </div>
           <button
             className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
@@ -33,8 +56,20 @@ export function OngoingOrdersDialog({
             <XCircle size={20} />
           </button>
         </div>
+        <div className="ongoing-filter-tags flex flex-wrap gap-[8px]" aria-label="筛选进行中事项">
+          {ongoingOrderFilterOptions.map((option) => (
+            <button
+              className={activeFilter === option.value ? "active" : ""}
+              key={option.value}
+              onClick={() => setActiveFilter(option.value)}
+              type="button"
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
         <div className="ongoing-list grid gap-[10px]">
-          {orders.map((order) => (
+          {filteredOrders.map((order) => (
             <article className={`flow-card compact p-[12px] ${order.risk ? "risk-card" : ""}`} key={order.id}>
               <div className="card-title flex items-center justify-between gap-[10px]">
                 <div>
@@ -50,21 +85,19 @@ export function OngoingOrdersDialog({
               </div>
             </article>
           ))}
+          {filteredOrders.length === 0 ? (
+            <article className="empty-state p-[14px] text-center">
+              <strong>暂无当前筛选事项</strong>
+              <span>切换筛选标签查看其它进行中内容。</span>
+            </article>
+          ) : null}
         </div>
-        <button
-          className="primary-button full inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-          onClick={onOpenOrders}
-          type="button"
-        >
-          <PackageCheck size={16} />
-          查看订单详情
-        </button>
       </article>
     </section>
   );
 }
 
-/** Renders the active scene profile template and delegates saving to App. */
+/** 渲染当前场景资料模板，并将保存动作交给 App。 */
 export function ProfileCompletionDialog({
   template,
   profileDraft,
@@ -143,7 +176,7 @@ export function ProfileCompletionDialog({
   );
 }
 
-/** Collects fulfillment and payment choices before App submits the purchase. */
+/** App 提交购买前，采集履约方式和支付方式。 */
 export function CheckoutSheet({
   checkout,
   role,

@@ -1,4 +1,4 @@
-/** Parent tutor recruitment route; owns sort state for tutor demand cards. */
+/** 家长家教招募页面，维护家教需求卡片的排序状态。 */
 export function Tutor({ tutorDemands }: { tutorDemands: TutorDemand[] }) {
   const [tutorSort, setTutorSort] = useState<TutorSort>("recommended");
 

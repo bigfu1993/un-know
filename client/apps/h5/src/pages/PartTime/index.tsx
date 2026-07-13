@@ -1,4 +1,4 @@
-﻿/** Part-time page: owns student filter state and switches to merchant workbench by role. */
+﻿/** 兼职页面，维护学生筛选状态，并按角色切换商户工作台。 */
 export function PartTime({ role, dashboard, jobs }: { role: Role; dashboard: MerchantDashboard; jobs: PartTimeJob[] }) {
   const [jobFilter, setJobFilter] = useState<JobFilter>("latest");
 

@@ -1,7 +1,4 @@
-/**
- * Shared presentation widgets used by feature pages.
- * Keep them stateless unless a widget owns purely visual UI state.
- */
+/** 业务页面共用展示组件，除纯视觉状态外保持无状态。 */
 export function SectionHeader({ eyebrow, title, countText }: { eyebrow: string; title: string; countText: string }) {
   return (
     <section className="section-title mb-[12px] mt-[20px] flex items-end justify-between gap-[12px]">
@@ -23,7 +20,7 @@ export function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
-/** Compact metric card for merchant and recruitment workbenches. */
+/** 商户和招募工作台使用的紧凑指标卡。 */
 export function WorkbenchInfoCard({
   icon: Icon,
   title,
@@ -57,7 +54,7 @@ export function WorkbenchInfoCard({
   );
 }
 
-/** Quick-entry card describes available actions; callers decide the actual behavior. */
+/** 快捷入口卡片仅描述可用动作，具体行为由调用方决定。 */
 export function WorkbenchQuickEntryCard({
   icon: Icon,
   title,
@@ -99,7 +96,7 @@ function QuickEntry({ icon: Icon, label, text }: { icon: LucideIcon; label: stri
   );
 }
 
-/** Product summary card; purchase intent is returned to the caller through onOpenCheckout. */
+/** 商品摘要卡片，通过 onOpenCheckout 将购买意图交回调用方。 */
 export function ProductListCard({
   role,
   product,
@@ -167,7 +164,7 @@ export function ProductListCard({
   );
 }
 
-/** Role-aware part-time card with student and merchant action layouts. */
+/** 按学生和商户两种操作布局展示的兼职卡片。 */
 export function PartTimeJobCard({ job, mode }: { job: PartTimeJob; mode: "student" | "merchant" }) {
   if (mode === "merchant") {
     return (

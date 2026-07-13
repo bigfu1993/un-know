@@ -56,11 +56,13 @@ declare global {
   const ProductListCard: typeof import('../components/PageWidgets/index').ProductListCard
   const ProfileCompletionDialog: typeof import('../components/WorkflowDialogs/index').ProfileCompletionDialog
   const ProfileContextCard: typeof import('../components/AppShell/index').ProfileContextCard
+  const PublishInfoDialog: typeof import('../components/PublishInfoDialog/index').PublishInfoDialog
   const QueryClient: typeof import('@tanstack/react-query').QueryClient
   const QueryClientProvider: typeof import('@tanstack/react-query').QueryClientProvider
   const RegistrationProfileCompletion: typeof import('../components/RegistrationProfileCompletion/index').RegistrationProfileCompletion
   const Route: typeof import('react-router-dom').Route
   const Routes: typeof import('react-router-dom').Routes
+  const ScrollingTicker: typeof import('../components/ScrollingTicker/index').ScrollingTicker
   const SectionHeader: typeof import('../components/PageWidgets/index').SectionHeader
   const Settings: typeof import('lucide-react').Settings
   const SettingsView: typeof import('../pages/Settings/index').SettingsView
@@ -72,8 +74,10 @@ declare global {
   const Suspense: typeof import('react').Suspense
   const Truck: typeof import('lucide-react').Truck
   const Tutor: typeof import('../pages/Tutor/index').Tutor
+  const TutorCalendarDialog: typeof import('../components/TutorCalendar/index').TutorCalendarDialog
   const TutorCard: typeof import('../components/TutorCard/index').TutorCard
-  const TutorCertification: typeof import('../pages/TutorCertification/index').TutorCertification
+  const TutorCertification: typeof import('../pages/Tutor/TutorCertification').TutorCertification
+  const TutorCertificationInfoDialog: typeof import('../components/TutorCertificationInfoDialog/index').TutorCertificationInfoDialog
   const UserRound: typeof import('lucide-react').UserRound
   const Wallet: typeof import('../pages/Wallet/index').Wallet
   const WalletCards: typeof import('lucide-react').WalletCards
@@ -99,6 +103,7 @@ declare global {
   const deliveryModeLabels: typeof import('@unknown/domain').deliveryModeLabels
   const filterProducts: typeof import('../shared/clientPageModel').filterProducts
   const formatCurrency: typeof import('../shared/clientPageModel').formatCurrency
+  const formatTutorSubjects: typeof import('../shared/tutorModel').formatTutorSubjects
   const forwardRef: typeof import('react').forwardRef
   const getDefaultDeliveryMode: typeof import('../shared/clientPageModel').getDefaultDeliveryMode
   const getDefaultPrimaryTab: typeof import('@unknown/domain').getDefaultPrimaryTab
@@ -130,6 +135,8 @@ declare global {
   const mineEntryLabels: typeof import('@unknown/domain').mineEntryLabels
   const moduleRoutePaths: typeof import('../shared/clientPageModel').moduleRoutePaths
   const normalizeAddressBookItems: typeof import('../shared/clientPageModel').normalizeAddressBookItems
+  const parseTutorSubjectLevelItems: typeof import('../components/TutorCard/model').parseTutorSubjectLevelItems
+  const parseTutorSubjects: typeof import('../shared/tutorModel').parseTutorSubjects
   const passwordCredentialStorageKey: typeof import('../shared/clientPageModel').passwordCredentialStorageKey
   const paymentMethodLabels: typeof import('@unknown/domain').paymentMethodLabels
   const pendingRegistrationStorageKey: typeof import('../shared/clientPageModel').pendingRegistrationStorageKey
@@ -145,9 +152,13 @@ declare global {
   const setStoredPendingRegistration: typeof import('../shared/clientPageModel').setStoredPendingRegistration
   const setStoredProfileDraft: typeof import('../shared/clientPageModel').setStoredProfileDraft
   const startTransition: typeof import('react').startTransition
+  const stringifyTutorSubjectLevelItems: typeof import('../components/TutorCard/model').stringifyTutorSubjectLevelItems
   const tabIcons: typeof import('../shared/clientPageModel').tabIcons
   const tutorCertificationStatusLabels: typeof import('../components/TutorCard/model').tutorCertificationStatusLabels
+  const tutorGradeOptions: typeof import('../components/TutorCard/model').tutorGradeOptions
+  const tutorLevelOptions: typeof import('../components/TutorCard/model').tutorLevelOptions
   const tutorSorts: typeof import('../shared/clientPageModel').tutorSorts
+  const tutorSubjectOptions: typeof import('../shared/tutorModel').tutorSubjectOptions
   const use: typeof import('react').use
   const useActionState: typeof import('react').useActionState
   const useCallback: typeof import('react').useCallback
@@ -170,6 +181,7 @@ declare global {
   const useNavigate: typeof import('react-router-dom').useNavigate
   const useOptimistic: typeof import('react').useOptimistic
   const useProducts: typeof import('@unknown/hooks').useProducts
+  const usePublishHuntingTask: typeof import('@unknown/hooks').usePublishHuntingTask
   const usePurchaseProduct: typeof import('@unknown/hooks').usePurchaseProduct
   const useReducer: typeof import('react').useReducer
   const useRef: typeof import('react').useRef
@@ -192,14 +204,29 @@ declare global {
   export type { OrderModuleCounts } from '../components/OrderModuleCard/model'
   import('../components/OrderModuleCard/model')
   // @ts-ignore
+  export type { PublishInfoDialogProps } from '../components/PublishInfoDialog/index'
+  import('../components/PublishInfoDialog/index')
+  // @ts-ignore
+  export type { ScrollingTickerDirection, ScrollingTickerProps } from '../components/ScrollingTicker/index'
+  import('../components/ScrollingTicker/index')
+  // @ts-ignore
   export type { SummaryCardVariant, AccountSummaryCardProps, WalletSummaryCardProps } from '../components/SummaryCards/index'
   import('../components/SummaryCards/index')
+  // @ts-ignore
+  export type { TutorCalendarTask, TutorCalendarDialogProps } from '../components/TutorCalendar/index'
+  import('../components/TutorCalendar/index')
   // @ts-ignore
   export type { TutorCardProps } from '../components/TutorCard/index'
   import('../components/TutorCard/index')
   // @ts-ignore
-  export type { TutorCardMode, TutorCardData, TutorCertificationStatus } from '../components/TutorCard/model'
+  export type { TutorCardMode, TutorSubjectLevelItem, TutorCardData, TutorCertificationStatus } from '../components/TutorCard/model'
   import('../components/TutorCard/model')
+  // @ts-ignore
+  export type { TutorCertificationInfoSaveMode, TutorCertificationInfoDialogProps } from '../components/TutorCertificationInfoDialog/index'
+  import('../components/TutorCertificationInfoDialog/index')
+  // @ts-ignore
+  export type { DelegationProps } from '../pages/Delegation/index'
+  import('../pages/Delegation/index')
   // @ts-ignore
   export type { StoredPasswordCredential, PasswordCredentialStore, PendingRegistrationRecord, PendingRegistrationStore } from '../shared/clientPageModel'
   import('../shared/clientPageModel')

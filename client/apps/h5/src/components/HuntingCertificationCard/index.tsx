@@ -32,7 +32,6 @@ export function HuntingCertificationCard({
         </span>
         <span className="hunting-certification-main min-w-0">
           <strong>狩猎认证</strong>
-          <em>提交基础身份资料后，等待平台审核狩猎接单资格。</em>
         </span>
       </button>
     );

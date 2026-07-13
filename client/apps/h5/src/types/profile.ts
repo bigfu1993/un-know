@@ -25,7 +25,7 @@ export type RegistrationProfileDraft = ProfileDraftState;
 export type AddressInfoFormMode = "edit" | "preview";
 export type AddressInfoPreviewVariant = "list" | "card";
 
-/** Local H5 address-book item persisted before backend address APIs are available. */
+/** 后端地址接口上线前，H5 本地持久化的地址簿条目。 */
 export interface AddressBookItem {
   createdAt: string;
   draft: ProfileDraftState;
@@ -34,7 +34,7 @@ export interface AddressBookItem {
   updatedAt: string;
 }
 
-/** Props consumed by the shared address information form in edit and preview mode. */
+/** 地址信息表单在编辑和预览模式下使用的属性。 */
 export interface AddressInfoFormProps {
   areaOptions: string[];
   actionLabel?: string;
@@ -49,7 +49,7 @@ export interface AddressInfoFormProps {
   previewVariant?: AddressInfoPreviewVariant;
 }
 
-/** Props consumed by the post-registration profile form with required password setup. */
+/** 注册后资料表单属性，包含必填密码设置。 */
 export interface RegistrationProfileCompletionProps {
   areaOptions: string[];
   birthday: string;

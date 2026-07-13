@@ -1,0 +1,2 @@
+ALTER TABLE hunting_task
+  ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '暂无描述';

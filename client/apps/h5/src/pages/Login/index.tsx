@@ -7,19 +7,19 @@ import {
 import { localAuthCode, localPasswordMinLength, saveLocalPasswordCredential, verifyLocalPasswordCredential } from "../../tools/localAuth";
 import { normalizeByKey, validateByKey } from "../../tools/validation";
 
-/** Runtime globals exposed by H5 host pages for API endpoint overrides. */
+/** H5 宿主页暴露的运行时全局变量，用于覆盖接口地址。 */
 type H5RuntimeGlobals = typeof globalThis & {
   __UNKNOWN_API_BASE_URL__?: string;
 };
 
-/** Minimal backend envelope used by the local registration role confirmation request. */
+/** 注册后角色确认请求使用的最小后端响应包。 */
 interface ApiEnvelope<T> {
   code: string;
   message: string;
   data?: T;
 }
 
-/** Props for the local H5 password reset form. */
+/** H5 本地重置密码表单属性。 */
 interface PasswordResetCardProps {
   code: string;
   defaultCode: string;
@@ -35,14 +35,14 @@ interface PasswordResetCardProps {
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }
 
-/** Role option icon mapping used by the mandatory post-register role picker. */
+/** 注册后必选角色卡片使用的角色图标映射。 */
 const registrationRoleIcons = {
   student: GraduationCap,
   merchant: Store,
   parent: UserRound
 } satisfies Record<Role, LucideIcon>;
 
-/** Creates an editable registration draft from stored values for the selected role. */
+/** 根据已存草稿和所选角色创建可编辑注册资料草稿。 */
 function getInitialRegistrationDraft(role: Role) {
   const storedDraft = getStoredProfileDraft();
   const template = registrationProfileTemplates[role];
@@ -50,17 +50,17 @@ function getInitialRegistrationDraft(role: Role) {
   return Object.fromEntries(template.fields.map((field) => [field.key, storedDraft[field.key] ?? ""]));
 }
 
-/** Reads the optional birthday captured outside the address form during registration completion. */
+/** 读取注册资料中独立于地址表单的选填生日。 */
 function getInitialRegistrationBirthday() {
   return getStoredProfileDraft().birthday ?? "";
 }
 
-/** Resolves the H5 API base URL without depending on shared package exports during dev-server HMR. */
+/** 解析 H5 接口基础地址，避免开发热更新期间依赖共享包导出。 */
 function getH5ApiBaseUrl() {
   return (globalThis as H5RuntimeGlobals).__UNKNOWN_API_BASE_URL__ ?? "http://127.0.0.1:8080";
 }
 
-/** Confirms the final role for a just-registered account and returns the refreshed session. */
+/** 为刚注册的账号确认最终角色，并返回刷新后的会话。 */
 async function selectClientRoleAfterRegistration(accessToken: string, role: Role) {
   const response = await fetch(`${getH5ApiBaseUrl()}/api/client/auth/select-role`, {
     method: "POST",
@@ -79,7 +79,7 @@ async function selectClientRoleAfterRegistration(accessToken: string, role: Role
   return result.data;
 }
 
-/** Mandatory role picker shown immediately after registration succeeds. */
+/** 注册成功后立即展示的强制角色选择面板。 */
 function RegistrationRoleSelection({
   isPending,
   onBack,
@@ -139,7 +139,7 @@ function RegistrationRoleSelection({
   );
 }
 
-/** Local password reset panel; SMS sending is intentionally not connected in phase one. */
+/** 本地重置密码面板，第一阶段不接入真实短信发送。 */
 function PasswordResetCard({
   code,
   defaultCode,
@@ -247,7 +247,7 @@ function PasswordResetCard({
   );
 }
 
-/** Login/register route: owns auth form state and registration profile handoff. */
+/** 登录/注册页面，负责认证表单状态和注册后资料交接。 */
 export function Login({
   onLoginSuccess
 }: {
@@ -279,7 +279,7 @@ export function Login({
 
   const registrationTemplate = selectedRegisterRole ? registrationProfileTemplates[selectedRegisterRole] : null;
 
-  /** Stores the fresh register session until the mandatory role selection is completed. */
+  /** 暂存新注册会话，直到用户完成强制角色选择。 */
   function handleRegisterSuccess(session: LoginResponse, rawPhone: string) {
     setStoredPendingRegistration(rawPhone);
     setPendingRegisterSession(session);
@@ -294,7 +294,7 @@ export function Login({
     showMessage("注册成功，请先选择角色。", { type: "success" });
   }
 
-  /** Routes an authenticated session through unfinished post-registration role selection when needed. */
+  /** 登录成功后，如存在未完成注册角色选择，则继续角色选择流程。 */
   function handleAuthenticatedSession(session: LoginResponse, rawPhone: string) {
     if (hasStoredPendingRegistration(rawPhone)) {
       setPendingRegisterSession(session);
@@ -312,7 +312,7 @@ export function Login({
     onLoginSuccess(session);
   }
 
-  /** Opens the local password reset flow with the current login phone carried over. */
+  /** 打开本地重置密码流程，并带入当前登录手机号。 */
   function handleOpenPasswordReset() {
     setIsPasswordResetOpen(true);
     setResetPhone(phone);
@@ -322,13 +322,13 @@ export function Login({
     hideMessage();
   }
 
-  /** Leaves the local password reset flow and returns to the regular login form. */
+  /** 退出本地重置密码流程并返回普通登录表单。 */
   function handleBackFromPasswordReset() {
     setIsPasswordResetOpen(false);
     hideMessage();
   }
 
-  /** Cancels the post-registration flow and returns to the normal login entry. */
+  /** 取消注册后流程并返回普通登录入口。 */
   function handleCancelRegistrationFlow() {
     setPendingRegisterSession(null);
     setPendingRegisterPhone("");
@@ -343,7 +343,7 @@ export function Login({
     hideMessage();
   }
 
-  /** Records the selected registration role and opens the optional profile draft step. */
+  /** 记录注册角色并打开资料草稿步骤。 */
   function handleRegistrationRoleSelect(role: Role) {
     setSelectedRegisterRole(role);
     setRegistrationBirthday(getInitialRegistrationBirthday());
@@ -352,7 +352,7 @@ export function Login({
     showMessage("已选择角色，请填写昵称并设置登录密码。", { type: "success" });
   }
 
-  /** Returns from registration profile completion to the mandatory role picker. */
+  /** 从注册资料页返回强制角色选择页。 */
   function handleBackToRegistrationRoleSelection() {
     setSelectedRegisterRole(null);
     setRegistrationBirthday("");
@@ -363,7 +363,7 @@ export function Login({
     hideMessage();
   }
 
-  /** Confirms registration role with the backend, then enters the client shell. */
+  /** 向后端确认注册角色后进入客户端外壳。 */
   async function completeRegistration() {
     if (!pendingRegisterSession || !selectedRegisterRole) {
       return;
@@ -413,7 +413,7 @@ export function Login({
     }
   }
 
-  /** Validates local auth input and dispatches the selected login or register action. */
+  /** 校验本地认证输入，并分发登录或注册动作。 */
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     hideMessage();
@@ -487,7 +487,7 @@ export function Login({
     });
   }
 
-  /** Validates the temporary local password reset form without calling backend SMS APIs. */
+  /** 校验临时本地重置密码表单，不调用后端短信接口。 */
   async function handlePasswordResetSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     hideMessage();

@@ -5,6 +5,7 @@ import {
   getProducts,
   loginClient,
   miniappOneTapLogin,
+  publishHuntingTask,
   purchaseProduct,
   registerClient,
   selectClientRole
@@ -12,6 +13,7 @@ import {
 import {
   LoginRequest,
   MiniappOneTapLoginRequest,
+  PublishHuntingTaskRequest,
   PurchaseRequest,
   RegisterRequest,
   Role,
@@ -70,5 +72,11 @@ export function useMiniappOneTapLogin() {
 export function usePurchaseProduct() {
   return useMutation({
     mutationFn: (payload: PurchaseRequest) => purchaseProduct(payload)
+  });
+}
+
+export function usePublishHuntingTask() {
+  return useMutation({
+    mutationFn: (payload: PublishHuntingTaskRequest) => publishHuntingTask(payload)
   });
 }

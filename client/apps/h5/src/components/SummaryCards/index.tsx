@@ -1,31 +1,34 @@
 import { ChevronRight, UserRound, WalletCards } from "lucide-react";
 import type { ReactNode } from "react";
+import { getWalletTotalAmount } from "../../tools/wallet";
 
-/** Visual density options shared by account and wallet summary cards. */
+/** 账户卡和钱包卡共用的展示密度。 */
 export type SummaryCardVariant = "default" | "simple";
 
-/** Display field rendered in summary card metric lists. */
+/** 汇总卡片指标列表字段。 */
 interface SummaryCardField {
   label: string;
   value: string | number | undefined;
 }
 
-/** Props for the reusable account summary card. */
+/** 可复用账户汇总卡片属性。 */
 export interface AccountSummaryCardProps {
   accountStatus: string;
   birthday?: string;
   className?: string;
   creditScore: number;
+  footerAction?: ReactNode;
   followerCount?: string | number;
   followingCount?: string | number;
   nickname: string;
+  profileTags?: string[];
   phone?: string;
   roleLabel: string;
   trailingAction?: ReactNode;
   variant?: SummaryCardVariant;
 }
 
-/** Props for the reusable wallet summary card. */
+/** 可复用钱包汇总卡片属性。 */
 export interface WalletSummaryCardProps {
   className?: string;
   onOpen?: () => void;
@@ -35,31 +38,13 @@ export interface WalletSummaryCardProps {
   walletSummary: WalletSummary;
 }
 
-/** Formats empty card values with a consistent placeholder. */
+/** 将空卡片字段格式化为统一占位文案。 */
 function getDisplayValue(value: string | number | undefined) {
   const normalizedValue = String(value ?? "").trim();
   return normalizedValue || "未填写";
 }
 
-/** 将钱包金额字符串转换为可计算数值。 */
-function parseWalletAmount(value: string | number | undefined) {
-  const normalizedValue = String(value ?? "");
-  const numericValue = Number(normalizedValue.replace(/[^\d.]/g, ""));
-
-  return Number.isFinite(numericValue) ? numericValue : 0;
-}
-
-/** 计算钱包卡片头展示的总金额。 */
-function getWalletTotalAmount(walletSummary: WalletSummary) {
-  const totalAmount =
-    parseWalletAmount(walletSummary.withdrawable) +
-    parseWalletAmount(walletSummary.observation) +
-    parseWalletAmount(walletSummary.deposit);
-
-  return `¥${totalAmount.toFixed(2)}`;
-}
-
-/** Renders a compact metric grid for reusable summary cards. */
+/** 渲染账户和钱包卡共用的紧凑指标网格。 */
 function SummaryFieldGrid({ fields }: { fields: SummaryCardField[] }) {
   return (
     <div className="summary-card-fields grid gap-[8px]">
@@ -73,15 +58,17 @@ function SummaryFieldGrid({ fields }: { fields: SummaryCardField[] }) {
   );
 }
 
-/** Account summary card used by the full mine page and the avatar popover. */
+/** 我的页面和头像弹窗复用的账户汇总卡片。 */
 export function AccountSummaryCard({
   accountStatus,
   birthday,
   className,
   creditScore,
+  footerAction,
   followerCount = 0,
   followingCount = 0,
   nickname,
+  profileTags = [],
   phone,
   roleLabel,
   trailingAction,
@@ -109,28 +96,38 @@ export function AccountSummaryCard({
           <UserRound size={21} />
         </span>
         <div className="summary-card-title min-w-0 flex-1">
-          <strong>{getDisplayValue(nickname)}</strong>
+          <strong>
+            {getDisplayValue(nickname)}
+            {profileTags.length > 0 ? (
+              <span className="summary-profile-tags">
+                {profileTags.map((tag) => (
+                  <em key={tag}>{tag}</em>
+                ))}
+              </span>
+            ) : null}
+          </strong>
           <p>{variant === "simple" ? `${accountStatus} · ${roleLabel}` : "账户核心信息"}</p>
         </div>
         {trailingAction ? <div className="summary-card-action shrink-0">{trailingAction}</div> : null}
       </div>
       <SummaryFieldGrid fields={fields} />
+      {footerAction ? <div className="summary-card-footer">{footerAction}</div> : null}
     </article>
   );
 }
 
-/** Wallet summary card used by the full mine page and the avatar popover. */
+/** 我的页面和头像弹窗复用的钱包汇总卡片。 */
 export function WalletSummaryCard({
   className,
   onOpen,
-  rechargeText = "去充值",
+  rechargeText = "充值",
   status = "正常",
   variant = "default",
   walletSummary
 }: WalletSummaryCardProps) {
   const simpleFields: SummaryCardField[] = [
-    { label: "充值", value: rechargeText },
-    { label: "余额", value: walletSummary.withdrawable }
+    { label: "余额", value: walletSummary.withdrawable },
+    { label: "充值", value: rechargeText }
   ];
   const defaultFields: SummaryCardField[] = [
     ...simpleFields,

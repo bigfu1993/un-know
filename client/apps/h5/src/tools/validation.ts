@@ -1,47 +1,47 @@
-/** Validation result returned by H5 field validation tools. */
+/** H5 字段校验工具返回的结果。 */
 export interface ValidationResult {
   isValid: boolean;
   message: string;
 }
 
-/** Context passed when a field needs label-aware validation feedback. */
+/** 字段需要基于展示名称输出校验反馈时传入的上下文。 */
 export interface ValidationContext {
   label?: string;
   required?: boolean;
 }
 
-/** Rule function used by validateByKey to keep page code free of scattered regular expressions. */
+/** validateByKey 使用的规则函数，用于避免页面散落正则。 */
 type ValidationRule = (value: string, context: ValidationContext) => ValidationResult;
 
-/** Successful validation result shared by all rules. */
+/** 所有规则共用的校验成功结果。 */
 const validResult: ValidationResult = {
   isValid: true,
   message: ""
 };
 
-/** Mainland China mobile phone format used by H5 login and contact fields. */
+/** H5 登录和联系字段使用的中国大陆手机号格式。 */
 const mobilePhonePattern = /^1[3-9]\d{9}$/;
-/** Mainland China resident ID format used by local tutor certification drafts. */
+/** 本地家教认证草稿使用的中国大陆居民身份证格式。 */
 const idCardPattern = /^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])([0-2]\d|3[01])\d{3}[\dX]$/;
 
-/** Field keys that should be normalized as mobile phone input. */
+/** 需要按手机号输入归一化的字段 key。 */
 const mobilePhoneKeys = new Set(["phone", "contactPhone"]);
-/** Field keys that should be normalized as age input. */
+/** 需要按年龄输入归一化的字段 key。 */
 const ageKeys = new Set(["age", "tutorAge", "huntingAge"]);
-/** Field keys that should be normalized as resident ID input. */
+/** 需要按身份证输入归一化的字段 key。 */
 const idCardKeys = new Set(["idCard", "tutorIdCard", "huntingIdCard"]);
 
-/** Builds the required-field message with the most specific visible label. */
+/** 按最具体展示名称生成必填提示。 */
 function getRequiredMessage(label?: string) {
   return `请填写${label || "内容"}。`;
 }
 
-/** Builds the mobile-phone error message with the most specific visible label. */
+/** 按最具体展示名称生成手机号错误提示。 */
 function getMobilePhoneMessage(label?: string) {
   return `请输入正确的${label || "手机号"}。`;
 }
 
-/** Validates mobile phone fields, allowing empty values only when the field is optional. */
+/** 校验手机号字段，仅在字段非必填时允许空值。 */
 function validateMobilePhone(value: string, context: ValidationContext) {
   const trimmedValue = value.trim();
 
@@ -54,7 +54,7 @@ function validateMobilePhone(value: string, context: ValidationContext) {
     : { isValid: false, message: getMobilePhoneMessage(context.label) };
 }
 
-/** Validates age fields, allowing empty values only when the field is optional. */
+/** 校验年龄字段，仅在字段非必填时允许空值。 */
 function validateAge(value: string, context: ValidationContext) {
   const trimmedValue = value.trim();
 
@@ -68,7 +68,7 @@ function validateAge(value: string, context: ValidationContext) {
     : { isValid: false, message: `请输入正确的${context.label || "年龄"}。` };
 }
 
-/** Validates resident ID fields, allowing empty values only when the field is optional. */
+/** 校验身份证字段，仅在字段非必填时允许空值。 */
 function validateIdCard(value: string, context: ValidationContext) {
   const trimmedValue = value.trim().toUpperCase();
 
@@ -81,7 +81,7 @@ function validateIdCard(value: string, context: ValidationContext) {
     : { isValid: false, message: `请输入正确的${context.label || "身份证"}。` };
 }
 
-/** Validation rule map keyed by business field key. */
+/** 按业务字段 key 建立的校验规则表。 */
 const validationRules: Record<string, ValidationRule> = {
   phone: validateMobilePhone,
   contactPhone: validateMobilePhone,
@@ -93,7 +93,7 @@ const validationRules: Record<string, ValidationRule> = {
   huntingIdCard: validateIdCard
 };
 
-/** Normalizes field values before they enter form state when a matching key has input constraints. */
+/** 字段进入表单状态前，按 key 对有输入约束的值做归一化。 */
 export function normalizeByKey(key: string, value: string) {
   if (mobilePhoneKeys.has(key)) {
     return value.replace(/\D/g, "").slice(0, 11);
@@ -110,7 +110,7 @@ export function normalizeByKey(key: string, value: string) {
   return value;
 }
 
-/** Validates a field by key; unknown keys are treated as valid so forms can opt in gradually. */
+/** 按 key 校验字段；未知 key 默认视为合法，便于表单渐进接入规则。 */
 export function validateByKey(key: string, value: string, context: ValidationContext = {}): ValidationResult {
   const rule = validationRules[key];
 

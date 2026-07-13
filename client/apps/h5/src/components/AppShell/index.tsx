@@ -1,4 +1,5 @@
 import { useGlobalUser } from "@h5/store/global";
+import type { LucideIcon } from "lucide-react";
 import { HuntingCertificationCard } from "../HuntingCertificationCard";
 import {
   getHuntingCertificationCardMode,
@@ -8,10 +9,18 @@ import { AccountSummaryCard, WalletSummaryCard } from "../SummaryCards";
 import { TutorCard } from "../TutorCard";
 import { getTutorCardDataFromDraft, getTutorCardMode } from "../TutorCard/model";
 
-/**
- * App shell widgets: navigation chrome, profile context, secondary page shell, and mine shortcuts.
- * These components read global user context but never fetch business data directly.
- */
+/** 头像弹窗快捷入口的视觉强调类型。 */
+type MinePopoverActionTone = "default" | "publish" | "recycle";
+
+/** 头像弹窗快捷入口配置。 */
+interface MinePopoverAction {
+  action: () => void;
+  icon: LucideIcon;
+  label: string;
+  tone?: MinePopoverActionTone;
+}
+
+/** App 外壳组件集合，负责导航、资料提示、次级页壳和我的弹窗快捷入口。 */
 export function Header({ activeTab }: { activeTab: ClientModuleKey }) {
   const { role } = useGlobalUser();
 
@@ -33,7 +42,7 @@ export function Header({ activeTab }: { activeTab: ClientModuleKey }) {
   );
 }
 
-/** Prompts users to complete required profile fields and opens the global completion dialog. */
+/** 资料缺失提示卡，仅展示补充提示和入口，不展示资料详情。 */
 export function ProfileContextCard({
   requirement,
   onOpenCompletion
@@ -62,7 +71,7 @@ export function ProfileContextCard({
   );
 }
 
-/** Shared wrapper for stack-based secondary pages such as wallet and orders. */
+/** 栈式次级页面共用容器，例如钱包、订单和认证页面。 */
 export function PageShell({
   title,
   eyebrow,
@@ -95,22 +104,26 @@ export function PageShell({
   );
 }
 
-/** Floating avatar popover for shortcuts; the full account center lives at /mine. */
+/** 悬浮头像弹窗，承接账户概览、认证入口和快捷操作。 */
 export function MinePopover({
   walletSummary,
   onClose,
-  onEditTutorSubject,
   onLogout,
+  onOpenPublish,
+  onOpenRecycle,
   onOpenTutorCalendar,
   onOpenTab,
+  onToggleTutorExposure,
   onNavigate
 }: {
   walletSummary: WalletSummary;
   onClose: () => void;
-  onEditTutorSubject: () => void;
   onLogout: () => void;
+  onOpenPublish: () => void;
+  onOpenRecycle: () => void;
   onOpenTutorCalendar: () => void;
   onOpenTab: (tab: ClientModuleKey) => void;
+  onToggleTutorExposure: () => void;
   onNavigate: (surface: PageSurface) => void;
 }) {
   const { accountStatusText, creditScore, phone, profileDraft, profileName, role } = useGlobalUser();
@@ -118,10 +131,27 @@ export function MinePopover({
   const tutorCardMode = getTutorCardMode(tutorCardData.certificationStatus, "simple");
   const huntingCertificationData = getHuntingCertificationDataFromDraft(profileDraft);
   const huntingCertificationMode = getHuntingCertificationCardMode(huntingCertificationData.certificationStatus);
-  const actions =
+  const profileTags = [
+    tutorCardData.certificationStatus === "normal" ? "家教" : "",
+    role === "student" && huntingCertificationData.certificationStatus === "normal" ? "狩猎" : ""
+  ].filter(Boolean);
+  const shouldShowTutorCertificationCard = tutorCardData.certificationStatus !== "normal";
+  const shouldShowHuntingCertificationCard =
+    role === "student" && huntingCertificationData.certificationStatus !== "normal";
+  const isTutorExposureEnabled = profileDraft.tutorExposureEnabled === "true";
+  const isCompactCertificationRow =
+    tutorCardMode === "entry" && huntingCertificationMode === "entry" && shouldShowHuntingCertificationCard;
+  const certifiedTutorActions: MinePopoverAction[] =
+    tutorCardData.certificationStatus === "normal"
+      ? [{ label: "家教日程", icon: CalendarClock, action: onOpenTutorCalendar }]
+      : [];
+  const actions: MinePopoverAction[] =
     role === "student"
       ? [
-          { label: "发布", icon: Plus, action: () => onOpenTab("hunting") },
+          { label: "发布", icon: Plus, action: onOpenPublish, tone: "publish" },
+          { label: "回收", icon: PackageCheck, action: onOpenRecycle, tone: "recycle" },
+          ...certifiedTutorActions,
+          { label: "消息", icon: MessageCircle, action: () => onNavigate("mine") },
           { label: "建议/投诉", icon: ClipboardCheck, action: () => onNavigate("mine") },
           { label: "更多", icon: UserRound, action: () => onNavigate("mine") }
         ]
@@ -133,8 +163,11 @@ export function MinePopover({
             { label: "更多", icon: UserRound, action: () => onNavigate("mine") }
           ]
         : [
+            { label: "发布", icon: Plus, action: onOpenPublish, tone: "publish" },
+            { label: "回收", icon: PackageCheck, action: onOpenRecycle, tone: "recycle" },
             { label: "家教", icon: GraduationCap, action: () => onOpenTab("tutor") },
             { label: "孩子", icon: UserRound, action: () => onNavigate("settings") },
+            { label: "消息", icon: MessageCircle, action: () => onNavigate("mine") },
             { label: "建议/投诉", icon: ClipboardCheck, action: () => onNavigate("mine") },
             { label: "更多", icon: UserRound, action: () => onNavigate("mine") }
           ];
@@ -153,19 +186,32 @@ export function MinePopover({
         followingCount={0}
         nickname={profileName}
         phone={phone}
+        profileTags={profileTags}
         roleLabel={roleLabels[role]}
         trailingAction={
           <button
-            className="popover-logout inline-flex items-center justify-center gap-[4px] px-[8px] py-[7px] text-[12px] text-[#8a2534]"
+            className="account-logout-button inline-flex items-center gap-[4px] px-[8px] py-[6px] text-[12px] font-bold"
             onClick={() => {
-              onClose();
               onLogout();
+              onClose();
             }}
             type="button"
           >
             <LogOut size={14} />
             退出
           </button>
+        }
+        footerAction={
+          tutorCardData.certificationStatus === "normal" ? (
+            <button
+              className={`tutor-exposure-switch ${isTutorExposureEnabled ? "active" : ""}`}
+              onClick={onToggleTutorExposure}
+              type="button"
+            >
+              <span>家教开关</span>
+              <strong>{isTutorExposureEnabled ? "已开启" : "未开启"}</strong>
+            </button>
+          ) : null
         }
         variant="simple"
       />
@@ -180,38 +226,36 @@ export function MinePopover({
         variant="simple"
       />
 
-      <TutorCard
-        {...tutorCardData}
-        className="popover-tutor-card p-[10px]"
-        mode={tutorCardMode}
-        onEditSubject={() => {
-          onEditTutorSubject();
-          onClose();
-        }}
-        onOpenCalendar={() => {
-          onOpenTutorCalendar();
-          onClose();
-        }}
-        onOpenMessages={() => {
-          onNavigate("mine");
-          onClose();
-        }}
-        onStartCertification={() => {
-          onNavigate("tutorCertification");
-          onClose();
-        }}
-      />
+      {shouldShowTutorCertificationCard || shouldShowHuntingCertificationCard ? (
+        <div
+          className={`popover-certification-cards grid gap-[8px] ${
+            isCompactCertificationRow ? "compact-row" : ""
+          }`}
+        >
+          {shouldShowTutorCertificationCard ? (
+            <TutorCard
+              {...tutorCardData}
+              className="popover-tutor-card p-[10px]"
+              mode={tutorCardMode}
+              onStartCertification={() => {
+                onNavigate("tutorCertification");
+                onClose();
+              }}
+            />
+          ) : null}
 
-      {role === "student" ? (
-        <HuntingCertificationCard
-          {...huntingCertificationData}
-          className="popover-hunting-certification-card p-[10px]"
-          mode={huntingCertificationMode}
-          onStartCertification={() => {
-            onNavigate("huntingCertification");
-            onClose();
-          }}
-        />
+          {shouldShowHuntingCertificationCard ? (
+            <HuntingCertificationCard
+              {...huntingCertificationData}
+              className="popover-hunting-certification-card p-[10px]"
+              mode={huntingCertificationMode}
+              onStartCertification={() => {
+                onNavigate("huntingCertification");
+                onClose();
+              }}
+            />
+          ) : null}
+        </div>
       ) : null}
 
       <strong>快捷入口</strong>
@@ -220,6 +264,7 @@ export function MinePopover({
           const Icon = action.icon;
           return (
             <button
+              className={`popover-action popover-action--${action.tone ?? "default"}`}
               key={action.label}
               onClick={() => {
                 action.action();
@@ -237,7 +282,7 @@ export function MinePopover({
   );
 }
 
-/** Primary module navigation for all roles; Mine intentionally remains a floating entry. */
+/** 底部主导航，所有角色共用，我的入口固定由悬浮头像承接。 */
 export function BottomTabs({
   activeTab,
   onChange

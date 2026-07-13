@@ -1,6 +1,6 @@
 import { normalizeByKey, validateByKey } from "../../tools/validation";
 
-/** Shared address information form used by registration, profile completion, and settings preview. */
+/** 注册、资料补充和设置预览共用的地址信息表单。 */
 export function AddressInfoForm({
   actionLabel = "编辑",
   areaOptions,

@@ -13,17 +13,17 @@ import { formatTutorSubjects, parseTutorSubjects, tutorSubjectOptions } from "..
 import { localAuthCode, localPasswordMinLength, saveLocalPasswordCredential } from "../../tools/localAuth";
 import { normalizeByKey, validateByKey } from "../../tools/validation";
 
-/** Local state for the settings address editor sheet. */
+/** 设置页地址编辑弹窗模式。 */
 type AddressEditorMode = "create" | "edit";
 type SecurityDialogMode = "phone" | "password";
 
-/** Local draft for changing the login phone in H5 settings. */
+/** 设置页变更登录手机号的本地草稿。 */
 interface PhoneChangeDraft {
   code: string;
   phone: string;
 }
 
-/** Local draft for resetting the H5 password from settings. */
+/** 设置页重置 H5 密码的本地草稿。 */
 interface PasswordResetDraft extends PhoneChangeDraft {
   password: string;
   passwordConfirm: string;
@@ -43,7 +43,7 @@ const tutorQualificationInfoFields = [
   { key: "tutorCertificate", label: "证书" }
 ];
 
-/** Settings route for nickname, phone security, address, protocol, version, and feedback entries. */
+/** 设置页面，负责昵称、手机号安全、地址、协议、版本和反馈入口。 */
 export function SettingsView({ onBack }: { onBack: () => void }) {
   const { phone, profileDraft, profileName, role } = useGlobalUser();
   const setUserDisplayName = useGlobalStore((state) => state.setUserDisplayName);
@@ -86,14 +86,14 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
     }
   }, [isNicknameEditorOpen, profileName]);
 
-  /** Opens the nickname editor with the latest global nickname. */
+  /** 使用最新全局昵称打开昵称编辑弹窗。 */
   function handleOpenNicknameChange() {
     setNicknameFeedback("");
     setNicknameDraft(profileName);
     setIsNicknameEditorOpen(true);
   }
 
-  /** Saves the local display nickname used by the H5 shell and profile pages. */
+  /** 保存 H5 外壳和资料页面使用的本地展示昵称。 */
   function handleSaveNickname() {
     const nicknameValidation = validateByKey("nickname", nicknameDraft, { label: "昵称", required: true });
 
@@ -106,7 +106,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
     setNicknameFeedback("昵称已更新。");
   }
 
-  /** Persists the address list and syncs the current address back to the global profile draft. */
+  /** 持久化地址列表，并将当前地址同步回全局资料草稿。 */
   function persistAddressItems(nextItems: AddressBookItem[]) {
     const normalizedItems = setStoredAddressBook(nextItems);
     const nextCurrentAddress = normalizedItems.find((item) => item.isCurrent);
@@ -117,26 +117,26 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
     }
   }
 
-  /** Opens the add-address sheet with an empty draft. */
+  /** 使用空草稿打开新增地址弹窗。 */
   function handleOpenCreateAddress() {
     setAddressEditorMode("create");
     setEditingAddressId(null);
     setAddressDraft({});
   }
 
-  /** Opens the edit-address sheet using the selected card draft. */
+  /** 使用所选地址卡草稿打开编辑地址弹窗。 */
   function handleOpenEditAddress(item: AddressBookItem) {
     setAddressEditorMode("edit");
     setEditingAddressId(item.id);
     setAddressDraft(item.draft);
   }
 
-  /** Marks an existing address card as the current address. */
+  /** 将已有地址卡标记为当前使用地址。 */
   function handleUseAddress(item: AddressBookItem) {
     persistAddressItems(addressItems.map((addressItem) => ({ ...addressItem, isCurrent: addressItem.id === item.id })));
   }
 
-  /** Saves the editor draft as a new or existing address card. */
+  /** 将编辑草稿保存为新增或已有地址卡。 */
   function handleSaveAddress() {
     const isInvalid = addressTemplate.fields.some(
       (field) => !validateByKey(field.key, addressDraft[field.key] ?? "", { label: field.label, required: true }).isValid
@@ -167,14 +167,14 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
     setAddressDraft({});
   }
 
-  /** Opens the phone-change dialog with an empty code and phone draft. */
+  /** 使用空验证码和当前手机号草稿打开手机号变更弹窗。 */
   function handleOpenPhoneChange() {
     setSecurityFeedback("");
     setPhoneChangeDraft({ phone: editableCurrentPhone, code: "" });
     setSecurityDialogMode("phone");
   }
 
-  /** Opens the password-reset dialog and carries the current valid phone when possible. */
+  /** 打开重置密码弹窗，并尽量带入当前有效手机号。 */
   function handleOpenPasswordReset() {
     setSecurityFeedback("");
     setPasswordResetDraft({
@@ -214,7 +214,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
     setIsTutorInfoOpen(false);
   }
 
-  /** Changes the local H5 phone after the fixed verification code passes. */
+  /** 固定验证码通过后更新 H5 本地手机号。 */
   function handleSavePhoneChange() {
     const phoneValidation = validateByKey("phone", phoneChangeDraft.phone, { label: "手机号", required: true });
 
@@ -227,7 +227,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
     setSecurityFeedback("手机号已更新。密码登录前请确认该手机号已设置本地密码。");
   }
 
-  /** Resets the local H5 password after phone and verification-code checks pass. */
+  /** 手机号和验证码校验通过后重置 H5 本地密码。 */
   async function handleSavePasswordReset() {
     const phoneValidation = validateByKey("phone", passwordResetDraft.phone, { label: "手机号", required: true });
 
@@ -455,7 +455,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
   );
 }
 
-/** Dialog for changing the locally stored H5 display nickname. */
+/** 修改 H5 本地展示昵称的弹窗。 */
 function NicknameEditorDialog({
   nickname,
   onChange,
@@ -470,7 +470,7 @@ function NicknameEditorDialog({
   const nicknameValidation = validateByKey("nickname", nickname, { label: "昵称", required: true });
   const isNicknameInvalid = !nicknameValidation.isValid;
 
-  /** Prevents native form navigation and delegates saving to SettingsView. */
+  /** 阻止原生表单跳转，并将保存动作交给 SettingsView。 */
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -619,7 +619,7 @@ function TutorQualificationInfoDialog({
   );
 }
 
-/** Address editor sheet used by settings add and edit flows. */
+/** 设置页新增和编辑地址流程使用的地址编辑弹窗。 */
 function AddressEditorDialog({
   areaOptions,
   draft,
@@ -641,7 +641,7 @@ function AddressEditorDialog({
     (field) => !validateByKey(field.key, draft[field.key] ?? "", { label: field.label, required: true }).isValid
   );
 
-  /** Prevents native form navigation and delegates saving to SettingsView. */
+  /** 阻止原生表单跳转，并将保存动作交给 SettingsView。 */
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -692,7 +692,7 @@ function AddressEditorDialog({
   );
 }
 
-/** Dialog for changing the locally stored H5 login phone. */
+/** 修改 H5 本地登录手机号的弹窗。 */
 function PhoneChangeDialog({
   draft,
   onChange,
@@ -708,7 +708,7 @@ function PhoneChangeDialog({
   const isCodeInvalid = draft.code !== localAuthCode;
   const isSaveDisabled = !phoneValidation.isValid || isCodeInvalid;
 
-  /** Prevents native form navigation and delegates saving to SettingsView. */
+  /** 阻止原生表单跳转，并将保存动作交给 SettingsView。 */
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -789,7 +789,7 @@ function PhoneChangeDialog({
   );
 }
 
-/** Dialog for resetting the local H5 password after phone verification. */
+/** 手机号校验后重置 H5 本地密码的弹窗。 */
 function PasswordResetDialog({
   draft,
   onChange,
@@ -807,7 +807,7 @@ function PasswordResetDialog({
   const isPasswordConfirmInvalid = draft.passwordConfirm.length > 0 && draft.password !== draft.passwordConfirm;
   const isSaveDisabled = !phoneValidation.isValid || isCodeInvalid || isPasswordInvalid || draft.password !== draft.passwordConfirm;
 
-  /** Prevents native form navigation and delegates saving to SettingsView. */
+  /** 阻止原生表单跳转，并将保存动作交给 SettingsView。 */
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 

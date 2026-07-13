@@ -1,13 +1,11 @@
-import { BadgeCheck, CalendarClock, GraduationCap, MessageCircle } from "lucide-react";
+import { BadgeCheck, GraduationCap } from "lucide-react";
 import { tutorCertificationStatusLabels, type TutorCardData, type TutorCardMode } from "./model";
 
 /** 家教卡片属性。 */
 export interface TutorCardProps extends TutorCardData {
   className?: string;
   mode: TutorCardMode;
-  onEditSubject?: () => void;
-  onOpenCalendar?: () => void;
-  onOpenMessages?: () => void;
+  onOpenInfo?: () => void;
   onStartCertification?: () => void;
 }
 
@@ -16,19 +14,14 @@ export function TutorCard({
   certificationStatus,
   className,
   grade,
-  hasChat,
   level,
-  messageCount,
   mode,
-  onEditSubject,
-  onOpenCalendar,
-  onOpenMessages,
+  onOpenInfo,
   onStartCertification,
   subject
 }: TutorCardProps) {
   const rootClassName = ["tutor-card", `tutor-card--${mode}`, className].filter(Boolean).join(" ");
   const statusText = tutorCertificationStatusLabels[certificationStatus];
-  const canOpenMessages = hasChat;
   const subjectButtonLabel = mode === "simple" ? subject : `${subject} · ${grade}`;
 
   if (mode === "entry") {
@@ -39,7 +32,6 @@ export function TutorCard({
         </span>
         <span className="tutor-card-main min-w-0">
           <strong>认证家教</strong>
-          <em>提交资格认证后展示家教卡片、课程日历和消息提醒。</em>
         </span>
       </button>
     );
@@ -62,8 +54,8 @@ export function TutorCard({
     );
   }
 
-  return (
-    <article className={rootClassName}>
+  const content = (
+    <>
       <div className="tutor-card-head flex items-start gap-[10px]">
         <span className="tutor-card-icon grid h-[40px] w-[40px] shrink-0 place-items-center">
           <GraduationCap size={21} />
@@ -77,10 +69,10 @@ export function TutorCard({
 
       {mode === "default" ? (
         <div className="tutor-card-meta grid gap-[8px]">
-          <button className="tutor-subject-edit" disabled={!onEditSubject} onClick={onEditSubject} type="button">
+          <span>
             <em>学科/年级</em>
             <strong>{subjectButtonLabel}</strong>
-          </button>
+          </span>
           <span>
             <em>等级</em>
             <strong>{level}</strong>
@@ -88,24 +80,12 @@ export function TutorCard({
         </div>
       ) : (
         <div className="tutor-card-meta grid gap-[8px]">
-          <button className="tutor-subject-edit" disabled={!onEditSubject} onClick={onEditSubject} type="button">
+          <span>
             <em>学科</em>
             <strong>{subjectButtonLabel}</strong>
-          </button>
+          </span>
         </div>
       )}
-
-      <div className="tutor-card-actions grid gap-[8px]">
-        <button className="ghost-button" onClick={onOpenCalendar} type="button">
-          <CalendarClock size={15} />
-          课程日历
-        </button>
-        <button className="ghost-button" disabled={!canOpenMessages} onClick={onOpenMessages} type="button">
-          <MessageCircle size={15} />
-          消息提示
-          <span className="tutor-message-badge">{messageCount}</span>
-        </button>
-      </div>
 
       {certificationStatus === "frozen" ? (
         <p className="tutor-card-warning">
@@ -113,6 +93,16 @@ export function TutorCard({
           家教资格冻结中，暂不可接单。
         </p>
       ) : null}
-    </article>
+    </>
   );
+
+  if (onOpenInfo) {
+    return (
+      <button className={rootClassName} onClick={onOpenInfo} type="button">
+        {content}
+      </button>
+    );
+  }
+
+  return <article className={rootClassName}>{content}</article>;
 }

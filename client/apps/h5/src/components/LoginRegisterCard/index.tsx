@@ -1,6 +1,6 @@
 import { normalizeByKey } from "../../tools/validation";
 
-/** Renders the shared login/register form and delegates auth actions to the login route. */
+/** 渲染登录/注册共用表单，并将认证动作交给登录页面处理。 */
 export function LoginRegisterCard({
   authMode,
   code,
