@@ -7,12 +7,14 @@ import { getTutorCardDataFromDraft, getTutorCardMode } from "../../components/Tu
 /** 所有角色共用的账户中心页面，跨页面跳转由 App 统一承接。 */
 export function Mine({
   onBack,
+  onLogout,
   onNavigate,
   onOpenTutorCertificationInfo,
   orders,
   walletSummary
 }: {
   onBack: () => void;
+  onLogout: () => void;
   onNavigate: (surface: PageSurface) => void;
   onOpenTutorCertificationInfo: () => void;
   orders: ClientOrder[];
@@ -21,14 +23,9 @@ export function Mine({
   const { accountStatusText, creditScore, phone, profileDraft, profileName, role } = useGlobalUser();
   const tutorCardData = getTutorCardDataFromDraft(profileDraft);
   const tutorCardMode = getTutorCardMode(tutorCardData.certificationStatus, "default");
-  const isStudent = role === "student";
   const isMerchant = role === "merchant";
-  const tradeItems = isStudent
-    ? ["我买到的", "我的发布", "狩猎记录", "我的兼职", "家教卡片", "投诉入口"]
-    : isMerchant
-      ? ["我卖出的", "我的兼职", "投诉入口"]
-      : ["我买到的", "我的家教", "投诉入口"];
-  const settingBinding = isStudent ? "家教资质/学生认证" : isMerchant ? "工商信息/门店/员工" : "孩子信息/多学科";
+  const recordItems = isMerchant ? ["我的关注"] : ["我的收藏", "我的关注", "浏览历史"];
+  const feedbackItems = ["投诉", "建议"];
 
   return (
     <section className="page-view grid gap-[12px]">
@@ -89,13 +86,12 @@ export function Mine({
           variant="default"
         />
         <div className="mine-grid grid gap-[10px]">
-          <MineCard title="我的交易" items={tradeItems} />
-          <MineCard title="我的记录" items={isMerchant ? ["我的关注"] : ["我的收藏", "我的关注", "浏览历史"]} />
-          <MineCard
-            title="设置绑定"
-            items={["账户信息", settingBinding, "收货地址", "平台协议", "版本&更新"]}
-          />
+          <MineCard title="我的记录" items={recordItems} />
+          <MineCard title="投诉建议" items={feedbackItems} />
         </div>
+        <button className="mine-logout-button" onClick={onLogout} type="button">
+          退出登录
+        </button>
       </section>
     </section>
   );

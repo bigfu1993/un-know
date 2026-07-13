@@ -28,11 +28,11 @@ export function OrderModuleCard({ className, onOpen, orders, variant = "default"
     .join(" ");
   const content = (
     <>
-      <div className="order-module-head flex items-start gap-[10px]">
-        <span className="order-module-icon grid h-[38px] w-[38px] shrink-0 place-items-center">
-          <PackageCheck size={20} />
+      <div className="order-module-head flex items-center gap-[10px]">
+        <span className="order-module-icon grid h-[40px] w-[40px] shrink-0 place-items-center">
+          <PackageCheck size={21} />
         </span>
-        <div className="min-w-0 flex-1">
+        <div className="order-module-main min-w-0 flex-1">
           <strong>订单模块</strong>
           <p>{totalCount > 0 ? `${totalCount} 个订单事项` : "暂无订单事项"}</p>
         </div>

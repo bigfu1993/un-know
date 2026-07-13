@@ -8,6 +8,13 @@ export const passwordCredentialStorageKey = "unknown_client_password_credentials
 /** H5 本地待完成注册存储 key，避免注册账号绕过角色选择。 */
 export const pendingRegistrationStorageKey = "unknown_client_pending_registration_v1";
 
+/** 根据当前登录账号生成本地存储 key，避免不同手机号共享资料草稿和地址簿。 */
+function getScopedStorageKey(baseKey: string, ownerKey?: string) {
+  const normalizedOwnerKey = ownerKey?.trim();
+
+  return normalizedOwnerKey ? `${baseKey}_${normalizedOwnerKey}` : baseKey;
+}
+
 /** 后端密码接口上线前使用的本地带盐密码凭据。 */
 export interface StoredPasswordCredential {
   salt: string;
@@ -122,25 +129,25 @@ export const tabIcons: Record<ClientModuleKey, LucideIcon> = {
 };
 
 // 本地草稿用于改善续填体验，认证状态仍以后端数据为准。
-export function getStoredProfileDraft(): ProfileDraftState {
+export function getStoredProfileDraft(ownerKey?: string): ProfileDraftState {
   if (typeof window === "undefined") {
     return {};
   }
 
   try {
-    const stored = window.localStorage.getItem(profileDraftStorageKey);
+    const stored = window.localStorage.getItem(getScopedStorageKey(profileDraftStorageKey, ownerKey));
     return stored ? (JSON.parse(stored) as ProfileDraftState) : {};
   } catch {
     return {};
   }
 }
 
-export function setStoredProfileDraft(profileDraft: ProfileDraftState) {
+export function setStoredProfileDraft(profileDraft: ProfileDraftState, ownerKey?: string) {
   if (typeof window === "undefined") {
     return;
   }
 
-  window.localStorage.setItem(profileDraftStorageKey, JSON.stringify(profileDraft));
+  window.localStorage.setItem(getScopedStorageKey(profileDraftStorageKey, ownerKey), JSON.stringify(profileDraft));
 }
 
 /** 根据地址草稿创建本地地址簿条目。 */
@@ -173,13 +180,13 @@ export function normalizeAddressBookItems(items: AddressBookItem[]) {
 }
 
 /** 读取 H5 本地地址簿；没有地址簿时回退到当前资料草稿。 */
-export function getStoredAddressBook(fallbackDraft: ProfileDraftState = {}) {
+export function getStoredAddressBook(fallbackDraft: ProfileDraftState = {}, ownerKey?: string) {
   if (typeof window === "undefined") {
     return [];
   }
 
   try {
-    const stored = window.localStorage.getItem(addressBookStorageKey);
+    const stored = window.localStorage.getItem(getScopedStorageKey(addressBookStorageKey, ownerKey));
     const parsedItems = stored ? (JSON.parse(stored) as AddressBookItem[]) : [];
 
     if (parsedItems.length > 0) {
@@ -194,14 +201,58 @@ export function getStoredAddressBook(fallbackDraft: ProfileDraftState = {}) {
 }
 
 /** 规范化当前地址状态后持久化 H5 本地地址簿。 */
-export function setStoredAddressBook(items: AddressBookItem[]) {
+export function setStoredAddressBook(items: AddressBookItem[], ownerKey?: string) {
   if (typeof window === "undefined") {
     return [];
   }
 
   const normalizedItems = normalizeAddressBookItems(items);
-  window.localStorage.setItem(addressBookStorageKey, JSON.stringify(normalizedItems));
+  window.localStorage.setItem(getScopedStorageKey(addressBookStorageKey, ownerKey), JSON.stringify(normalizedItems));
   return normalizedItems;
+}
+
+/** 将服务端地址响应映射为 H5 现有地址卡片模型，避免页面重复拼装字段。 */
+export function clientAddressToAddressBookItem(address: ClientAddress): AddressBookItem {
+  return {
+    id: address.id,
+    draft: getFilledProfileDraft({
+      contactName: address.contactName,
+      campusArea: address.campusArea,
+      buildingFloor: address.buildingFloor,
+      deliveryAddress: address.deliveryAddress,
+      contactPhone: address.contactPhone
+    }),
+    isCurrent: address.isCurrent,
+    createdAt: address.createdAt,
+    updatedAt: address.updatedAt
+  };
+}
+
+/** 将服务端地址列表映射为 H5 地址卡片列表，并兜底保证最多一个当前地址。 */
+export function clientAddressesToAddressBookItems(addresses: ClientAddress[]) {
+  return normalizeAddressBookItems(addresses.map(clientAddressToAddressBookItem));
+}
+
+/** 从地址卡片列表中提取当前地址草稿，用于首页资料补充校验和发布位置预填。 */
+export function getCurrentAddressDraft(addressItems: AddressBookItem[], fallbackDraft: ProfileDraftState = {}) {
+  return addressItems.find((item) => item.isCurrent)?.draft ?? fallbackDraft;
+}
+
+/** 将 H5 地址表单草稿转换为服务端地址保存请求。 */
+export function profileDraftToClientAddressRequest(
+  profileDraft: ProfileDraftState,
+  isCurrent = true
+): ClientAddressRequest {
+  const filledDraft = getFilledProfileDraft(profileDraft);
+
+  return {
+    contactName: filledDraft.contactName ?? "",
+    campusArea: filledDraft.campusArea ?? "",
+    buildingFloor: filledDraft.buildingFloor ?? "",
+    deliveryAddress: filledDraft.deliveryAddress ?? "",
+    contactPhone: filledDraft.contactPhone ?? "",
+    isCurrent
+  };
 }
 
 /** 容错读取所有 H5 本地密码凭据。 */

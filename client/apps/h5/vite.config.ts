@@ -30,16 +30,22 @@ export default defineConfig({
             "roleLabels"
           ],
           "@unknown/hooks": [
+            "useClientAddresses",
             "useClientHome",
             "useClientLogin",
             "useClientRegister",
             "useClientWorkspace",
+            "useCreateClientAddress",
+            "useDeleteClientAddress",
             "usePublishHuntingTask",
             "useProducts",
-            "usePurchaseProduct"
+            "usePurchaseProduct",
+            "useUpdateClientAddress",
+            "useUseClientAddress"
           ],
           "lucide-react": [
             "AlertCircle",
+            "ArrowDownUp",
             "ArrowLeft",
             "BadgeCheck",
             "BriefcaseBusiness",
@@ -49,6 +55,7 @@ export default defineConfig({
             "CircleDollarSign",
             "ClipboardCheck",
             "Crosshair",
+            "Filter",
             "GraduationCap",
             "Heart",
             "Home",

@@ -54,6 +54,8 @@ const initialPublishInfoDraft: PublishInfoDraft = {
   amountMode: "input",
   checkInMode: "",
   delegationTime: "",
+  depositAmount: "",
+  depositRequired: "no",
   description: "",
   partTimeWageMode: "按日结算",
   requirement: "",
@@ -92,8 +94,9 @@ function getPublishFormValid(draft: PublishInfoDraft) {
 
   if (draft.type === "delegation" || draft.type === "recycle") {
     const hasValidAmount = isNegotiableAmount(draft) || isPositiveAmount(draft.amount);
+    const hasValidDeposit = draft.depositRequired === "no" || isPositiveAmount(draft.depositAmount);
 
-    return hasTitle && hasValidAmount && Boolean(draft.delegationTime.trim());
+    return hasTitle && hasValidAmount && hasValidDeposit && Boolean(draft.delegationTime.trim());
   }
 
   if (draft.type === "partTime") {
@@ -310,6 +313,39 @@ function DelegationPublishFields({
         />
         {!amountInputDisabled && draft.amount.trim() && !isPositiveAmount(draft.amount) ? (
           <em>金额必须为大于 0 的数字</em>
+        ) : null}
+      </label>
+      <label className={`profile-field publish-field grid gap-[7px] ${draft.depositRequired === "yes" && !isPositiveAmount(draft.depositAmount) ? "missing" : ""}`}>
+        <span>是否需要押金</span>
+        <div className="segmented-control publish-segmented-field wrap flex gap-[8px]" aria-label="是否需要委托押金">
+          <button
+            className={draft.depositRequired === "no" ? "active" : ""}
+            onClick={() => onChange("depositRequired", "no")}
+            type="button"
+          >
+            否
+          </button>
+          <button
+            className={draft.depositRequired === "yes" ? "active" : ""}
+            onClick={() => onChange("depositRequired", "yes")}
+            type="button"
+          >
+            是
+          </button>
+        </div>
+        {draft.depositRequired === "yes" ? (
+          <>
+            <input
+              inputMode="decimal"
+              onChange={(event) => onChange("depositAmount", event.target.value)}
+              placeholder="请输入需要冻结的押金金额"
+              type="text"
+              value={draft.depositAmount}
+            />
+            {draft.depositAmount.trim() && !isPositiveAmount(draft.depositAmount) ? (
+              <em>押金金额必须为大于 0 的数字</em>
+            ) : null}
+          </>
         ) : null}
       </label>
       <DelegationTimeField onChange={(value) => onChange("delegationTime", value)} value={draft.delegationTime} />

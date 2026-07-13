@@ -11,6 +11,7 @@
   RefreshCw,
   ShieldAlert,
   Tags,
+  UserRound,
   XCircle
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -27,17 +28,17 @@ type DelegationSortMode = "amountAsc" | "amountDesc" | "default" | "time";
 /** 委托页展开面板类型。 */
 type DelegationToolbarPanel = "area" | "sort" | null;
 
-/** 委托额度弹窗阶段。 */
-type DelegationAmountStep = "confirm" | "input";
-
 /** 委托页属性。 */
 export interface DelegationProps {
   huntingCertificationStatus: HuntingCertificationStatus;
   huntingTasks: HuntingTask[];
   isRefreshing?: boolean;
+  onAcceptTask: (task: HuntingTask) => Promise<void> | void;
   onCertificationReviewing: () => void;
   onOpenHuntingCertification: () => void;
+  onQuoteTask: (task: HuntingTask, amount: number) => Promise<void> | void;
   onRefreshTasks: () => void;
+  onSelfTaskAction: () => void;
 }
 
 /** 委托页顶部规则滚动字幕文案。 */
@@ -91,7 +92,16 @@ function getDelegationPublishTime(task: HuntingTask) {
 
 /** 获取委托金额展示文案。 */
 function getDelegationAmountText(task: HuntingTask) {
+  if (task.pendingAmount) {
+    return `报价 ${formatCurrency(task.pendingAmount)}`;
+  }
+
   return task.amountNegotiable || task.fee <= 0 ? "协商" : formatCurrency(task.fee);
+}
+
+/** 获取委托发布者展示文案，手机号由服务端返回脱敏值。 */
+function getDelegationPublisherText(task: HuntingTask) {
+  return `${task.publisherName || "平台用户"} · ${task.publisherPhone || "暂无手机号"}`;
 }
 
 /** 获取委托要求标签。 */
@@ -106,14 +116,56 @@ function getDelegationRequirementTags(task: HuntingTask) {
   return requirementItems.length > 0 ? requirementItems : ["无特殊要求"];
 }
 
+/** 判断委托是否处于发布阶段，兼容旧的待领取文案。 */
+function isDelegationPublishedStatus(task: HuntingTask) {
+  return task.status === "发布" || task.status.includes("待领取") || task.status.includes("已发布");
+}
+
+/** 判断委托是否处于报价阶段。 */
+function isDelegationQuoteStatus(task: HuntingTask) {
+  return task.status === "报价" || task.status.includes("报价");
+}
+
+/** 委托任务池只展示发布和报价状态。 */
+function isDelegationListVisible(task: HuntingTask) {
+  return isDelegationPublishedStatus(task) || isDelegationQuoteStatus(task);
+}
+
+/** 判断委托是否处于履约中。 */
+function isDelegationFulfillingStatus(task: HuntingTask) {
+  return task.status.includes("履约中") || task.status.includes("进行中") || task.status.includes("已领取");
+}
+
+/** 判断委托是否已进入不可重复领取/报价的业务状态。 */
+function isDelegationTaskLocked(task: HuntingTask) {
+  const lockedStatusKeywords = ["履约中", "进行中", "已领取", "完成", "取消", "异常", "争议"];
+
+  return Boolean(task.pendingAmount) || lockedStatusKeywords.some((keyword) => task.status.includes(keyword));
+}
+
+/** 获取委托卡片主按钮文案。 */
+function getDelegationPrimaryActionLabel(task: HuntingTask) {
+  if (isDelegationFulfillingStatus(task)) {
+    return "履约中";
+  }
+  if (task.status.includes("完成") || task.status.includes("取消") || task.status.includes("异常")) {
+    return task.status;
+  }
+
+  return isDelegationQuoteStatus(task) || task.amountNegotiable || task.fee <= 0 ? "报价" : "接受委托";
+}
+
 /** 委托/狩猎页面，仅保留规则字幕、筛选排序工具条和委托任务列表。 */
 export function Delegation({
   huntingCertificationStatus,
   huntingTasks,
   isRefreshing = false,
+  onAcceptTask,
   onCertificationReviewing,
   onOpenHuntingCertification,
-  onRefreshTasks
+  onQuoteTask,
+  onRefreshTasks,
+  onSelfTaskAction
 }: DelegationProps) {
   const [keyword, setKeyword] = useState("");
   const [activePanel, setActivePanel] = useState<DelegationToolbarPanel>(null);
@@ -121,24 +173,20 @@ export function Delegation({
   const [isCertificationPromptOpen, setIsCertificationPromptOpen] = useState(false);
   const [amountDraft, setAmountDraft] = useState("");
   const [amountError, setAmountError] = useState("");
-  const [amountStep, setAmountStep] = useState<DelegationAmountStep>("input");
   const [amountTaskId, setAmountTaskId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [selectedArea, setSelectedArea] = useState("");
   const [sortMode, setSortMode] = useState<DelegationSortMode>("default");
-  const [taskOverrides, setTaskOverrides] = useState<Record<string, Partial<HuntingTask>>>({});
   const isHuntingCertified = huntingCertificationStatus === "normal";
-  const displayTasks = useMemo(
-    () => huntingTasks.map((task) => ({ ...task, ...taskOverrides[task.id] })),
-    [huntingTasks, taskOverrides]
-  );
+  const displayTasks = useMemo(() => huntingTasks, [huntingTasks]);
+  const listTasks = useMemo(() => displayTasks.filter(isDelegationListVisible), [displayTasks]);
   const areaOptions = useMemo(
-    () => Array.from(new Set(displayTasks.map((task) => getDelegationArea(getDelegationDestination(task))))),
-    [displayTasks]
+    () => Array.from(new Set(listTasks.map((task) => getDelegationArea(getDelegationDestination(task))))),
+    [listTasks]
   );
   const visibleTasks = useMemo(() => {
     const normalizedKeyword = keyword.trim().toLowerCase();
-    const tasks = displayTasks.filter((task) => {
+    const tasks = listTasks.filter((task) => {
       const titleMatched = normalizedKeyword ? task.title.toLowerCase().includes(normalizedKeyword) : true;
       const areaMatched = selectedArea ? getDelegationArea(getDelegationDestination(task)) === selectedArea : true;
 
@@ -158,7 +206,7 @@ export function Delegation({
 
       return 0;
     });
-  }, [displayTasks, keyword, selectedArea, sortMode]);
+  }, [listTasks, keyword, selectedArea, sortMode]);
   const selectedSortLabel =
     delegationSortOptions.find((option) => option.value === sortMode)?.label ?? "默认排序";
   const selectedTask = selectedTaskId ? visibleTasks.find((task) => task.id === selectedTaskId) ?? null : null;
@@ -196,8 +244,12 @@ export function Delegation({
     setIsHuntingModeEnabled((value) => !value);
   }
 
-  /** 处理委托卡片操作，未认证狩猎时阻断。 */
-  function handleTaskAction() {
+  /** 处理委托卡片操作，自己的委托或未认证狩猎时阻断。 */
+  function handleTaskAction(task: HuntingTask) {
+    if (task.isMine) {
+      onSelfTaskAction();
+      return;
+    }
     if (!isHuntingCertified) {
       openCertificationPrompt();
     }
@@ -208,40 +260,41 @@ export function Delegation({
     setSelectedTaskId(task.id);
   }
 
+  /** 校验委托领取或报价动作是否允许继续。 */
+  function validateTaskOperation(task: HuntingTask) {
+    if (task.isMine) {
+      onSelfTaskAction();
+      return false;
+    }
+    if (!isHuntingCertified) {
+      openCertificationPrompt();
+      return false;
+    }
+    if (isDelegationTaskLocked(task)) {
+      return false;
+    }
+
+    return true;
+  }
+
   /** 打开委托额度确认弹窗。 */
   function openAmountDialog(task: HuntingTask) {
     setAmountTaskId(task.id);
-    setAmountDraft(task.pendingAmount ? String(task.pendingAmount) : task.fee > 0 ? String(task.fee) : "");
+    setAmountDraft(task.fee > 0 ? String(task.fee) : "");
     setAmountError("");
-    setAmountStep(task.pendingAmount ? "confirm" : "input");
-  }
-
-  /** 更新任务本地状态。 */
-  function updateTaskOverride(taskId: string, override: Partial<HuntingTask>) {
-    setTaskOverrides((overrides) => ({
-      ...overrides,
-      [taskId]: {
-        ...overrides[taskId],
-        ...override
-      }
-    }));
   }
 
   /** 处理接受委托，协商金额时先进入额度流程。 */
   function handleAcceptTask(task: HuntingTask) {
-    if (task.isMine) {
+    if (!validateTaskOperation(task)) {
       return;
     }
-    if (!isHuntingCertified) {
-      openCertificationPrompt();
-      return;
-    }
-    if (task.amountNegotiable || task.fee <= 0) {
+    if (isDelegationQuoteStatus(task) || task.amountNegotiable || task.fee <= 0) {
       openAmountDialog(task);
       return;
     }
 
-    updateTaskOverride(task.id, { status: "进行中" });
+    void Promise.resolve(onAcceptTask(task)).catch(() => undefined);
   }
 
   /** 提交委托额度，等待另一方确认。 */
@@ -257,27 +310,11 @@ export function Delegation({
     }
 
     setAmountError("");
-    updateTaskOverride(amountTask.id, {
-      pendingAmount: nextAmount,
-      status: "待确认金额"
-    });
-    setAmountStep("confirm");
-  }
-
-  /** 确认额度后委托进入进行中。 */
-  function handleConfirmAmount() {
-    if (!amountTask?.pendingAmount) {
-      return;
-    }
-
-    updateTaskOverride(amountTask.id, {
-      amountNegotiable: false,
-      fee: amountTask.pendingAmount,
-      pendingAmount: undefined,
-      status: "进行中"
-    });
-    setAmountTaskId(null);
-    setSelectedTaskId(null);
+    void Promise.resolve(onQuoteTask(amountTask, nextAmount))
+      .then(() => {
+        setAmountTaskId(null);
+      })
+      .catch(() => undefined);
   }
 
   return (
@@ -407,39 +444,50 @@ export function Delegation({
                   目的地：{getDelegationDestination(task)}
                 </span>
                 <span>
+                  <UserRound size={14} />
+                  发布者：{getDelegationPublisherText(task)}
+                </span>
+                <span>
                   <Banknote size={14} />
                   委托金额：
                   <strong className="delegation-task-amount">{getDelegationAmountText(task)}</strong>
                 </span>
+                {task.depositRequired ? (
+                  <span>
+                    <Banknote size={14} />
+                    押金：{formatCurrency(task.depositAmount ?? 0)}
+                  </span>
+                ) : null}
                 <span>
                   <Tags size={14} />
                   要求：{requirementTags.join("、")}
                 </span>
               </div>
-              <div className="product-actions flex flex-wrap items-center justify-between gap-[10px]">
-                <div
-                  className="delegation-card-actions flex flex-wrap gap-[8px]"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  <button
-                    className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466] disabled:text-[#748092]"
-                    disabled={Boolean(task.isMine)}
-                    onClick={handleTaskAction}
-                    type="button"
+              {!task.isMine ? (
+                <div className="product-actions flex flex-wrap items-center justify-between gap-[10px]">
+                  <div
+                    className="delegation-card-actions flex flex-wrap gap-[8px]"
+                    onClick={(event) => event.stopPropagation()}
                   >
-                    <MessageCircle size={15} /> 联系
-                  </button>
-                  <button
-                    className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
-                    disabled={Boolean(task.isMine)}
-                    onClick={() => handleAcceptTask(task)}
-                    type="button"
-                  >
-                    <CheckCircle2 size={15} />
-                    {task.amountNegotiable || task.fee <= 0 ? "报价" : "接受委托"}
-                  </button>
+                    <button
+                      className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466] disabled:text-[#748092]"
+                      onClick={() => handleTaskAction(task)}
+                      type="button"
+                    >
+                      <MessageCircle size={15} /> 联系
+                    </button>
+                    <button
+                      className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+                      disabled={isDelegationTaskLocked(task)}
+                      onClick={() => handleAcceptTask(task)}
+                      type="button"
+                    >
+                      <CheckCircle2 size={15} />
+                      {getDelegationPrimaryActionLabel(task)}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) : null}
             </article>
           );
         })}
@@ -480,9 +528,19 @@ export function Delegation({
                 委托目的地：{getDelegationDestination(selectedTask)}
               </span>
               <span>
+                <UserRound size={15} />
+                发布者：{getDelegationPublisherText(selectedTask)}
+              </span>
+              <span>
                 <Banknote size={15} />
                 委托金额：{getDelegationAmountText(selectedTask)}
               </span>
+              {selectedTask.depositRequired ? (
+                <span>
+                  <Banknote size={15} />
+                  押金：{formatCurrency(selectedTask.depositAmount ?? 0)}
+                </span>
+              ) : null}
               <span>
                 <MessageCircle size={15} />
                 描述：{selectedTask.description || "暂无描述"}
@@ -492,24 +550,26 @@ export function Delegation({
                 要求：{getDelegationRequirementTags(selectedTask).join("、")}
               </span>
             </div>
-            <div className="delegation-card-actions flex flex-wrap gap-[8px]">
-              <button
-                className="ghost-button inline-flex min-h-[36px] flex-1 items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466] disabled:text-[#748092]"
-                disabled={Boolean(selectedTask.isMine)}
-                onClick={handleTaskAction}
-                type="button"
-              >
-                <MessageCircle size={15} /> 联系
-              </button>
-              <button
-                className="primary-button inline-flex min-h-[36px] flex-1 items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-                onClick={() => openAmountDialog(selectedTask)}
-                type="button"
-              >
-                <Banknote size={15} />
-                {selectedTask.amountNegotiable || selectedTask.fee <= 0 ? "报价" : "委托额度"}
-              </button>
-            </div>
+            {!selectedTask.isMine ? (
+              <div className="delegation-card-actions flex flex-wrap gap-[8px]">
+                <button
+                  className="ghost-button inline-flex min-h-[36px] flex-1 items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466] disabled:text-[#748092]"
+                  onClick={() => handleTaskAction(selectedTask)}
+                  type="button"
+                >
+                  <MessageCircle size={15} /> 联系
+                </button>
+                <button
+                  className="primary-button inline-flex min-h-[36px] flex-1 items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+                  disabled={isDelegationTaskLocked(selectedTask)}
+                  onClick={() => handleAcceptTask(selectedTask)}
+                  type="button"
+                >
+                  <Banknote size={15} />
+                  {getDelegationPrimaryActionLabel(selectedTask)}
+                </button>
+              </div>
+            ) : null}
           </div>
         </section>
       ) : null}
@@ -533,50 +593,26 @@ export function Delegation({
                 <XCircle size={20} />
               </button>
             </div>
-            {amountStep === "input" ? (
-              <label className="profile-field publish-field grid gap-[7px]">
-                <span>输入委托额度</span>
-                <input
-                  inputMode="decimal"
-                  onChange={(event) => setAmountDraft(event.target.value)}
-                  placeholder="请输入双方协商金额"
-                  type="text"
-                  value={amountDraft}
-                />
-                {amountError ? <em>{amountError}</em> : null}
-              </label>
-            ) : (
-              <div className="delegation-preview grid gap-[9px]">
-                <span>
-                  <Banknote size={15} />
-                  待确认额度：{amountTask.pendingAmount ? formatCurrency(amountTask.pendingAmount) : "待输入"}
-                </span>
-                <span>
-                  <CheckCircle2 size={15} />
-                  任意一方输入金额后，另一方确认，委托即进入进行中。
-                </span>
-              </div>
-            )}
+            <label className="profile-field publish-field grid gap-[7px]">
+              <span>输入报价金额</span>
+              <input
+                inputMode="decimal"
+                onChange={(event) => setAmountDraft(event.target.value)}
+                placeholder="请输入本次报价金额"
+                type="text"
+                value={amountDraft}
+              />
+              {amountError ? <em>{amountError}</em> : null}
+            </label>
             <div className="sheet-actions grid gap-[8px]">
-              {amountStep === "input" ? (
-                <button
-                  className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-                  onClick={handleSubmitAmount}
-                  type="button"
-                >
-                  <Banknote size={16} />
-                  提交额度
-                </button>
-              ) : (
-                <button
-                  className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-                  onClick={handleConfirmAmount}
-                  type="button"
-                >
-                  <CheckCircle2 size={16} />
-                  确认并开始
-                </button>
-              )}
+              <button
+                className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+                onClick={handleSubmitAmount}
+                type="button"
+              >
+                <Banknote size={16} />
+                提交报价
+              </button>
             </div>
           </div>
         </section>

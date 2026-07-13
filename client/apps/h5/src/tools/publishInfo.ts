@@ -20,6 +20,8 @@ export interface PublishInfoDraft {
   amountMode: DelegationAmountMode;
   checkInMode: string;
   delegationTime: string;
+  depositAmount: string;
+  depositRequired: "no" | "yes";
   description: string;
   partTimeWageMode: string;
   requirement: string;
@@ -106,6 +108,8 @@ export function buildPublishHuntingTaskRequest(
   return {
     amount: isNegotiableAmount(draft) ? null : Number(draft.amount.trim()),
     amountNegotiable: isNegotiableAmount(draft),
+    depositAmount: draft.depositRequired === "yes" ? Number(draft.depositAmount.trim()) : null,
+    depositRequired: draft.depositRequired === "yes",
     description: draft.description.trim(),
     destination: getPublishDestinationLabel(draft.addressId, addressItems),
     latestTime: getDelegationLatestTimeLabel(draft.delegationTime),

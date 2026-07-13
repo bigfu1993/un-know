@@ -10,6 +10,7 @@ export function AddressInfoForm({
   isCurrent = false,
   mode,
   onChange,
+  onDelete,
   onEdit,
   onUse,
   previewVariant = "list"
@@ -41,6 +42,11 @@ export function AddressInfoForm({
             {onEdit ? (
               <button className="ghost-button inline-flex min-h-[30px] items-center justify-center px-[9px] py-[6px]" onClick={onEdit} type="button">
                 {actionLabel}
+              </button>
+            ) : null}
+            {onDelete ? (
+              <button className="ghost-button danger inline-flex min-h-[30px] items-center justify-center px-[9px] py-[6px]" onClick={onDelete} type="button">
+                删除
               </button>
             ) : null}
           </div>

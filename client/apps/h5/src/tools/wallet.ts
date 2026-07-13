@@ -34,6 +34,18 @@ export function formatWalletAmount(amount: number) {
   return `${sign}¥${Math.abs(amount).toFixed(2)}`;
 }
 
+/** 将金额数值格式化为紧凑展示文案，最多保留 2 位小数并关闭千分位。 */
+export function formatCompactWalletAmount(amount: number) {
+  const sign = amount < 0 ? "-" : "";
+  const normalizedAmount = Math.abs(amount).toLocaleString("zh-CN", {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    useGrouping: false
+  });
+
+  return `${sign}¥${normalizedAmount}`;
+}
+
 /** 计算钱包总金额，包含可提现、观察期和押金/保证金。 */
 export function getWalletTotalAmount(walletSummary: WalletSummary) {
   return formatWalletAmount(

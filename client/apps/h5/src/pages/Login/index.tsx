@@ -2,6 +2,7 @@ import {
   clearStoredPendingRegistration,
   getStoredPasswordCredential,
   hasStoredPendingRegistration,
+  profileDraftToClientAddressRequest,
   setStoredPendingRegistration
 } from "../../shared/clientPageModel";
 import { localAuthCode, localPasswordMinLength, saveLocalPasswordCredential, verifyLocalPasswordCredential } from "../../tools/localAuth";
@@ -43,16 +44,16 @@ const registrationRoleIcons = {
 } satisfies Record<Role, LucideIcon>;
 
 /** 根据已存草稿和所选角色创建可编辑注册资料草稿。 */
-function getInitialRegistrationDraft(role: Role) {
-  const storedDraft = getStoredProfileDraft();
+function getInitialRegistrationDraft(role: Role, ownerKey?: string) {
+  const storedDraft = getStoredProfileDraft(ownerKey);
   const template = registrationProfileTemplates[role];
 
   return Object.fromEntries(template.fields.map((field) => [field.key, storedDraft[field.key] ?? ""]));
 }
 
 /** 读取注册资料中独立于地址表单的选填生日。 */
-function getInitialRegistrationBirthday() {
-  return getStoredProfileDraft().birthday ?? "";
+function getInitialRegistrationBirthday(ownerKey?: string) {
+  return getStoredProfileDraft(ownerKey).birthday ?? "";
 }
 
 /** 解析 H5 接口基础地址，避免开发热更新期间依赖共享包导出。 */
@@ -71,6 +72,25 @@ async function selectClientRoleAfterRegistration(accessToken: string, role: Role
     body: JSON.stringify({ role })
   });
   const result = (await response.json()) as ApiEnvelope<LoginResponse>;
+
+  if (!response.ok || result.code !== "OK" || !result.data) {
+    throw new Error(result.message || `HTTP ${response.status}`);
+  }
+
+  return result.data;
+}
+
+/** 注册资料补充阶段地址填写完整时，使用新会话令牌直接创建服务端当前地址。 */
+async function createClientAddressAfterRegistration(accessToken: string, profileDraft: ProfileDraftState) {
+  const response = await fetch(`${getH5ApiBaseUrl()}/api/client/profile/addresses`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(profileDraftToClientAddressRequest(profileDraft, true))
+  });
+  const result = (await response.json()) as ApiEnvelope<ClientAddress>;
 
   if (!response.ok || result.code !== "OK" || !result.data) {
     throw new Error(result.message || `HTTP ${response.status}`);
@@ -345,10 +365,12 @@ export function Login({
 
   /** 记录注册角色并打开资料草稿步骤。 */
   function handleRegistrationRoleSelect(role: Role) {
+    const registrationOwnerKey = pendingRegisterPhone || phone;
+
     setSelectedRegisterRole(role);
-    setRegistrationBirthday(getInitialRegistrationBirthday());
+    setRegistrationBirthday(getInitialRegistrationBirthday(registrationOwnerKey));
     setRegistrationNickname("");
-    setRegistrationDraft(getInitialRegistrationDraft(role));
+    setRegistrationDraft(getInitialRegistrationDraft(role, registrationOwnerKey));
     showMessage("已选择角色，请填写昵称并设置登录密码。", { type: "success" });
   }
 
@@ -365,7 +387,7 @@ export function Login({
 
   /** 向后端确认注册角色后进入客户端外壳。 */
   async function completeRegistration() {
-    if (!pendingRegisterSession || !selectedRegisterRole) {
+    if (!pendingRegisterSession || !selectedRegisterRole || !registrationTemplate) {
       return;
     }
 
@@ -384,8 +406,9 @@ export function Login({
       return;
     }
 
+    const credentialPhone = pendingRegisterPhone || phone;
     const nextProfileDraft = {
-      ...getStoredProfileDraft(),
+      ...getStoredProfileDraft(credentialPhone),
       ...getFilledProfileDraft({
         ...registrationDraft,
         birthday: registrationBirthday
@@ -395,16 +418,19 @@ export function Login({
     setIsRoleSelectionPending(true);
     try {
       const session = await selectClientRoleAfterRegistration(pendingRegisterSession.accessToken, selectedRegisterRole);
+      const hasCompleteAddress = registrationTemplate.fields.every((field) => nextProfileDraft[field.key]?.trim());
       const sessionWithNickname = {
         ...session,
-        displayName: registrationNickname.trim()
+        displayName: registrationNickname.trim(),
+        profileCompletionRequired: !hasCompleteAddress
       };
 
-      const credentialPhone = pendingRegisterPhone || phone;
-
+      if (hasCompleteAddress) {
+        await createClientAddressAfterRegistration(session.accessToken, nextProfileDraft);
+      }
       await saveLocalPasswordCredential(credentialPhone, registrationPassword);
       clearStoredPendingRegistration(credentialPhone);
-      setStoredProfileDraft(nextProfileDraft);
+      setStoredProfileDraft(nextProfileDraft, credentialPhone);
       onLoginSuccess(sessionWithNickname);
     } catch (error) {
       showMessage(getErrorMessage(error, "角色确认或密码保存失败，请稍后重试。"), { type: "error" });

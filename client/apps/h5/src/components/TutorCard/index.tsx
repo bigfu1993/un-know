@@ -40,7 +40,7 @@ export function TutorCard({
   if (mode === "status") {
     return (
       <article className={rootClassName}>
-        <div className="tutor-card-head flex items-start gap-[10px]">
+        <div className="tutor-card-head flex items-center gap-[10px]">
           <span className="tutor-card-icon grid h-[40px] w-[40px] shrink-0 place-items-center">
             <GraduationCap size={21} />
           </span>
@@ -56,7 +56,7 @@ export function TutorCard({
 
   const content = (
     <>
-      <div className="tutor-card-head flex items-start gap-[10px]">
+      <div className="tutor-card-head flex items-center gap-[10px]">
         <span className="tutor-card-icon grid h-[40px] w-[40px] shrink-0 place-items-center">
           <GraduationCap size={21} />
         </span>

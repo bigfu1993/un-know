@@ -44,6 +44,7 @@ export interface AddressInfoFormProps {
   isCurrent?: boolean;
   mode: AddressInfoFormMode;
   onChange?: (key: string, value: string) => void;
+  onDelete?: () => void;
   onEdit?: () => void;
   onUse?: () => void;
   previewVariant?: AddressInfoPreviewVariant;

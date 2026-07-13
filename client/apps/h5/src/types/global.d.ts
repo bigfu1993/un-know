@@ -10,6 +10,7 @@ declare global {
   type ClientModuleKey = import("@unknown/domain").ClientModuleKey;
   type DeliveryMode = import("@unknown/domain").DeliveryMode;
   type HuntingSummary = import("@unknown/domain").HuntingSummary;
+  type HuntingQuote = import("@unknown/domain").HuntingQuote;
   type HuntingTask = import("@unknown/domain").HuntingTask;
   type LoginResponse = import("@unknown/domain").LoginResponse;
   type MerchantDashboard = import("@unknown/domain").MerchantDashboard;
@@ -29,6 +30,8 @@ declare global {
   type JobFilter = import("./app").JobFilter;
   type TutorSort = import("./app").TutorSort;
   type CheckoutState = import("./app").CheckoutState;
+  type ClientAddress = import("@unknown/domain").ClientAddress;
+  type ClientAddressRequest = import("@unknown/domain").ClientAddressRequest;
 
   type LoginRegisterCardProps = import("./auth").LoginRegisterCardProps;
 

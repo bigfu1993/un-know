@@ -1,6 +1,7 @@
 package com.unknown.platform.modules.clienthome.application;
 
 import com.unknown.platform.common.exception.BusinessException;
+import com.unknown.platform.common.security.ClientSessionService;
 import com.unknown.platform.modules.auth.model.ClientRole;
 import com.unknown.platform.modules.clienthome.model.ClientHomeResponse;
 import com.unknown.platform.modules.clienthome.model.ModuleCard;
@@ -13,45 +14,84 @@ import org.springframework.stereotype.Service;
 @Service
 public class ClientHomeAppService {
   private final JdbcTemplate jdbcTemplate;
+  private final ClientSessionService clientSessionService;
 
-  public ClientHomeAppService(JdbcTemplate jdbcTemplate) {
+  public ClientHomeAppService(JdbcTemplate jdbcTemplate, ClientSessionService clientSessionService) {
     this.jdbcTemplate = jdbcTemplate;
+    this.clientSessionService = clientSessionService;
   }
 
-  public ClientHomeResponse getHome(ClientRole role) {
-    RoleProfile profile = profile(role);
+  public ClientHomeResponse getHome(ClientRole role, String authorization) {
+    RoleProfile profile = profile(role, authorization);
     List<ModuleCard> modules = modules(role);
     List<String> alerts = alerts(role);
     return new ClientHomeResponse(profile, modules, alerts);
   }
 
-  private RoleProfile profile(ClientRole role) {
-    List<RoleProfile> profiles = jdbcTemplate.query(
-        """
-            SELECT u.nickname, u.account_label, u.credit_score, u.status,
-                   COALESCE(u.tutor_certification_status, 'pending') AS tutor_certification_status,
-                   COALESCE(w.withdrawable_cents, 0) AS withdrawable_cents
-            FROM app_user u
-            LEFT JOIN wallet_account w ON w.user_id = u.id
-            WHERE u.role = ?
-            ORDER BY u.updated_at DESC, u.id DESC
-            LIMIT 1
-            """,
-        (rs, rowNum) -> new RoleProfile(
-            role,
-            rs.getString("nickname"),
-            rs.getString("account_label"),
-            rs.getInt("credit_score"),
-            balanceText(role, rs.getLong("withdrawable_cents")),
-            accountStatus(rs.getString("status")),
-            tutorCertificationStatus(rs.getString("tutor_certification_status"))
-        ),
-        role.name()
-    );
+  private RoleProfile profile(ClientRole role, String authorization) {
+    Long currentUserId = clientSessionService.userIdOrNull(authorization);
+    List<RoleProfile> profiles = currentUserId == null ? latestRoleProfiles(role) : currentUserProfiles(role, currentUserId);
     if (profiles.isEmpty()) {
       throw new BusinessException("ROLE_PROFILE_NOT_FOUND", "角色账户数据不存在，请先登录创建真实账号");
     }
     return profiles.get(0);
+  }
+
+  private List<RoleProfile> latestRoleProfiles(ClientRole role) {
+    return jdbcTemplate.query(
+        profileSql("u.role = ?", "ORDER BY u.updated_at DESC, u.id DESC"),
+        (rs, rowNum) -> mapRoleProfile(role, rs.getString("nickname"), rs.getString("account_label"),
+            rs.getInt("credit_score"), rs.getLong("withdrawable_cents"), rs.getString("status"),
+            rs.getString("tutor_certification_status"), rs.getString("hunting_certification_status")),
+        role.name()
+    );
+  }
+
+  private List<RoleProfile> currentUserProfiles(ClientRole role, long userId) {
+    return jdbcTemplate.query(
+        profileSql("u.id = ? AND u.role = ?", ""),
+        (rs, rowNum) -> mapRoleProfile(role, rs.getString("nickname"), rs.getString("account_label"),
+            rs.getInt("credit_score"), rs.getLong("withdrawable_cents"), rs.getString("status"),
+            rs.getString("tutor_certification_status"), rs.getString("hunting_certification_status")),
+        userId,
+        role.name()
+    );
+  }
+
+  private String profileSql(String whereClause, String orderClause) {
+    return """
+            SELECT u.nickname, u.account_label, u.credit_score, u.status,
+                   COALESCE(u.tutor_certification_status, 'pending') AS tutor_certification_status,
+                   COALESCE(u.hunting_certification_status, 'pending') AS hunting_certification_status,
+                   COALESCE(w.withdrawable_cents, 0) AS withdrawable_cents
+            FROM app_user u
+            LEFT JOIN wallet_account w ON w.user_id = u.id
+            WHERE %s
+            %s
+            LIMIT 1
+            """.formatted(whereClause, orderClause);
+  }
+
+  private RoleProfile mapRoleProfile(
+      ClientRole role,
+      String nickname,
+      String accountLabel,
+      int creditScore,
+      long withdrawableCents,
+      String status,
+      String tutorCertificationStatus,
+      String huntingCertificationStatus
+  ) {
+    return new RoleProfile(
+        role,
+        nickname,
+        accountLabel,
+        creditScore,
+        balanceText(role, withdrawableCents),
+        accountStatus(status),
+        certificationStatus(tutorCertificationStatus),
+        certificationStatus(huntingCertificationStatus)
+    );
   }
 
   private List<ModuleCard> modules(ClientRole role) {
@@ -103,7 +143,7 @@ public class ClientHomeAppService {
     };
   }
 
-  private String tutorCertificationStatus(String status) {
+  private String certificationStatus(String status) {
     return switch (status == null ? "pending" : status) {
       case "reviewing" -> "reviewing";
       case "normal" -> "normal";

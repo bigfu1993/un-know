@@ -39,7 +39,7 @@ export function HuntingCertificationCard({
 
   return (
     <article className={rootClassName}>
-      <div className="hunting-certification-head flex items-start gap-[10px]">
+      <div className="hunting-certification-head flex items-center gap-[10px]">
         <span className="hunting-certification-icon grid h-[40px] w-[40px] shrink-0 place-items-center">
           <ShieldCheck size={21} />
         </span>

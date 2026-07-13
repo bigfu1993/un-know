@@ -5,6 +5,7 @@ import com.unknown.platform.modules.auth.model.ClientRole;
 import com.unknown.platform.modules.clienthome.application.ClientHomeAppService;
 import com.unknown.platform.modules.clienthome.model.ClientHomeResponse;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,8 +20,10 @@ public class ClientHomeController {
   }
 
   @GetMapping("/home")
-  public ApiResponse<ClientHomeResponse> home(@RequestParam(defaultValue = "student") ClientRole role) {
-    return ApiResponse.ok(clientHomeAppService.getHome(role));
+  public ApiResponse<ClientHomeResponse> home(
+      @RequestHeader(value = "Authorization", required = false) String authorization,
+      @RequestParam(defaultValue = "student") ClientRole role
+  ) {
+    return ApiResponse.ok(clientHomeAppService.getHome(role, authorization));
   }
 }
-

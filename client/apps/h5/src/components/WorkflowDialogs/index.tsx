@@ -22,11 +22,13 @@ function getOngoingOrderCategory(order: ClientOrder): Exclude<OngoingOrderFilter
 export function OngoingOrdersDialog({
   maxHeight = "min(72vh, 620px)",
   orders,
-  onClose
+  onClose,
+  onOpenQuoteList
 }: {
   maxHeight?: string;
   orders: ClientOrder[];
   onClose: () => void;
+  onOpenQuoteList?: (order: ClientOrder) => void;
 }) {
   const [activeFilter, setActiveFilter] = useState<OngoingOrderFilter>("all");
   const filteredOrders = useMemo(
@@ -80,9 +82,32 @@ export function OngoingOrdersDialog({
               </div>
               <p>{order.detail}</p>
               <div className="meta-line mt-[10px] flex flex-wrap items-center gap-[6px] text-[13px] leading-[1.45] text-[#657181]">
-                <span>{formatCurrency(order.amount)}</span>
+                <span>{order.amountLabel ?? formatCurrency(order.amount)}</span>
                 <span>{order.contact}</span>
               </div>
+              {getOngoingOrderCategory(order) === "delegation" && order.quoteCount && order.quoteCount > 0 ? (
+                <div className="ongoing-card-actions mt-[10px] flex flex-wrap gap-[8px]">
+                  <button
+                    className="primary-button delegation-quote-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+                    onClick={() => onOpenQuoteList?.(order)}
+                    type="button"
+                  >
+                    查看报价
+                    <span className="delegation-quote-badge">{order.quoteCount}</span>
+                  </button>
+                </div>
+              ) : null}
+              {getOngoingOrderCategory(order) === "hunting" && order.quoteId ? (
+                <div className="ongoing-card-actions mt-[10px] flex flex-wrap gap-[8px]">
+                  <button
+                    className="primary-button delegation-quote-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+                    onClick={() => onOpenQuoteList?.(order)}
+                    type="button"
+                  >
+                    处理报价
+                  </button>
+                </div>
+              ) : null}
             </article>
           ))}
           {filteredOrders.length === 0 ? (
@@ -99,12 +124,14 @@ export function OngoingOrdersDialog({
 
 /** 渲染当前场景资料模板，并将保存动作交给 App。 */
 export function ProfileCompletionDialog({
+  isSaving = false,
   template,
   profileDraft,
   onChange,
   onClose,
   onSave
 }: {
+  isSaving?: boolean;
   template: ProfileRequirementTemplate;
   profileDraft: ProfileDraftState;
   onChange: (key: string, value: string) => void;
@@ -118,7 +145,7 @@ export function ProfileCompletionDialog({
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!hasInvalidFields) {
+    if (!hasInvalidFields && !isSaving) {
       onSave();
     }
   }
@@ -164,7 +191,7 @@ export function ProfileCompletionDialog({
           </button>
           <button
             className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
-            disabled={hasInvalidFields}
+            disabled={hasInvalidFields || isSaving}
             type="submit"
           >
             <CheckCircle2 size={16} />

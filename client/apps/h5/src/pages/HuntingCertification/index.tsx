@@ -1,8 +1,10 @@
-import { useGlobalStore, useGlobalUser } from "@h5/store/global";
+import { useGlobalUser } from "@h5/store/global";
+import type { HuntingCertificationStatus } from "@unknown/domain";
+import { useSubmitHuntingCertification } from "@unknown/hooks";
 import { getFilledProfileDraft } from "../../shared/clientPageModel";
 import { normalizeByKey, validateByKey } from "../../tools/validation";
 
-/** 狩猎认证字段配置。 */
+/** 狩猎认证字段配置，字段 key 同本地资料草稿保持一致，便于提交后回填表单。 */
 interface HuntingCertificationField {
   inputMode?: "text" | "numeric";
   key: string;
@@ -13,7 +15,7 @@ interface HuntingCertificationField {
 /** 狩猎认证表单草稿。 */
 type HuntingCertificationDraft = Record<string, string>;
 
-/** 狩猎认证必填字段，后续接后端接口时可保持同一字段口径。 */
+/** 狩猎认证必填字段，提交时会映射为服务端接口字段。 */
 const huntingCertificationFields: HuntingCertificationField[] = [
   { key: "huntingRealName", label: "姓名", placeholder: "请输入真实姓名" },
   { key: "huntingAge", label: "年龄", placeholder: "请输入年龄", inputMode: "numeric" },
@@ -26,6 +28,12 @@ const huntingCertificationFields: HuntingCertificationField[] = [
 /** 狩猎认证性别选项。 */
 const huntingGenderOptions = ["男", "女", "其他"];
 
+interface HuntingCertificationProps {
+  onBack: () => void;
+  onSubmitError: (error: unknown) => void;
+  onSubmitted: (certificationStatus: HuntingCertificationStatus, profileDraft: ProfileDraftState) => void;
+}
+
 /** 根据全局资料草稿初始化狩猎认证表单。 */
 function getInitialHuntingCertificationDraft(profileDraft: ProfileDraftState): HuntingCertificationDraft {
   return {
@@ -34,10 +42,10 @@ function getInitialHuntingCertificationDraft(profileDraft: ProfileDraftState): H
   };
 }
 
-/** 学生狩猎资格认证页面，当前阶段提交后进入“认证中”状态。 */
-export function HuntingCertification({ onBack, onSubmitted }: { onBack: () => void; onSubmitted: () => void }) {
+/** 学生狩猎资格认证页面，提交后由服务端持久化审核状态并返回最新状态。 */
+export function HuntingCertification({ onBack, onSubmitError, onSubmitted }: HuntingCertificationProps) {
   const { profileDraft } = useGlobalUser();
-  const setUserProfileDraft = useGlobalStore((state) => state.setUserProfileDraft);
+  const submitHuntingCertificationMutation = useSubmitHuntingCertification();
   const [draft, setDraft] = useState<HuntingCertificationDraft>(() =>
     getInitialHuntingCertificationDraft(profileDraft)
   );
@@ -49,6 +57,7 @@ export function HuntingCertification({ onBack, onSubmitted }: { onBack: () => vo
     required: true
   });
   const isFormValid = genderValidation.isValid && requiredFieldResults.every((result) => result.isValid);
+  const isSubmitting = submitHuntingCertificationMutation.isPending;
 
   /** 更新认证字段并复用统一输入归一化。 */
   function handleFieldChange(key: string, value: string) {
@@ -58,24 +67,31 @@ export function HuntingCertification({ onBack, onSubmitted }: { onBack: () => vo
     }));
   }
 
-  /** 提交本地认证草稿，等待后端认证接口上线后替换为真实提交。 */
+  /** 提交狩猎认证资料，认证状态以服务端返回为准。 */
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!isFormValid) {
+    if (!isFormValid || isSubmitting) {
       return;
     }
 
-    const filledDraft = getFilledProfileDraft({
-      ...draft,
-      huntingCertificationStatus: "reviewing"
-    });
-
-    setUserProfileDraft({
-      ...profileDraft,
-      ...filledDraft
-    });
-    onSubmitted();
+    submitHuntingCertificationMutation.mutate(
+      {
+        realName: draft.huntingRealName ?? "",
+        gender: draft.huntingGender ?? "",
+        age: draft.huntingAge ?? "",
+        nativePlace: draft.huntingNativePlace ?? "",
+        idCard: draft.huntingIdCard ?? "",
+        school: draft.huntingSchool ?? "",
+        major: draft.huntingMajor ?? ""
+      },
+      {
+        onSuccess: (response) => {
+          onSubmitted(response.huntingCertificationStatus, getFilledProfileDraft(draft));
+        },
+        onError: onSubmitError
+      }
+    );
   }
 
   return (
@@ -123,6 +139,7 @@ export function HuntingCertification({ onBack, onSubmitted }: { onBack: () => vo
         <div className="sheet-actions grid gap-[8px]">
           <button
             className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+            disabled={isSubmitting}
             onClick={onBack}
             type="button"
           >
@@ -130,10 +147,10 @@ export function HuntingCertification({ onBack, onSubmitted }: { onBack: () => vo
           </button>
           <button
             className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
-            disabled={!isFormValid}
+            disabled={!isFormValid || isSubmitting}
             type="submit"
           >
-            提交认证
+            {isSubmitting ? "提交中..." : "提交认证"}
           </button>
         </div>
       </form>

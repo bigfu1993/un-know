@@ -1,54 +1,155 @@
-﻿/** 兼职页面，维护学生筛选状态，并按角色切换商户工作台。 */
+/** 学生兼职页展开的工具面板。 */
+type PartTimeToolbarPanel = "area" | "sort" | null;
+
+/** 从兼职地点中提取适合做快速筛选的区域文案。 */
+function getPartTimeArea(location: string) {
+  return location.split(/->|→|·|,|，|-|\s+/)[0]?.trim() || "未知区域";
+}
+
+/** 汇总兼职可搜索文本，保持搜索逻辑集中。 */
+function getPartTimeSearchText(job: PartTimeJob) {
+  return [
+    job.title,
+    job.description,
+    job.publisher,
+    job.location,
+    job.period,
+    job.requirement,
+    job.status,
+    job.fundingState,
+    ...job.formFields
+  ]
+    .join(" ")
+    .toLowerCase();
+}
+
+/** 兼职页面，维护学生筛选状态，并按角色切换商户工作台。 */
 export function PartTime({ role, dashboard, jobs }: { role: Role; dashboard: MerchantDashboard; jobs: PartTimeJob[] }) {
+  const [keyword, setKeyword] = useState("");
+  const [activePanel, setActivePanel] = useState<PartTimeToolbarPanel>(null);
+  const [selectedArea, setSelectedArea] = useState("");
   const [jobFilter, setJobFilter] = useState<JobFilter>("latest");
+  const areaOptions = useMemo(
+    () => Array.from(new Set(jobs.map((job) => getPartTimeArea(job.location)))),
+    [jobs]
+  );
+  const visibleJobs = useMemo(() => {
+    const normalizedKeyword = keyword.trim().toLowerCase();
+    const filteredJobs = jobs.filter((job) => {
+      const keywordMatched = normalizedKeyword ? getPartTimeSearchText(job).includes(normalizedKeyword) : true;
+      const areaMatched = selectedArea ? getPartTimeArea(job.location) === selectedArea : true;
+
+      return keywordMatched && areaMatched;
+    });
+
+    return jobFilter === "hourly" ? [...filteredJobs].sort((a, b) => b.hourlyPay - a.hourlyPay) : filteredJobs;
+  }, [jobFilter, jobs, keyword, selectedArea]);
+  const selectedSortLabel = jobFilters.find((item) => item.key === jobFilter)?.label ?? "最新发布";
 
   if (role === "merchant") {
     return <MerchantPartTime dashboard={dashboard} jobs={jobs} />;
   }
 
-  const visibleJobs = jobFilter === "hourly" ? [...jobs].sort((a, b) => b.hourlyPay - a.hourlyPay) : jobs;
-
   return (
-    <section className="module-stack grid gap-[10px]">
-      <SectionHeader
-        countText={`${visibleJobs.length} 个`}
-        eyebrow="中长期兼职、短期任务、平台合作兼职"
-        title="兼职列表与报名"
-      />
+    <section className="module-stack part-time-list-page grid gap-[10px]">
+      <SectionHeader countText={`${visibleJobs.length} 个`} eyebrow="中长期兼职、短期任务、平台合作兼职" title="兼职列表与报名" />
 
-      <div
-        className="segmented-control my-[12px] flex gap-[8px] flex-wrap min-w-0 flex-1 font-bold"
-        aria-label="兼职筛选"
-      >
-        {jobFilters.map((item) => (
+      <div className="delegation-toolbar grid gap-[8px]">
+        <div className="delegation-toolbar-row flex items-center gap-[8px]">
+          <label className="delegation-search min-w-0 flex-1">
+            <span className="sr-only">搜索兼职</span>
+            <input
+              onChange={(event) => setKeyword(event.target.value)}
+              placeholder="搜索兼职、发布方或地点"
+              type="search"
+              value={keyword}
+            />
+          </label>
           <button
-            className={item.key === jobFilter ? "active" : ""}
-            key={item.key}
-            onClick={() => setJobFilter(item.key)}
+            aria-expanded={activePanel === "area"}
+            aria-label={`地点筛选，当前${selectedArea || "全部地点"}`}
+            className={`delegation-icon-button ${activePanel === "area" ? "active" : ""}`}
+            onClick={() => setActivePanel((panel) => (panel === "area" ? null : "area"))}
             type="button"
           >
-            {item.label}
+            <Filter size={17} />
           </button>
-        ))}
+          <button
+            aria-expanded={activePanel === "sort"}
+            aria-label={`排序，当前${selectedSortLabel}`}
+            className={`delegation-icon-button ${activePanel === "sort" ? "active" : ""}`}
+            onClick={() => setActivePanel((panel) => (panel === "sort" ? null : "sort"))}
+            type="button"
+          >
+            <ArrowDownUp size={17} />
+          </button>
+        </div>
+
+        {activePanel === "area" ? (
+          <div className="delegation-option-panel flex flex-wrap gap-[8px]" aria-label="兼职地点筛选">
+            {["", ...areaOptions].map((area) => (
+              <button
+                className={selectedArea === area ? "active" : ""}
+                key={area || "all"}
+                onClick={() => {
+                  setSelectedArea(area);
+                  setActivePanel(null);
+                }}
+                type="button"
+              >
+                {area || "全部地点"}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        {activePanel === "sort" ? (
+          <div className="delegation-option-panel flex flex-wrap gap-[8px]" aria-label="兼职排序">
+            {jobFilters.map((item) => (
+              <button
+                className={item.key === jobFilter ? "active" : ""}
+                key={item.key}
+                onClick={() => {
+                  setJobFilter(item.key);
+                  setActivePanel(null);
+                }}
+                type="button"
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="delegation-live-status">
+          <span>
+            当前筛选：{selectedArea || "全部地点"} · {selectedSortLabel}
+          </span>
+        </div>
       </div>
 
-      <div className="card-list grid gap-[10px]">
+      <div className="card-list part-time-list-scroll grid gap-[10px]">
         {visibleJobs.map((job) => (
           <PartTimeJobCard job={job} key={job.id} mode="student" />
         ))}
+        {visibleJobs.length === 0 ? (
+          <article className="empty-state p-[16px] text-center">
+            <strong>暂无匹配兼职</strong>
+            <span>换个关键词、地点或排序方式再试试。</span>
+          </article>
+        ) : null}
+        <article className="flow-card p-[14px] compact">
+          <div className="card-title flex items-center justify-between gap-[10px] min-w-0">
+            <CalendarClock size={18} />
+            <strong>学生报名状态流</strong>
+          </div>
+          <div className="status-flow mt-[10px] grid gap-[8px] text-center">
+            {["已报名", "待筛选", "未通过", "已确认/待签到", "已签到", "进行中", "结算中", "已结算"].map((status) => (
+              <span key={status}>{status}</span>
+            ))}
+          </div>
+        </article>
       </div>
-
-      <article className="flow-card p-[14px] compact">
-        <div className="card-title flex items-center justify-between gap-[10px] min-w-0">
-          <CalendarClock size={18} />
-          <strong>学生报名状态流</strong>
-        </div>
-        <div className="status-flow mt-[10px] grid gap-[8px] text-center">
-          {["已报名", "待筛选", "未通过", "已确认/待签到", "已签到", "进行中", "结算中", "已结算"].map((status) => (
-            <span key={status}>{status}</span>
-          ))}
-        </div>
-      </article>
     </section>
   );
 }

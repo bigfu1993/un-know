@@ -1,5 +1,14 @@
 ﻿import { useGlobalStore, useGlobalUser } from "@h5/store/global";
-import { usePublishHuntingTask } from "@unknown/hooks";
+import {
+  useAcceptHuntingTask,
+  useClientAddresses,
+  useCreateClientAddress,
+  useDecideHuntingTaskQuote,
+  usePublishHuntingTask,
+  useQuoteHuntingTask,
+  useUpdateClientAddress
+} from "@unknown/hooks";
+import type { HuntingCertificationStatus } from "@unknown/domain";
 import { Banknote, MapPin, RadioTower } from "lucide-react";
 import { getHuntingCertificationDataFromDraft } from "./components/HuntingCertificationCard/model";
 import { PublishInfoDialog } from "./components/PublishInfoDialog";
@@ -10,7 +19,12 @@ import {
 } from "./components/TutorCertificationInfoDialog";
 import { HuntingCertification } from "./pages/HuntingCertification";
 import { TutorCertification } from "./pages/Tutor/TutorCertification";
-import { getStoredAddressBook } from "./shared/clientPageModel";
+import {
+  clientAddressesToAddressBookItems,
+  clientAddressToAddressBookItem,
+  getCurrentAddressDraft,
+  profileDraftToClientAddressRequest
+} from "./shared/clientPageModel";
 import {
   buildPublishHuntingTaskRequest,
   isHuntingTaskPublishType,
@@ -40,16 +54,73 @@ function getPageMeta(page: PageSurface, role: Role) {
   return { title: "设置", eyebrow: "昵称与安全" };
 }
 
-/** 将当前账号发布的委托任务转换为进行中弹窗展示项。 */
-function getPublishedHuntingOngoingOrders(tasks: HuntingTask[], role: Role): ClientOrder[] {
-  return tasks.map((task) => ({
-    amount: task.fee,
-    category: "delegation",
-    contact: "我发布的委托",
+/** 判断委托是否处在报价阶段，兼容迁移前旧状态文案。 */
+function isHuntingQuoteStatus(task: HuntingTask) {
+  return task.status.includes("报价");
+}
+
+/** 判断委托是否处在发布等待阶段，兼容迁移前旧状态文案。 */
+function isHuntingPublishedStatus(task: HuntingTask) {
+  return task.status.includes("发布") || task.status.includes("待领取");
+}
+
+/** 判断委托是否处在履约阶段，兼容迁移前旧状态文案。 */
+function isHuntingFulfillingStatus(task: HuntingTask) {
+  return task.status.includes("履约中") || task.status.includes("进行中") || task.status.includes("已领取");
+}
+
+/** 获取进行中弹窗内委托/狩猎卡片展示状态。 */
+function getHuntingOngoingStatus(task: HuntingTask) {
+  const hasPendingQuote = isHuntingQuoteStatus(task) && (Boolean(task.isQuotedByMe) || (task.quoteCount ?? 0) > 0);
+
+  if (hasPendingQuote) {
+    return "报价确认中";
+  }
+  if (isHuntingFulfillingStatus(task)) {
+    return "履约中";
+  }
+  if (isHuntingPublishedStatus(task) || isHuntingQuoteStatus(task)) {
+    return "发布";
+  }
+  return task.status;
+}
+
+/** 获取进行中弹窗内委托/狩猎卡片金额展示文案。 */
+function getHuntingOngoingAmountLabel(task: HuntingTask) {
+  if (task.isQuotedByMe && typeof task.pendingAmount === "number") {
+    return `报价：${formatCurrency(task.pendingAmount)}`;
+  }
+  if (task.isMine && isHuntingQuoteStatus(task) && (task.quoteCount ?? 0) > 0) {
+    return `${task.quoteCount} 个报价`;
+  }
+  if (task.amountNegotiable || task.fee <= 0) {
+    return "协商";
+  }
+  return formatCurrency(task.fee);
+}
+
+/** 将当前账号相关的发布方委托或服务方报价/履约任务转换为进行中弹窗展示项。 */
+function getHuntingOngoingOrders(tasks: HuntingTask[], role: Role): ClientOrder[] {
+  return tasks.filter((task) => {
+    const isDelegationInProgress =
+      Boolean(task.isMine) &&
+      (isHuntingPublishedStatus(task) || isHuntingQuoteStatus(task) || isHuntingFulfillingStatus(task));
+    const isQuotedHunting = Boolean(task.isQuotedByMe) && isHuntingQuoteStatus(task);
+    const isHuntingInProgress = Boolean(task.isAcceptedByMe) && isHuntingFulfillingStatus(task);
+
+    return isDelegationInProgress || isQuotedHunting || isHuntingInProgress;
+  }).map((task) => ({
+    amount: task.pendingAmount ?? task.fee,
+    amountLabel: getHuntingOngoingAmountLabel(task),
+    category: task.isMine ? "delegation" : "hunting",
+    contact: task.isMine ? "我发布的委托" : isHuntingQuoteStatus(task) ? "我报价的委托" : "我履约的委托",
     detail: `${task.mode} · ${task.latestTime} · ${task.destination ?? task.location}`,
     id: task.id,
+    quoteAmount: task.pendingAmount,
+    quoteCount: task.isMine ? task.quoteCount : undefined,
+    quoteId: task.pendingQuoteId,
     role,
-    status: task.status,
+    status: getHuntingOngoingStatus(task),
     title: task.title
   }));
 }
@@ -61,13 +132,13 @@ function getHuntingTaskAmountText(task: HuntingTask) {
 
 /** 获取狩猎快捷开启后系统推荐的委托任务。 */
 function getRecommendedHuntingTasks(tasks: HuntingTask[]) {
-  const recommendableStatusKeywords = ["待", "报价", "领取", "已发布"];
+  const recommendableStatusKeywords = ["发布", "待", "报价", "领取", "已发布"];
 
   return tasks
     .filter(
       (task) =>
         !task.isMine &&
-        !task.status.includes("进行中") &&
+        !isHuntingFulfillingStatus(task) &&
         recommendableStatusKeywords.some((keyword) => task.status.includes(keyword))
     )
     .slice(0, 9);
@@ -83,6 +154,28 @@ function getHuntingTaskPublishTimeText(date: Date) {
   return `${month}-${day} ${hour}:${minute}`;
 }
 
+/** 判断报价是否仍处于协商中。 */
+function isNegotiatingHuntingQuote(quote: HuntingQuote | null) {
+  if (!quote) {
+    return false;
+  }
+  return !quote.status.includes("已拒绝") && !quote.status.includes("未选中") && !quote.status.includes("已确认");
+}
+
+/** 判断当前账号是否可以确认选中的报价。 */
+function canConfirmHuntingQuote(task: HuntingTask | null, quote: HuntingQuote | null) {
+  if (!task || !quote) {
+    return false;
+  }
+  if (task.isMine) {
+    return quote.status.includes("待发布方确认") || quote.status.includes("待确认");
+  }
+  return Boolean(task.isQuotedByMe) && quote.status.includes("待服务方确认");
+}
+
+/** React Query 首次返回数据前使用的稳定空地址，避免 effect 因默认数组反复触发。 */
+const emptyClientAddresses: ClientAddress[] = [];
+
 /** H5 根组件，负责登录态、角色数据、路由栈和全局弹窗编排。 */
 export function App() {
   const navigate = useNavigate();
@@ -97,6 +190,9 @@ export function App() {
   const [activeTab, setActiveTab] = useState<ClientModuleKey>(() => getDefaultPrimaryTab(role));
   const [pageStack, setPageStack] = useState<PageSurface[]>([]);
   const [isOngoingOpen, setIsOngoingOpen] = useState(false);
+  const [ongoingQuoteTaskId, setOngoingQuoteTaskId] = useState<string | null>(null);
+  const [selectedOngoingQuoteId, setSelectedOngoingQuoteId] = useState("");
+  const [quoteCounterAmount, setQuoteCounterAmount] = useState("");
   const [isMineOpen, setIsMineOpen] = useState(false);
   const [isQuickDockExpanded, setIsQuickDockExpanded] = useState(true);
   const [isTutorCalendarOpen, setIsTutorCalendarOpen] = useState(false);
@@ -112,11 +208,16 @@ export function App() {
   const avatarLastClickAt = useRef(0);
   const { hideMessage, showMessage, toast } = useMessageToast();
   const [checkout, setCheckout] = useState<CheckoutState | null>(null);
-  const [savedProfileDraft, setSavedProfileDraft] = useState<ProfileDraftState>(() => getStoredProfileDraft());
-  const [profileDraft, setProfileDraft] = useState<ProfileDraftState>(() => getStoredProfileDraft());
+  const [savedProfileDraft, setSavedProfileDraft] = useState<ProfileDraftState>(() => getStoredProfileDraft(user.phone));
+  const [profileDraft, setProfileDraft] = useState<ProfileDraftState>(() => getStoredProfileDraft(user.phone));
   const [isProfileCompletionOpen, setIsProfileCompletionOpen] = useState(false);
   // 角色级数据在路由间共享，页面局部筛选保留在各页面模块内。
-  const { data: homeData, error: homeError, isLoading: isHomeLoading } = useClientHome(role, isAuthenticated);
+  const {
+    data: homeData,
+    error: homeError,
+    isLoading: isHomeLoading,
+    refetch: refetchHome
+  } = useClientHome(role, isAuthenticated);
   const {
     data: workspaceResponse,
     error: workspaceError,
@@ -124,29 +225,38 @@ export function App() {
     isLoading: isWorkspaceLoading,
     refetch: refetchWorkspace
   } = useClientWorkspace(role, isAuthenticated);
+  const {
+    data: clientAddresses = emptyClientAddresses,
+    error: addressError,
+    isLoading: isAddressLoading
+  } = useClientAddresses(isAuthenticated, user.session?.accessToken);
   const purchaseMutation = usePurchaseProduct();
   const publishHuntingTaskMutation = usePublishHuntingTask();
+  const acceptHuntingTaskMutation = useAcceptHuntingTask();
+  const quoteHuntingTaskMutation = useQuoteHuntingTask();
+  const decideHuntingTaskQuoteMutation = useDecideHuntingTaskQuote();
+  const createAddressMutation = useCreateClientAddress();
+  const updateAddressMutation = useUpdateClientAddress();
+  const addressItems = useMemo(() => clientAddressesToAddressBookItems(clientAddresses), [clientAddresses]);
 
   const roleOrders = useMemo(
     () => (workspaceResponse?.orders ?? []).filter((order) => order.role === role),
     [workspaceResponse?.orders, role]
   );
-  const ongoingOrders = useMemo(
-    () => [...getPublishedHuntingOngoingOrders(publishedHuntingTasks, role), ...roleOrders],
-    [publishedHuntingTasks, role, roleOrders]
-  );
+  const baseOngoingOrders = useMemo(() => roleOrders, [roleOrders]);
   const hasPaymentRisk = roleOrders.some((order) => order.risk === "payment");
-  const profileRequirement = getProfileRequirement(role, activeTab, savedProfileDraft);
+  const currentAddressDraft = useMemo(() => getCurrentAddressDraft(addressItems, {}), [addressItems]);
+  const profileRequirement = getProfileRequirement(role, activeTab, currentAddressDraft);
   const profileCompletionTemplate = getProfileRequirementTemplate(role, activeTab);
   const activePage = pageStack.length > 0 ? pageStack[pageStack.length - 1] : null;
-  const dataError = homeError ?? workspaceError;
-  const isInitialDataLoading = isHomeLoading || isWorkspaceLoading;
+  const dataError = homeError ?? workspaceError ?? addressError;
+  const isInitialDataLoading = isHomeLoading || isWorkspaceLoading || isAddressLoading;
   const huntingCertificationStatus = useMemo(
     () => getHuntingCertificationDataFromDraft(user.profileDraft).certificationStatus,
     [user.profileDraft]
   );
   const tutorCalendarTasks = useMemo(() => getTutorCalendarTasks(user.profileDraft), [user.profileDraft]);
-  const publishAddressItems = useMemo(() => getStoredAddressBook(user.profileDraft), [user.profileDraft]);
+  const publishAddressItems = addressItems;
   const refreshWorkspace = useCallback(() => {
     void refetchWorkspace();
   }, [refetchWorkspace]);
@@ -253,8 +363,20 @@ export function App() {
     navigate(getRouteForTab(activeTab), { replace: true });
   }
 
-  /** 狩猎认证提交完成后回到当前主模块首页，并用全局提示承接提交结果。 */
-  function handleHuntingCertificationSubmitted() {
+  /** 狩猎认证提交完成后回到当前主模块首页，并同步服务端返回的认证状态。 */
+  function handleHuntingCertificationSubmitted(
+    huntingCertificationStatus: HuntingCertificationStatus,
+    nextCertificationDraft: ProfileDraftState
+  ) {
+    const nextProfileDraft = {
+      ...user.profileDraft,
+      ...nextCertificationDraft,
+      huntingCertificationStatus
+    };
+
+    setUserProfileDraft(nextProfileDraft);
+    setSavedProfileDraft(nextProfileDraft);
+    setProfileDraft(nextProfileDraft);
     setPageStack([]);
     setIsMineOpen(false);
     setIsOngoingOpen(false);
@@ -262,11 +384,12 @@ export function App() {
     closeTutorDialogs();
     closeHuntingShortcutDialogs();
     showMessage("狩猎认证已提交，当前状态为认证中。", { type: "success" });
+    void refetchHome();
     navigate(getRouteForTab(activeTab), { replace: true });
   }
 
   function handleLoginSuccess(session: LoginResponse) {
-    const storedProfileDraft = getStoredProfileDraft();
+    const storedProfileDraft = getStoredProfileDraft(session.phone);
 
     setUserSession(session);
     setActiveTab(getDefaultPrimaryTab(session.role));
@@ -358,7 +481,7 @@ export function App() {
 
   // 购买前置资料校验属于跨模块流程，因此在根节点统一处理。
   function handleOpenCheckout(product: ProductSummary) {
-    const featuredRequirement = getProfileRequirement(role, "featured", savedProfileDraft);
+    const featuredRequirement = getProfileRequirement(role, "featured", currentAddressDraft);
 
     if (featuredRequirement) {
       showMessage(`请先补充${featuredRequirement.missingFields.map((field) => field.label).join("、")}`, {
@@ -383,20 +506,41 @@ export function App() {
   }
 
   function handleSaveProfileDraft() {
-    try {
-      const nextProfileDraft = {
-        ...savedProfileDraft,
-        ...getFilledProfileDraft(profileDraft)
-      };
+    const nextProfileDraft = {
+      ...savedProfileDraft,
+      ...getFilledProfileDraft(profileDraft)
+    };
+    const payload = profileDraftToClientAddressRequest(nextProfileDraft, true);
+    const currentAddressId = addressItems.find((item) => item.isCurrent)?.id;
+    const handleSuccess = (address: ClientAddress) => {
+      const nextAddressDraft = clientAddressToAddressBookItem(address).draft;
 
-      setSavedProfileDraft(nextProfileDraft);
-      setProfileDraft(nextProfileDraft);
-      setUserProfileDraft(nextProfileDraft);
+      setSavedProfileDraft(nextAddressDraft);
+      setProfileDraft(nextAddressDraft);
+      setUserProfileDraft({
+        ...user.profileDraft,
+        ...nextAddressDraft
+      });
       setIsProfileCompletionOpen(false);
       showMessage("资料已保存，当前模块可以继续操作。", { type: "success" });
-    } catch {
-      showMessage("资料保存失败，请检查浏览器存储权限。", { type: "error" });
+      void refetchHome();
+    };
+    const handleError = (error: unknown) => {
+      showMessage(getErrorMessage(error, "资料保存失败，请稍后重试。"), { type: "error" });
+    };
+
+    if (currentAddressId) {
+      updateAddressMutation.mutate({ ...payload, addressId: currentAddressId }, {
+        onSuccess: handleSuccess,
+        onError: handleError
+      });
+      return;
     }
+
+    createAddressMutation.mutate(payload, {
+      onSuccess: handleSuccess,
+      onError: handleError
+    });
   }
 
   function handleOpenProfileCompletion() {
@@ -530,14 +674,18 @@ export function App() {
           const publishedTask: HuntingTask = {
             ...task,
             amountNegotiable: Boolean(payload.amountNegotiable),
+            depositAmount: payload.depositAmount ?? 0,
+            depositRequired: Boolean(payload.depositRequired),
             description: payload.description,
             destination: payload.destination ?? payload.location,
             fee: payload.amountNegotiable ? 0 : task.fee,
             isMine: true,
             publishTime: task.publishTime ?? getHuntingTaskPublishTimeText(new Date()),
+            quoteCount: task.quoteCount ?? 0,
+            quotes: task.quotes ?? [],
             requirement: payload.requirement,
             requirementTags: payload.requirementTags ?? [],
-            status: payload.amountNegotiable ? "待协商" : task.status
+            status: task.status
           };
 
           setPublishedHuntingTasks((tasks) => [
@@ -562,7 +710,7 @@ export function App() {
 
   // 委托模块负责上线开关，根节点仅判断是否满足上线资料要求。
   function handleRequestHuntingOnline() {
-    const huntingRequirement = getProfileRequirement(role, "hunting", savedProfileDraft);
+    const huntingRequirement = getProfileRequirement(role, "hunting", currentAddressDraft);
 
     if (huntingRequirement) {
       showMessage(`请先补充${huntingRequirement.missingFields.map((field) => field.label).join("、")}`, {
@@ -573,6 +721,71 @@ export function App() {
     }
 
     return true;
+  }
+
+  /** 接受固定金额委托，服务端负责锁单和押金冻结校验。 */
+  async function handleAcceptHuntingTask(task: HuntingTask) {
+    try {
+      await acceptHuntingTaskMutation.mutateAsync(task.id);
+      showMessage("已接受委托，任务已进入履约中。", { type: "success" });
+      void refetchWorkspace();
+    } catch (error) {
+      showMessage(getErrorMessage(error, "接受委托失败，请稍后重试。"), { type: "error" });
+      throw error;
+    }
+  }
+
+  /** 提交协商金额报价，发布方确认后才会进入履约。 */
+  async function handleQuoteHuntingTask(task: HuntingTask, amount: number) {
+    try {
+      await quoteHuntingTaskMutation.mutateAsync({ amount, taskId: task.id });
+      showMessage(`报价 ${formatCurrency(amount)} 已提交，等待发布方确认。`, { type: "success" });
+      void refetchWorkspace();
+    } catch (error) {
+      showMessage(getErrorMessage(error, "提交报价失败，请稍后重试。"), { type: "error" });
+      throw error;
+    }
+  }
+
+  /** 发布方确认报价，确认成功后委托进入履约中。 */
+  async function handleConfirmHuntingQuote(task: HuntingTask, quote: HuntingQuote) {
+    try {
+      await decideHuntingTaskQuoteMutation.mutateAsync({ action: "confirm", quoteId: quote.id, taskId: task.id });
+      showMessage(`已确认 ${quote.bidderName} 的报价，委托进入履约中。`, { type: "success" });
+      void refetchWorkspace();
+    } catch (error) {
+      showMessage(getErrorMessage(error, "确认报价失败，请稍后重试。"), { type: "error" });
+      throw error;
+    }
+  }
+
+  /** 拒绝进行中弹窗内选中的委托报价，报价将失效并保留委托待报价状态。 */
+  async function handleRejectHuntingQuote(task: HuntingTask, quote: HuntingQuote) {
+    try {
+      await decideHuntingTaskQuoteMutation.mutateAsync({ action: "reject", quoteId: quote.id, taskId: task.id });
+      showMessage("已拒绝报价，委托将继续等待其他报价。", { type: "success" });
+      void refetchWorkspace();
+    } catch (error) {
+      showMessage(getErrorMessage(error, "拒绝报价失败，请稍后重试。"), { type: "error" });
+      throw error;
+    }
+  }
+
+  /** 修改报价金额后推送给对方确认。 */
+  async function handleCounterHuntingQuote(task: HuntingTask, quote: HuntingQuote, amount: number) {
+    try {
+      await decideHuntingTaskQuoteMutation.mutateAsync({
+        action: "counter",
+        amount,
+        quoteId: quote.id,
+        taskId: task.id
+      });
+      showMessage("已提交修改后的报价，等待对方确认。", { type: "success" });
+      void refetchWorkspace();
+    } catch (error) {
+      showMessage(getErrorMessage(error, "提交修改报价失败，请稍后重试。"), { type: "error" });
+      throw error;
+    }
   }
 
   function handleSubmitPurchase() {
@@ -619,9 +832,13 @@ export function App() {
   }, [homeData?.profile, isAuthenticated, syncUserProfile]);
 
   useEffect(() => {
-    setSavedProfileDraft(user.profileDraft);
-    setProfileDraft(user.profileDraft);
-  }, [user.profileDraft]);
+    const nextAddressDraft = getCurrentAddressDraft(addressItems, {});
+
+    setSavedProfileDraft(nextAddressDraft);
+    if (!isProfileCompletionOpen) {
+      setProfileDraft(nextAddressDraft);
+    }
+  }, [addressItems, isProfileCompletionOpen]);
 
   // 浏览器路由驱动当前模块，activeTab 只镜像主模块路由。
   useEffect(() => {
@@ -713,7 +930,76 @@ export function App() {
       (task) => !publishedHuntingTasks.some((publishedTask) => publishedTask.id === task.id)
     )
   ];
+  const ongoingOrders = [...getHuntingOngoingOrders(mergedHuntingTasks, role), ...baseOngoingOrders];
   const recommendedHuntingTasks = getRecommendedHuntingTasks(mergedHuntingTasks);
+  const ongoingQuoteTask = ongoingQuoteTaskId
+    ? mergedHuntingTasks.find((task) => task.id === ongoingQuoteTaskId) ?? null
+    : null;
+  const selectedOngoingQuote =
+    ongoingQuoteTask?.quotes?.find((quote) => quote.id === selectedOngoingQuoteId) ?? null;
+  const canConfirmSelectedOngoingQuote = canConfirmHuntingQuote(ongoingQuoteTask, selectedOngoingQuote);
+  const canNegotiateSelectedOngoingQuote = isNegotiatingHuntingQuote(selectedOngoingQuote);
+  const hasPrimaryContextCard = Boolean(profileRequirement) && !activePage && !isSettingsRoute && !isMineRoute;
+  const isPrimaryListShell =
+    (activeTab === "featured" || activeTab === "partTime") && !activePage && !isSettingsRoute && !isMineRoute;
+
+  /** 从进行中弹窗打开当前委托的报价列表。 */
+  function handleOpenOngoingQuoteList(order: ClientOrder) {
+    const task = mergedHuntingTasks.find((item) => item.id === order.id);
+    if (!task || !task.quotes || task.quotes.length === 0) {
+      showMessage("当前委托暂无可查看报价。", { type: "warning" });
+      return;
+    }
+
+    setOngoingQuoteTaskId(task.id);
+    setSelectedOngoingQuoteId(task.quotes[0].id);
+    setQuoteCounterAmount(String(task.quotes[0].amount));
+  }
+
+  /** 关闭进行中入口打开的报价列表弹窗。 */
+  function handleCloseOngoingQuoteList() {
+    setOngoingQuoteTaskId(null);
+    setSelectedOngoingQuoteId("");
+    setQuoteCounterAmount("");
+  }
+
+  /** 确认进行中弹窗内选中的委托报价。 */
+  function handleConfirmOngoingQuote() {
+    if (!ongoingQuoteTask || !selectedOngoingQuote) {
+      return;
+    }
+
+    void Promise.resolve(handleConfirmHuntingQuote(ongoingQuoteTask, selectedOngoingQuote))
+      .then(handleCloseOngoingQuoteList)
+      .catch(() => undefined);
+  }
+
+  /** 拒绝进行中弹窗内选中的委托报价。 */
+  function handleRejectOngoingQuote() {
+    if (!ongoingQuoteTask || !selectedOngoingQuote) {
+      return;
+    }
+
+    void Promise.resolve(handleRejectHuntingQuote(ongoingQuoteTask, selectedOngoingQuote))
+      .then(handleCloseOngoingQuoteList)
+      .catch(() => undefined);
+  }
+
+  /** 改价后提交给对方确认。 */
+  function handleCounterOngoingQuote() {
+    if (!ongoingQuoteTask || !selectedOngoingQuote) {
+      return;
+    }
+    const amount = Number(quoteCounterAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      showMessage("请输入大于 0 的报价金额。", { type: "warning" });
+      return;
+    }
+
+    void Promise.resolve(handleCounterHuntingQuote(ongoingQuoteTask, selectedOngoingQuote, amount))
+      .then(handleCloseOngoingQuoteList)
+      .catch(() => undefined);
+  }
 
   return (
     <main
@@ -721,7 +1007,9 @@ export function App() {
         activePage || isSettingsRoute || isMineRoute
           ? "page-mode pb-[28px]"
           : "pb-[calc(92px+env(safe-area-inset-bottom))]"
-      } ${activeTab === "hunting" && !activePage && !isSettingsRoute && !isMineRoute ? "delegation-shell" : ""}`}
+      } ${activeTab === "hunting" && !activePage && !isSettingsRoute && !isMineRoute ? "delegation-shell" : ""} ${
+        isPrimaryListShell ? "list-shell" : ""
+      } ${hasPrimaryContextCard ? "has-context-card" : "no-context-card"}`}
     >
       <MessageToast onClose={hideMessage} toast={toast} />
       {activePage && pageMeta ? (
@@ -733,29 +1021,29 @@ export function App() {
           ) : activePage === "tutorCertification" ? (
             <TutorCertification onBack={handleBack} onSubmitted={handleTutorCertificationSubmitted} />
           ) : activePage === "huntingCertification" ? (
-            <HuntingCertification onBack={handleBack} onSubmitted={handleHuntingCertificationSubmitted} />
+            <HuntingCertification
+              onBack={handleBack}
+              onSubmitError={(error) =>
+                showMessage(getErrorMessage(error, "狩猎认证提交失败，请稍后重试。"), { type: "error" })
+              }
+              onSubmitted={handleHuntingCertificationSubmitted}
+            />
           ) : null}
         </PageShell>
       ) : isMineRoute ? (
         <Mine
           onBack={() => navigate(getRouteForTab(activeTab), { replace: true })}
+          onLogout={handleLogout}
           onNavigate={handleNavigate}
           onOpenTutorCertificationInfo={handleOpenTutorCertificationInfo}
           orders={roleOrders}
           walletSummary={workspaceData.walletSummary}
         />
       ) : isSettingsRoute ? (
-        <SettingsView onBack={() => navigate(settingsBackRoute, { replace: true })} />
+        <SettingsView onBack={() => navigate(settingsBackRoute, { replace: true })} onMessage={showMessage} />
       ) : (
         <>
-          <Header activeTab={activeTab} />
-
-          {activeTab === "hunting" ? null : (
-            <ProfileContextCard
-              onOpenCompletion={handleOpenProfileCompletion}
-              requirement={profileRequirement}
-            />
-          )}
+          <ProfileContextCard onOpenCompletion={handleOpenProfileCompletion} requirement={profileRequirement} />
 
           <Routes>
             <Route
@@ -781,13 +1069,20 @@ export function App() {
                   huntingCertificationStatus={huntingCertificationStatus}
                   huntingTasks={mergedHuntingTasks}
                   isRefreshing={isWorkspaceFetching}
+                  onAcceptTask={handleAcceptHuntingTask}
                   onCertificationReviewing={() =>
                     showMessage("狩猎认证系统审批中...", {
                       type: "warning"
                     })
                   }
                   onOpenHuntingCertification={() => handleNavigate("huntingCertification")}
+                  onQuoteTask={handleQuoteHuntingTask}
                   onRefreshTasks={refreshWorkspace}
+                  onSelfTaskAction={() =>
+                    showMessage("不能联系、报价或接受自己发布的委托。", {
+                      type: "warning"
+                    })
+                  }
                 />
               }
             />
@@ -893,8 +1188,98 @@ export function App() {
         <OngoingOrdersDialog
           maxHeight="min(72vh, 620px)"
           onClose={() => setIsOngoingOpen(false)}
+          onOpenQuoteList={handleOpenOngoingQuoteList}
           orders={ongoingOrders}
         />
+      ) : null}
+
+      {ongoingQuoteTask ? (
+        <section className="checkout-sheet" aria-label="报价列表">
+          <div className="sheet-backdrop" onClick={handleCloseOngoingQuoteList} />
+          <div className="sheet-panel delegation-quote-dialog mx-auto grid max-w-[420px] gap-[12px] p-[14px]">
+            <div className="card-title flex items-center justify-between gap-[10px]">
+              <Banknote size={18} />
+              <div>
+                <strong>报价列表</strong>
+                <span>{ongoingQuoteTask.title}</span>
+              </div>
+              <button
+                aria-label="关闭"
+                className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
+                onClick={handleCloseOngoingQuoteList}
+                type="button"
+              >
+                <XCircle size={20} />
+              </button>
+            </div>
+            <div className="delegation-quote-list grid gap-[8px]">
+              {(ongoingQuoteTask.quotes ?? []).map((quote) => (
+                <button
+                  className={`delegation-quote-option grid gap-[5px] p-[10px] text-left ${
+                    selectedOngoingQuoteId === quote.id ? "active" : ""
+                  }`}
+                  key={quote.id}
+                  onClick={() => {
+                    setSelectedOngoingQuoteId(quote.id);
+                    setQuoteCounterAmount(String(quote.amount));
+                  }}
+                  type="button"
+                >
+                  <span className="flex items-center justify-between gap-[8px]">
+                    <strong>{quote.bidderName}</strong>
+                    <em>{formatCurrency(quote.amount)}</em>
+                  </span>
+                  <span>
+                    {quote.quoteTime} · {quote.status}
+                  </span>
+                </button>
+              ))}
+              {(ongoingQuoteTask.quotes ?? []).length === 0 ? (
+                <article className="empty-state p-[14px] text-center">
+                  <strong>暂无报价</strong>
+                  <span>有服务方报价后会在这里展示。</span>
+                </article>
+              ) : null}
+            </div>
+            <label className="delegation-quote-counter grid gap-[6px]">
+              <span>{ongoingQuoteTask.isMine ? "修改报价并推送给服务方" : "修改报价并推送给发布方"}</span>
+              <input
+                inputMode="decimal"
+                onChange={(event) => setQuoteCounterAmount(event.target.value)}
+                placeholder="输入修改后的报价"
+                type="number"
+                value={quoteCounterAmount}
+              />
+            </label>
+            <div className="delegation-quote-actions grid gap-[8px]">
+              <button
+                className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+                disabled={!canConfirmSelectedOngoingQuote}
+                onClick={handleConfirmOngoingQuote}
+                type="button"
+              >
+                <CheckCircle2 size={16} />
+                确认报价并开始履约
+              </button>
+              <button
+                className="secondary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+                disabled={!canNegotiateSelectedOngoingQuote}
+                onClick={handleCounterOngoingQuote}
+                type="button"
+              >
+                修改后提交
+              </button>
+              <button
+                className="danger-outline-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+                disabled={!canNegotiateSelectedOngoingQuote}
+                onClick={handleRejectOngoingQuote}
+                type="button"
+              >
+                拒绝报价
+              </button>
+            </div>
+          </div>
+        </section>
       ) : null}
 
       {checkout ? (
@@ -911,6 +1296,7 @@ export function App() {
 
       {isProfileCompletionOpen && profileCompletionTemplate ? (
         <ProfileCompletionDialog
+          isSaving={createAddressMutation.isPending || updateAddressMutation.isPending}
           onChange={handleProfileDraftChange}
           onClose={() => setIsProfileCompletionOpen(false)}
           onSave={handleSaveProfileDraft}

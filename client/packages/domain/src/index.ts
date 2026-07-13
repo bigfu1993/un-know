@@ -2,8 +2,13 @@ export type Role = "student" | "merchant" | "parent";
 
 export type AccountStatus = "normal" | "frozen" | "supervised" | "muted" | "banned";
 
+export type CertificationStatus = "pending" | "reviewing" | "normal" | "frozen";
+
 /** 家教资格认证状态，与服务端 app_user.tutor_certification_status 保持一致。 */
-export type TutorCertificationStatus = "pending" | "reviewing" | "normal" | "frozen";
+export type TutorCertificationStatus = CertificationStatus;
+
+/** 狩猎资格认证状态，与服务端 app_user.hunting_certification_status 保持一致。 */
+export type HuntingCertificationStatus = CertificationStatus;
 
 export type ClientModuleKey =
   | "featured"
@@ -44,6 +49,7 @@ export interface RoleProfile {
   balanceText: string;
   accountStatus: AccountStatus;
   tutorCertificationStatus: TutorCertificationStatus;
+  huntingCertificationStatus: HuntingCertificationStatus;
 }
 
 export interface ClientHomePayload {
@@ -71,6 +77,43 @@ export interface SelectRoleRequest {
 export interface MiniappOneTapLoginRequest {
   phoneCode: string;
   role?: Role;
+}
+
+export interface SubmitHuntingCertificationRequest {
+  realName: string;
+  gender: string;
+  age: string;
+  nativePlace: string;
+  idCard: string;
+  school: string;
+  major: string;
+}
+
+export interface SubmitHuntingCertificationResponse {
+  huntingCertificationStatus: HuntingCertificationStatus;
+}
+
+/** 客户端地址簿条目，服务端字段与 H5 地址表单保持一一对应。 */
+export interface ClientAddress {
+  id: string;
+  contactName: string;
+  campusArea: string;
+  buildingFloor: string;
+  deliveryAddress: string;
+  contactPhone: string;
+  isCurrent: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** 客户端地址新增和编辑请求，isCurrent 用于主动切换当前使用地址。 */
+export interface ClientAddressRequest {
+  contactName: string;
+  campusArea: string;
+  buildingFloor: string;
+  deliveryAddress: string;
+  contactPhone: string;
+  isCurrent?: boolean;
 }
 
 export interface LoginResponse {
@@ -128,9 +171,13 @@ export interface ClientOrder {
   title: string;
   status: string;
   amount: number;
+  amountLabel?: string;
   category?: "delegation" | "featured" | "hunting" | "partTime";
   contact: string;
   detail: string;
+  quoteAmount?: number;
+  quoteCount?: number;
+  quoteId?: string;
   risk?: "payment" | "refund";
 }
 
@@ -161,25 +208,46 @@ export interface HuntingTask {
   amountNegotiable?: boolean;
   description?: string;
   destination?: string;
+  depositAmount?: number;
+  depositRequired?: boolean;
   id: string;
   title: string;
   mode: string;
   fee: number;
+  isAcceptedByMe?: boolean;
   isMine?: boolean;
+  isQuotedByMe?: boolean;
   latestTime: string;
   location: string;
   pendingAmount?: number;
+  pendingQuoteId?: string;
+  pendingQuoteStatus?: string;
+  publisherName?: string;
+  publisherPhone?: string;
   publishTime?: string;
+  quoteCount?: number;
+  quotes?: HuntingQuote[];
   requirement?: string;
   requirementTags?: string[];
   urgency: string;
   status: string;
 }
 
+export interface HuntingQuote {
+  id: string;
+  bidderName: string;
+  amount: number;
+  quoteTime: string;
+  status: string;
+  isSelected?: boolean;
+}
+
 /** 委托发布请求，提交后由服务端写入 hunting_task。 */
 export interface PublishHuntingTaskRequest {
   amount: number | null;
   amountNegotiable?: boolean;
+  depositAmount?: number | null;
+  depositRequired?: boolean;
   description?: string;
   latestTime: string;
   destination?: string;
@@ -188,6 +256,15 @@ export interface PublishHuntingTaskRequest {
   requirementTags?: string[];
   title: string;
   type: "delegation" | "recycle";
+}
+
+export interface QuoteHuntingTaskRequest {
+  amount: number;
+}
+
+export interface HuntingQuoteDecisionRequest {
+  action: "confirm" | "reject" | "counter";
+  amount?: number;
 }
 
 export interface TutorApplicant {

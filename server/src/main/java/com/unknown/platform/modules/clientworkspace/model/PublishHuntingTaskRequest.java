@@ -17,6 +17,8 @@ public record PublishHuntingTaskRequest(
     @Size(max = 160) String location,
     @Size(max = 500) String requirement,
     List<String> requirementTags,
+    Boolean depositRequired,
+    @DecimalMin("0.00") BigDecimal depositAmount,
     @NotBlank @Size(max = 32) String type
 ) {
 }

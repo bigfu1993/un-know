@@ -1,6 +1,6 @@
 import { ChevronRight, UserRound, WalletCards } from "lucide-react";
 import type { ReactNode } from "react";
-import { getWalletTotalAmount } from "../../tools/wallet";
+import { formatCompactWalletAmount, getWalletTotalAmount, parseWalletBucketAmount } from "../../tools/wallet";
 
 /** 账户卡和钱包卡共用的展示密度。 */
 export type SummaryCardVariant = "default" | "simple";
@@ -46,9 +46,40 @@ function getDisplayValue(value: string | number | undefined) {
 
 /** 渲染账户和钱包卡共用的紧凑指标网格。 */
 function SummaryFieldGrid({ fields }: { fields: SummaryCardField[] }) {
+  if (fields.length === 0) {
+    return null;
+  }
+
   return (
     <div className="summary-card-fields grid gap-[8px]">
       {fields.map((field) => (
+        <span key={field.label}>
+          <em>{field.label}</em>
+          <strong>{getDisplayValue(field.value)}</strong>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/** 钱包指标网格，充值项与余额容器保持同级视觉但仅展示居中文案。 */
+function WalletFieldGrid({
+  balanceField,
+  detailFields,
+  rechargeText
+}: {
+  balanceField: SummaryCardField;
+  detailFields: SummaryCardField[];
+  rechargeText: string;
+}) {
+  return (
+    <div className="summary-card-fields wallet-summary-fields grid gap-[8px]">
+      <span>
+        <em>{balanceField.label}</em>
+        <strong>{getDisplayValue(balanceField.value)}</strong>
+      </span>
+      <span className="wallet-recharge-action">{rechargeText}</span>
+      {detailFields.map((field) => (
         <span key={field.label}>
           <em>{field.label}</em>
           <strong>{getDisplayValue(field.value)}</strong>
@@ -74,13 +105,11 @@ export function AccountSummaryCard({
   trailingAction,
   variant = "default"
 }: AccountSummaryCardProps) {
-  const simpleFields: SummaryCardField[] = [
+  const simpleFields: SummaryCardField[] = [];
+  const defaultFields: SummaryCardField[] = [
     { label: "状态", value: accountStatus },
     { label: "角色", value: roleLabel },
-    { label: "信用值", value: creditScore }
-  ];
-  const defaultFields: SummaryCardField[] = [
-    ...simpleFields,
+    { label: "信用值", value: creditScore },
     { label: "手机号", value: phone },
     { label: "关注", value: followingCount },
     { label: "粉丝", value: followerCount },
@@ -91,7 +120,7 @@ export function AccountSummaryCard({
 
   return (
     <article className={rootClassName}>
-      <div className="summary-card-head flex items-start gap-[10px]">
+      <div className="summary-card-head flex items-center gap-[10px]">
         <span className="summary-card-icon grid h-[40px] w-[40px] shrink-0 place-items-center">
           <UserRound size={21} />
         </span>
@@ -106,7 +135,9 @@ export function AccountSummaryCard({
               </span>
             ) : null}
           </strong>
-          <p>{variant === "simple" ? `${accountStatus} · ${roleLabel}` : "账户核心信息"}</p>
+          <p className="summary-card-status-text">
+            {variant === "simple" ? `${accountStatus} · ${roleLabel} · 信用值 ${creditScore}` : "账户核心信息"}
+          </p>
         </div>
         {trailingAction ? <div className="summary-card-action shrink-0">{trailingAction}</div> : null}
       </div>
@@ -125,30 +156,31 @@ export function WalletSummaryCard({
   variant = "default",
   walletSummary
 }: WalletSummaryCardProps) {
-  const simpleFields: SummaryCardField[] = [
-    { label: "余额", value: walletSummary.withdrawable },
-    { label: "充值", value: rechargeText }
-  ];
-  const defaultFields: SummaryCardField[] = [
-    ...simpleFields,
-    { label: "押金/保证金", value: walletSummary.deposit },
-    { label: "提现账号", value: walletSummary.withdrawMethods }
-  ];
-  const fields = variant === "simple" ? simpleFields : defaultFields;
+  const balanceField: SummaryCardField = {
+    label: "可提现",
+    value: formatCompactWalletAmount(parseWalletBucketAmount(walletSummary.withdrawable))
+  };
+  const detailFields: SummaryCardField[] =
+    variant === "simple"
+      ? []
+      : [
+          { label: "押金/保证金", value: walletSummary.deposit },
+          { label: "提现账号", value: walletSummary.withdrawMethods }
+        ];
   const rootClassName = ["wallet-summary-card", `wallet-summary-card--${variant}`, className].filter(Boolean).join(" ");
   const content = (
     <>
-      <div className="summary-card-head flex items-start gap-[10px]">
+      <div className="summary-card-head flex items-center gap-[10px]">
         <span className="summary-card-icon grid h-[40px] w-[40px] shrink-0 place-items-center">
           <WalletCards size={21} />
         </span>
         <div className="summary-card-title min-w-0 flex-1">
           <strong>{getWalletTotalAmount(walletSummary)}</strong>
-          <p>{status}</p>
+          <p className="summary-card-status-text">{status}</p>
         </div>
         {onOpen ? <ChevronRight className="summary-card-chevron shrink-0" size={17} /> : null}
       </div>
-      <SummaryFieldGrid fields={fields} />
+      <WalletFieldGrid balanceField={balanceField} detailFields={detailFields} rechargeText={rechargeText} />
     </>
   );
 

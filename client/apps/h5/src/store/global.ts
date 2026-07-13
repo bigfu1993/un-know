@@ -44,10 +44,11 @@ function buildGlobalUser(
   const accountStatus = profile?.accountStatus ?? session?.accountStatus ?? "normal";
   const displayName = session?.displayName ?? "";
   const profileName = displayName || profile?.name || roleLabels[role];
-  const serverProfileDraft = profile?.tutorCertificationStatus
+  const serverProfileDraft = profile
     ? {
         ...profileDraft,
-        tutorCertificationStatus: profile.tutorCertificationStatus
+        tutorCertificationStatus: profile.tutorCertificationStatus,
+        huntingCertificationStatus: profile.huntingCertificationStatus
       }
     : profileDraft;
 
@@ -69,11 +70,11 @@ function buildGlobalUser(
 export function createGlobalStore(initialSession: LoginResponse | null = getStoredClientAuthSession()) {
   return createStore<GlobalStoreState>((set, get) => ({
     global: {
-      user: buildGlobalUser(initialSession, undefined, getStoredProfileDraft())
+      user: buildGlobalUser(initialSession, undefined, getStoredProfileDraft(initialSession?.phone))
     },
     setUserSession: (session) => {
       setStoredClientAuthSession(session);
-      set({ global: { user: buildGlobalUser(session, undefined, getStoredProfileDraft()) } });
+      set({ global: { user: buildGlobalUser(session, undefined, getStoredProfileDraft(session.phone)) } });
     },
     syncUserProfile: (profile) => {
       const user = get().global.user;
@@ -110,9 +111,9 @@ export function createGlobalStore(initialSession: LoginResponse | null = getStor
       });
     },
     setUserProfileDraft: (profileDraft) => {
-      setStoredProfileDraft(profileDraft);
       const user = get().global.user;
 
+      setStoredProfileDraft(profileDraft, user.phone);
       set({ global: { user: { ...user, profileDraft } } });
     },
     setUserPhone: (phone) => {

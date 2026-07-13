@@ -66,7 +66,29 @@ public record ClientWorkspaceResponse(
       String destination,
       String requirement,
       List<String> requirementTags,
-      Boolean amountNegotiable
+      String publisherName,
+      String publisherPhone,
+      Boolean isMine,
+      Boolean isAcceptedByMe,
+      Boolean isQuotedByMe,
+      BigDecimal pendingAmount,
+      String pendingQuoteId,
+      String pendingQuoteStatus,
+      Boolean amountNegotiable,
+      Boolean depositRequired,
+      BigDecimal depositAmount,
+      int quoteCount,
+      List<HuntingQuote> quotes
+  ) {
+  }
+
+  public record HuntingQuote(
+      String id,
+      String bidderName,
+      BigDecimal amount,
+      String quoteTime,
+      String status,
+      Boolean isSelected
   ) {
   }
 

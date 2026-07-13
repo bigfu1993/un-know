@@ -1,17 +1,23 @@
 import {
+  ClientAddress,
+  ClientAddressRequest,
   ClientHomePayload,
   ClientWorkspacePayload,
   LoginRequest,
   LoginResponse,
   MiniappOneTapLoginRequest,
+  HuntingQuoteDecisionRequest,
   HuntingTask,
   ProductSummary,
   PublishHuntingTaskRequest,
   PurchaseRequest,
   PurchaseResponse,
+  QuoteHuntingTaskRequest,
   RegisterRequest,
   Role,
-  SelectRoleRequest
+  SelectRoleRequest,
+  SubmitHuntingCertificationRequest,
+  SubmitHuntingCertificationResponse
 } from "@unknown/domain";
 
 type ApiEnvelope<T> = {
@@ -218,8 +224,83 @@ export async function getClientWorkspace(role: Role): Promise<ClientWorkspacePay
   return requestJson<ClientWorkspacePayload>(`/api/client/workspace?role=${role}`);
 }
 
+export async function getClientAddresses(): Promise<ClientAddress[]> {
+  return requestJson<ClientAddress[]>("/api/client/profile/addresses");
+}
+
+export async function createClientAddress(payload: ClientAddressRequest): Promise<ClientAddress> {
+  return requestJson<ClientAddress>("/api/client/profile/addresses", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function updateClientAddress(addressId: string, payload: ClientAddressRequest): Promise<ClientAddress> {
+  return requestJson<ClientAddress>(`/api/client/profile/addresses/${encodeURIComponent(addressId)}`, {
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function useClientAddress(addressId: string): Promise<ClientAddress[]> {
+  return requestJson<ClientAddress[]>(`/api/client/profile/addresses/${encodeURIComponent(addressId)}/current`, {
+    method: "POST"
+  });
+}
+
+export async function deleteClientAddress(addressId: string): Promise<ClientAddress[]> {
+  return requestJson<ClientAddress[]>(`/api/client/profile/addresses/${encodeURIComponent(addressId)}`, {
+    method: "DELETE"
+  });
+}
+
 export async function publishHuntingTask(payload: PublishHuntingTaskRequest): Promise<HuntingTask> {
   return requestJson<HuntingTask>("/api/client/workspace/hunting-tasks", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function acceptHuntingTask(taskId: string): Promise<HuntingTask> {
+  return requestJson<HuntingTask>(`/api/client/workspace/hunting-tasks/${encodeURIComponent(taskId)}/accept`, {
+    method: "POST"
+  });
+}
+
+export async function quoteHuntingTask(taskId: string, payload: QuoteHuntingTaskRequest): Promise<HuntingTask> {
+  return requestJson<HuntingTask>(`/api/client/workspace/hunting-tasks/${encodeURIComponent(taskId)}/quotes`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function confirmHuntingTaskQuote(taskId: string, quoteId: string): Promise<HuntingTask> {
+  return requestJson<HuntingTask>(
+    `/api/client/workspace/hunting-tasks/${encodeURIComponent(taskId)}/quotes/${encodeURIComponent(quoteId)}/confirm`,
+    {
+      method: "POST"
+    }
+  );
+}
+
+export async function decideHuntingTaskQuote(
+  taskId: string,
+  quoteId: string,
+  payload: HuntingQuoteDecisionRequest
+): Promise<HuntingTask> {
+  return requestJson<HuntingTask>(
+    `/api/client/workspace/hunting-tasks/${encodeURIComponent(taskId)}/quotes/${encodeURIComponent(quoteId)}/decision`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }
+  );
+}
+
+export async function submitHuntingCertification(
+  payload: SubmitHuntingCertificationRequest
+): Promise<SubmitHuntingCertificationResponse> {
+  return requestJson<SubmitHuntingCertificationResponse>("/api/client/profile/hunting-certification", {
     method: "POST",
     body: JSON.stringify(payload)
   });

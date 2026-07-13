@@ -11,6 +11,7 @@ declare global {
   const AddressInfoForm: typeof import('../components/AddressInfoForm/index').AddressInfoForm
   const AlertCircle: typeof import('lucide-react').AlertCircle
   const App: typeof import('@h5/App').App
+  const ArrowDownUp: typeof import('lucide-react').ArrowDownUp
   const ArrowLeft: typeof import('lucide-react').ArrowLeft
   const BadgeCheck: typeof import('lucide-react').BadgeCheck
   const BottomTabs: typeof import('../components/AppShell/index').BottomTabs
@@ -25,6 +26,7 @@ declare global {
   const Crosshair: typeof import('lucide-react').Crosshair
   const Delegation: typeof import('../pages/Delegation/index').Delegation
   const Featured: typeof import('../pages/Featured/index').Featured
+  const Filter: typeof import('lucide-react').Filter
   const Fragment: typeof import('react').Fragment
   const GraduationCap: typeof import('lucide-react').GraduationCap
   const Header: typeof import('../components/AppShell/index').Header
@@ -94,6 +96,8 @@ declare global {
   const campusAreaOptions: typeof import('../shared/clientPageModel').campusAreaOptions
   const clearStoredClientAuthSession: typeof import('@unknown/api-client').clearStoredClientAuthSession
   const clearStoredPendingRegistration: typeof import('../shared/clientPageModel').clearStoredPendingRegistration
+  const clientAddressToAddressBookItem: typeof import('../shared/clientPageModel').clientAddressToAddressBookItem
+  const clientAddressesToAddressBookItems: typeof import('../shared/clientPageModel').clientAddressesToAddressBookItems
   const clientPrimaryTabs: typeof import('@unknown/domain').clientPrimaryTabs
   const clientPublishPlatformLabels: typeof import('@unknown/domain').clientPublishPlatformLabels
   const createAddressBookItem: typeof import('../shared/clientPageModel').createAddressBookItem
@@ -105,6 +109,7 @@ declare global {
   const formatCurrency: typeof import('../shared/clientPageModel').formatCurrency
   const formatTutorSubjects: typeof import('../shared/tutorModel').formatTutorSubjects
   const forwardRef: typeof import('react').forwardRef
+  const getCurrentAddressDraft: typeof import('../shared/clientPageModel').getCurrentAddressDraft
   const getDefaultDeliveryMode: typeof import('../shared/clientPageModel').getDefaultDeliveryMode
   const getDefaultPrimaryTab: typeof import('@unknown/domain').getDefaultPrimaryTab
   const getDefaultRouteForRole: typeof import('../shared/clientPageModel').getDefaultRouteForRole
@@ -142,6 +147,7 @@ declare global {
   const pendingRegistrationStorageKey: typeof import('../shared/clientPageModel').pendingRegistrationStorageKey
   const productFilters: typeof import('../shared/clientPageModel').productFilters
   const profileDraftStorageKey: typeof import('../shared/clientPageModel').profileDraftStorageKey
+  const profileDraftToClientAddressRequest: typeof import('../shared/clientPageModel').profileDraftToClientAddressRequest
   const profileRequirementTemplates: typeof import('../shared/clientPageModel').profileRequirementTemplates
   const registrationProfileTemplates: typeof import('../shared/clientPageModel').registrationProfileTemplates
   const roleLabels: typeof import('@unknown/domain').roleLabels
@@ -162,13 +168,16 @@ declare global {
   const use: typeof import('react').use
   const useActionState: typeof import('react').useActionState
   const useCallback: typeof import('react').useCallback
+  const useClientAddresses: typeof import('@unknown/hooks').useClientAddresses
   const useClientHome: typeof import('@unknown/hooks').useClientHome
   const useClientLogin: typeof import('@unknown/hooks').useClientLogin
   const useClientRegister: typeof import('@unknown/hooks').useClientRegister
   const useClientWorkspace: typeof import('@unknown/hooks').useClientWorkspace
   const useContext: typeof import('react').useContext
+  const useCreateClientAddress: typeof import('@unknown/hooks').useCreateClientAddress
   const useDebugValue: typeof import('react').useDebugValue
   const useDeferredValue: typeof import('react').useDeferredValue
+  const useDeleteClientAddress: typeof import('@unknown/hooks').useDeleteClientAddress
   const useEffect: typeof import('react').useEffect
   const useEffectEvent: typeof import('react').useEffectEvent
   const useId: typeof import('react').useId
@@ -188,6 +197,8 @@ declare global {
   const useState: typeof import('react').useState
   const useSyncExternalStore: typeof import('react').useSyncExternalStore
   const useTransition: typeof import('react').useTransition
+  const useUpdateClientAddress: typeof import('@unknown/hooks').useUpdateClientAddress
+  const useUseClientAddress: typeof import('@unknown/hooks').useUseClientAddress
 }
 // for type re-export
 declare global {
@@ -195,7 +206,7 @@ declare global {
   export type { HuntingCertificationCardProps } from '../components/HuntingCertificationCard/index'
   import('../components/HuntingCertificationCard/index')
   // @ts-ignore
-  export type { HuntingCertificationStatus, HuntingCertificationCardMode, HuntingCertificationCardData } from '../components/HuntingCertificationCard/model'
+  export type { HuntingCertificationCardMode, HuntingCertificationCardData, HuntingCertificationStatus } from '../components/HuntingCertificationCard/model'
   import('../components/HuntingCertificationCard/model')
   // @ts-ignore
   export type { OrderModuleCardVariant, OrderModuleCardProps } from '../components/OrderModuleCard/index'

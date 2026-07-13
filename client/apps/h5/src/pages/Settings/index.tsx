@@ -3,11 +3,12 @@ import { AddressInfoForm } from "../../components/AddressInfoForm";
 import { tutorCertificationStatusLabels, type TutorCertificationStatus } from "../../components/TutorCard/model";
 import {
   campusAreaOptions,
-  createAddressBookItem,
+  clientAddressesToAddressBookItems,
+  clientAddressToAddressBookItem,
   getFilledProfileDraft,
-  getStoredAddressBook,
+  getCurrentAddressDraft,
+  profileDraftToClientAddressRequest,
   registrationProfileTemplates,
-  setStoredAddressBook
 } from "../../shared/clientPageModel";
 import { formatTutorSubjects, parseTutorSubjects, tutorSubjectOptions } from "../../shared/tutorModel";
 import { localAuthCode, localPasswordMinLength, saveLocalPasswordCredential } from "../../tools/localAuth";
@@ -44,13 +45,27 @@ const tutorQualificationInfoFields = [
 ];
 
 /** 设置页面，负责昵称、手机号安全、地址、协议、版本和反馈入口。 */
-export function SettingsView({ onBack }: { onBack: () => void }) {
-  const { phone, profileDraft, profileName, role } = useGlobalUser();
+/** 地址接口返回前使用的稳定空列表，避免派生地址列表在每次渲染时变更引用。 */
+const emptyClientAddresses: ClientAddress[] = [];
+
+export function SettingsView({
+  onBack,
+  onMessage
+}: {
+  onBack: () => void;
+  onMessage?: (message: string, options?: MessageToastOptions) => void;
+}) {
+  const { phone, profileDraft, profileName, role, session } = useGlobalUser();
   const setUserDisplayName = useGlobalStore((state) => state.setUserDisplayName);
   const setUserProfileDraft = useGlobalStore((state) => state.setUserProfileDraft);
   const setUserPhone = useGlobalStore((state) => state.setUserPhone);
   const addressTemplate = registrationProfileTemplates[role];
-  const [addressItems, setAddressItems] = useState<AddressBookItem[]>(() => getStoredAddressBook(profileDraft));
+  const { data: clientAddresses = emptyClientAddresses, error: addressError, isLoading: isAddressLoading } = useClientAddresses(true, session?.accessToken);
+  const createAddressMutation = useCreateClientAddress();
+  const updateAddressMutation = useUpdateClientAddress();
+  const useAddressMutation = useUseClientAddress();
+  const deleteAddressMutation = useDeleteClientAddress();
+  const addressItems = useMemo(() => clientAddressesToAddressBookItems(clientAddresses), [clientAddresses]);
   const [addressEditorMode, setAddressEditorMode] = useState<AddressEditorMode | null>(null);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [addressDraft, setAddressDraft] = useState<ProfileDraftState>({});
@@ -71,14 +86,16 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
   const currentAddress = addressItems.find((item) => item.isCurrent);
   const currentAddressDraft = currentAddress?.draft ?? profileDraft;
   const completedFieldCount = addressTemplate.fields.filter((field) => currentAddressDraft[field.key]?.trim()).length;
-  const addressCountText = addressItems.length > 0 ? `${addressItems.length} 个地址` : "未添加";
+  const addressCountText = isAddressLoading ? "加载中" : addressItems.length > 0 ? `${addressItems.length} 个地址` : "未添加";
   const editableCurrentPhone = validateByKey("phone", phone).isValid ? phone : "";
   const rawTutorStatus = profileDraft.tutorCertificationStatus as TutorCertificationStatus | undefined;
   const tutorCertificationStatus = rawTutorStatus && rawTutorStatus in tutorCertificationStatusLabels ? rawTutorStatus : "pending";
 
-  useEffect(() => {
-    setAddressItems(getStoredAddressBook(profileDraft));
-  }, [profileDraft]);
+  const isAddressMutating =
+    createAddressMutation.isPending ||
+    updateAddressMutation.isPending ||
+    useAddressMutation.isPending ||
+    deleteAddressMutation.isPending;
 
   useEffect(() => {
     if (!isNicknameEditorOpen) {
@@ -107,14 +124,21 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
   }
 
   /** 持久化地址列表，并将当前地址同步回全局资料草稿。 */
-  function persistAddressItems(nextItems: AddressBookItem[]) {
-    const normalizedItems = setStoredAddressBook(nextItems);
-    const nextCurrentAddress = normalizedItems.find((item) => item.isCurrent);
+  function syncCurrentAddressDraft(nextAddressItems: AddressBookItem[]) {
+    const addressFieldKeys = new Set(addressTemplate.fields.map((field) => field.key));
+    const profileDraftWithoutAddress = Object.fromEntries(
+      Object.entries(profileDraft).filter(([key]) => !addressFieldKeys.has(key))
+    );
+    const nextCurrentAddressDraft = getCurrentAddressDraft(nextAddressItems, {});
 
-    setAddressItems(normalizedItems);
-    if (nextCurrentAddress) {
-      setUserProfileDraft(nextCurrentAddress.draft);
-    }
+    setUserProfileDraft({
+      ...profileDraftWithoutAddress,
+      ...nextCurrentAddressDraft
+    });
+  }
+
+  function notifyAddressResult(message: string, type: MessageToastType = "success") {
+    onMessage?.(message, { type });
   }
 
   /** 使用空草稿打开新增地址弹窗。 */
@@ -133,7 +157,13 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
 
   /** 将已有地址卡标记为当前使用地址。 */
   function handleUseAddress(item: AddressBookItem) {
-    persistAddressItems(addressItems.map((addressItem) => ({ ...addressItem, isCurrent: addressItem.id === item.id })));
+    useAddressMutation.mutate(item.id, {
+      onSuccess: (addresses) => {
+        syncCurrentAddressDraft(clientAddressesToAddressBookItems(addresses));
+        notifyAddressResult("已切换当前地址。");
+      },
+      onError: (error) => notifyAddressResult(getErrorMessage(error, "切换地址失败，请稍后重试。"), "error")
+    });
   }
 
   /** 将编辑草稿保存为新增或已有地址卡。 */
@@ -146,25 +176,54 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
       return;
     }
 
-    const filledDraft = getFilledProfileDraft(addressDraft);
-    const now = new Date().toISOString();
-    const nextItems =
-      addressEditorMode === "edit" && editingAddressId
-        ? addressItems.map((item) =>
-            item.id === editingAddressId
-              ? {
-                  ...item,
-                  draft: filledDraft,
-                  updatedAt: now
-                }
-              : item
-          )
-        : [createAddressBookItem(filledDraft, true), ...addressItems.map((item) => ({ ...item, isCurrent: false }))];
+    const editingAddress = editingAddressId ? addressItems.find((item) => item.id === editingAddressId) : null;
+    const payload = profileDraftToClientAddressRequest(
+      getFilledProfileDraft(addressDraft),
+      addressEditorMode === "create" || Boolean(editingAddress?.isCurrent)
+    );
+    const closeEditor = () => {
+      setAddressEditorMode(null);
+      setEditingAddressId(null);
+      setAddressDraft({});
+    };
+    const handleSuccess = (address: ClientAddress) => {
+      if (address.isCurrent) {
+        syncCurrentAddressDraft([clientAddressToAddressBookItem(address)]);
+      }
+      closeEditor();
+      notifyAddressResult(addressEditorMode === "edit" ? "地址已更新。" : "地址已新增。");
+    };
+    const handleError = (error: unknown) => {
+      notifyAddressResult(getErrorMessage(error, "地址保存失败，请稍后重试。"), "error");
+    };
 
-    persistAddressItems(nextItems);
-    setAddressEditorMode(null);
-    setEditingAddressId(null);
-    setAddressDraft({});
+    if (addressEditorMode === "edit" && editingAddressId) {
+      updateAddressMutation.mutate({ ...payload, addressId: editingAddressId }, {
+        onSuccess: handleSuccess,
+        onError: handleError
+      });
+      return;
+    }
+
+    createAddressMutation.mutate(payload, {
+      onSuccess: handleSuccess,
+      onError: handleError
+    });
+  }
+
+  /** 删除指定地址，并按服务端返回的地址列表刷新当前地址草稿。 */
+  function handleDeleteAddress(item: AddressBookItem) {
+    if (typeof window !== "undefined" && !window.confirm("确认删除该地址？")) {
+      return;
+    }
+
+    deleteAddressMutation.mutate(item.id, {
+      onSuccess: (addresses) => {
+        syncCurrentAddressDraft(clientAddressesToAddressBookItems(addresses));
+        notifyAddressResult("地址已删除。");
+      },
+      onError: (error) => notifyAddressResult(getErrorMessage(error, "地址删除失败，请稍后重试。"), "error")
+    });
   }
 
   /** 使用空验证码和当前手机号草稿打开手机号变更弹窗。 */
@@ -350,7 +409,12 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
         title="地址信息"
       />
       <div className="card-list grid gap-[10px]">
-        {addressItems.length > 0 ? (
+        {addressError ? (
+          <article className="empty-state p-[14px]">
+            <strong>地址加载失败</strong>
+            <p>{getErrorMessage(addressError, "请检查后端服务后重试。")}</p>
+          </article>
+        ) : addressItems.length > 0 ? (
           addressItems.map((item) => (
             <AddressInfoForm
               actionLabel="编辑"
@@ -360,6 +424,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
               isCurrent={item.isCurrent}
               key={item.id}
               mode="preview"
+              onDelete={() => handleDeleteAddress(item)}
               onEdit={() => handleOpenEditAddress(item)}
               onUse={() => handleUseAddress(item)}
               previewVariant="card"
@@ -371,7 +436,12 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
             <p>添加地址后，购买和资料补充会优先使用当前地址。</p>
           </article>
         )}
-        <button className="address-add-button flow-card compact p-[12px] text-left" onClick={handleOpenCreateAddress} type="button">
+        <button
+          className="address-add-button flow-card compact p-[12px] text-left"
+          disabled={isAddressMutating}
+          onClick={handleOpenCreateAddress}
+          type="button"
+        >
           <div className="card-title flex items-center justify-between gap-[10px] min-w-0">
             <Plus size={18} />
             <div>
@@ -414,6 +484,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
             setEditingAddressId(null);
             setAddressDraft({});
           }}
+          isSubmitting={isAddressMutating}
           onSave={handleSaveAddress}
         />
       ) : null}
@@ -624,6 +695,7 @@ function AddressEditorDialog({
   areaOptions,
   draft,
   fields,
+  isSubmitting = false,
   mode,
   onChange,
   onClose,
@@ -632,6 +704,7 @@ function AddressEditorDialog({
   areaOptions: string[];
   draft: ProfileDraftState;
   fields: ProfileRequirementField[];
+  isSubmitting?: boolean;
   mode: AddressEditorMode;
   onChange: (key: string, value: string) => void;
   onClose: () => void;
@@ -645,7 +718,7 @@ function AddressEditorDialog({
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!hasInvalidFields) {
+    if (!hasInvalidFields && !isSubmitting) {
       onSave();
     }
   }
@@ -680,11 +753,11 @@ function AddressEditorDialog({
           </button>
           <button
             className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
-            disabled={hasInvalidFields}
+            disabled={hasInvalidFields || isSubmitting}
             type="submit"
           >
             <CheckCircle2 size={16} />
-            保存地址
+            {isSubmitting ? "保存中" : "保存地址"}
           </button>
         </div>
       </form>

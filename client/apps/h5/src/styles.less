@@ -1057,6 +1057,7 @@ body,
 }
 
 .summary-card-head {
+  align-items: center;
   min-width: 0;
 }
 
@@ -1067,6 +1068,12 @@ body,
 }
 
 .summary-card-title {
+  display: flex;
+  height: 40px;
+  min-height: 40px;
+  flex-direction: column;
+  justify-content: center;
+
   strong {
     display: flex;
     min-width: 0;
@@ -1075,16 +1082,27 @@ body,
     overflow: hidden;
     color: #17212b;
     font-size: 16px;
+    line-height: 1.25;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   p {
-    margin: 4px 0 0;
-    color: #657181;
-    font-size: 13px;
-    line-height: 1.45;
+    margin: 2px 0 0;
+    overflow: hidden;
+    color: #8b96a5;
+    font-size: 12px;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
+}
+
+.summary-card-title .summary-card-status-text {
+  color: #8b96a5;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.25;
 }
 
 .summary-profile-tags {
@@ -1126,13 +1144,14 @@ body,
 
   span {
     font-size: 13px;
-    font-weight: 800;
+    font-weight: 400;
   }
 
   strong {
     flex: 0 0 auto;
     color: #8b96a5;
     font-size: 12px;
+    font-weight: 400;
   }
 
   &.active {
@@ -1173,9 +1192,28 @@ body,
   font-size: 13px;
 }
 
+.wallet-summary-fields strong {
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .summary-card-chevron {
-  margin-top: 11px;
   color: #8b96a5;
+}
+
+.wallet-recharge-action {
+  display: grid;
+  min-width: 0;
+  place-items: center;
+  padding: 9px;
+  border-radius: 8px;
+  background: #f3f6f9;
+  color: #17212b;
+  font-size: 13px;
+  font-weight: 900;
 }
 
 .account-summary-card--simple .summary-card-fields,
@@ -1197,24 +1235,40 @@ body,
 }
 
 .order-module-head {
+  align-items: center;
   min-width: 0;
+
+  > svg {
+    align-self: center;
+    color: #8b96a5;
+  }
+}
+
+.order-module-main {
+  display: flex;
+  height: 40px;
+  min-height: 40px;
+  flex-direction: column;
+  justify-content: center;
 
   strong {
     display: block;
+    overflow: hidden;
     color: #17212b;
     font-size: 16px;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   p {
-    margin: 4px 0 0;
-    color: #657181;
-    font-size: 13px;
-    line-height: 1.45;
-  }
-
-  > svg {
-    margin-top: 10px;
+    margin: 2px 0 0;
+    overflow: hidden;
     color: #8b96a5;
+    font-size: 12px;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
@@ -1289,7 +1343,19 @@ body,
   color: #175e75;
 }
 
+.hunting-certification-head,
+.tutor-card-head {
+  align-items: center;
+  min-width: 0;
+}
+
 .hunting-certification-main {
+  display: flex;
+  height: 40px;
+  min-height: 40px;
+  flex-direction: column;
+  justify-content: center;
+
   strong,
   em {
     display: block;
@@ -1299,17 +1365,20 @@ body,
     overflow: hidden;
     color: #17212b;
     font-size: 16px;
+    line-height: 1.25;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   em {
-    margin-top: 4px;
-    overflow-wrap: anywhere;
-    color: #657181;
-    font-size: 13px;
+    margin-top: 2px;
+    overflow: hidden;
+    color: #8b96a5;
+    font-size: 12px;
     font-style: normal;
-    line-height: 1.45;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
@@ -1372,6 +1441,12 @@ body,
 }
 
 .tutor-card-main {
+  display: flex;
+  height: 40px;
+  min-height: 40px;
+  flex-direction: column;
+  justify-content: center;
+
   strong,
   em {
     display: block;
@@ -1381,17 +1456,20 @@ body,
     overflow: hidden;
     color: #17212b;
     font-size: 16px;
+    line-height: 1.25;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   em {
-    margin-top: 4px;
-    overflow-wrap: anywhere;
-    color: #657181;
-    font-size: 13px;
+    margin-top: 2px;
+    overflow: hidden;
+    color: #8b96a5;
+    font-size: 12px;
     font-style: normal;
-    line-height: 1.45;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
@@ -1589,18 +1667,29 @@ body,
   min-width: 0;
 }
 
-.h5-shell.delegation-shell {
+.h5-shell.delegation-shell,
+.h5-shell.list-shell {
   height: 100dvh;
   overflow: hidden;
 }
 
-.delegation-page {
+.delegation-page,
+.product-list-page,
+.part-time-list-page {
   grid-template-rows: auto auto minmax(0, 1fr);
-  height: calc(100dvh - 294px - env(safe-area-inset-bottom));
+  height: calc(100dvh - 118px - env(safe-area-inset-bottom));
   min-height: 0;
 }
 
-.delegation-task-scroll {
+.h5-shell.has-context-card .delegation-page,
+.h5-shell.list-shell.has-context-card .product-list-page,
+.h5-shell.list-shell.has-context-card .part-time-list-page {
+  height: calc(100dvh - 210px - env(safe-area-inset-bottom));
+}
+
+.delegation-task-scroll,
+.product-list-scroll,
+.part-time-list-scroll {
   min-height: 0;
   align-content: start;
   margin-inline: -2px;
@@ -1786,6 +1875,77 @@ body,
   padding-right: 72px;
 }
 
+.delegation-quote-button {
+  position: relative;
+}
+
+.delegation-quote-badge {
+  display: inline-grid;
+  min-width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 999px;
+  background: #fff;
+  color: #d92d20;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.delegation-quote-option {
+  border: 1px solid #e4e9f1;
+  border-radius: 8px;
+  background: #fff;
+  color: #17212b;
+}
+
+.delegation-quote-option.active {
+  border-color: #1f7a63;
+  background: #eefaf4;
+}
+
+.delegation-quote-option span:last-child {
+  color: #657181;
+  font-size: 12px;
+}
+
+.delegation-quote-counter span {
+  color: #657181;
+  font-size: 12px;
+}
+
+.delegation-quote-counter input {
+  min-height: 38px;
+  border: 1px solid #d9e1ec;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0 10px;
+  color: #17212b;
+  font-size: 14px;
+}
+
+.secondary-button {
+  border: 1px solid #d9e1ec;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f7a63;
+  font-weight: 800;
+}
+
+.danger-outline-button {
+  border: 1px solid #f7c7c4;
+  border-radius: 8px;
+  background: #fff7f6;
+  color: #d92d20;
+  font-weight: 800;
+}
+
+.secondary-button:disabled,
+.danger-outline-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
 .hunting-certification-prompt {
   width: min(420px, calc(100vw - 28px));
 }
@@ -1920,6 +2080,15 @@ body,
     color: #475466;
     text-align: left;
   }
+}
+
+.mine-logout-button {
+  min-height: 42px;
+  border-radius: 8px;
+  background: #fff1f2;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .mine-popover {
