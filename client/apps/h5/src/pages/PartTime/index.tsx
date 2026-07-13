@@ -1,3 +1,5 @@
+import { TutorTrialJobCard } from "@components/PageWidgets";
+
 /** 学生兼职页展开的工具面板。 */
 type PartTimeToolbarPanel = "area" | "sort" | null;
 
@@ -24,14 +26,26 @@ function getPartTimeSearchText(job: PartTimeJob) {
 }
 
 /** 兼职页面，维护学生筛选状态，并按角色切换商户工作台。 */
-export function PartTime({ role, dashboard, jobs }: { role: Role; dashboard: MerchantDashboard; jobs: PartTimeJob[] }) {
+export function PartTime({
+  role,
+  dashboard,
+  jobs,
+  tutorJobs = [],
+  onApplyTutorTrial
+}: {
+  role: Role;
+  dashboard: MerchantDashboard;
+  jobs: PartTimeJob[];
+  tutorJobs?: TutorTrialJob[];
+  onApplyTutorTrial?: (job: TutorTrialJob) => void;
+}) {
   const [keyword, setKeyword] = useState("");
   const [activePanel, setActivePanel] = useState<PartTimeToolbarPanel>(null);
   const [selectedArea, setSelectedArea] = useState("");
   const [jobFilter, setJobFilter] = useState<JobFilter>("latest");
   const areaOptions = useMemo(
-    () => Array.from(new Set(jobs.map((job) => getPartTimeArea(job.location)))),
-    [jobs]
+    () => Array.from(new Set([...jobs.map((job) => getPartTimeArea(job.location)), ...tutorJobs.map((job) => getPartTimeArea(job.address))])),
+    [jobs, tutorJobs]
   );
   const visibleJobs = useMemo(() => {
     const normalizedKeyword = keyword.trim().toLowerCase();
@@ -44,7 +58,21 @@ export function PartTime({ role, dashboard, jobs }: { role: Role; dashboard: Mer
 
     return jobFilter === "hourly" ? [...filteredJobs].sort((a, b) => b.hourlyPay - a.hourlyPay) : filteredJobs;
   }, [jobFilter, jobs, keyword, selectedArea]);
+  const visibleTutorJobs = useMemo(() => {
+    const normalizedKeyword = keyword.trim().toLowerCase();
+
+    return tutorJobs.filter((job) => {
+      const searchText = [job.title, job.publisher, job.subject, job.address, job.period, job.requirement]
+        .join(" ")
+        .toLowerCase();
+      const keywordMatched = normalizedKeyword ? searchText.includes(normalizedKeyword) : true;
+      const areaMatched = selectedArea ? getPartTimeArea(job.address) === selectedArea : true;
+
+      return keywordMatched && areaMatched;
+    });
+  }, [keyword, selectedArea, tutorJobs]);
   const selectedSortLabel = jobFilters.find((item) => item.key === jobFilter)?.label ?? "最新发布";
+  const totalVisibleCount = visibleJobs.length + visibleTutorJobs.length;
 
   if (role === "merchant") {
     return <MerchantPartTime dashboard={dashboard} jobs={jobs} />;
@@ -52,7 +80,7 @@ export function PartTime({ role, dashboard, jobs }: { role: Role; dashboard: Mer
 
   return (
     <section className="module-stack part-time-list-page grid gap-[10px]">
-      <SectionHeader countText={`${visibleJobs.length} 个`} eyebrow="中长期兼职、短期任务、平台合作兼职" title="兼职列表与报名" />
+      <SectionHeader countText={`${totalVisibleCount} 个`} eyebrow="中长期兼职、短期任务、家教兼职" title="兼职列表与报名" />
 
       <div className="delegation-toolbar grid gap-[8px]">
         <div className="delegation-toolbar-row flex items-center gap-[8px]">
@@ -129,10 +157,13 @@ export function PartTime({ role, dashboard, jobs }: { role: Role; dashboard: Mer
       </div>
 
       <div className="card-list part-time-list-scroll grid gap-[10px]">
+        {visibleTutorJobs.map((job) => (
+          <TutorTrialJobCard job={job} key={job.id} onApplyTrial={onApplyTutorTrial} />
+        ))}
         {visibleJobs.map((job) => (
           <PartTimeJobCard job={job} key={job.id} mode="student" />
         ))}
-        {visibleJobs.length === 0 ? (
+        {totalVisibleCount === 0 ? (
           <article className="empty-state p-[16px] text-center">
             <strong>暂无匹配兼职</strong>
             <span>换个关键词、地点或排序方式再试试。</span>

@@ -172,7 +172,7 @@ export interface ClientOrder {
   status: string;
   amount: number;
   amountLabel?: string;
-  category?: "delegation" | "featured" | "hunting" | "partTime";
+  category?: "delegation" | "featured" | "hunting" | "partTime" | "tutor";
   contact: string;
   detail: string;
   phoneNumber?: string;
@@ -187,6 +187,11 @@ export interface ClientOrder {
   canConfirmCancel?: boolean;
   canConfirmComplete?: boolean;
   canRepublish?: boolean;
+  canAgreeTrial?: boolean;
+  canOpenTrialResult?: boolean;
+  canOpenTrialSchedule?: boolean;
+  canOpenTutorApplications?: boolean;
+  canRejectTrial?: boolean;
   risk?: "payment" | "refund";
 }
 

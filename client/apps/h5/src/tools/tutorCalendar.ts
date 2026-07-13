@@ -1,5 +1,5 @@
-import type { TutorCalendarTask } from "../components/TutorCalendar";
-import { parseTutorSubjects } from "../shared/tutorModel";
+import type { TutorCalendarTask } from "@components/TutorCalendar";
+import { parseTutorSubjects } from "@shared/tutorModel";
 
 /** 获取家教日历使用的日期字符串。 */
 export function getTutorDateKey(date: Date) {

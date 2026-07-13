@@ -66,6 +66,10 @@
 
 - 第一阶段调整仅修改 H5 代码；除非用户明确要求，不修改后端、小程序、admin、共享包或数据库迁移。
 - 技术栈：React、TypeScript、Vite。
+- H5 必须配置并使用全局别名引用源码目录：`@h5`、`@components`、`@pages`、`@shared`、`@store`、`@tools`、`@app-types`；业务源码中不得继续新增跨目录相对路径引用，生成文件除外。
+- H5 业务 TypeScript 类型必须集中维护在 `client/apps/h5/src/types` 目录；页面和组件内只保留局部不可复用类型，共享类型不得散落在业务组件内。
+- H5 类型通过 `unplugin-auto-import` 生成声明和 `src/types/global.d.ts` 暴露给业务代码；自动导入生成文件固定为 `client/apps/h5/src/auto-imports.d.ts`，不得放入 `src/types` 避免被当作业务类型反向扫描。
+- 新增类型文件后必须同步更新 `src/types/global.d.ts` 或确认 auto-import 生成声明包含该类型，避免业务代码隐式依赖失效。
 - `pages` 目录按业务模块组织；同一业务域的主页面、子页面和流程页应收敛到同一目录，例如 `pages/Tutor/index.tsx` 与 `pages/Tutor/TutorCertification.tsx`，避免在 `pages` 根部平铺孤立的同域页面。
 - 与页面业务无关、可复用的纯计算工具应放入 `client/apps/h5/src/tools/*.ts`，例如金额格式化、月份计算、日期 key 生成、日历任务映射和字段校验；页面与组件内不保留可复用工具函数。
 - 页面组件负责业务编排，通用组件负责展示；组件需要数据时通过 props 传入，不直接读取全局用户资料或自行拼装业务数据。

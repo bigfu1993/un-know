@@ -3,7 +3,7 @@ import {
   huntingCertificationStatusLabels,
   type HuntingCertificationCardData,
   type HuntingCertificationCardMode
-} from "./model";
+} from "@components/HuntingCertificationCard/model";
 
 /** 狩猎认证卡片属性。 */
 export interface HuntingCertificationCardProps extends HuntingCertificationCardData {

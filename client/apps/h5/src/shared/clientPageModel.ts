@@ -82,11 +82,28 @@ export const addressInfoFields: ProfileRequirementField[] = [
   { key: "contactPhone", label: "联系电话", placeholder: "请输入手机号", inputMode: "tel" }
 ];
 
+/** 家长注册引导中可选添加的地址字段，不要求填写联系电话。 */
+export const parentRegistrationAddressFields = addressInfoFields.filter((field) => field.key !== "contactPhone");
+
+/** 家长注册引导中可选添加的孩子信息字段。 */
+export const parentChildInfoFields: ProfileRequirementField[] = [
+  { key: "childName", label: "孩子姓名", placeholder: "请输入孩子姓名" },
+  { key: "childGrade", label: "就读年级", placeholder: "例如 初二 / 高一" },
+  { key: "childSchool", label: "就读学校", placeholder: "请输入学校名称" }
+];
+
 /** H5 要求用户补充账户资料时共用的地址信息模板。 */
 export const addressInfoTemplate: ProfileRequirementTemplate = {
   title: "补充地址信息",
   description: "请补充姓名、常用区域、楼栋楼层、收货地址和联系电话。",
   fields: addressInfoFields
+};
+
+/** 家长注册后进入前的轻量引导模板，地址和孩子信息由快捷文字展开。 */
+export const parentRegistrationProfileTemplate: ProfileRequirementTemplate = {
+  title: "完善家长资料",
+  description: "昵称和登录密码必填；地址和孩子信息可按需添加。",
+  fields: []
 };
 
 // App、登录注册和资料补充流程共用的场景级资料要求。
@@ -112,7 +129,7 @@ export const profileRequirementTemplates: Record<Role, Partial<Record<ClientModu
 export const registrationProfileTemplates: Record<Role, ProfileRequirementTemplate> = {
   student: addressInfoTemplate,
   merchant: addressInfoTemplate,
-  parent: addressInfoTemplate
+  parent: parentRegistrationProfileTemplate
 };
 
 // 仅用于 UI 展示的模块 key 与导航图标映射。
@@ -236,6 +253,24 @@ export function clientAddressesToAddressBookItems(addresses: ClientAddress[]) {
 /** 从地址卡片列表中提取当前地址草稿，用于首页资料补充校验和发布位置预填。 */
 export function getCurrentAddressDraft(addressItems: AddressBookItem[], fallbackDraft: ProfileDraftState = {}) {
   return addressItems.find((item) => item.isCurrent)?.draft ?? fallbackDraft;
+}
+
+/** 从家长资料草稿中提取可用于发布家教的孩子选项。 */
+export function getChildProfileOptions(profileDraft: ProfileDraftState): ChildProfileOption[] {
+  const name = profileDraft.childName?.trim();
+
+  if (!name) {
+    return [];
+  }
+
+  return [
+    {
+      grade: profileDraft.childGrade?.trim() ?? "",
+      id: "primary-child",
+      name,
+      school: profileDraft.childSchool?.trim() ?? ""
+    }
+  ];
 }
 
 /** 将 H5 地址表单草稿转换为服务端地址保存请求。 */

@@ -1,6 +1,6 @@
 import { useGlobalStore, useGlobalUser } from "@h5/store/global";
-import { AddressInfoForm } from "../../components/AddressInfoForm";
-import { tutorCertificationStatusLabels, type TutorCertificationStatus } from "../../components/TutorCard/model";
+import { AddressInfoForm } from "@components/AddressInfoForm";
+import { tutorCertificationStatusLabels, type TutorCertificationStatus } from "@components/TutorCard/model";
 import {
   campusAreaOptions,
   clientAddressesToAddressBookItems,
@@ -9,10 +9,10 @@ import {
   getCurrentAddressDraft,
   profileDraftToClientAddressRequest,
   registrationProfileTemplates,
-} from "../../shared/clientPageModel";
-import { formatTutorSubjects, parseTutorSubjects, tutorSubjectOptions } from "../../shared/tutorModel";
-import { localAuthCode, localPasswordMinLength, saveLocalPasswordCredential } from "../../tools/localAuth";
-import { normalizeByKey, validateByKey } from "../../tools/validation";
+} from "@shared/clientPageModel";
+import { formatTutorSubjects, parseTutorSubjects, tutorSubjectOptions } from "@shared/tutorModel";
+import { localAuthCode, localPasswordMinLength, saveLocalPasswordCredential } from "@tools/localAuth";
+import { normalizeByKey, validateByKey } from "@tools/validation";
 
 /** 设置页地址编辑弹窗模式。 */
 type AddressEditorMode = "create" | "edit";

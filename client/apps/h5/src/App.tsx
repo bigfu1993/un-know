@@ -1,4 +1,4 @@
-﻿import { useGlobalStore, useGlobalUser } from "@h5/store/global";
+import { useGlobalStore, useGlobalUser } from "@h5/store/global";
 import {
   useAcceptHuntingTask,
   useClientAddresses,
@@ -11,29 +11,33 @@ import {
 } from "@unknown/hooks";
 import type { HuntingCertificationStatus, HuntingTaskFulfillmentActionRequest } from "@unknown/domain";
 import { Banknote, MapPin, RadioTower } from "lucide-react";
-import { getHuntingCertificationDataFromDraft } from "./components/HuntingCertificationCard/model";
-import { PublishInfoDialog } from "./components/PublishInfoDialog";
-import { TutorCalendarDialog } from "./components/TutorCalendar";
+import { getHuntingCertificationDataFromDraft } from "@components/HuntingCertificationCard/model";
+import { HuntingProjectDialog } from "@components/HuntingProjectDialog";
+import { PublishInfoDialog } from "@components/PublishInfoDialog";
+import { TutorCalendarDialog } from "@components/TutorCalendar";
 import {
   TutorCertificationInfoDialog,
   type TutorCertificationInfoSaveMode
-} from "./components/TutorCertificationInfoDialog";
-import { HuntingCertification } from "./pages/HuntingCertification";
-import { TutorCertification } from "./pages/Tutor/TutorCertification";
+} from "@components/TutorCertificationInfoDialog";
+import { HuntingCertification } from "@pages/HuntingCertification";
+import { TutorCertification } from "@pages/Tutor/TutorCertification";
 import {
+  campusAreaOptions,
   clientAddressesToAddressBookItems,
   clientAddressToAddressBookItem,
+  getChildProfileOptions,
   getCurrentAddressDraft,
   profileDraftToClientAddressRequest
-} from "./shared/clientPageModel";
+} from "@shared/clientPageModel";
 import {
   buildPublishHuntingTaskRequest,
+  getPublishDestinationLabel,
   isHuntingTaskPublishType,
   saveLocalPublishInfoDraft,
   type PublishInfoDraft,
   type PublishInfoType
-} from "./tools/publishInfo";
-import { getTutorCalendarTasks, getTutorDateKey } from "./tools/tutorCalendar";
+} from "@tools/publishInfo";
+import { getTutorCalendarTasks, getTutorDateKey } from "@tools/tutorCalendar";
 
 /** 获取栈式次级页面的标题信息。 */
 function getPageMeta(page: PageSurface, role: Role) {
@@ -70,9 +74,14 @@ function isHuntingFulfillingStatus(task: HuntingTask) {
   return task.status.includes("履约中") || task.status.includes("进行中") || task.status.includes("已领取");
 }
 
-/** 判断委托是否已取消，取消后的发布方卡片可再次发布。 */
+/** 判断委托是否已取消，取消后的委托进入订单详情页。 */
 function isHuntingCancelledStatus(task: HuntingTask) {
   return task.status.includes("取消");
+}
+
+/** 判断委托是否已完成，完成后的委托进入订单详情页。 */
+function isHuntingCompletedStatus(task: HuntingTask) {
+  return task.status.includes("完成");
 }
 
 /** 获取进行中弹窗内委托/狩猎卡片展示状态。 */
@@ -81,9 +90,6 @@ function getHuntingOngoingStatus(task: HuntingTask) {
 
   if (task.fulfillmentAction) {
     return "待确认";
-  }
-  if (isHuntingCancelledStatus(task)) {
-    return "取消";
   }
   if (hasPendingQuote) {
     return "报价确认中";
@@ -146,8 +152,7 @@ function getHuntingOngoingOrders(tasks: HuntingTask[], role: Role): ClientOrder[
       Boolean(task.isMine) &&
       (isHuntingPublishedStatus(task) ||
         isHuntingQuoteStatus(task) ||
-        isHuntingFulfillingStatus(task) ||
-        isHuntingCancelledStatus(task));
+        isHuntingFulfillingStatus(task));
     const isQuotedHunting = Boolean(task.isQuotedByMe) && isHuntingQuoteStatus(task);
     const isHuntingInProgress = Boolean(task.isAcceptedByMe) && isHuntingFulfillingStatus(task);
 
@@ -156,16 +161,17 @@ function getHuntingOngoingOrders(tasks: HuntingTask[], role: Role): ClientOrder[
     const isFulfilling = isHuntingFulfillingStatus(task);
     const isPublisher = Boolean(task.isMine);
     const isHunter = Boolean(task.isAcceptedByMe) && !isPublisher;
+    const isCancelPending = task.fulfillmentAction === "取消待确认";
 
     return {
       amount: task.pendingAmount ?? task.fee,
       amountLabel: getHuntingOngoingAmountLabel(task),
       canCall: isPublisher && isFulfilling,
-      canConfirmCancel: isPublisher && task.fulfillmentAction === "取消待确认" && !task.fulfillmentActionByMe,
+      canConfirmCancel: (isPublisher || isHunter) && isCancelPending,
       canConfirmComplete: isPublisher && task.fulfillmentAction === "完成待确认" && !task.fulfillmentActionByMe,
       canMessage: isFulfilling,
-      canRepublish: isPublisher && isHuntingCancelledStatus(task),
-      canRequestCancel: isHunter && isFulfilling && !task.fulfillmentAction,
+      canRepublish: isPublisher && isCancelPending,
+      canRequestCancel: (isPublisher || isHunter) && isFulfilling && !task.fulfillmentAction,
       canRequestComplete: isHunter && isFulfilling && !task.fulfillmentAction,
       category: isPublisher ? "delegation" : "hunting",
       contact: isPublisher ? getHuntingFulfillmentContact(task) : isHuntingQuoteStatus(task) ? "我报价的委托" : "我履约的委托",
@@ -183,14 +189,53 @@ function getHuntingOngoingOrders(tasks: HuntingTask[], role: Role): ClientOrder[
   });
 }
 
+/** 将完成和取消的委托转换为订单详情页历史订单。 */
+function getHuntingHistoryOrders(tasks: HuntingTask[], role: Role): ClientOrder[] {
+  return tasks
+    .filter((task) => {
+      const isRelatedToCurrentUser = Boolean(task.isMine || task.isAcceptedByMe || task.isQuotedByMe);
+      return isRelatedToCurrentUser && (isHuntingCompletedStatus(task) || isHuntingCancelledStatus(task));
+    })
+    .map((task) => {
+      const isPublisher = Boolean(task.isMine);
+      const amount = task.pendingAmount ?? task.fee;
+      const amountLabel =
+        task.amountNegotiable && typeof task.pendingAmount !== "number" ? "协商" : formatCurrency(amount);
+      const destination = task.destination ?? task.location;
+      const requirementText = task.requirementTags?.length
+        ? task.requirementTags.join("、")
+        : task.requirement || "暂无要求";
+      const isCancelled = isHuntingCancelledStatus(task);
+
+      return {
+        amount,
+        amountLabel,
+        canRepublish: isPublisher && isCancelled,
+        category: isPublisher ? "delegation" : "hunting",
+        contact: getHuntingFulfillmentContact(task),
+        detail: `发布时间：${task.publishTime ?? "未知"} · 目的地：${destination} · 要求：${requirementText}`,
+        id: task.id,
+        phoneNumber: isPublisher ? task.acceptedUserPhone ?? undefined : task.publisherPhone,
+        role,
+        status: isCancelled ? "已取消委托" : "已完成委托",
+        title: task.title
+      };
+    });
+}
+
 /** 获取委托任务金额展示文案，协商任务不展示 0 元。 */
 function getHuntingTaskAmountText(task: HuntingTask) {
   return task.amountNegotiable || task.fee <= 0 ? "协商" : formatCurrency(task.fee);
 }
 
 /** 获取狩猎快捷开启后系统推荐的委托任务。 */
-function getRecommendedHuntingTasks(tasks: HuntingTask[]) {
+function getRecommendedHuntingTasks(tasks: HuntingTask[], project: HuntingProject | null) {
   const recommendableStatusKeywords = ["发布", "待", "报价", "领取", "已发布"];
+  const projectAreas = project
+    ? [project.currentArea, ...project.nextStops.map((stop) => stop.inputMode === "custom" ? stop.customArea : stop.area)]
+        .map((area) => area.trim())
+        .filter(Boolean)
+    : [];
 
   return tasks
     .filter(
@@ -199,6 +244,18 @@ function getRecommendedHuntingTasks(tasks: HuntingTask[]) {
         !isHuntingFulfillingStatus(task) &&
         recommendableStatusKeywords.some((keyword) => task.status.includes(keyword))
     )
+    .sort((leftTask, rightTask) => {
+      const getScore = (task: HuntingTask) => {
+        if (projectAreas.length === 0) {
+          return 0;
+        }
+
+        const searchText = `${task.destination ?? ""} ${task.location} ${task.title}`;
+        return projectAreas.some((area) => searchText.includes(area)) ? 1 : 0;
+      };
+
+      return getScore(rightTask) - getScore(leftTask);
+    })
     .slice(0, 9);
 }
 
@@ -299,11 +356,14 @@ export function App() {
   const [isTutorCertificationInfoOpen, setIsTutorCertificationInfoOpen] = useState(false);
   const [isPublishInfoOpen, setIsPublishInfoOpen] = useState(false);
   const [publishInfoInitialType, setPublishInfoInitialType] = useState<PublishInfoType>("delegation");
+  const [isHuntingProjectOpen, setIsHuntingProjectOpen] = useState(false);
   const [isHuntingRecommendationOpen, setIsHuntingRecommendationOpen] = useState(false);
-  const [isHuntingShortcutConfirmOpen, setIsHuntingShortcutConfirmOpen] = useState(false);
-  const [huntingShortcutConfirmStep, setHuntingShortcutConfirmStep] = useState<1 | 2>(1);
   const [isHuntingShortcutEnabled, setIsHuntingShortcutEnabled] = useState(false);
+  const [huntingShortcutProject, setHuntingShortcutProject] = useState<HuntingProject | null>(null);
   const [publishedHuntingTasks, setPublishedHuntingTasks] = useState<HuntingTask[]>([]);
+  const [publishedTutorOrders, setPublishedTutorOrders] = useState<ClientOrder[]>([]);
+  const [studentTutorOrders, setStudentTutorOrders] = useState<ClientOrder[]>([]);
+  const [isTutorApplicationOpen, setIsTutorApplicationOpen] = useState(false);
   const avatarClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const avatarLastClickAt = useRef(0);
   const { hideMessage, showMessage, toast } = useMessageToast();
@@ -380,8 +440,7 @@ export function App() {
   /** 关闭狩猎快捷相关弹窗，保持页面切换后的浮层状态一致。 */
   function closeHuntingShortcutDialogs() {
     setIsHuntingRecommendationOpen(false);
-    setIsHuntingShortcutConfirmOpen(false);
-    setHuntingShortcutConfirmStep(1);
+    setIsHuntingProjectOpen(false);
   }
 
   function handleAvatarClick() {
@@ -406,7 +465,7 @@ export function App() {
   function handleOpenHuntingShortcut() {
     if (isHuntingShortcutEnabled) {
       setIsHuntingRecommendationOpen(true);
-      setIsHuntingShortcutConfirmOpen(false);
+      setIsHuntingProjectOpen(false);
       setIsMineOpen(false);
       setIsOngoingOpen(false);
       return;
@@ -417,37 +476,39 @@ export function App() {
       return;
     }
 
-    setHuntingShortcutConfirmStep(1);
-    setIsHuntingShortcutConfirmOpen(true);
+    setIsHuntingProjectOpen(true);
     setIsHuntingRecommendationOpen(false);
     setIsMineOpen(false);
     setIsOngoingOpen(false);
   }
 
-  /** 确认开启狩猎快捷，第二次确认后进入委托页并展示推荐角标。 */
-  function handleConfirmHuntingShortcut() {
-    if (huntingShortcutConfirmStep === 1) {
-      setHuntingShortcutConfirmStep(2);
-      return;
-    }
+  /** 创建狩猎项目并开启系统推荐，推荐数量由项目区域匹配任务池生成。 */
+  function handleCreateHuntingProject(draft: HuntingProjectDraft) {
+    const nextProject: HuntingProject = {
+      ...draft,
+      createdAt: new Date().toISOString(),
+      id: globalThis.crypto?.randomUUID?.() ?? `hunting_project_${Date.now()}`,
+      matchedTaskIds: [],
+      status: "matching"
+    };
 
+    setHuntingShortcutProject(nextProject);
     setIsHuntingShortcutEnabled(true);
-    setIsHuntingShortcutConfirmOpen(false);
-    setHuntingShortcutConfirmStep(1);
+    setIsHuntingProjectOpen(false);
     setActiveTab("hunting");
     setPageStack([]);
     setIsOngoingOpen(false);
     setIsMineOpen(false);
     setIsProfileCompletionOpen(false);
     closeTutorDialogs();
-    closeHuntingShortcutDialogs();
     navigate(getRouteForTab("hunting"));
-    showMessage("狩猎快捷已开启，系统将自动推送推荐委托。", { type: "success" });
+    showMessage("狩猎项目已创建，系统将按动线推送推荐委托。", { type: "success" });
   }
 
   /** 关闭狩猎快捷推荐推送。 */
   function handleDisableHuntingShortcut() {
     setIsHuntingShortcutEnabled(false);
+    setHuntingShortcutProject(null);
     setIsHuntingRecommendationOpen(false);
     showMessage("狩猎快捷已关闭。", { type: "success" });
   }
@@ -501,7 +562,11 @@ export function App() {
     setIsProfileCompletionOpen(false);
     setIsPublishInfoOpen(false);
     setPublishedHuntingTasks([]);
+    setPublishedTutorOrders([]);
+    setStudentTutorOrders([]);
+    setIsTutorApplicationOpen(false);
     setIsHuntingShortcutEnabled(false);
+    setHuntingShortcutProject(null);
     closeTutorDialogs();
     closeHuntingShortcutDialogs();
     setSavedProfileDraft(storedProfileDraft);
@@ -523,7 +588,11 @@ export function App() {
     setIsProfileCompletionOpen(false);
     setIsPublishInfoOpen(false);
     setPublishedHuntingTasks([]);
+    setPublishedTutorOrders([]);
+    setStudentTutorOrders([]);
+    setIsTutorApplicationOpen(false);
     setIsHuntingShortcutEnabled(false);
+    setHuntingShortcutProject(null);
     closeTutorDialogs();
     closeHuntingShortcutDialogs();
     hideMessage();
@@ -663,7 +732,7 @@ export function App() {
     setIsProfileCompletionOpen(false);
     closeTutorDialogs();
     closeHuntingShortcutDialogs();
-    setPublishInfoInitialType("delegation");
+    setPublishInfoInitialType(role === "parent" ? "tutor" : "delegation");
     setIsPublishInfoOpen(true);
   }
 
@@ -753,8 +822,40 @@ export function App() {
     }
   }
 
-  /** 发布委托或回收任务，其他类型当前保存为草稿等待后续接口。 */
+  /** 发布委托或回收任务；家教发布当前在 H5 侧进入进行中，后续接入真实接口。 */
   function handlePublishInfo(draft: PublishInfoDraft) {
+    if (draft.type === "tutor") {
+      const childOptions = getChildProfileOptions(user.profileDraft);
+      const selectedChild = childOptions.find((child) => child.id === draft.childId);
+      const addressLabel = getPublishDestinationLabel(draft.addressId, publishAddressItems);
+      const order: ClientOrder = {
+        amount: 0,
+        amountLabel: draft.trialEnabled === "是" ? "支持试课" : "待议价",
+        canMessage: true,
+        canOpenTutorApplications: true,
+        category: "tutor",
+        contact: selectedChild ? `孩子：${selectedChild.name}` : "未指定孩子",
+        detail: `周期：${draft.tutorDateStart} 至 ${draft.tutorDateEnd} · 地址：${addressLabel} · 学科：${draft.tutorSubject || "待沟通"} · 要求：${draft.requirement || "暂无"}`,
+        id: `tutor_${Date.now()}`,
+        role,
+        status: "家教招募中",
+        title: draft.title.trim()
+      };
+
+      try {
+        saveLocalPublishInfoDraft(draft, "published");
+        setPublishedTutorOrders((orders) => [order, ...orders]);
+        setIsPublishInfoOpen(false);
+        setActiveTab("tutor");
+        setPageStack([]);
+        navigate(getRouteForTab("tutor"));
+        showMessage("家教需求已发布，已加入进行中列表。", { type: "success" });
+      } catch {
+        showMessage("家教发布保存失败，请检查浏览器存储权限。", { type: "error" });
+      }
+      return;
+    }
+
     if (!isHuntingTaskPublishType(draft.type)) {
       try {
         saveLocalPublishInfoDraft(draft, "draft");
@@ -895,14 +996,24 @@ export function App() {
     action: HuntingTaskFulfillmentActionRequest["action"]
   ) {
     const actionMessages: Record<HuntingTaskFulfillmentActionRequest["action"], string> = {
-      confirm_cancel: "已确认取消委托，可选择再次发布。",
+      confirm_cancel: "已确认取消委托，已进入订单详情。",
       confirm_complete: "已确认完成委托。",
       republish: "委托已再次发布。",
-      request_cancel: "取消委托申请已提交，等待发布方确认。",
+      request_cancel: "取消委托申请已提交，等待对方确认。",
       request_complete: "完成委托申请已提交，等待发布方确认。"
     };
 
     try {
+      const task = mergedHuntingTasks.find((item) => item.id === order.id);
+
+      if (action === "republish" && task?.fulfillmentAction === "取消待确认") {
+        await huntingTaskFulfillmentActionMutation.mutateAsync({ action: "confirm_cancel", taskId: order.id });
+        await huntingTaskFulfillmentActionMutation.mutateAsync({ action: "republish", taskId: order.id });
+        showMessage("已取消原委托并重新发布。", { type: "success" });
+        void refetchWorkspace();
+        return;
+      }
+
       await huntingTaskFulfillmentActionMutation.mutateAsync({ action, taskId: order.id });
       showMessage(actionMessages[action], { type: "success" });
       void refetchWorkspace();
@@ -920,6 +1031,41 @@ export function App() {
   /** 电话按钮展示当前接口返回的脱敏联系电话。 */
   function handleOngoingOrderCall(order: ClientOrder) {
     showMessage(order.phoneNumber ? `联系电话：${order.phoneNumber}` : "暂无可用联系电话。", { type: "success" });
+  }
+
+  /** 学生端提交家教试课申请，进入本地进行中列表。 */
+  function handleApplyTutorTrial(job: TutorTrialJob) {
+    const order: ClientOrder = {
+      amount: 0,
+      amountLabel: job.budget,
+      canCall: true,
+      canMessage: true,
+      canOpenTrialSchedule: true,
+      canRejectTrial: true,
+      canAgreeTrial: true,
+      category: "tutor",
+      contact: job.publisher,
+      detail: `试课申请 · ${job.subject} · ${job.period} · ${job.address}`,
+      id: `trial_${job.id}_${Date.now()}`,
+      phoneNumber: job.parentPhone,
+      role,
+      status: "等待家长确认试课",
+      title: job.title
+    };
+
+    setStudentTutorOrders((orders) => [order, ...orders]);
+    setIsOngoingOpen(true);
+    showMessage("试课申请已提交，可在进行中查看状态。", { type: "success" });
+  }
+
+  /** 打开家长端试课申请选择弹窗。 */
+  function handleOpenTutorApplications() {
+    setIsTutorApplicationOpen(true);
+  }
+
+  /** 当前阶段家教试课动作先以消息承接，等待后端流程接口补齐。 */
+  function handleTutorWorkflowMessage(message: string) {
+    showMessage(message, { type: "success" });
   }
 
   function handleSubmitPurchase() {
@@ -1064,8 +1210,37 @@ export function App() {
       (task) => !publishedHuntingTasks.some((publishedTask) => publishedTask.id === task.id)
     )
   ];
-  const ongoingOrders = [...getHuntingOngoingOrders(mergedHuntingTasks, role), ...baseOngoingOrders];
-  const recommendedHuntingTasks = getRecommendedHuntingTasks(mergedHuntingTasks);
+  const tutorTrialJobs: TutorTrialJob[] = workspaceData.tutorDemands.map((demand) => ({
+    address: demand.school,
+    budget: demand.budget,
+    description: `${demand.child} 需要 ${demand.subject} 家教，学校：${demand.school}`,
+    id: demand.id,
+    parentPhone: "家长电话待平台授权",
+    period: demand.status,
+    publisher: "家长用户",
+    requirement: `${demand.subject} · ${demand.school}`,
+    status: demand.status,
+    subject: demand.subject,
+    title: `${demand.child}${demand.subject}家教`
+  }));
+  const tutorApplicationCandidates: TutorApplicationCandidate[] = workspaceData.tutorDemands
+    .flatMap((demand) => demand.applicants)
+    .map((applicant) => ({
+      id: applicant.id,
+      major: applicant.major,
+      name: applicant.name,
+      school: applicant.school,
+      status: applicant.status
+    }));
+  const ongoingOrders = [
+    ...getHuntingOngoingOrders(mergedHuntingTasks, role),
+    ...publishedTutorOrders.filter((order) => order.role === role),
+    ...studentTutorOrders.filter((order) => order.role === role),
+    ...baseOngoingOrders
+  ];
+  const orderDetailOrders = [...getHuntingHistoryOrders(mergedHuntingTasks, role), ...roleOrders];
+  const recommendedHuntingTasks = getRecommendedHuntingTasks(mergedHuntingTasks, huntingShortcutProject);
+  const publishChildOptions = getChildProfileOptions(user.profileDraft);
   const ongoingQuoteTask = ongoingQuoteTaskId
     ? mergedHuntingTasks.find((task) => task.id === ongoingQuoteTaskId) ?? null
     : null;
@@ -1079,7 +1254,11 @@ export function App() {
   const canRejectSelectedOngoingQuote = canConfirmSelectedOngoingQuote || canCounterSelectedOngoingQuote;
   const canSubmitSelectedOngoingQuote =
     !hasInvalidCounterAmount && (canConfirmSelectedOngoingQuote || isCounterOngoingQuoteAction);
-  const ongoingQuoteActionLabel = isCounterOngoingQuoteAction ? "协商报价" : "确认报价并开始履约";
+  const ongoingQuoteActionLabel = isCounterOngoingQuoteAction
+    ? "协商报价"
+    : selectedOngoingQuote
+      ? "确认报价"
+      : "选择报价";
   const ongoingQuoteCounterPrompt = ongoingQuoteTask?.isMine
     ? "输入协商金额后推送给报价方"
     : "输入协商金额后推送给发布方";
@@ -1159,7 +1338,10 @@ export function App() {
           {activePage === "wallet" ? (
             <Wallet walletRecords={workspaceData.walletRecords} walletSummary={workspaceData.walletSummary} />
           ) : activePage === "orders" ? (
-            <Orders orders={roleOrders} />
+            <Orders
+              onRepublishDelegation={(order) => void handleHuntingTaskFulfillmentAction(order, "republish")}
+              orders={orderDetailOrders}
+            />
           ) : activePage === "tutorCertification" ? (
             <TutorCertification onBack={handleBack} onSubmitted={handleTutorCertificationSubmitted} />
           ) : activePage === "huntingCertification" ? (
@@ -1201,7 +1383,13 @@ export function App() {
             <Route
               path="/part-time"
               element={
-                <PartTime dashboard={workspaceData.merchantDashboard} jobs={workspaceData.partTimeJobs} role={role} />
+                <PartTime
+                  dashboard={workspaceData.merchantDashboard}
+                  jobs={workspaceData.partTimeJobs}
+                  onApplyTutorTrial={handleApplyTutorTrial}
+                  role={role}
+                  tutorJobs={tutorTrialJobs}
+                />
               }
             />
             <Route
@@ -1310,11 +1498,12 @@ export function App() {
         </>
       )}
 
-      {isHuntingShortcutConfirmOpen ? (
-        <HuntingShortcutConfirmDialog
+      {isHuntingProjectOpen ? (
+        <HuntingProjectDialog
+          areaOptions={campusAreaOptions}
+          initialProject={huntingShortcutProject}
           onClose={closeHuntingShortcutDialogs}
-          onConfirm={handleConfirmHuntingShortcut}
-          step={huntingShortcutConfirmStep}
+          onSubmit={handleCreateHuntingProject}
         />
       ) : null}
 
@@ -1335,6 +1524,11 @@ export function App() {
           onConfirmComplete={(order) => void handleHuntingTaskFulfillmentAction(order, "confirm_complete")}
           onMessageOrder={handleOngoingOrderMessage}
           onOpenQuoteList={handleOpenOngoingQuoteList}
+          onOpenTutorApplications={handleOpenTutorApplications}
+          onOpenTrialResult={() => handleTutorWorkflowMessage("试课结果流程待后端结算接口接入。")}
+          onOpenTrialSchedule={() => handleTutorWorkflowMessage("试课日程已记录，等待双方确认。")}
+          onRejectTrial={() => handleTutorWorkflowMessage("已拒绝试课申请。")}
+          onAgreeTrial={() => handleTutorWorkflowMessage("已同意试课，家教兼职进入试课流程。")}
           onRepublish={(order) => void handleHuntingTaskFulfillmentAction(order, "republish")}
           onRequestCancel={(order) => void handleHuntingTaskFulfillmentAction(order, "request_cancel")}
           onRequestComplete={(order) => void handleHuntingTaskFulfillmentAction(order, "request_complete")}
@@ -1374,6 +1568,12 @@ export function App() {
                     disabled={isLockedQuote}
                     key={quote.id}
                     onClick={() => {
+                      if (selectedOngoingQuoteId === quote.id) {
+                        setSelectedOngoingQuoteId("");
+                        setQuoteCounterAmount("");
+                        return;
+                      }
+
                       setSelectedOngoingQuoteId(quote.id);
                       setQuoteCounterAmount(String(quote.amount));
                     }}
@@ -1460,12 +1660,24 @@ export function App() {
       {isPublishInfoOpen ? (
         <PublishInfoDialog
           addressItems={publishAddressItems}
+          childOptions={publishChildOptions}
           initialType={publishInfoInitialType}
           isPublishing={publishHuntingTaskMutation.isPending}
           onClose={() => setIsPublishInfoOpen(false)}
           onPublish={handlePublishInfo}
           onSave={handleSavePublishInfo}
           role={role}
+        />
+      ) : null}
+
+      {isTutorApplicationOpen ? (
+        <TutorApplicationsDialog
+          candidates={tutorApplicationCandidates}
+          onClose={() => setIsTutorApplicationOpen(false)}
+          onConfirm={() => {
+            setIsTutorApplicationOpen(false);
+            showMessage("试课信息已确认，等待学生端处理。", { type: "success" });
+          }}
         />
       ) : null}
 
@@ -1485,64 +1697,6 @@ export function App() {
         />
       ) : null}
     </main>
-  );
-}
-
-/** 狩猎快捷开启确认弹窗，使用两步确认降低误触上线概率。 */
-function HuntingShortcutConfirmDialog({
-  onClose,
-  onConfirm,
-  step
-}: {
-  onClose: () => void;
-  onConfirm: () => void;
-  step: 1 | 2;
-}) {
-  const isFinalStep = step === 2;
-
-  return (
-    <section className="checkout-sheet" aria-label="开启狩猎快捷确认">
-      <div className="sheet-backdrop" onClick={onClose} />
-      <article className="sheet-panel hunting-shortcut-sheet mx-auto grid max-w-[420px] gap-[12px] p-[14px]">
-        <div className="card-title flex items-center justify-between gap-[10px]">
-          <RadioTower size={18} />
-          <div>
-            <strong>{isFinalStep ? "再次确认开启狩猎" : "开启狩猎快捷"}</strong>
-            <span>{isFinalStep ? "系统将开始推荐委托" : "开启后会显示实时推荐数量"}</span>
-          </div>
-          <button
-            aria-label="关闭"
-            className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
-            onClick={onClose}
-            type="button"
-          >
-            <XCircle size={20} />
-          </button>
-        </div>
-        <p className="hunting-shortcut-copy m-0 text-[13px] leading-[1.55] text-[#657181]">
-          {isFinalStep
-            ? "确认后狩猎快捷按钮进入开启状态，系统推荐的委托数量会显示在角标中。"
-            : "开启狩猎快捷后，平台会基于当前任务池推送推荐委托。请确认你已准备好及时响应。"}
-        </p>
-        <div className="sheet-actions grid gap-[8px]">
-          <button
-            className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
-            onClick={onClose}
-            type="button"
-          >
-            取消
-          </button>
-          <button
-            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-            onClick={onConfirm}
-            type="button"
-          >
-            <CheckCircle2 size={16} />
-            {isFinalStep ? "确认开启" : "继续确认"}
-          </button>
-        </div>
-      </article>
-    </section>
   );
 }
 
@@ -1624,3 +1778,102 @@ function HuntingRecommendationDialog({
     </section>
   );
 }
+
+/** 家长端选择试课家教并确认试课时间。 */
+function TutorApplicationsDialog({
+  candidates,
+  onClose,
+  onConfirm
+}: {
+  candidates: TutorApplicationCandidate[];
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const [selectedCandidateId, setSelectedCandidateId] = useState("");
+  const [trialDateStart, setTrialDateStart] = useState("");
+  const [trialDateEnd, setTrialDateEnd] = useState("");
+  const [trialHalfDay, setTrialHalfDay] = useState("上午");
+  const canConfirm = Boolean(selectedCandidateId && trialDateStart && trialDateEnd);
+
+  return (
+    <section className="checkout-sheet" aria-label="试课申请列表">
+      <div className="sheet-backdrop" onClick={onClose} />
+      <article className="sheet-panel tutor-applications-panel mx-auto grid max-h-[min(76vh,620px)] max-w-[540px] gap-[12px] overflow-hidden px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]">
+        <div className="card-title flex items-center justify-between gap-[10px]">
+          <CalendarClock size={18} />
+          <div>
+            <strong>试课申请列表</strong>
+            <span>选择家教并确认试课时间</span>
+          </div>
+          <button
+            aria-label="关闭"
+            className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
+            onClick={onClose}
+            type="button"
+          >
+            <XCircle size={20} />
+          </button>
+        </div>
+
+        <div className="tutor-application-list grid gap-[10px] overflow-auto pr-[2px]">
+          {candidates.map((candidate) => (
+            <button
+              className={`tutor-application-card flow-card compact grid gap-[6px] p-[12px] text-left ${
+                selectedCandidateId === candidate.id ? "active" : ""
+              }`}
+              key={candidate.id}
+              onClick={() => setSelectedCandidateId((value) => (value === candidate.id ? "" : candidate.id))}
+              type="button"
+            >
+              <strong>{candidate.name}</strong>
+              <span>{candidate.school} · {candidate.major}</span>
+              <em>{candidate.status}</em>
+            </button>
+          ))}
+          {candidates.length === 0 ? (
+            <article className="empty-state p-[14px] text-center">
+              <strong>暂无试课申请</strong>
+              <span>学生申请试课后会在这里展示。</span>
+            </article>
+          ) : null}
+        </div>
+
+        <div className="tutor-trial-form grid gap-[8px]">
+          <div className="tutor-period-fields grid grid-cols-2 gap-[8px]">
+            <label className={`profile-field publish-field grid gap-[7px] ${trialDateStart ? "" : "missing"}`}>
+              <span>试课开始</span>
+              <input onChange={(event) => setTrialDateStart(event.target.value)} type="date" value={trialDateStart} />
+            </label>
+            <label className={`profile-field publish-field grid gap-[7px] ${trialDateEnd ? "" : "missing"}`}>
+              <span>试课结束</span>
+              <input onChange={(event) => setTrialDateEnd(event.target.value)} type="date" value={trialDateEnd} />
+            </label>
+          </div>
+          <div className="segmented-control publish-segmented-field wrap flex gap-[8px]" aria-label="选择试课时段">
+            {["上午", "下午"].map((halfDay) => (
+              <button
+                className={trialHalfDay === halfDay ? "active" : ""}
+                key={halfDay}
+                onClick={() => setTrialHalfDay(halfDay)}
+                type="button"
+              >
+                {halfDay}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button
+          className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+          disabled={!canConfirm}
+          onClick={onConfirm}
+          type="button"
+        >
+          <CheckCircle2 size={16} />
+          {selectedCandidateId ? "试课信息确认" : "选择试课家教"}
+        </button>
+      </article>
+    </section>
+  );
+}
+

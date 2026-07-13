@@ -1,13 +1,13 @@
 import { useGlobalUser } from "@h5/store/global";
 import type { LucideIcon } from "lucide-react";
-import { HuntingCertificationCard } from "../HuntingCertificationCard";
+import { HuntingCertificationCard } from "@components/HuntingCertificationCard";
 import {
   getHuntingCertificationCardMode,
   getHuntingCertificationDataFromDraft
-} from "../HuntingCertificationCard/model";
-import { AccountSummaryCard, WalletSummaryCard } from "../SummaryCards";
-import { TutorCard } from "../TutorCard";
-import { getTutorCardDataFromDraft, getTutorCardMode } from "../TutorCard/model";
+} from "@components/HuntingCertificationCard/model";
+import { AccountSummaryCard, WalletSummaryCard } from "@components/SummaryCards";
+import { TutorCard } from "@components/TutorCard";
+import { getTutorCardDataFromDraft, getTutorCardMode } from "@components/TutorCard/model";
 
 /** 头像弹窗快捷入口的视觉强调类型。 */
 type MinePopoverActionTone = "default" | "publish" | "recycle";
@@ -135,7 +135,7 @@ export function MinePopover({
     tutorCardData.certificationStatus === "normal" ? "家教" : "",
     role === "student" && huntingCertificationData.certificationStatus === "normal" ? "狩猎" : ""
   ].filter(Boolean);
-  const shouldShowTutorCertificationCard = tutorCardData.certificationStatus !== "normal";
+  const shouldShowTutorCertificationCard = role === "student" && tutorCardData.certificationStatus !== "normal";
   const shouldShowHuntingCertificationCard =
     role === "student" && huntingCertificationData.certificationStatus !== "normal";
   const isTutorExposureEnabled = profileDraft.tutorExposureEnabled === "true";
@@ -164,8 +164,7 @@ export function MinePopover({
           ]
         : [
             { label: "发布", icon: Plus, action: onOpenPublish, tone: "publish" },
-            { label: "回收", icon: PackageCheck, action: onOpenRecycle, tone: "recycle" },
-            { label: "家教", icon: GraduationCap, action: () => onOpenTab("tutor") },
+            { label: "家教日程", icon: CalendarClock, action: onOpenTutorCalendar },
             { label: "孩子", icon: UserRound, action: () => onNavigate("settings") },
             { label: "消息", icon: MessageCircle, action: () => onNavigate("mine") },
             { label: "建议/投诉", icon: ClipboardCheck, action: () => onNavigate("mine") },

@@ -23,28 +23,38 @@ declare global {
   type WalletRecord = import("@unknown/domain").WalletRecord;
   type WalletSummary = import("@unknown/domain").WalletSummary;
 
-  type PageSurface = import("./app").PageSurface;
-  type AuthMode = import("./app").AuthMode;
-  type LoginCredentialMode = import("./app").LoginCredentialMode;
-  type ProductFilter = import("./app").ProductFilter;
-  type JobFilter = import("./app").JobFilter;
-  type TutorSort = import("./app").TutorSort;
-  type CheckoutState = import("./app").CheckoutState;
+  type PageSurface = import("@app-types/app").PageSurface;
+  type AuthMode = import("@app-types/app").AuthMode;
+  type LoginCredentialMode = import("@app-types/app").LoginCredentialMode;
+  type ProductFilter = import("@app-types/app").ProductFilter;
+  type JobFilter = import("@app-types/app").JobFilter;
+  type TutorSort = import("@app-types/app").TutorSort;
+  type CheckoutState = import("@app-types/app").CheckoutState;
   type ClientAddress = import("@unknown/domain").ClientAddress;
   type ClientAddressRequest = import("@unknown/domain").ClientAddressRequest;
 
-  type LoginRegisterCardProps = import("./auth").LoginRegisterCardProps;
+  type LoginRegisterCardProps = import("@app-types/auth").LoginRegisterCardProps;
 
-  type MessageToastType = import("./message-toast").MessageToastType;
-  type MessageToastState = import("./message-toast").MessageToastState;
-  type MessageToastOptions = import("./message-toast").MessageToastOptions;
-  type MessageToastProps = import("./message-toast").MessageToastProps;
+  type MessageToastType = import("@app-types/message-toast").MessageToastType;
+  type MessageToastState = import("@app-types/message-toast").MessageToastState;
+  type MessageToastOptions = import("@app-types/message-toast").MessageToastOptions;
+  type MessageToastProps = import("@app-types/message-toast").MessageToastProps;
 
-  type ProfileRequirementField = import("./profile").ProfileRequirementField;
-  type ProfileRequirementTemplate = import("./profile").ProfileRequirementTemplate;
-  type ProfileRequirement = import("./profile").ProfileRequirement;
-  type ProfileDraftState = import("./profile").ProfileDraftState;
-  type AddressBookItem = import("./profile").AddressBookItem;
-  type AddressInfoFormProps = import("./profile").AddressInfoFormProps;
-  type RegistrationProfileCompletionProps = import("./profile").RegistrationProfileCompletionProps;
+  type ProfileRequirementField = import("@app-types/profile").ProfileRequirementField;
+  type ProfileRequirementTemplate = import("@app-types/profile").ProfileRequirementTemplate;
+  type ProfileRequirement = import("@app-types/profile").ProfileRequirement;
+  type ProfileDraftState = import("@app-types/profile").ProfileDraftState;
+  type AddressBookItem = import("@app-types/profile").AddressBookItem;
+  type AddressInfoFormProps = import("@app-types/profile").AddressInfoFormProps;
+  type RegistrationProfileCompletionProps = import("@app-types/profile").RegistrationProfileCompletionProps;
+
+  type HuntingAreaInputMode = import("@app-types/hunting-project").HuntingAreaInputMode;
+  type HuntingProjectStop = import("@app-types/hunting-project").HuntingProjectStop;
+  type HuntingProjectDraft = import("@app-types/hunting-project").HuntingProjectDraft;
+  type HuntingProject = import("@app-types/hunting-project").HuntingProject;
+  type HuntingProjectDialogProps = import("@app-types/hunting-project").HuntingProjectDialogProps;
+
+  type ChildProfileOption = import("@app-types/tutor-workflow").ChildProfileOption;
+  type TutorTrialJob = import("@app-types/tutor-workflow").TutorTrialJob;
+  type TutorApplicationCandidate = import("@app-types/tutor-workflow").TutorApplicationCandidate;
 }

@@ -1,4 +1,4 @@
-﻿import {
+import {
   ArrowDownUp,
   Banknote,
   CheckCircle2,
@@ -15,12 +15,12 @@
   XCircle
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { ScrollingTicker } from "../../components/ScrollingTicker";
+import { ScrollingTicker } from "@components/ScrollingTicker";
 import {
   huntingCertificationStatusLabels,
   type HuntingCertificationStatus
-} from "../../components/HuntingCertificationCard/model";
-import { formatCurrency } from "../../shared/clientPageModel";
+} from "@components/HuntingCertificationCard/model";
+import { formatCurrency } from "@shared/clientPageModel";
 
 /** 委托任务排序方式。 */
 type DelegationSortMode = "amountAsc" | "amountDesc" | "default" | "time";

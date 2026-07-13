@@ -2,11 +2,12 @@ import {
   clearStoredPendingRegistration,
   getStoredPasswordCredential,
   hasStoredPendingRegistration,
+  parentRegistrationAddressFields,
   profileDraftToClientAddressRequest,
   setStoredPendingRegistration
-} from "../../shared/clientPageModel";
-import { localAuthCode, localPasswordMinLength, saveLocalPasswordCredential, verifyLocalPasswordCredential } from "../../tools/localAuth";
-import { normalizeByKey, validateByKey } from "../../tools/validation";
+} from "@shared/clientPageModel";
+import { localAuthCode, localPasswordMinLength, saveLocalPasswordCredential, verifyLocalPasswordCredential } from "@tools/localAuth";
+import { normalizeByKey, validateByKey } from "@tools/validation";
 
 /** H5 宿主页暴露的运行时全局变量，用于覆盖接口地址。 */
 type H5RuntimeGlobals = typeof globalThis & {
@@ -418,7 +419,9 @@ export function Login({
     setIsRoleSelectionPending(true);
     try {
       const session = await selectClientRoleAfterRegistration(pendingRegisterSession.accessToken, selectedRegisterRole);
-      const hasCompleteAddress = registrationTemplate.fields.every((field) => nextProfileDraft[field.key]?.trim());
+      const addressFields =
+        selectedRegisterRole === "parent" ? parentRegistrationAddressFields : registrationTemplate.fields;
+      const hasCompleteAddress = addressFields.length > 0 && addressFields.every((field) => nextProfileDraft[field.key]?.trim());
       const sessionWithNickname = {
         ...session,
         displayName: registrationNickname.trim(),
@@ -604,6 +607,7 @@ export function Login({
           onPasswordChange={setRegistrationPassword}
           onPasswordConfirmChange={setRegistrationPasswordConfirm}
           onSubmit={completeRegistration}
+          role={selectedRegisterRole}
           roleLabel={roleLabels[selectedRegisterRole]}
           template={registrationTemplate}
         />

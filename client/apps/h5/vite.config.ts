@@ -7,8 +7,8 @@ export default defineConfig({
   plugins: [
     react(),
     AutoImport({
-      dts: path.resolve(__dirname, "src/types/auto-imports.d.ts"),
-      dirs: ["src/components/**", "src/pages/**", "src/shared/**"],
+      dts: path.resolve(__dirname, "src/auto-imports.d.ts"),
+      dirs: ["src/components/**", "src/pages/**", "src/shared/**", "src/store/**", "src/tools/**", "src/types/*.ts"],
       imports: [
         "react",
         {
@@ -85,6 +85,12 @@ export default defineConfig({
   resolve: {
     alias: {
       "@h5": path.resolve(__dirname, "src"),
+      "@components": path.resolve(__dirname, "src/components"),
+      "@pages": path.resolve(__dirname, "src/pages"),
+      "@shared": path.resolve(__dirname, "src/shared"),
+      "@store": path.resolve(__dirname, "src/store"),
+      "@tools": path.resolve(__dirname, "src/tools"),
+      "@app-types": path.resolve(__dirname, "src/types"),
       "@unknown/api-client": path.resolve(__dirname, "../../packages/api-client/src"),
       "@unknown/domain": path.resolve(__dirname, "../../packages/domain/src"),
       "@unknown/hooks": path.resolve(__dirname, "../../packages/hooks/src"),

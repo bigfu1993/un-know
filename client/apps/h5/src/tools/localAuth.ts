@@ -1,4 +1,4 @@
-import { getStoredPasswordCredential, setStoredPasswordCredential } from "../shared/clientPageModel";
+import { getStoredPasswordCredential, setStoredPasswordCredential } from "@shared/clientPageModel";
 
 /** 登录、注册和设置安全流程共用的 H5 本地测试验证码。 */
 export const localAuthCode = "000000";

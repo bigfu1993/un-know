@@ -1,21 +1,24 @@
 /** 跨页面流程弹窗，仅负责采集或展示数据，提交和导航由调用方处理。 */
-import { AddressInfoForm } from "../AddressInfoForm";
-import { validateByKey } from "../../tools/validation";
+import { AddressInfoForm } from "@components/AddressInfoForm";
+import { validateByKey } from "@tools/validation";
 
 /** 进行中列表筛选类型。 */
-type OngoingOrderFilter = "all" | "delegation" | "featured" | "hunting";
+type OngoingOrderFilter = "all" | "delegation" | "featured" | "hunting" | "tutor";
 
 /** 进行中列表筛选标签配置。 */
 const ongoingOrderFilterOptions: Array<{ label: string; value: OngoingOrderFilter }> = [
   { label: "全部", value: "all" },
   { label: "优选", value: "featured" },
   { label: "委托", value: "delegation" },
-  { label: "狩猎", value: "hunting" }
+  { label: "狩猎", value: "hunting" },
+  { label: "家教", value: "tutor" }
 ];
 
 /** 获取进行中事项分类，未标记的订单默认归入优选。 */
 function getOngoingOrderCategory(order: ClientOrder): Exclude<OngoingOrderFilter, "all"> {
-  return order.category === "delegation" || order.category === "hunting" ? order.category : "featured";
+  return order.category === "delegation" || order.category === "hunting" || order.category === "tutor"
+    ? order.category
+    : "featured";
 }
 
 /** 进行中事项弹窗，支持分类筛选和面板高度配置。 */
@@ -28,6 +31,11 @@ export function OngoingOrdersDialog({
   onConfirmComplete,
   onMessageOrder,
   onOpenQuoteList,
+  onOpenTutorApplications,
+  onOpenTrialResult,
+  onOpenTrialSchedule,
+  onRejectTrial,
+  onAgreeTrial,
   onRepublish,
   onRequestCancel,
   onRequestComplete
@@ -40,6 +48,11 @@ export function OngoingOrdersDialog({
   onConfirmComplete?: (order: ClientOrder) => void;
   onMessageOrder?: (order: ClientOrder) => void;
   onOpenQuoteList?: (order: ClientOrder) => void;
+  onOpenTutorApplications?: (order: ClientOrder) => void;
+  onOpenTrialResult?: (order: ClientOrder) => void;
+  onOpenTrialSchedule?: (order: ClientOrder) => void;
+  onRejectTrial?: (order: ClientOrder) => void;
+  onAgreeTrial?: (order: ClientOrder) => void;
   onRepublish?: (order: ClientOrder) => void;
   onRequestCancel?: (order: ClientOrder) => void;
   onRequestComplete?: (order: ClientOrder) => void;
@@ -124,6 +137,11 @@ export function OngoingOrdersDialog({
               ) : null}
               {order.canCall ||
               order.canMessage ||
+              order.canOpenTutorApplications ||
+              order.canOpenTrialSchedule ||
+              order.canRejectTrial ||
+              order.canAgreeTrial ||
+              order.canOpenTrialResult ||
               order.canRequestCancel ||
               order.canRequestComplete ||
               order.canConfirmCancel ||
@@ -147,6 +165,52 @@ export function OngoingOrdersDialog({
                     >
                       <MessageCircle size={15} />
                       消息
+                    </button>
+                  ) : null}
+                  {order.canOpenTutorApplications ? (
+                    <button
+                      className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+                      onClick={() => onOpenTutorApplications?.(order)}
+                      type="button"
+                    >
+                      申请列表
+                    </button>
+                  ) : null}
+                  {order.canOpenTrialSchedule ? (
+                    <button
+                      className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+                      onClick={() => onOpenTrialSchedule?.(order)}
+                      type="button"
+                    >
+                      <CalendarClock size={15} />
+                      试课安排
+                    </button>
+                  ) : null}
+                  {order.canRejectTrial ? (
+                    <button
+                      className="danger-outline-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+                      onClick={() => onRejectTrial?.(order)}
+                      type="button"
+                    >
+                      拒绝
+                    </button>
+                  ) : null}
+                  {order.canAgreeTrial ? (
+                    <button
+                      className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+                      onClick={() => onAgreeTrial?.(order)}
+                      type="button"
+                    >
+                      同意试课
+                    </button>
+                  ) : null}
+                  {order.canOpenTrialResult ? (
+                    <button
+                      className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+                      onClick={() => onOpenTrialResult?.(order)}
+                      type="button"
+                    >
+                      试课结果
                     </button>
                   ) : null}
                   {order.canRequestCancel ? (
@@ -192,7 +256,7 @@ export function OngoingOrdersDialog({
                       onClick={() => onRepublish?.(order)}
                       type="button"
                     >
-                      再次发布
+                      重新发布
                     </button>
                   ) : null}
                 </div>

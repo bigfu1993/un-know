@@ -1,7 +1,7 @@
 import { useGlobalStore, useGlobalUser } from "@h5/store/global";
-import { getFilledProfileDraft } from "../../shared/clientPageModel";
-import { parseTutorSubjects, tutorSubjectOptions } from "../../shared/tutorModel";
-import { normalizeByKey, validateByKey } from "../../tools/validation";
+import { getFilledProfileDraft } from "@shared/clientPageModel";
+import { parseTutorSubjects, tutorSubjectOptions } from "@shared/tutorModel";
+import { normalizeByKey, validateByKey } from "@tools/validation";
 
 /** 家教认证字段配置。 */
 interface TutorCertificationField {

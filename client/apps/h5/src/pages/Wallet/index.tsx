@@ -4,7 +4,7 @@ import {
   getWalletMonthOptions,
   getWalletMonthlySummary,
   getWalletTotalAmount
-} from "../../tools/wallet";
+} from "@tools/wallet";
 
 /** 钱包页面，展示月度汇总、月份选择和账单列表。 */
 export function Wallet({

@@ -2008,6 +2008,49 @@ body,
   color: #175e75;
 }
 
+.order-search-field {
+  border: 1px solid #d9e1ec;
+  border-radius: 8px;
+  background: #fff;
+  color: #657181;
+}
+
+.order-search-field input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #17212b;
+  font-size: 14px;
+}
+
+.order-search-field input::placeholder {
+  color: #9aa5b1;
+}
+
+.order-filter-tags {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-bottom: 2px;
+}
+
+.order-filter-tags button {
+  min-height: 30px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: #f3f6f9;
+  color: #475466;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.order-filter-tags button.active {
+  background: #dceef3;
+  color: #175e75;
+}
+
 .tutor-card-warning {
   display: inline-flex;
   align-items: center;
@@ -2800,3 +2843,55 @@ body,
   }
 }
 /* moved-child-selector:end */
+
+/* 狩猎项目和家教试课流程的弹窗补充样式。 */
+.hunting-project-panel,
+.tutor-applications-panel {
+  border-radius: 18px 18px 0 0;
+}
+
+.hunting-project-body,
+.hunting-recommendation-list,
+.tutor-application-list {
+  min-height: 0;
+}
+
+.hunting-stop-card,
+.tutor-application-card {
+  border: 1px solid rgba(112, 128, 148, 0.18);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.hunting-stop-card:active {
+  cursor: grabbing;
+}
+
+.hunting-stop-head button:disabled {
+  opacity: 0.45;
+}
+
+.tutor-application-card {
+  color: #17212b;
+}
+
+.tutor-application-card.active {
+  border-color: #1d6f55;
+  box-shadow: 0 0 0 3px rgba(29, 111, 85, 0.12);
+}
+
+.tutor-application-card em {
+  color: #1d6f55;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.tutor-trial-job-card .card-title em {
+  color: #c2410c;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.parent-registration-shortcut-row .ghost-button {
+  font-weight: 800;
+}

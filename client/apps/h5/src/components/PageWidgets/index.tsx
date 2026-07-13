@@ -259,3 +259,57 @@ export function PartTimeJobCard({ job, mode }: { job: PartTimeJob; mode: "studen
     </article>
   );
 }
+
+/** 学生端家教兼职卡片，提供试课申请入口。 */
+export function TutorTrialJobCard({
+  job,
+  onApplyTrial
+}: {
+  job: TutorTrialJob;
+  onApplyTrial?: (job: TutorTrialJob) => void;
+}) {
+  return (
+    <article className="flow-card tutor-trial-job-card p-[14px]">
+      <div className="card-title flex items-center justify-between gap-[10px]">
+        <GraduationCap size={18} />
+        <div>
+          <strong>{job.title}</strong>
+          <span>{job.publisher}</span>
+        </div>
+        <em>{job.budget}</em>
+      </div>
+      <p>{job.description}</p>
+      <div className="meta-line mt-[10px] flex flex-wrap items-center gap-[6px] text-[13px] leading-[1.45] text-[#657181]">
+        <span>{job.subject}</span>
+        <span>{job.period}</span>
+        <span>{job.address}</span>
+        <span>{job.status}</span>
+      </div>
+      <div className="product-actions mt-[12px] flex flex-wrap items-center justify-between gap-[10px]">
+        <span>{job.requirement}</span>
+        <div>
+          <button
+            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+            type="button"
+          >
+            <Smartphone size={15} /> 电话
+          </button>
+          <button
+            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+            type="button"
+          >
+            <MessageCircle size={15} /> 消息
+          </button>
+          <button
+            className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+            onClick={() => onApplyTrial?.(job)}
+            type="button"
+          >
+            <CalendarClock size={15} /> 申请试课
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
+

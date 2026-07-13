@@ -1,5 +1,6 @@
-import { AddressInfoForm } from "../AddressInfoForm";
-import { validateByKey } from "../../tools/validation";
+import { AddressInfoForm } from "@components/AddressInfoForm";
+import { parentChildInfoFields, parentRegistrationAddressFields } from "@shared/clientPageModel";
+import { validateByKey } from "@tools/validation";
 
 /** 进入 H5 前渲染注册后的昵称、地址和密码设置表单。 */
 export function RegistrationProfileCompletion({
@@ -17,16 +18,26 @@ export function RegistrationProfileCompletion({
   onPasswordChange,
   onPasswordConfirmChange,
   onSubmit,
+  role,
   roleLabel,
   template
 }: RegistrationProfileCompletionProps) {
+  const [isParentAddressVisible, setIsParentAddressVisible] = useState(false);
+  const [isParentChildVisible, setIsParentChildVisible] = useState(false);
+  const visibleProfileFields =
+    role === "parent"
+      ? [
+          ...(isParentAddressVisible ? parentRegistrationAddressFields : []),
+          ...(isParentChildVisible ? parentChildInfoFields : [])
+        ]
+      : template.fields;
   const nicknameValidation = validateByKey("nickname", nickname, { label: "昵称", required: true });
-  const hasMissingProfileFields = template.fields.some((field) => !draft[field.key]?.trim());
+  const hasMissingProfileFields = visibleProfileFields.some((field) => !draft[field.key]?.trim());
   const isNicknameInvalid = !nicknameValidation.isValid;
   const isPasswordMissing = !password.trim();
   const isPasswordConfirmMissing = !passwordConfirm.trim();
   const isPasswordConfirmInvalid = Boolean(passwordConfirm.trim()) && password !== passwordConfirm;
-  const hasInvalidProfileFields = template.fields.some(
+  const hasInvalidProfileFields = visibleProfileFields.some(
     (field) => !validateByKey(field.key, draft[field.key] ?? "", { label: field.label }).isValid
   );
   const submitLabel = isSubmitting
@@ -88,13 +99,54 @@ export function RegistrationProfileCompletion({
           />
         </label>
 
-        <AddressInfoForm
-          areaOptions={areaOptions}
-          draft={draft}
-          fields={template.fields}
-          mode="edit"
-          onChange={onChange}
-        />
+        {role === "parent" ? (
+          <div className="parent-registration-shortcuts grid gap-[10px]">
+            <div className="parent-registration-shortcut-row flex flex-wrap gap-[8px]">
+              <button
+                className="ghost-button inline-flex min-h-[32px] items-center justify-center gap-[5px] px-[10px] py-[7px] text-[#475466]"
+                onClick={() => setIsParentAddressVisible((visible) => !visible)}
+                type="button"
+              >
+                {isParentAddressVisible ? "收起地址信息" : "添加地址信息"}
+              </button>
+              <button
+                className="ghost-button inline-flex min-h-[32px] items-center justify-center gap-[5px] px-[10px] py-[7px] text-[#475466]"
+                onClick={() => setIsParentChildVisible((visible) => !visible)}
+                type="button"
+              >
+                {isParentChildVisible ? "收起孩子信息" : "添加孩子信息"}
+              </button>
+            </div>
+
+            {isParentAddressVisible ? (
+              <AddressInfoForm
+                areaOptions={areaOptions}
+                draft={draft}
+                fields={parentRegistrationAddressFields}
+                mode="edit"
+                onChange={onChange}
+              />
+            ) : null}
+
+            {isParentChildVisible ? (
+              <AddressInfoForm
+                areaOptions={areaOptions}
+                draft={draft}
+                fields={parentChildInfoFields}
+                mode="edit"
+                onChange={onChange}
+              />
+            ) : null}
+          </div>
+        ) : (
+          <AddressInfoForm
+            areaOptions={areaOptions}
+            draft={draft}
+            fields={template.fields}
+            mode="edit"
+            onChange={onChange}
+          />
+        )}
 
         <label
           className={`registration-profile-field grid gap-[7px] w-full min-w-0 font-bold ${
@@ -148,7 +200,7 @@ export function RegistrationProfileCompletion({
         </button>
       </div>
       <p className="login-tip m-0 text-[13px] leading-[1.5] text-[#657181]">
-        昵称和登录密码为必填；生日和地址字段可以先留空，后续可在设置页维护地址列表。
+        昵称和登录密码为必填；生日、地址和孩子信息可以先留空，后续可在设置页或业务流程中补充。
       </p>
     </form>
   );

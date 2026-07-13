@@ -1,17 +1,18 @@
 import { BriefcaseBusiness, CheckCircle2, GraduationCap, PackageCheck, Plus, XCircle } from "lucide-react";
 import type { FormEvent } from "react";
-import { tutorSubjectOptions } from "../../shared/tutorModel";
+import { tutorSubjectOptions } from "@shared/tutorModel";
 import {
   delegationRequirementTags,
   isNegotiableAmount,
   isPositiveAmount,
   type PublishInfoDraft,
   type PublishInfoType
-} from "../../tools/publishInfo";
+} from "@tools/publishInfo";
 
 /** 发布信息弹窗属性。 */
 export interface PublishInfoDialogProps {
   addressItems: AddressBookItem[];
+  childOptions?: ChildProfileOption[];
   initialType?: PublishInfoType;
   isPublishing?: boolean;
   onClose: () => void;
@@ -53,6 +54,7 @@ const initialPublishInfoDraft: PublishInfoDraft = {
   amount: "",
   amountMode: "input",
   checkInMode: "",
+  childId: "",
   delegationTime: "",
   depositAmount: "",
   depositRequired: "no",
@@ -64,6 +66,8 @@ const initialPublishInfoDraft: PublishInfoDraft = {
   title: "",
   trialDuration: "",
   trialEnabled: "否",
+  tutorDateEnd: "",
+  tutorDateStart: "",
   tutorSchoolTags: [],
   tutorSubject: "",
   tutorTime: "",
@@ -103,12 +107,13 @@ function getPublishFormValid(draft: PublishInfoDraft) {
     return hasTitle;
   }
 
-  return hasTitle && Boolean(draft.tutorTime.trim());
+  return hasTitle && Boolean(draft.addressId.trim()) && Boolean(draft.tutorDateStart.trim()) && Boolean(draft.tutorDateEnd.trim());
 }
 
 /** 发布信息弹窗，采集发布入口和独立回收入口的表单草稿。 */
 export function PublishInfoDialog({
   addressItems,
+  childOptions = [],
   initialType = "delegation",
   isPublishing = false,
   onClose,
@@ -119,11 +124,14 @@ export function PublishInfoDialog({
   const availablePublishTypeOptions =
     initialType === "recycle"
       ? [recycleTypeOption]
-      : publishTypeOptions.filter((option) => !option.parentOnly || role === "parent");
+      : role === "parent"
+        ? publishTypeOptions.filter((option) => option.value === "tutor")
+        : publishTypeOptions.filter((option) => !option.parentOnly);
   const [draft, setDraft] = useState<PublishInfoDraft>(() => ({
     ...initialPublishInfoDraft,
     addressId: addressItems.find((item) => item.isCurrent)?.id ?? addressItems[0]?.id ?? "",
-    type: initialType
+    childId: childOptions[0]?.id ?? "",
+    type: role === "parent" && initialType !== "recycle" ? "tutor" : initialType
   }));
   const isFormValid = getPublishFormValid(draft);
   const selectedType = availablePublishTypeOptions.find((option) => option.value === draft.type) ?? availablePublishTypeOptions[0];
@@ -224,6 +232,8 @@ export function PublishInfoDialog({
             <PartTimePublishFields draft={draft} onChange={handleFieldChange} />
           ) : (
             <TutorPublishFields
+              addressItems={addressItems}
+              childOptions={childOptions}
               draft={draft}
               onChange={handleFieldChange}
               onToggleSchoolTag={handleToggleTutorSchoolTag}
@@ -452,10 +462,14 @@ function PartTimePublishFields({
 
 /** 家教发布字段。 */
 function TutorPublishFields({
+  addressItems,
+  childOptions,
   draft,
   onChange,
   onToggleSchoolTag
 }: {
+  addressItems: AddressBookItem[];
+  childOptions: ChildProfileOption[];
   draft: PublishInfoDraft;
   onChange: (key: keyof PublishInfoDraft, value: string) => void;
   onToggleSchoolTag: (tag: string) => void;
@@ -475,25 +489,51 @@ function TutorPublishFields({
         placeholder="请输入家教需求描述"
         value={draft.description}
       />
-      <TextAreaField
-        label="要求"
-        onChange={(value) => onChange("requirement", value)}
-        placeholder="请输入授课要求"
-        value={draft.requirement}
-      />
       <SegmentedField
         label="要求学科"
         onChange={(value) => onChange("tutorSubject", value)}
         options={tutorSubjectOptions}
         value={draft.tutorSubject}
       />
-      <TextField
-        label="时间"
-        onChange={(value) => onChange("tutorTime", value)}
-        placeholder="例如周末上午 9:00-11:00"
-        required
-        value={draft.tutorTime}
-      />
+      <label className={`profile-field publish-field grid gap-[7px] ${draft.addressId ? "" : "missing"}`}>
+        <span>授课地址（必填）</span>
+        <select
+          disabled={addressItems.length === 0}
+          onChange={(event) => onChange("addressId", event.target.value)}
+          value={draft.addressId}
+        >
+          {addressItems.length > 0 ? (
+            addressItems.map((item) => (
+              <option key={item.id} value={item.id}>
+                {getAddressOptionLabel(item)}
+              </option>
+            ))
+          ) : (
+            <option value="">暂无地址，请先添加地址</option>
+          )}
+        </select>
+      </label>
+      <label className="profile-field publish-field grid gap-[7px]">
+        <span>选择孩子</span>
+        <select onChange={(event) => onChange("childId", event.target.value)} value={draft.childId}>
+          <option value="">暂不指定孩子</option>
+          {childOptions.map((child) => (
+            <option key={child.id} value={child.id}>
+              {[child.name, child.grade, child.school].filter(Boolean).join(" · ")}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="tutor-period-fields grid grid-cols-2 gap-[8px]">
+        <label className={`profile-field publish-field grid gap-[7px] ${draft.tutorDateStart ? "" : "missing"}`}>
+          <span>周期开始</span>
+          <input onChange={(event) => onChange("tutorDateStart", event.target.value)} type="date" value={draft.tutorDateStart} />
+        </label>
+        <label className={`profile-field publish-field grid gap-[7px] ${draft.tutorDateEnd ? "" : "missing"}`}>
+          <span>周期结束</span>
+          <input onChange={(event) => onChange("tutorDateEnd", event.target.value)} type="date" value={draft.tutorDateEnd} />
+        </label>
+      </div>
       <SegmentedField
         label="是否试课"
         onChange={(value) => onChange("trialEnabled", value)}
@@ -529,6 +569,12 @@ function TutorPublishFields({
           ))}
         </div>
       </label>
+      <TextAreaField
+        label="要求"
+        onChange={(value) => onChange("requirement", value)}
+        placeholder="请输入授课要求"
+        value={draft.requirement}
+      />
     </div>
   );
 }

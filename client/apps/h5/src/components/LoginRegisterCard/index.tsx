@@ -1,4 +1,4 @@
-import { normalizeByKey } from "../../tools/validation";
+import { normalizeByKey } from "@tools/validation";
 
 /** 渲染登录/注册共用表单，并将认证动作交给登录页面处理。 */
 export function LoginRegisterCard({

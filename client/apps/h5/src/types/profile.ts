@@ -66,6 +66,7 @@ export interface RegistrationProfileCompletionProps {
   onPasswordChange: (password: string) => void;
   onPasswordConfirmChange: (passwordConfirm: string) => void;
   onSubmit: () => void;
+  role: Role;
   roleLabel: string;
   template: RegistrationProfileTemplate;
 }

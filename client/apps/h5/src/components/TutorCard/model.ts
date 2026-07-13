@@ -1,5 +1,5 @@
 import type { TutorCertificationStatus } from "@unknown/domain";
-import { formatTutorSubjects, parseTutorSubjects } from "../../shared/tutorModel";
+import { formatTutorSubjects, parseTutorSubjects } from "@shared/tutorModel";
 
 export type { TutorCertificationStatus };
 

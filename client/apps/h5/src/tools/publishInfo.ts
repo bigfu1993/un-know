@@ -1,5 +1,5 @@
 import type { PublishHuntingTaskRequest } from "@unknown/domain";
-import type { AddressBookItem } from "../types/profile";
+import type { AddressBookItem } from "@app-types/profile";
 
 /** 本地发布草稿存储 key，用于保存未正式发布的信息。 */
 const localPublishInfoStorageKey = "unknown_h5_publish_info_drafts_v1";
@@ -19,6 +19,7 @@ export interface PublishInfoDraft {
   amount: string;
   amountMode: DelegationAmountMode;
   checkInMode: string;
+  childId: string;
   delegationTime: string;
   depositAmount: string;
   depositRequired: "no" | "yes";
@@ -30,6 +31,8 @@ export interface PublishInfoDraft {
   title: string;
   trialDuration: string;
   trialEnabled: string;
+  tutorDateEnd: string;
+  tutorDateStart: string;
   tutorSchoolTags: string[];
   tutorSubject: string;
   tutorTime: string;

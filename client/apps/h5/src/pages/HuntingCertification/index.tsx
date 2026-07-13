@@ -1,8 +1,8 @@
 import { useGlobalUser } from "@h5/store/global";
 import type { HuntingCertificationStatus } from "@unknown/domain";
 import { useSubmitHuntingCertification } from "@unknown/hooks";
-import { getFilledProfileDraft } from "../../shared/clientPageModel";
-import { normalizeByKey, validateByKey } from "../../tools/validation";
+import { getFilledProfileDraft } from "@shared/clientPageModel";
+import { normalizeByKey, validateByKey } from "@tools/validation";
 
 /** 狩猎认证字段配置，字段 key 同本地资料草稿保持一致，便于提交后回填表单。 */
 interface HuntingCertificationField {

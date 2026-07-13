@@ -391,7 +391,11 @@ public class ClientWorkspaceAppService {
       long currentUserId,
       String fulfillmentAction
   ) {
-    ensureAcceptedHunter(task, currentUserId);
+    if (FULFILLMENT_CANCEL_REQUESTED.equals(fulfillmentAction)) {
+      ensureHuntingCancellationActor(task, currentUserId);
+    } else {
+      ensureAcceptedHunter(task, currentUserId);
+    }
     ensureNoPendingFulfillmentAction(task);
     jdbcTemplate.update(
         """
@@ -414,7 +418,11 @@ public class ClientWorkspaceAppService {
       long currentUserId,
       String expectedFulfillmentAction
   ) {
-    ensurePublisher(task, currentUserId);
+    if (FULFILLMENT_CANCEL_REQUESTED.equals(expectedFulfillmentAction)) {
+      ensureHuntingCancellationActor(task, currentUserId);
+    } else {
+      ensurePublisher(task, currentUserId);
+    }
     if (!expectedFulfillmentAction.equals(task.fulfillmentAction())) {
       throw new BusinessException("HUNTING_FULFILLMENT_ACTION_NOT_FOUND", "当前没有可确认的履约申请");
     }
@@ -632,6 +640,20 @@ public class ClientWorkspaceAppService {
                    ) AS pending_quote_status
             FROM hunting_task ht
             WHERE ht.enabled = TRUE
+               OR (
+                 CAST(? AS BIGINT) IS NOT NULL
+                 AND ht.status IN (?, ?)
+                 AND (
+                   ht.publisher_user_id = CAST(? AS BIGINT)
+                   OR ht.accepted_user_id = CAST(? AS BIGINT)
+                   OR EXISTS (
+                     SELECT 1
+                     FROM hunting_task_quote hq
+                     WHERE hq.hunting_task_id = ht.id
+                       AND hq.quote_user_id = CAST(? AS BIGINT)
+                   )
+                 )
+               )
             ORDER BY ht.updated_at DESC, ht.created_at DESC, ht.id DESC
             """,
         (rs, rowNum) -> {
@@ -698,7 +720,13 @@ public class ClientWorkspaceAppService {
         currentUserId,
         QUOTE_WAITING_PUBLISHER,
         QUOTE_WAITING_HUNTER,
-        QUOTE_CONFIRMED
+        QUOTE_CONFIRMED,
+        currentUserId,
+        TASK_COMPLETED,
+        TASK_CANCELLED,
+        currentUserId,
+        currentUserId,
+        currentUserId
     );
   }
 
@@ -999,7 +1027,20 @@ public class ClientWorkspaceAppService {
       throw new BusinessException("HUNTING_TASK_NOT_FULFILLING", "委托未处于履约中，不能发起履约申请");
     }
     if (!task.acceptedUserId().equals(currentUserId)) {
-      throw new BusinessException("HUNTING_TASK_HUNTER_FORBIDDEN", "仅履约方可发起取消或完成申请");
+      throw new BusinessException("HUNTING_TASK_HUNTER_FORBIDDEN", "仅履约方可发起完成申请");
+    }
+  }
+
+  /** 校验当前用户是否为履约中委托的发布方或履约方，用于双向取消协商。 */
+  private void ensureHuntingCancellationActor(HuntingTaskRow task, long currentUserId) {
+    if (!isHuntingFulfillingStatus(task.status()) || task.acceptedUserId() == null) {
+      throw new BusinessException("HUNTING_TASK_NOT_FULFILLING", "委托未处于履约中，不能处理取消申请");
+    }
+
+    boolean isPublisher = task.publisherUserId() != null && task.publisherUserId().equals(currentUserId);
+    boolean isHunter = task.acceptedUserId().equals(currentUserId);
+    if (!isPublisher && !isHunter) {
+      throw new BusinessException("HUNTING_TASK_CANCEL_FORBIDDEN", "仅发布方或履约方可处理取消申请");
     }
   }
 

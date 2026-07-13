@@ -1,5 +1,5 @@
 import { BadgeCheck, GraduationCap } from "lucide-react";
-import { tutorCertificationStatusLabels, type TutorCardData, type TutorCardMode } from "./model";
+import { tutorCertificationStatusLabels, type TutorCardData, type TutorCardMode } from "@components/TutorCard/model";
 
 /** 家教卡片属性。 */
 export interface TutorCardProps extends TutorCardData {
