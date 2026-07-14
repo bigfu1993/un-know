@@ -23,10 +23,13 @@ description: Methodology and validation workflow for the un-know project. Use wh
 7. Let global data flow through Provider/Context/store. Descendants should read global state through store/context hooks instead of prop drilling global objects.
 8. Keep components narrow. Local feedback, button event wrapping, default props, and temporary drafts belong inside the owning component/page. Emit final data or business result callbacks upward.
 9. Prefer slots for pure containers. Layout, grouping, and tab-switching components should use `children` or named slots for content instead of forwarding child business props; keep their props limited to their own layout, switching, and display configuration.
-10. Keep roots and pages lean: root wires application-level providers, session, routing, global data, and cross-module composition; pages orchestrate feature flow; components own display and local interaction.
-11. Keep styles and types by ownership: page styles in `pages/<Module>/index.less`, shared component styles beside the component, H5 reusable types in `client/apps/h5/src/types`, pure reusable utilities in `client/apps/h5/src/tools`.
-12. Run broad refactors in batches. Each batch declares scope, classifies issues, makes focused edits, validates, then moves to the next batch.
-13. Before deleting or splitting exports, search explicit imports, JSX usage, generated declarations, and auto-import configuration.
+10. Collapse no-op shells. If a wrapper only forwards props or children and has no durable semantics, reusable layout role, or local state, move its content to the real owner or turn it into a slot-based container.
+11. Match DOM ownership to layout behavior. Fixed headers, fixed footers, and scrollable bodies should be sibling regions under the same layout owner; use stable `form` ids and submit `form` attributes when a footer button must submit an external form.
+12. Design form hierarchy intentionally. Put required, frequent, and high-risk fields first; group optional supplements into coherent panels with their own header, action, and content; choose inline text/icon controls when full buttons would change field height.
+13. Keep roots and pages lean: root wires application-level providers, session, routing, global data, and cross-module composition; pages orchestrate feature flow; components own display and local interaction.
+14. Keep styles and types by ownership: page styles in `pages/<Module>/index.less`, shared component styles beside the component, H5 reusable types in `client/apps/h5/src/types`, pure reusable utilities in `client/apps/h5/src/tools`.
+15. Run broad refactors in batches. Each batch declares scope, classifies issues, makes focused edits, validates, then moves to the next batch.
+16. Before deleting or splitting exports, search explicit imports, JSX usage, generated declarations, and auto-import configuration.
 
 ## Choose References
 

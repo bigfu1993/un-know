@@ -71,45 +71,32 @@ export function Login({ onLoginSuccess }: LoginProps) {
     hideMessage();
   }
 
-  /** 根据当前流程状态渲染登录页内部步骤，外壳只在页面出口统一装配一次。 */
-  function renderLoginContent() {
-    if (isPasswordResetOpen) {
-      return (
+  return (
+    <main className="login-shell mx-auto grid min-h-screen w-full max-w-[540px] content-center gap-[14px] overflow-hidden px-[14px] py-[28px] text-[#17212b]">
+      {isPasswordResetOpen ? (
         <PasswordResetCard
           initialPhone={passwordResetInitialPhone}
           onBack={handleBackFromPasswordReset}
           onCompleted={handlePasswordResetCompleted}
         />
-      );
-    }
-
-    if (pendingRegisterSession) {
-      return (
+      ) : pendingRegisterSession ? (
         <RegistrationGuide
           accessToken={pendingRegisterSession.accessToken}
           ownerPhone={pendingRegisterPhone}
           onBack={handleCancelRegistrationFlow}
           onCompleted={onLoginSuccess}
         />
-      );
-    }
-
-    return (
-      <LoginRegisterCard
-        loginForm={
-          <LoginForm
-            onAuthenticated={handleAuthenticatedSession}
-            onForgotPassword={handleOpenPasswordReset}
-          />
-        }
-        registerForm={<RegisterForm onRegistered={handleRegisterSuccess} />}
-      />
-    );
-  }
-
-  return (
-    <main className="login-shell mx-auto grid min-h-screen w-full max-w-[540px] content-center gap-[14px] overflow-hidden px-[14px] py-[28px] text-[#17212b]">
-      {renderLoginContent()}
+      ) : (
+        <LoginRegisterCard
+          loginForm={
+            <LoginForm
+              onAuthenticated={handleAuthenticatedSession}
+              onForgotPassword={handleOpenPasswordReset}
+            />
+          }
+          registerForm={<RegisterForm onRegistered={handleRegisterSuccess} />}
+        />
+      )}
     </main>
   );
 }
