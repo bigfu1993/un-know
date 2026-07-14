@@ -1,6 +1,6 @@
 ---
 name: un-know-development-practices
-description: Frontend and backend development workflow for the un-know project. Use when working in D:\code\un-know on H5 React code, shared client packages, Java Spring Boot backend code, PostgreSQL/Flyway migrations, product document updates, API integration, validation, refactoring, comments, or code quality improvements.
+description: Methodology and validation workflow for the un-know project. Use when working in D:\code\un-know on H5 React code, shared client packages, Java Spring Boot backend code, PostgreSQL/Flyway migrations, product documentation, API integration, refactoring, comments, or code quality improvements.
 ---
 
 # un-know Development Practices
@@ -9,9 +9,23 @@ description: Frontend and backend development workflow for the un-know project. 
 
 1. Read `AGENTS.md` before making changes; it is the project-level source of truth.
 2. Keep product behavior synchronized with `docs/产品需求文档.md` whenever features, states, APIs, UI entries, validation, or copy changes.
-3. Business flows are mandatory backend/database flows during this project phase. For any status transition, permission action, workflow step, operation button visibility, current/default item, application/confirmation/cancel/completion flow, first confirm or implement the backend state, database record/field, API response, and API action before wiring H5.
-4. Prefer real API/database implementation. For product features, complete database migration, backend API, shared domain type, api-client, hooks, H5 usage, and PRD update together; do not leave half frontend or half backend work unless the user explicitly scopes the change.
-5. Preserve user changes. Read files before editing and keep refactors scoped to the requested business area.
+3. Keep this skill business-agnostic. Do not add role names, feature names, one-off page rules, endpoint paths, or concrete product decisions here; put those details in PRD or module docs.
+4. Preserve user changes. Read files before editing and keep refactors scoped to the requested area.
+
+## Core Method
+
+1. Locate ownership first: page/component/hook for H5, controller/application/model/migration for backend, shared domain/api-client/hooks for contracts.
+2. Inspect existing modules, components, hooks, shared types, and tools before adding logic. Reuse or extract instead of duplicating.
+3. For real business behavior, trace the backend/database source of truth first. Workflow state, permissions, operation visibility, current/default records, and status transitions must be represented by database state and API contracts before H5 consumes them.
+4. Do not implement business flow progression with H5-only local state, local cache, mock data, toast-only actions, or temporary frontend flags. If a flow is local-only, convert it to backend API + database first, then polish the UI.
+5. Keep data contracts aligned end to end: migration/model/service/API response, shared domain, api-client, hooks, H5 usage, and product documentation.
+6. Keep state and hooks close to the real consumer. Do not call a hook in a parent only to pass its result through child layers.
+7. Let global data flow through Provider/Context/store. Descendants should read global state through store/context hooks instead of prop drilling global objects.
+8. Keep components narrow. Local feedback, button event wrapping, default props, and temporary drafts belong inside the owning component/page. Emit final data or business result callbacks upward.
+9. Keep roots and pages lean: root wires application-level providers, session, routing, global data, and cross-module composition; pages orchestrate feature flow; components own display and local interaction.
+10. Keep styles and types by ownership: page styles in `pages/<Module>/index.less`, shared component styles beside the component, H5 reusable types in `client/apps/h5/src/types`, pure reusable utilities in `client/apps/h5/src/tools`.
+11. Run broad refactors in batches. Each batch declares scope, classifies issues, makes focused edits, validates, then moves to the next batch.
+12. Before deleting or splitting exports, search explicit imports, JSX usage, generated declarations, and auto-import configuration.
 
 ## Choose References
 
@@ -21,23 +35,15 @@ description: Frontend and backend development workflow for the un-know project. 
 
 ## Required Workflow
 
-1. Locate the current module owner: page/component/hook for H5, controller/application/model/migration for backend.
-2. Before writing new logic, inspect existing modules, components, hooks, shared types, and tools for reusable behavior. Keep business-specific reusable helpers in the owning module/component, and move business-agnostic pure helpers into `client/apps/h5/src/tools`.
-3. For business behavior, do not start from H5-only local state. Trace the real server state machine and database source first, then update backend, domain, api-client, hooks, and H5 in that order. Existing local/mock flow must be corrected into a backend-closed flow before polishing UI.
-4. Keep `client/apps/h5/src/App.tsx` as the root coordinator only: login/session, routing, global data loading, and cross-business dialog composition. Move single-business models, dialogs, cards, and workflow components into the matching page module such as `pages/Delegation` or `pages/Tutor`.
-5. Keep page-private components flat under `pages/<Module>/components/*.tsx`; do not create nested component folders inside `pages`.
-6. Keep every page module style entry in `pages/<Module>/index.less`, imported by `index.tsx`. Page-private component styles should live in that page stylesheet instead of global `styles.less`.
-7. Keep shared component-specific styles next to the component in `components/<Component>/index.less`; reserve `styles.less` for global primitives and truly shared utility styles.
-8. Keep component boundaries tight: local UI feedback, button event wrapping, default prop values, and temporary form drafts should live in the component/page that owns the interaction. Parents should receive final data or business callbacks instead of field-level or toast-only plumbing.
-9. Before deleting or splitting a component folder, search explicit imports, JSX usage, `auto-imports.d.ts`, and auto-import configuration. Auto-imported exports can be used without visible import statements.
-10. Update code and comments together. Java uses JavaDoc; TypeScript/React uses TSDoc/JSDoc for exported or business-heavy units.
-11. Keep domain states centralized. Avoid scattering Chinese status strings across frontend and backend.
-12. H5 reusable types live in `client/apps/h5/src/types` and are exposed through auto-import/global declarations; remove explicit type imports when a type is globally provided.
-13. Validate after changes:
+1. Apply the Core Method before editing.
+2. Update code and comments together. Java uses JavaDoc; TypeScript/React uses TSDoc/JSDoc for exported or behavior-heavy units.
+3. Keep stable domain states centralized. Avoid scattering display strings or backend states across frontend and backend.
+4. H5 reusable types live in `client/apps/h5/src/types` and are exposed through auto-import/global declarations; remove explicit type imports when a type is globally provided.
+5. Validate after changes:
    - H5: `cd client && npm run typecheck:h5 && npm run lint:h5`
    - Backend: `cd server && mvn -q -DskipTests compile`
    - Runtime when APIs or data changed: health check and at least one targeted real-interface flow.
-14. If backend behavior changed and a running server needs refresh, restart it unless the user explicitly asks not to.
+6. If backend behavior changed and a running server needs refresh, restart it unless the user explicitly asks not to.
 
 ## Completion Standard
 

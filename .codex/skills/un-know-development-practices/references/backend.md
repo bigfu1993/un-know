@@ -25,7 +25,7 @@ Applies to `server/src/main/java`, `server/src/main/resources/db/migration`, bac
 - Backend owns business workflow transitions during this project phase. Status changes, permission decisions, operation button visibility, current/default records, and application/confirmation/cancel/completion flows must be represented by database state and API contracts before H5 consumes them.
 - Do not leave business workflow behavior as frontend-only state, mock data, local cache, or toast-only actions. If a feature currently works that way, replace it with a backend application-service transaction and real API verification.
 - Keep status strings centralized in Java constants when backend owns the state. Frontend may derive display labels but should not invent backend states.
-- Use transactions for multi-step writes such as order creation, wallet freeze, quote confirmation, and status transitions.
+- Use transactions for multi-step writes and status transitions.
 - Throw `BusinessException` with stable error codes for expected business failures.
 - Avoid logging or committing secrets. Read local database password from `.env.*.local` or environment variables.
 
