@@ -47,7 +47,11 @@ declare global {
   const KeyRound: typeof import('lucide-react').KeyRound
   const LogOut: typeof import('lucide-react').LogOut
   const Login: typeof import('./pages/Login/index').Login
-  const LoginRegisterCard: typeof import('./components/LoginRegisterCard/index').LoginRegisterCard
+  const LoginFlow: typeof import('./pages/Login/components/LoginFlow').LoginFlow
+  const LoginForm: typeof import('./pages/Login/components/LoginForm').LoginForm
+  const LoginGuideCard: typeof import('./pages/Login/components/LoginGuideCard').LoginGuideCard
+  const LoginRegisterCard: typeof import('./pages/Login/components/LoginRegisterCard').LoginRegisterCard
+  const LoginShell: typeof import('./pages/Login/components/LoginShell').LoginShell
   const Marketing: typeof import('./pages/Marketing/index').Marketing
   const Megaphone: typeof import('lucide-react').Megaphone
   const MerchantSales: typeof import('./pages/MerchantSales/index').MerchantSales
@@ -67,6 +71,7 @@ declare global {
   const PageShell: typeof import('./components/AppShell/index').PageShell
   const PartTime: typeof import('./pages/PartTime/index').PartTime
   const PartTimeJobCard: typeof import('./components/PageWidgets/index').PartTimeJobCard
+  const PasswordResetCard: typeof import('./pages/Login/components/PasswordResetCard').PasswordResetCard
   const PasswordResetDialog: typeof import('./pages/Settings/components/SettingsDialogs').PasswordResetDialog
   const PhoneChangeDialog: typeof import('./pages/Settings/components/SettingsDialogs').PhoneChangeDialog
   const Plus: typeof import('lucide-react').Plus
@@ -76,7 +81,10 @@ declare global {
   const PublishInfoDialog: typeof import('./components/PublishInfoDialog/index').PublishInfoDialog
   const QueryClient: typeof import('@tanstack/react-query').QueryClient
   const QueryClientProvider: typeof import('@tanstack/react-query').QueryClientProvider
+  const RegisterForm: typeof import('./pages/Login/components/RegisterForm').RegisterForm
   const RegistrationProfileCompletion: typeof import('./components/RegistrationProfileCompletion/index').RegistrationProfileCompletion
+  const RegistrationProfileStep: typeof import('./pages/Login/components/RegistrationProfileStep').RegistrationProfileStep
+  const RegistrationRoleSelection: typeof import('./pages/Login/components/RegistrationRoleSelection').RegistrationRoleSelection
   const Route: typeof import('react-router-dom').Route
   const Routes: typeof import('react-router-dom').Routes
   const ScrollingTicker: typeof import('./components/ScrollingTicker/index').ScrollingTicker
@@ -376,7 +384,7 @@ declare global {
   export type { PageSurface, AuthMode, LoginCredentialMode, ProductFilter, JobFilter, TutorSort, CheckoutState } from './types/app'
   import('./types/app')
   // @ts-ignore
-  export type { LoginRegisterCardProps } from './types/auth'
+  export type { H5RuntimeGlobals, ApiEnvelope, LoginProps, LoginFlowProps, LoginShellProps, LoginGuideCardProps, LoginFormProps, RegisterFormProps, PasswordResetCardProps, RegistrationRoleSelectionProps, RegistrationProfileStepProps, LoginRegisterCardProps } from './types/auth'
   import('./types/auth')
   // @ts-ignore
   export type { HuntingAreaInputMode, HuntingProjectStop, HuntingProjectDraft, HuntingProject, HuntingProjectDialogProps } from './types/hunting-project'

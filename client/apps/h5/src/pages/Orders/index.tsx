@@ -2,12 +2,13 @@ import "./index.less";
 import { Search } from "lucide-react";
 
 /** 订单列表筛选类型。 */
-type OrderListFilter = "all" | "featured" | "delegation" | "hunting" | "cancelled" | "completed";
+type OrderListFilter = "all" | "featured" | "partTime" | "delegation" | "hunting" | "cancelled" | "completed";
 
 /** 订单列表筛选标签配置。 */
 const orderListFilterOptions: Array<{ label: string; value: OrderListFilter }> = [
   { label: "全部", value: "all" },
   { label: "优选", value: "featured" },
+  { label: "兼职", value: "partTime" },
   { label: "委托", value: "delegation" },
   { label: "狩猎", value: "hunting" },
   { label: "已取消", value: "cancelled" },
@@ -24,6 +25,9 @@ function isOrderMatchedFilter(order: ClientOrder, filter: OrderListFilter) {
   }
   if (filter === "completed") {
     return order.status.includes("完成");
+  }
+  if (filter === "partTime") {
+    return order.category === "partTime" || order.category === "tutor";
   }
 
   return order.category === filter || (!order.category && filter === "featured");

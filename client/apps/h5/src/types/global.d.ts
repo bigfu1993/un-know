@@ -43,6 +43,17 @@ declare global {
   type ClientAddress = import("@unknown/domain").ClientAddress;
   type ClientAddressRequest = import("@unknown/domain").ClientAddressRequest;
 
+  type H5RuntimeGlobals = import("@app-types/auth").H5RuntimeGlobals;
+  type ApiEnvelope<T> = import("@app-types/auth").ApiEnvelope<T>;
+  type LoginProps = import("@app-types/auth").LoginProps;
+  type LoginFlowProps = import("@app-types/auth").LoginFlowProps;
+  type LoginShellProps = import("@app-types/auth").LoginShellProps;
+  type LoginGuideCardProps = import("@app-types/auth").LoginGuideCardProps;
+  type LoginFormProps = import("@app-types/auth").LoginFormProps;
+  type RegisterFormProps = import("@app-types/auth").RegisterFormProps;
+  type PasswordResetCardProps = import("@app-types/auth").PasswordResetCardProps;
+  type RegistrationRoleSelectionProps = import("@app-types/auth").RegistrationRoleSelectionProps;
+  type RegistrationProfileStepProps = import("@app-types/auth").RegistrationProfileStepProps;
   type LoginRegisterCardProps = import("@app-types/auth").LoginRegisterCardProps;
 
   type MessageToastType = import("@app-types/message-toast").MessageToastType;

@@ -16,6 +16,11 @@ interface UseClientWorkspaceViewModelOptions {
   };
 }
 
+/** 判断接口订单是否应保留在订单历史而不再展示到进行中列表。 */
+function isArchivedClientOrder(order: ClientOrder) {
+  return ["已取消", "已完成", "已结束", "已结算"].some((status) => order.status.includes(status));
+}
+
 /** 将工作台接口数据转换为 App 和各页面需要的展示模型。 */
 export function useClientWorkspaceViewModel({
   huntingShortcutProject,
@@ -27,6 +32,7 @@ export function useClientWorkspaceViewModel({
     () => (workspaceData.orders ?? []).filter((order) => order.role === role),
     [workspaceData.orders, role]
   );
+  const ongoingRoleOrders = useMemo(() => roleOrders.filter((order) => !isArchivedClientOrder(order)), [roleOrders]);
   const hasPaymentRisk = roleOrders.some((order) => order.risk === "payment");
   const mergedHuntingTasks = useMemo(
     () => [
@@ -71,8 +77,8 @@ export function useClientWorkspaceViewModel({
     [workspaceData.tutorDemands]
   );
   const ongoingOrders = useMemo(
-    () => [...getHuntingOngoingOrders(mergedHuntingTasks, role), ...roleOrders],
-    [mergedHuntingTasks, role, roleOrders]
+    () => [...getHuntingOngoingOrders(mergedHuntingTasks, role), ...ongoingRoleOrders],
+    [mergedHuntingTasks, role, ongoingRoleOrders]
   );
   const orderDetailOrders = useMemo(
     () => [...getHuntingHistoryOrders(mergedHuntingTasks, role), ...roleOrders],

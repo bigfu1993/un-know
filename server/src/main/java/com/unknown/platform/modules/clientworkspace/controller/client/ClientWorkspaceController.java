@@ -98,6 +98,15 @@ public class ClientWorkspaceController {
     return ApiResponse.ok(clientWorkspaceAppService.confirmTutorTrial(demandId, applicationId, request, authorization));
   }
 
+  /** 家长取消尚未安排试课的家教兼职，取消后保留为兼职订单历史。 */
+  @PostMapping("/workspace/tutor-demands/{demandId}/cancel")
+  public ApiResponse<TutorDemand> cancelTutorDemand(
+      @PathVariable String demandId,
+      @RequestHeader(value = "Authorization", required = false) String authorization
+  ) {
+    return ApiResponse.ok(clientWorkspaceAppService.cancelTutorDemand(demandId, authorization));
+  }
+
   /** 服务方接受固定金额委托，后端完成锁单和押金冻结校验。 */
   @PostMapping("/workspace/hunting-tasks/{taskId}/accept")
   public ApiResponse<HuntingTask> acceptHuntingTask(

@@ -16,15 +16,28 @@ const orderModuleKeywords: Array<{ key: OrderModuleKey; keywords: string[] }> = 
   { key: "hunting", keywords: ["狩猎", "服务方", "接单", "领取", "接受委托", "报价委托"] }
 ];
 
+/** 优先使用接口业务分类，旧订单缺少分类时再回退到文本关键词。 */
+function getOrderModuleKey(order: ClientOrder): OrderModuleKey {
+  if (order.category === "partTime" || order.category === "tutor") {
+    return "partTime";
+  }
+  if (order.category === "delegation" || order.category === "hunting") {
+    return order.category;
+  }
+  if (order.category === "featured") {
+    return "featured";
+  }
+
+  const searchText = `${order.title} ${order.detail} ${order.status}`;
+  const matchedRule = orderModuleKeywords.find((rule) => rule.keywords.some((keyword) => searchText.includes(keyword)));
+  return matchedRule?.key ?? "featured";
+}
+
 /** 聚合订单卡片所需的四类数量，无法识别类型时默认归入优选订单。 */
 export function getOrderModuleCounts(orders: ClientOrder[]): OrderModuleCounts {
   return orders.reduce<OrderModuleCounts>(
     (counts, order) => {
-      const searchText = `${order.title} ${order.detail} ${order.status}`;
-      const matchedRule = orderModuleKeywords.find((rule) =>
-        rule.keywords.some((keyword) => searchText.includes(keyword))
-      );
-      const moduleKey = matchedRule?.key ?? "featured";
+      const moduleKey = getOrderModuleKey(order);
 
       return {
         ...counts,

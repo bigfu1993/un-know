@@ -134,6 +134,9 @@ function OngoingOrderActions({
               type="button"
             >
               申请列表
+              {typeof order.quoteCount === "number" ? (
+                <span className="ongoing-action-badge">{order.quoteCount}</span>
+              ) : null}
             </button>
           ) : null}
           {order.canOpenTrialSchedule ? (

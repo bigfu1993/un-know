@@ -2,6 +2,7 @@ import { useGlobalStore, useGlobalUser } from "@h5/store/global";
 import {
   useAcceptHuntingTask,
   useApplyTutorTrial,
+  useCancelTutorDemand,
   useClientAddresses,
   useConfirmTutorTrial,
   useCreateClientAddress,
@@ -128,6 +129,7 @@ export function App() {
   const createHuntingProjectMutation = useCreateHuntingProject();
   const applyTutorTrialMutation = useApplyTutorTrial();
   const confirmTutorTrialMutation = useConfirmTutorTrial();
+  const cancelTutorDemandMutation = useCancelTutorDemand();
   const updateTutorExposureMutation = useUpdateTutorExposure();
   const acceptHuntingTaskMutation = useAcceptHuntingTask();
   const quoteHuntingTaskMutation = useQuoteHuntingTask();
@@ -267,8 +269,9 @@ export function App() {
     },
     showMessage
   });
-  const { handleApplyTutorTrial, handleConfirmTutorTrial } = useTutorTrialActions({
+  const { handleApplyTutorTrial, handleCancelTutorDemand, handleConfirmTutorTrial } = useTutorTrialActions({
     applyTutorTrial: (payload) => applyTutorTrialMutation.mutateAsync(payload),
+    cancelTutorDemand: (demandId) => cancelTutorDemandMutation.mutateAsync(demandId),
     closeTutorApplications: () => {
       setIsTutorApplicationOpen(false);
       setActiveTutorApplicationDemandId(null);
@@ -551,6 +554,16 @@ export function App() {
   function handleOpenTutorApplications(order?: ClientOrder) {
     setActiveTutorApplicationDemandId(order?.id ?? null);
     setIsTutorApplicationOpen(true);
+  }
+
+  /** 进行中取消动作按业务类型分流，家教兼职走真实家教取消接口。 */
+  function handleRequestOngoingCancel(order: ClientOrder) {
+    if (order.category === "tutor") {
+      void handleCancelTutorDemand(order);
+      return;
+    }
+
+    void handleHuntingTaskFulfillmentAction(order, "request_cancel");
   }
 
   /** 当前阶段家教试课动作先以消息承接，等待后端流程接口补齐。 */
@@ -836,7 +849,7 @@ export function App() {
           onOpenQuoteList={handleOpenOngoingQuoteList}
           onOpenTutorApplications={handleOpenTutorApplications}
           onRepublish={(order) => void handleHuntingTaskFulfillmentAction(order, "republish")}
-          onRequestCancel={(order) => void handleHuntingTaskFulfillmentAction(order, "request_cancel")}
+          onRequestCancel={handleRequestOngoingCancel}
           onRequestComplete={(order) => void handleHuntingTaskFulfillmentAction(order, "request_complete")}
           orders={ongoingOrders}
         />

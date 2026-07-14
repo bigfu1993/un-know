@@ -18,6 +18,7 @@ interface ConfirmTutorTrialPayload {
 /** 家教试课动作 hook 入参。 */
 interface UseTutorTrialActionsOptions {
   applyTutorTrial: (payload: ApplyTutorTrialPayload) => Promise<unknown>;
+  cancelTutorDemand: (demandId: string) => Promise<unknown>;
   closeTutorApplications: () => void;
   confirmTutorTrial: (payload: ConfirmTutorTrialPayload) => Promise<unknown>;
   openOngoingOrders: () => void;
@@ -28,6 +29,7 @@ interface UseTutorTrialActionsOptions {
 /** 学生端家教试课申请动作，集中承接服务端提交和全局反馈。 */
 export function useTutorTrialActions({
   applyTutorTrial,
+  cancelTutorDemand,
   closeTutorApplications,
   confirmTutorTrial,
   openOngoingOrders,
@@ -58,8 +60,20 @@ export function useTutorTrialActions({
     }
   }
 
+  /** 家长端取消尚未安排试课的家教兼职，后端会将记录保留到兼职订单历史。 */
+  async function handleCancelTutorDemand(order: ClientOrder) {
+    try {
+      await cancelTutorDemand(order.id);
+      showMessage("家教兼职已取消，已移入我的订单。", { type: "success" });
+      refetchWorkspace();
+    } catch (error) {
+      showMessage(getErrorMessage(error, "家教兼职取消失败，请稍后重试。"), { type: "error" });
+    }
+  }
+
   return {
     handleApplyTutorTrial,
+    handleCancelTutorDemand,
     handleConfirmTutorTrial
   };
 }

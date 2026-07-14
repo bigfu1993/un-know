@@ -534,7 +534,7 @@ export const clientPrimaryTabs: Record<Role, ClientPrimaryTab[]> = {
     { key: "marketing", label: "营销", description: "活动能力预留" }
   ],
   parent: [
-    { key: "featured", label: "商品", description: "快递配送购买" },
+    { key: "featured", label: "优选", description: "快递配送购买" },
     { key: "tutor", label: "家教", description: "家教招募" }
   ]
 };

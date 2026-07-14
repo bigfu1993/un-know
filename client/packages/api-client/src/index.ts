@@ -376,6 +376,12 @@ export async function confirmTutorTrial(
   );
 }
 
+export async function cancelTutorDemand(demandId: string): Promise<TutorDemand> {
+  return requestJson<TutorDemand>(`/api/client/workspace/tutor-demands/${encodeURIComponent(demandId)}/cancel`, {
+    method: "POST"
+  });
+}
+
 export async function getChatConversations(): Promise<ChatConversation[]> {
   return requestJson<ChatConversation[]>("/api/client/chat/conversations");
 }

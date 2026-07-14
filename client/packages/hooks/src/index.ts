@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   acceptHuntingTask,
   applyTutorTrial,
+  cancelTutorDemand,
   confirmHuntingTaskQuote,
   confirmTutorTrial,
   createChatConversation,
@@ -243,6 +244,17 @@ export function useConfirmTutorTrial() {
       const { applicationId, demandId, ...request } = payload;
       return confirmTutorTrial(demandId, applicationId, request);
     },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["client-workspace"] });
+    }
+  });
+}
+
+export function useCancelTutorDemand() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (demandId: string) => cancelTutorDemand(demandId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["client-workspace"] });
     }
