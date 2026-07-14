@@ -18,6 +18,7 @@ import {
   HuntingQuoteDecisionRequest,
   HuntingTaskFulfillmentActionRequest,
   HuntingTask,
+  PartTimeJob,
   ProductSummary,
   PublishHuntingTaskRequest,
   PublishTutorDemandRequest,
@@ -247,6 +248,18 @@ export async function getProducts(role: Role): Promise<ProductSummary[]> {
 
 export async function getClientWorkspace(role: Role): Promise<ClientWorkspacePayload> {
   return requestJson<ClientWorkspacePayload>(`/api/client/workspace?role=${role}`);
+}
+
+export async function getPartTimeJobs(role: Role): Promise<PartTimeJob[]> {
+  return requestJson<PartTimeJob[]>(`/api/client/workspace/part-time-jobs?role=${role}`);
+}
+
+export async function getHuntingTasks(role: Role): Promise<HuntingTask[]> {
+  return requestJson<HuntingTask[]>(`/api/client/workspace/hunting-tasks?role=${role}`);
+}
+
+export async function getTutorDemands(role: Role): Promise<TutorDemand[]> {
+  return requestJson<TutorDemand[]>(`/api/client/workspace/tutor-demands?role=${role}`);
 }
 
 export async function getClientAddresses(): Promise<ClientAddress[]> {

@@ -1,4 +1,4 @@
-/** 主导航 workspace 刷新控制入参。 */
+/** 主导航数据刷新控制入参。 */
 interface UsePrimaryTabWorkspaceRefreshOptions {
   activePage: PageSurface | null;
   activeTab: ClientModuleKey;
@@ -9,15 +9,15 @@ interface UsePrimaryTabWorkspaceRefreshOptions {
   refetchWorkspace: () => void;
 }
 
-/** 直接依赖工作台聚合接口展示列表的主模块。 */
+/** 切换进入后需要刷新服务端列表或工作台数据的主模块。 */
 const workspaceBackedPrimaryTabs: ClientModuleKey[] = ["partTime", "hunting", "merchantSales", "tutor"];
 
-/** 判断当前主模块是否需要通过工作台聚合接口刷新列表数据。 */
+/** 判断当前主模块是否需要刷新服务端数据。 */
 function isWorkspaceBackedPrimaryTab(tab: ClientModuleKey) {
   return workspaceBackedPrimaryTabs.includes(tab);
 }
 
-/** 主导航切换到工作台列表页面时，主动刷新真实 workspace 接口。 */
+/** 主导航切换到服务端列表页面时，主动刷新当前模块真实接口。 */
 export function usePrimaryTabWorkspaceRefresh({
   activePage,
   activeTab,

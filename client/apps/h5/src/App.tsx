@@ -9,9 +9,12 @@ import {
   useCreateHuntingProject,
   useDecideHuntingTaskQuote,
   useHandleHuntingTaskFulfillmentAction,
+  useHuntingTasks,
+  usePartTimeJobs,
   usePublishHuntingTask,
   usePublishTutorDemand,
   useQuoteHuntingTask,
+  useTutorDemands,
   useUpdateClientAddress,
   useUpdateTutorExposure
 } from "@unknown/hooks";
@@ -42,11 +45,18 @@ import { getTutorCalendarTasks, getTutorDateKey } from "@tools/tutorCalendar";
 /** React Query 首次返回数据前使用的稳定空地址，避免 effect 因默认数组反复触发。 */
 const emptyClientAddresses: ClientAddress[] = [];
 
+/** React Query 首次返回兼职列表前使用的稳定空数组。 */
+const emptyPartTimeJobs: PartTimeJob[] = [];
+
+/** React Query 首次返回委托/狩猎列表前使用的稳定空数组。 */
+const emptyHuntingTasks: HuntingTask[] = [];
+
+/** React Query 首次返回家教列表前使用的稳定空数组。 */
+const emptyTutorDemands: TutorDemand[] = [];
+
 /** React Query 首次返回工作台数据前使用的稳定空工作台数据。 */
 const emptyWorkspaceData = {
-  huntingTasks: [] as HuntingTask[],
-  orders: [] as ClientOrder[],
-  tutorDemands: [] as TutorDemand[]
+  orders: [] as ClientOrder[]
 };
 
 /** H5 根组件，负责登录态、角色数据、路由栈和全局弹窗编排。 */
@@ -120,6 +130,27 @@ export function App() {
     refetch: refetchWorkspace
   } = useClientWorkspace(role, isAuthenticated);
   const {
+    data: partTimeJobsResponse = emptyPartTimeJobs,
+    error: partTimeJobsError,
+    isFetching: isPartTimeJobsFetching,
+    isLoading: isPartTimeJobsLoading,
+    refetch: refetchPartTimeJobs
+  } = usePartTimeJobs(role, isAuthenticated);
+  const {
+    data: huntingTasksResponse = emptyHuntingTasks,
+    error: huntingTasksError,
+    isFetching: isHuntingTasksFetching,
+    isLoading: isHuntingTasksLoading,
+    refetch: refetchHuntingTasks
+  } = useHuntingTasks(role, isAuthenticated);
+  const {
+    data: tutorDemandsResponse = emptyTutorDemands,
+    error: tutorDemandsError,
+    isFetching: isTutorDemandsFetching,
+    isLoading: isTutorDemandsLoading,
+    refetch: refetchTutorDemands
+  } = useTutorDemands(role, isAuthenticated);
+  const {
     data: clientAddresses = emptyClientAddresses,
     error: addressError,
     isLoading: isAddressLoading
@@ -139,6 +170,36 @@ export function App() {
   const createAddressMutation = useCreateClientAddress();
   const updateAddressMutation = useUpdateClientAddress();
   const addressItems = useMemo(() => clientAddressesToAddressBookItems(clientAddresses), [clientAddresses]);
+  /** 刷新工作台聚合数据和已拆分的三类业务列表。 */
+  const refetchWorkspaceData = useCallback(() => {
+    void refetchWorkspace();
+    void refetchPartTimeJobs();
+    void refetchHuntingTasks();
+    void refetchTutorDemands();
+  }, [refetchHuntingTasks, refetchPartTimeJobs, refetchTutorDemands, refetchWorkspace]);
+  /** 仅刷新委托/狩猎列表，用于接单、报价和狩猎轮询。 */
+  const refetchHuntingTaskList = useCallback(() => {
+    void refetchHuntingTasks();
+  }, [refetchHuntingTasks]);
+  /** 主导航切换时只刷新当前页面真正使用的数据接口。 */
+  const refetchPrimaryTabData = useCallback(() => {
+    if (activeTab === "partTime") {
+      void refetchPartTimeJobs();
+      return;
+    }
+
+    if (activeTab === "hunting") {
+      void refetchHuntingTasks();
+      return;
+    }
+
+    if (activeTab === "tutor") {
+      void refetchTutorDemands();
+      return;
+    }
+
+    void refetchWorkspace();
+  }, [activeTab, refetchHuntingTasks, refetchPartTimeJobs, refetchTutorDemands, refetchWorkspace]);
   const {
     changeProfileDraft: handleProfileDraftChange,
     currentAddressDraft,
@@ -214,9 +275,7 @@ export function App() {
     publishHuntingTask: (payload, callbacks) => publishHuntingTaskMutation.mutate(payload, callbacks),
     publishTutorDemand: (payload, callbacks) => publishTutorDemandMutation.mutate(payload, callbacks),
     profileDraft: user.profileDraft,
-    refetchWorkspace: () => {
-      void refetchWorkspace();
-    },
+    refetchWorkspace: refetchWorkspaceData,
     role,
     showMessage
   });
@@ -234,7 +293,11 @@ export function App() {
     huntingShortcutProject,
     publishedHuntingTasks,
     role,
-    workspaceData: workspaceResponse ?? emptyWorkspaceData
+    workspaceData: {
+      huntingTasks: huntingTasksResponse,
+      orders: workspaceResponse?.orders ?? emptyWorkspaceData.orders,
+      tutorDemands: tutorDemandsResponse
+    }
   });
   const activeTutorApplicationCandidates = useMemo(
     () =>
@@ -265,9 +328,7 @@ export function App() {
     fulfillmentAction: (payload) => huntingTaskFulfillmentActionMutation.mutateAsync(payload),
     mergedHuntingTasks,
     quoteTask: (payload) => quoteHuntingTaskMutation.mutateAsync(payload),
-    refetchWorkspace: () => {
-      void refetchWorkspace();
-    },
+    refetchWorkspace: refetchHuntingTaskList,
     showMessage
   });
   const { handleApplyTutorTrial, handleCancelTutorDemand, handleConfirmTutorTrial } = useTutorTrialActions({
@@ -279,29 +340,30 @@ export function App() {
     },
     confirmTutorTrial: (payload) => confirmTutorTrialMutation.mutateAsync(payload),
     openOngoingOrders: () => setIsOngoingOpen(true),
-    refetchWorkspace: () => {
-      void refetchWorkspace();
-    },
+    refetchWorkspace: refetchWorkspaceData,
     showMessage
   });
-  const dataError = homeError ?? workspaceError ?? addressError;
-  const isInitialDataLoading = isHomeLoading || isWorkspaceLoading || isAddressLoading;
+  const dataError = homeError ?? workspaceError ?? partTimeJobsError ?? huntingTasksError ?? tutorDemandsError ?? addressError;
+  const isInitialDataLoading =
+    isHomeLoading ||
+    isWorkspaceLoading ||
+    isPartTimeJobsLoading ||
+    isHuntingTasksLoading ||
+    isTutorDemandsLoading ||
+    isAddressLoading;
   const huntingCertificationStatus = useMemo(
     () => getHuntingCertificationDataFromDraft(user.profileDraft).certificationStatus,
     [user.profileDraft]
   );
   const tutorCalendarTasks = useMemo(() => getTutorCalendarTasks(user.profileDraft), [user.profileDraft]);
-  const refreshWorkspace = useCallback(() => {
-    void refetchWorkspace();
-  }, [refetchWorkspace]);
   usePrimaryTabWorkspaceRefresh({
     activePage,
     activeTab,
     isAuthenticated,
     isMineRoute,
     isSettingsRoute,
-    isWorkspaceFetching,
-    refetchWorkspace: refreshWorkspace
+    isWorkspaceFetching: isWorkspaceFetching || isPartTimeJobsFetching || isHuntingTasksFetching || isTutorDemandsFetching,
+    refetchWorkspace: refetchPrimaryTabData
   });
 
   function handleOpenHuntingShortcut() {
@@ -357,7 +419,7 @@ export function App() {
           closeTutorDialogs();
           navigate(getRouteForTab("hunting"));
           showMessage(`狩猎项目已创建，系统匹配到 ${project.matchedCount} 个推荐委托。`, { type: "success" });
-          void refetchWorkspace();
+          void refetchHuntingTasks();
         },
         onError: (error) => {
           showMessage(getErrorMessage(error, "狩猎项目创建失败，请稍后重试。"), { type: "error" });
@@ -503,7 +565,7 @@ export function App() {
           type: "success"
         });
         void refetchHome();
-        void refetchWorkspace();
+        void refetchTutorDemands();
       },
       onError: (error) => {
         showMessage(getErrorMessage(error, "家教开关切换失败，请稍后重试。"), { type: "error" });
@@ -663,7 +725,12 @@ export function App() {
     );
   }
 
-  const workspaceData = workspaceResponse;
+  const workspaceData = {
+    ...workspaceResponse,
+    huntingTasks: huntingTasksResponse,
+    partTimeJobs: partTimeJobsResponse,
+    tutorDemands: tutorDemandsResponse
+  };
   const hasPrimaryContextCard = Boolean(profileRequirement) && !activePage && !isSettingsRoute && !isMineRoute;
   const isPrimaryListShell =
     (activeTab === "featured" || activeTab === "partTime") && !activePage && !isSettingsRoute && !isMineRoute;
@@ -743,11 +810,11 @@ export function App() {
                 <Delegation
                   huntingCertificationStatus={huntingCertificationStatus}
                   huntingTasks={mergedHuntingTasks}
-                  isRefreshing={isWorkspaceFetching}
+                  isRefreshing={isHuntingTasksFetching}
                   onAcceptTask={handleAcceptHuntingTask}
                   onOpenHuntingCertification={() => handleNavigate("huntingCertification")}
                   onQuoteTask={handleQuoteHuntingTask}
-                  onRefreshTasks={refreshWorkspace}
+                  onRefreshTasks={refetchHuntingTaskList}
                 />
               }
             />

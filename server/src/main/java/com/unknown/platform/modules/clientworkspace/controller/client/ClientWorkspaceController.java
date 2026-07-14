@@ -5,6 +5,7 @@ import com.unknown.platform.modules.auth.model.ClientRole;
 import com.unknown.platform.modules.clientworkspace.application.ClientWorkspaceAppService;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.HuntingTask;
+import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.PartTimeJob;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorDemand;
 import com.unknown.platform.modules.clientworkspace.model.ApplyTutorTrialRequest;
 import com.unknown.platform.modules.clientworkspace.model.ConfirmTutorTrialRequest;
@@ -16,6 +17,7 @@ import com.unknown.platform.modules.clientworkspace.model.PublishHuntingTaskRequ
 import com.unknown.platform.modules.clientworkspace.model.PublishTutorDemandRequest;
 import com.unknown.platform.modules.clientworkspace.model.QuoteHuntingTaskRequest;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -48,6 +50,29 @@ public class ClientWorkspaceController {
       @RequestHeader(value = "Authorization", required = false) String authorization
   ) {
     return ApiResponse.ok(clientWorkspaceAppService.getWorkspace(role, authorization));
+  }
+
+  /** 获取兼职列表独立接口，避免兼职页依赖完整工作台聚合响应。 */
+  @GetMapping("/workspace/part-time-jobs")
+  public ApiResponse<List<PartTimeJob>> partTimeJobs() {
+    return ApiResponse.ok(clientWorkspaceAppService.listPartTimeJobs());
+  }
+
+  /** 获取委托/狩猎任务列表独立接口，保留登录用户视角下的报价和履约状态。 */
+  @GetMapping("/workspace/hunting-tasks")
+  public ApiResponse<List<HuntingTask>> huntingTasks(
+      @RequestHeader(value = "Authorization", required = false) String authorization
+  ) {
+    return ApiResponse.ok(clientWorkspaceAppService.listHuntingTasks(authorization));
+  }
+
+  /** 获取家教列表独立接口，按当前角色返回家长或学生视角数据。 */
+  @GetMapping("/workspace/tutor-demands")
+  public ApiResponse<List<TutorDemand>> tutorDemands(
+      @RequestParam(defaultValue = "student") ClientRole role,
+      @RequestHeader(value = "Authorization", required = false) String authorization
+  ) {
+    return ApiResponse.ok(clientWorkspaceAppService.listTutorDemands(role, authorization));
   }
 
   /** 发布委托或回收任务，返回列表可直接展示的任务卡片数据。 */

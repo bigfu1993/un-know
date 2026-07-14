@@ -100,6 +100,38 @@ public class ClientWorkspaceAppService {
     );
   }
 
+  /**
+   * 获取兼职列表独立数据。
+   *
+   * @return 兼职卡片列表
+   */
+  public List<PartTimeJob> listPartTimeJobs() {
+    return partTimeJobs();
+  }
+
+  /**
+   * 获取当前登录用户视角下的委托/狩猎任务列表。
+   *
+   * @param authorization 登录访问令牌，可为空
+   * @return 委托/狩猎任务列表
+   */
+  public List<HuntingTask> listHuntingTasks(String authorization) {
+    Long currentUserId = clientSessionService.userIdOrNull(authorization);
+    return huntingTasks(currentUserId);
+  }
+
+  /**
+   * 获取当前角色视角下的家教列表。
+   *
+   * @param role 当前角色
+   * @param authorization 登录访问令牌，可为空
+   * @return 家教需求或可公开家教学生列表
+   */
+  public List<TutorDemand> listTutorDemands(ClientRole role, String authorization) {
+    Long currentUserId = clientSessionService.userIdOrNull(authorization);
+    return tutorDemands(role, currentUserId);
+  }
+
   /** 发布委托或回收任务，并返回委托列表可直接展示的任务数据。 */
   @Transactional
   public HuntingTask publishHuntingTask(PublishHuntingTaskRequest request, String authorization) {
