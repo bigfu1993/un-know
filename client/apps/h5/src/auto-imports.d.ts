@@ -47,7 +47,6 @@ declare global {
   const KeyRound: typeof import('lucide-react').KeyRound
   const LogOut: typeof import('lucide-react').LogOut
   const Login: typeof import('./pages/Login/index').Login
-  const LoginFlow: typeof import('./pages/Login/components/LoginFlow').LoginFlow
   const LoginForm: typeof import('./pages/Login/components/LoginForm').LoginForm
   const LoginGuideCard: typeof import('./pages/Login/components/LoginGuideCard').LoginGuideCard
   const LoginRegisterCard: typeof import('./pages/Login/components/LoginRegisterCard').LoginRegisterCard
@@ -384,7 +383,7 @@ declare global {
   export type { PageSurface, AuthMode, LoginCredentialMode, ProductFilter, JobFilter, TutorSort, CheckoutState } from './types/app'
   import('./types/app')
   // @ts-ignore
-  export type { H5RuntimeGlobals, ApiEnvelope, LoginProps, LoginFlowProps, LoginShellProps, LoginGuideCardProps, LoginFormProps, RegisterFormProps, PasswordResetCardProps, RegistrationRoleSelectionProps, RegistrationProfileStepProps, LoginRegisterCardProps } from './types/auth'
+  export type { H5RuntimeGlobals, ApiEnvelope, PasswordResetResult, LoginProps, LoginShellProps, LoginFormProps, RegisterFormProps, LoginRegisterCardProps, PasswordResetCardProps, RegistrationRoleSelectionProps, RegistrationProfileStepProps } from './types/auth'
   import('./types/auth')
   // @ts-ignore
   export type { HuntingAreaInputMode, HuntingProjectStop, HuntingProjectDraft, HuntingProject, HuntingProjectDialogProps } from './types/hunting-project'

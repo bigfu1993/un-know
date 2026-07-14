@@ -46,9 +46,8 @@ declare global {
   type H5RuntimeGlobals = import("@app-types/auth").H5RuntimeGlobals;
   type ApiEnvelope<T> = import("@app-types/auth").ApiEnvelope<T>;
   type LoginProps = import("@app-types/auth").LoginProps;
-  type LoginFlowProps = import("@app-types/auth").LoginFlowProps;
   type LoginShellProps = import("@app-types/auth").LoginShellProps;
-  type LoginGuideCardProps = import("@app-types/auth").LoginGuideCardProps;
+  type PasswordResetResult = import("@app-types/auth").PasswordResetResult;
   type LoginFormProps = import("@app-types/auth").LoginFormProps;
   type RegisterFormProps = import("@app-types/auth").RegisterFormProps;
   type PasswordResetCardProps = import("@app-types/auth").PasswordResetCardProps;

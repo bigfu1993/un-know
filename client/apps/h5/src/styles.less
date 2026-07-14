@@ -1,5 +1,4 @@
 @import "./components/MessageToast/index.less";
-@import "./components/RegistrationProfileCompletion/index.less";
 
 @tailwind base;
 @tailwind components;
@@ -31,8 +30,6 @@ button:not(:disabled) {
   cursor: pointer;
 }
 
-.login-brand,
-.login-card,
 .top-bar,
 .context-card,
 .flow-card,
@@ -48,11 +45,6 @@ button:not(:disabled) {
   border-radius: 8px;
 }
 
-.login-mode-tabs,
-.login-mode-tabs button,
-.login-method-tabs,
-.login-method-tabs button,
-.login-role-tabs button,
 .segmented-control button,
 .context-action,
 .notice,
@@ -74,25 +66,16 @@ button:not(:disabled) {
   border-radius: 8px;
 }
 
-.login-field > div,
 .profile-field input,
 .publish-field select,
-.publish-field textarea,
-.registration-profile-field input {
+.publish-field textarea {
   border: 1px solid;
   border-radius: 8px;
 }
 
-.login-field input {
-  border: 0;
-  font: inherit;
-  outline: 0;
-}
-
 .profile-field input,
 .publish-field select,
-.publish-field textarea,
-.registration-profile-field input {
+.publish-field textarea {
   font: inherit;
   outline: 0;
 }
@@ -118,7 +101,6 @@ button:not(:disabled) {
 
 .product-thumb,
 .context-action,
-.login-field button,
 .top-role-switch button {
   border-radius: 7px;
 }
@@ -182,32 +164,27 @@ button:not(:disabled) {
 
 .profile-field input,
 .publish-field select,
-.publish-field textarea,
-.registration-profile-field input {
+.publish-field textarea {
   box-sizing: border-box;
 }
 
 .profile-field input:focus,
 .publish-field select:focus,
-.publish-field textarea:focus,
-.registration-profile-field input:focus {
+.publish-field textarea:focus {
   box-shadow: 0 0 0 3px rgba(23, 94, 117, 0.12);
 }
 
 /* moved-bg-position:start */
 :root,
 body,
-#root,
-.login-shell {
+#root {
   background: #edf2f6;
 }
 
-.login-brand,
 .top-bar {
   background: #175e75;
 }
 
-.login-card,
 .context-card,
 .flow-card,
 .product-row,
@@ -223,9 +200,6 @@ body,
   background: #fff;
 }
 
-.login-mode-tabs,
-.login-method-tabs,
-.login-role-tabs button,
 .back-button,
 .ghost-button,
 .settings-icon,
@@ -234,26 +208,15 @@ body,
   background: #f3f6f9;
 }
 
-.login-mode-tabs button,
-.login-method-tabs button,
-.bottom-tabs button,
-.login-field input {
+.bottom-tabs button {
   background: transparent;
 }
 
-.login-mode-tabs button.active,
-.login-method-tabs button.active,
-.login-role-tabs button.active,
 .segmented-control button.active,
 .bottom-tabs button.active {
   background: #dceef3;
 }
 
-.login-field > div {
-  background: #f8fafc;
-}
-
-.login-field button,
 .product-thumb {
   background: #e7f2ef;
 }
@@ -487,8 +450,6 @@ body,
 /* moved-bg-position:end */
 
 /* moved-border:start */
-.login-brand,
-.login-card,
 .top-bar,
 .context-card,
 .flow-card,
@@ -504,11 +465,9 @@ body,
   border-color: #d9e1e8;
 }
 
-.login-field > div,
 .profile-field input,
 .publish-field select,
-.publish-field textarea,
-.registration-profile-field input {
+.publish-field textarea {
   border-color: #d9e1e8;
 }
 
@@ -518,11 +477,9 @@ body,
 
 .notice,
 .context-card.needs-profile,
-.login-field.missing > div,
 .profile-field.missing input,
 .publish-field.missing select,
-.publish-field.missing textarea,
-.registration-profile-field.missing input {
+.publish-field.missing textarea {
   border-color: #f4d59d;
 }
 
@@ -546,8 +503,7 @@ body,
 
 .profile-field input:focus,
 .publish-field select:focus,
-.publish-field textarea:focus,
-.registration-profile-field input:focus {
+.publish-field textarea:focus {
   border-color: #175e75;
 }
 
@@ -578,13 +534,8 @@ body,
   grid-template-columns: auto minmax(0, 1fr);
 }
 
-.login-role-tabs,
 .top-role-switch > div {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.login-field > div {
-  grid-template-columns: auto minmax(0, 1fr) auto;
 }
 
 .metric-grid,
@@ -592,9 +543,7 @@ body,
 .status-flow,
 .mine-grid,
 .sheet-actions,
-.quick-entry-grid,
-.password-reset-actions,
-.registration-profile-actions {
+.quick-entry-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -647,25 +596,6 @@ body,
 /* moved-grid-template:end */
 
 /* moved-child-selector:start */
-.login-brand {
-  h1,
-  p {
-    margin: 0;
-  }
-
-  h1 {
-    margin-top: 8px;
-    margin-bottom: 8px;
-    font-size: 34px;
-    line-height: 1.1;
-  }
-
-  p,
-  span {
-    color: #d8edf3;
-  }
-}
-
 .top-bar {
   h1,
   p {
@@ -1224,67 +1154,7 @@ body,
   }
 }
 
-.login-mode-tabs button,
-.login-method-tabs button {
-  flex: 1;
-  padding: 10px 6px;
-  color: #475466;
-
-  &.active {
-    color: #175e75;
-    font-weight: 800;
-  }
-}
-
-.login-role-tabs button {
-  padding: 10px 6px;
-  color: #475466;
-
-  &.active {
-    color: #175e75;
-    font-weight: 800;
-  }
-}
-
-.login-field {
-  > div {
-    display: grid;
-    align-items: center;
-    gap: 8px;
-    padding: 10px;
-  }
-
-  > span {
-    color: #657181;
-    font-size: 13px;
-  }
-
-  button {
-    padding: 6px 8px;
-    color: #1d6f55;
-    font-size: 13px;
-  }
-
-  input {
-    min-width: 0;
-    color: #17212b;
-  }
-
-  svg {
-    color: #1d6f55;
-  }
-
-  em {
-    color: #b26a11;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 700;
-    line-height: 1.4;
-  }
-}
-
-.profile-field,
-.registration-profile-field {
+.profile-field {
   input {
     width: 100%;
     min-width: 0;
@@ -1348,15 +1218,6 @@ body,
 
 .primary-button.full {
   width: 100%;
-}
-
-.text-link-button {
-  min-height: 28px;
-  padding: 0;
-  background: transparent;
-  color: #175e75;
-  font-size: 13px;
-  font-weight: 700;
 }
 
 /* moved-child-selector:end */
