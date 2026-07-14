@@ -42,14 +42,56 @@
 
 ## 本地环境
 
-- H5 前端默认地址：`http://127.0.0.1:5174/`。
-- 后端默认地址：`http://127.0.0.1:8080`。
+- H5 前端默认地址：`http://127.0.0.1:8899/`。
+- 后端默认地址：`http://127.0.0.1:9988`。
 - 本地数据库通过 SSH 隧道访问 PostgreSQL：
   - 本地隧道：`127.0.0.1:15432`
   - 服务端本机数据库：`127.0.0.1:5432`
   - 数据库名：`unknown_platform`
   - 数据库账号：`unknown_app`
 - 测试环境数据库密码从 `.env.*.local` 或环境变量读取，不写入代码仓库。
+
+## 本地运行快捷流程
+
+用户要求“本地运行”“重启项目”“接口不通”“登录接口报错”或“按运行部署文档启动”时，不再从零反复排查，优先直接执行以下固定流程：
+
+1. 确认或建立数据库 SSH 隧道，默认使用用户已授权的密钥：
+
+```bash
+nc -zv 127.0.0.1 15432 || ssh -f -i ~/.ssh/unknow/bigfu.m2pro.mac.home.pem -o ExitOnForwardFailure=yes -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -N -L 15432:127.0.0.1:5432 root@8.153.110.192
+```
+
+2. 清理旧的本地前后端运行会话和端口进程，只处理 `un-know` 项目相关进程，不误杀其他项目：
+
+```bash
+screen -S unknow-h5 -X quit 2>/dev/null || true
+screen -S unknow-server -X quit 2>/dev/null || true
+lsof -tiTCP:8899 -sTCP:LISTEN | xargs -r kill
+lsof -tiTCP:9988 -sTCP:LISTEN | xargs -r kill
+```
+
+3. 按运行部署文档直接启动前端和后端，使用 `screen` 保持后台会话：
+
+```bash
+mkdir -p /Users/bigfu/code/un-know/log/client /Users/bigfu/code/un-know/log/server
+screen -dmS unknow-h5 bash -lc 'cd /Users/bigfu/code/un-know/client && npm run dev:h5 > /Users/bigfu/code/un-know/log/client/h5.screen.log 2>&1'
+screen -dmS unknow-server bash -lc 'cd /Users/bigfu/code/un-know/server && set -a && source .env.prod.local && set +a && mvn spring-boot:run > /Users/bigfu/code/un-know/log/server/server.screen.log 2>&1'
+```
+
+4. 启动后直接验证固定地址和登录接口：
+
+```bash
+curl -I http://127.0.0.1:8899/
+curl http://127.0.0.1:9988/actuator/health
+curl -sS -i -X POST http://127.0.0.1:9988/api/client/auth/login -H 'Content-Type: application/json' --data '{"phone":"18000000009","code":"000000"}'
+```
+
+5. 只有上述固定流程失败时，才查看日志并深入排查：
+
+```bash
+tail -n 160 /Users/bigfu/code/un-know/log/client/h5.screen.log
+tail -n 200 /Users/bigfu/code/un-know/log/server/server.screen.log
+```
 
 ## 核心方法论
 
@@ -113,8 +155,8 @@
 - 运行态检验应贴合本次改动范围：H5 页面改动至少确认页面可访问和相关交互无明显报错；接口改动至少确认健康检查和目标接口可用；同时涉及前后端时需要完成一次闭环联调。
 - 运行状态确认不强制要求截图；截图仅在排查视觉布局、交互遮挡、响应式问题或用户明确要求时补充。
 - 如受环境、账号、权限、网络或数据限制无法完成运行态检验，必须在最终回复中明确说明未检验项、阻塞原因和已完成的替代检查。
-- 检查 H5 页面时，先确认 `http://127.0.0.1:5174/` 是否已有 Vite 进程可用；可用则直接复用该进程做页面、模块或接口联调检查。
-- 检查后端接口时，先确认 `http://127.0.0.1:8080` 是否已有后端进程可用；可用则直接复用该进程做健康检查或接口验证。
+- 检查 H5 页面时，先确认 `http://127.0.0.1:8899/` 是否已有 Vite 进程可用；可用则直接复用该进程做页面、模块或接口联调检查。
+- 检查后端接口时，先确认 `http://127.0.0.1:9988` 是否已有后端进程可用；可用则直接复用该进程做健康检查或接口验证。
 - 已确认需要重启后端才能生效的场景，默认由 Codex 主动完成后端重启，并在重启后验证健康检查或目标接口；只有涉及用户明确保留的手动进程、端口冲突或权限限制时才先说明原因。
 - 只有默认端口无进程、进程不属于当前项目、响应异常且确需重启时，才启动新的本地服务。
 - 如果启动命令因端口占用自动切换到备用端口，先验证默认端口上的既有进程；不要直接把备用端口当作最终检查地址。
@@ -140,7 +182,7 @@ mvn -q -DskipTests compile
 涉及数据库迁移、接口或本地联调时，还需要验证：
 
 ```bash
-curl http://127.0.0.1:8080/actuator/health
+curl http://127.0.0.1:9988/actuator/health
 ```
 
 ## Context Sync 规则

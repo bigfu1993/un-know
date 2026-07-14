@@ -32,12 +32,12 @@ mvn spring-boot:run
 ## 快速验证
 
 ```text
-GET  http://127.0.0.1:8080/actuator/health
-GET  http://127.0.0.1:8080/api/client/home?role=student
-GET  http://127.0.0.1:8080/api/client/products?role=student
-GET  http://127.0.0.1:8080/api/client/workspace?role=student
-POST http://127.0.0.1:8080/api/client/auth/login
-POST http://127.0.0.1:8080/api/client/auth/register
-POST http://127.0.0.1:8080/api/client/auth/miniapp/one-tap-login
-POST http://127.0.0.1:8080/api/client/products/purchase
+GET  http://127.0.0.1:9988/actuator/health
+GET  http://127.0.0.1:9988/api/client/home?role=student
+GET  http://127.0.0.1:9988/api/client/products?role=student
+GET  http://127.0.0.1:9988/api/client/workspace?role=student
+POST http://127.0.0.1:9988/api/client/auth/login
+POST http://127.0.0.1:9988/api/client/auth/register
+POST http://127.0.0.1:9988/api/client/auth/miniapp/one-tap-login
+POST http://127.0.0.1:9988/api/client/products/purchase
 ```

@@ -64,7 +64,7 @@ type RuntimeGlobals = typeof globalThis & {
 
 function getApiBaseUrl() {
   const runtime = globalThis as RuntimeGlobals;
-  return runtime.__UNKNOWN_API_BASE_URL__ ?? "http://127.0.0.1:8080";
+  return runtime.__UNKNOWN_API_BASE_URL__ ?? "http://127.0.0.1:9988";
 }
 
 function getLocalStorage() {

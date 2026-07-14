@@ -32,6 +32,6 @@ Applies to `server/src/main/java`, `server/src/main/resources/db/migration`, bac
 ## Runtime Validation
 
 - Compile with `mvn -q -DskipTests compile`.
-- For API/data changes, confirm `http://127.0.0.1:8080/actuator/health`.
+- For API/data changes, confirm `http://127.0.0.1:9988/actuator/health`.
 - For changed flows, execute the shortest real API path using local H5/backend and the cloud PostgreSQL tunnel. Clean up any temporary test rows by exact ID/title.
 - If Maven dependency resolution is blocked by sandbox network restrictions, rerun the same compile command with approved escalation.

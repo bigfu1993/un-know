@@ -127,7 +127,7 @@ export function LoginForm({ onAuthenticated, onForgotPassword }: LoginFormProps)
                 placeholder={`本地验证码 ${localAuthCode}`}
                 value={code}
               />
-              <button onClick={() => setCode(localAuthCode)} type="button">
+              <button className="login-inline-text-button" onClick={() => setCode(localAuthCode)} type="button">
                 填入
               </button>
             </div>

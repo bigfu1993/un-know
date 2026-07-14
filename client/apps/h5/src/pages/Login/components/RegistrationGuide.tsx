@@ -26,7 +26,7 @@ const registrationProfileFormId = "registration-profile-form";
 
 /** 解析 H5 接口基础地址，避免开发热更新期间依赖共享包导出。 */
 function getH5ApiBaseUrl() {
-  return (globalThis as H5RuntimeGlobals).__UNKNOWN_API_BASE_URL__ ?? "http://127.0.0.1:8080";
+  return (globalThis as H5RuntimeGlobals).__UNKNOWN_API_BASE_URL__ ?? "http://127.0.0.1:9988";
 }
 
 /** 为刚注册的账号确认最终角色，并返回刷新后的会话。 */
