@@ -1,3 +1,5 @@
+import "./index.less";
+
 /** 商户销售工作台，展示经营指标、快捷入口和商品卡片。 */
 export function MerchantSales({
   dashboard,

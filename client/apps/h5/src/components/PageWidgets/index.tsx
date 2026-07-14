@@ -100,12 +100,12 @@ function QuickEntry({ icon: Icon, label, text }: { icon: LucideIcon; label: stri
 export function ProductListCard({
   role,
   product,
-  purchasePending,
+  purchasePending = false,
   onOpenCheckout
 }: {
   role: Role;
   product: ProductSummary;
-  purchasePending: boolean;
+  purchasePending?: boolean;
   onOpenCheckout: (product: ProductSummary) => void;
 }) {
   const deliveryMode = getDefaultDeliveryMode(role, product);

@@ -1,3 +1,4 @@
+import "./index.less";
 import { BadgeCheck, GraduationCap } from "lucide-react";
 import { tutorCertificationStatusLabels } from "@components/TutorCard/model";
 

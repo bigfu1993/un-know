@@ -1,3 +1,4 @@
+import "./index.less";
 import { Crosshair, ShieldCheck } from "lucide-react";
 import {
   huntingCertificationStatusLabels,

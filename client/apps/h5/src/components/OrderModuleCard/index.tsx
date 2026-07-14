@@ -1,3 +1,4 @@
+import "./index.less";
 import { ChevronRight, PackageCheck } from "lucide-react";
 import { getOrderModuleCounts } from "@components/OrderModuleCard/model";
 

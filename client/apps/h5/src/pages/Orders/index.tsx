@@ -1,3 +1,4 @@
+import "./index.less";
 import { Search } from "lucide-react";
 
 /** 订单列表筛选类型。 */

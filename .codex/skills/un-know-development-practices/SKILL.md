@@ -21,14 +21,18 @@ description: Frontend and backend development workflow for the un-know project. 
 ## Required Workflow
 
 1. Locate the current module owner: page/component/hook for H5, controller/application/model/migration for backend.
-2. Update code and comments together. Java uses JavaDoc; TypeScript/React uses TSDoc/JSDoc for exported or business-heavy units.
-3. Keep domain states centralized. Avoid scattering Chinese status strings across frontend and backend.
-4. H5 reusable types live in `client/apps/h5/src/types` and are exposed through auto-import/global declarations; remove explicit type imports when a type is globally provided.
-5. Validate after changes:
+2. Before writing new logic, inspect existing modules, components, hooks, shared types, and tools for reusable behavior. Keep business-specific reusable helpers in the owning module/component, and move business-agnostic pure helpers into `client/apps/h5/src/tools`.
+3. Keep `client/apps/h5/src/App.tsx` as the root coordinator only: login/session, routing, global data loading, and cross-business dialog composition. Move single-business models, dialogs, cards, and workflow components into the matching page module such as `pages/Delegation` or `pages/Tutor`.
+4. Keep page-private components flat under `pages/<Module>/components/*.tsx`; do not create nested component folders inside `pages`.
+5. Keep every page module style entry in `pages/<Module>/index.less`, imported by `index.tsx`. Page-private component styles should live in that page stylesheet instead of global `styles.less`.
+6. Update code and comments together. Java uses JavaDoc; TypeScript/React uses TSDoc/JSDoc for exported or business-heavy units.
+7. Keep domain states centralized. Avoid scattering Chinese status strings across frontend and backend.
+8. H5 reusable types live in `client/apps/h5/src/types` and are exposed through auto-import/global declarations; remove explicit type imports when a type is globally provided.
+9. Validate after changes:
    - H5: `cd client && npm run typecheck:h5 && npm run lint:h5`
    - Backend: `cd server && mvn -q -DskipTests compile`
    - Runtime when APIs or data changed: health check and at least one targeted real-interface flow.
-6. If backend behavior changed and a running server needs refresh, restart it unless the user explicitly asks not to.
+10. If backend behavior changed and a running server needs refresh, restart it unless the user explicitly asks not to.
 
 ## Completion Standard
 

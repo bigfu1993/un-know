@@ -16,6 +16,33 @@
   border-radius: 999px;
 }
 
+.message-toast {
+  svg {
+    color: var(--message-toast-color);
+  }
+
+  strong {
+    display: block;
+    color: var(--message-toast-color);
+    font-size: 13px;
+    line-height: 1.2;
+  }
+
+  p {
+    margin: 3px 0 0;
+    color: #2f3b4a;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  button {
+    width: 28px;
+    height: 28px;
+    color: #657181;
+    line-height: 1;
+  }
+}
+
 @keyframes message-toast-drop {
   from {
     opacity: 0;

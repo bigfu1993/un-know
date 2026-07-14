@@ -1,3 +1,4 @@
+import "./index.less";
 import { useGlobalStore, useGlobalUser } from "@h5/store/global";
 import { AddressInfoForm } from "@components/AddressInfoForm";
 import { tutorCertificationStatusLabels } from "@components/TutorCard/model";
@@ -48,17 +49,12 @@ const tutorQualificationInfoFields = [
 /** 地址接口返回前使用的稳定空列表，避免派生地址列表在每次渲染时变更引用。 */
 const emptyClientAddresses: ClientAddress[] = [];
 
-export function SettingsView({
-  onBack,
-  onMessage
-}: {
-  onBack: () => void;
-  onMessage?: (message: string, options?: MessageToastOptions) => void;
-}) {
+export function SettingsView({ onBack }: { onBack: () => void }) {
   const { phone, profileDraft, profileName, role, session } = useGlobalUser();
   const setUserDisplayName = useGlobalStore((state) => state.setUserDisplayName);
   const setUserProfileDraft = useGlobalStore((state) => state.setUserProfileDraft);
   const setUserPhone = useGlobalStore((state) => state.setUserPhone);
+  const { hideMessage, showMessage, toast } = useMessageToast();
   const addressTemplate = registrationProfileTemplates[role];
   const { data: clientAddresses = emptyClientAddresses, error: addressError, isLoading: isAddressLoading } = useClientAddresses(true, session?.accessToken);
   const createAddressMutation = useCreateClientAddress();
@@ -138,7 +134,7 @@ export function SettingsView({
   }
 
   function notifyAddressResult(message: string, type: MessageToastType = "success") {
-    onMessage?.(message, { type });
+    showMessage(message, { type });
   }
 
   /** 使用空草稿打开新增地址弹窗。 */
@@ -310,6 +306,7 @@ export function SettingsView({
 
   return (
     <section className="page-view grid gap-[12px]">
+      <MessageToast onClose={hideMessage} toast={toast} />
       <header className="page-header grid items-center gap-[10px] p-[12px]">
         <button
           className="back-button grid h-[38px] w-[38px] place-items-center text-[#17212b]"

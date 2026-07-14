@@ -1,3 +1,4 @@
+import "./index.less";
 import { normalizeByKey, validateByKey } from "@tools/validation";
 
 /** 注册、资料补充和设置预览共用的地址信息表单。 */

@@ -1,0 +1,309 @@
+.h5-shell.delegation-shell {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.delegation-page {
+  grid-template-rows: auto auto minmax(0, 1fr);
+  height: calc(100dvh - 118px - env(safe-area-inset-bottom));
+  min-height: 0;
+}
+
+.h5-shell.has-context-card .delegation-page {
+  height: calc(100dvh - 210px - env(safe-area-inset-bottom));
+}
+
+.delegation-toolbar {
+  padding: 2px 0 4px;
+}
+
+.delegation-toolbar-row {
+  min-width: 0;
+}
+
+.delegation-task-scroll {
+  min-height: 0;
+  align-content: start;
+  margin-inline: -2px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 6px 12px;
+  scrollbar-gutter: stable;
+}
+
+.delegation-task-card {
+  cursor: pointer;
+}
+
+.delegation-task-card:focus-visible {
+  outline: 3px solid rgba(23, 94, 117, 0.18);
+  outline-offset: 2px;
+}
+
+.mine-task-badge {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #fff4e5;
+  color: #a35b00;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.delegation-task-fields,
+.delegation-preview {
+  span {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 6px;
+    color: #657181;
+    font-size: 13px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  svg {
+    flex: 0 0 auto;
+    color: #175e75;
+  }
+}
+
+.delegation-task-amount {
+  color: #d9344e;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.delegation-detail-dialog,
+.delegation-amount-dialog {
+  width: min(420px, calc(100vw - 28px));
+}
+
+.delegation-detail-dialog .delegation-card-actions {
+  padding-right: 0;
+}
+
+.delegation-amount-dialog .sheet-actions {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.delegation-search,
+.delegation-filter {
+  span {
+    color: #657181;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  input,
+  select {
+    width: 100%;
+    min-height: 40px;
+    padding: 9px 10px;
+    background: #fff;
+    color: #17212b;
+    font-size: 14px;
+  }
+}
+
+.delegation-search input,
+.delegation-filter select {
+  box-sizing: border-box;
+  border: 1px solid #d9e1e8;
+  border-radius: 8px;
+  font: inherit;
+  outline: 0;
+}
+
+.delegation-search input:focus,
+.delegation-filter select:focus {
+  border-color: #175e75;
+  box-shadow: 0 0 0 3px rgba(23, 94, 117, 0.12);
+}
+
+.delegation-icon-button {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  place-items: center;
+  border: 1px solid #d9e1e8;
+  border-radius: 8px;
+  background: #fff;
+  color: #475466;
+}
+
+.delegation-icon-button.active {
+  border-color: #b8dbe4;
+  background: #dceef3;
+  color: #175e75;
+}
+
+.delegation-live-button.active {
+  border-color: #b8ead5;
+  background: #eefaf4;
+  color: #1d6f55;
+}
+
+.delegation-option-panel {
+  padding: 8px;
+  border: 1px solid #d9e1e8;
+  border-radius: 8px;
+  background: #fff;
+
+  button {
+    min-height: 32px;
+    border-radius: 999px;
+    padding: 6px 10px;
+    background: #f3f6f9;
+    color: #475466;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  button.active {
+    background: #dceef3;
+    color: #175e75;
+  }
+}
+
+.delegation-live-status {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-radius: 8px;
+  padding: 7px 9px;
+  background: #f7fafc;
+  color: #657181;
+  font-size: 12px;
+  font-weight: 800;
+
+  span {
+    min-width: 0;
+  }
+
+  button {
+    display: inline-flex;
+    min-height: 28px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border-radius: 999px;
+    padding: 5px 9px;
+    background: #fff;
+    color: #175e75;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.delegation-live-status.live {
+  background: #eefaf4;
+  color: #1d6f55;
+}
+
+.delegation-filter-row {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.delegation-card-actions {
+  width: 100%;
+  justify-content: flex-start;
+  padding-right: 72px;
+}
+
+.delegation-quote-button {
+  position: relative;
+}
+
+.delegation-quote-badge {
+  display: inline-grid;
+  min-width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 999px;
+  background: #fff;
+  color: #d92d20;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.delegation-quote-option {
+  border: 1px solid #e4e9f1;
+  border-radius: 8px;
+  background: #fff;
+  color: #17212b;
+}
+
+.delegation-quote-option.active {
+  border-color: #1f7a63;
+  background: #eefaf4;
+}
+
+.delegation-quote-option.locked {
+  cursor: not-allowed;
+  background: #fff8f8;
+  opacity: 0.86;
+}
+
+.delegation-quote-price del {
+  color: #8a96a5;
+  font-size: 12px;
+}
+
+.delegation-quote-price .counter {
+  color: #d92d20;
+}
+
+.delegation-quote-option span:last-child {
+  color: #657181;
+  font-size: 12px;
+}
+
+.delegation-quote-counter span {
+  color: #657181;
+  font-size: 12px;
+}
+
+.delegation-quote-counter input {
+  min-height: 38px;
+  border: 1px solid #d9e1ec;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0 10px;
+  color: #17212b;
+  font-size: 14px;
+}
+
+.hunting-recommendation-panel {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.hunting-recommendation-list {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+}
+
+.hunting-recommendation-card .meta-line span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hunting-certification-prompt {
+  width: min(420px, calc(100vw - 28px));
+}

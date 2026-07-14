@@ -1,3 +1,5 @@
+import "./index.less";
+
 /** 优选商品排序方式。 */
 type ProductSortMode = "default" | "priceAsc" | "priceDesc" | "stock";
 
@@ -25,11 +27,11 @@ function getProductSearchText(product: ProductSummary) {
 /** 优选商品页面，维护商品筛选、排序和购买确认入口。 */
 export function Featured({
   role,
-  purchasePending,
+  purchasePending = false,
   onOpenCheckout
 }: {
   role: Role;
-  purchasePending: boolean;
+  purchasePending?: boolean;
   onOpenCheckout: (product: ProductSummary) => void;
 }) {
   const [keyword, setKeyword] = useState("");

@@ -1,3 +1,4 @@
+import "./index.less";
 import {
   getWalletDisplayDate,
   getWalletMonthKey,

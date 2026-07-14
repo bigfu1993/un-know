@@ -38,6 +38,7 @@ declare global {
   const HuntingCertification: typeof import('./pages/HuntingCertification/index').HuntingCertification
   const HuntingCertificationCard: typeof import('./components/HuntingCertificationCard/index').HuntingCertificationCard
   const HuntingProjectDialog: typeof import('./components/HuntingProjectDialog/index').HuntingProjectDialog
+  const HuntingRecommendationDialog: typeof import('./pages/Delegation/components/HuntingRecommendationDialog').HuntingRecommendationDialog
   const KeyRound: typeof import('lucide-react').KeyRound
   const LogOut: typeof import('lucide-react').LogOut
   const Login: typeof import('./pages/Login/index').Login
@@ -52,6 +53,8 @@ declare global {
   const MinePopover: typeof import('./components/AppShell/index').MinePopover
   const Navigate: typeof import('react-router-dom').Navigate
   const OngoingOrdersDialog: typeof import('./components/WorkflowDialogs/index').OngoingOrdersDialog
+  const OngoingOrdersList: typeof import('./components/OngoingOrdersList/index').OngoingOrdersList
+  const OngoingQuoteDialog: typeof import('./pages/Delegation/components/OngoingQuoteDialog').OngoingQuoteDialog
   const OrderModuleCard: typeof import('./components/OrderModuleCard/index').OrderModuleCard
   const Orders: typeof import('./pages/Orders/index').Orders
   const PackageCheck: typeof import('lucide-react').PackageCheck
@@ -80,6 +83,7 @@ declare global {
   const Suspense: typeof import('react').Suspense
   const Truck: typeof import('lucide-react').Truck
   const Tutor: typeof import('./pages/Tutor/index').Tutor
+  const TutorApplicationsDialog: typeof import('./pages/Tutor/components/TutorApplicationsDialog').TutorApplicationsDialog
   const TutorCalendarDialog: typeof import('./components/TutorCalendar/index').TutorCalendarDialog
   const TutorCard: typeof import('./components/TutorCard/index').TutorCard
   const TutorCertification: typeof import('./pages/Tutor/TutorCertification').TutorCertification
@@ -101,6 +105,8 @@ declare global {
   const cache: typeof import('react').cache
   const cacheSignal: typeof import('react').cacheSignal
   const campusAreaOptions: typeof import('./shared/clientPageModel').campusAreaOptions
+  const canConfirmHuntingQuote: typeof import('./pages/Delegation/model').canConfirmHuntingQuote
+  const canCounterHuntingQuote: typeof import('./pages/Delegation/model').canCounterHuntingQuote
   const clearStoredClientAuthSession: typeof import('@unknown/api-client').clearStoredClientAuthSession
   const clearStoredPendingRegistration: typeof import('./shared/clientPageModel').clearStoredPendingRegistration
   const clientAddressToAddressBookItem: typeof import('./shared/clientPageModel').clientAddressToAddressBookItem
@@ -128,10 +134,18 @@ declare global {
   const getDelegationLatestTimeLabel: typeof import('./tools/publishInfo').getDelegationLatestTimeLabel
   const getDelegationRequirementLabel: typeof import('./tools/publishInfo').getDelegationRequirementLabel
   const getDeliveryFee: typeof import('./shared/clientPageModel').getDeliveryFee
-  const getErrorMessage: typeof import('./components/MessageToast/index').getErrorMessage
+  const getErrorMessage: typeof import('./tools/messageToast').getErrorMessage
   const getFilledProfileDraft: typeof import('./shared/clientPageModel').getFilledProfileDraft
   const getHuntingCertificationCardMode: typeof import('./components/HuntingCertificationCard/model').getHuntingCertificationCardMode
   const getHuntingCertificationDataFromDraft: typeof import('./components/HuntingCertificationCard/model').getHuntingCertificationDataFromDraft
+  const getHuntingFulfillmentContact: typeof import('./pages/Delegation/model').getHuntingFulfillmentContact
+  const getHuntingHistoryOrders: typeof import('./pages/Delegation/model').getHuntingHistoryOrders
+  const getHuntingOngoingAmountLabel: typeof import('./pages/Delegation/model').getHuntingOngoingAmountLabel
+  const getHuntingOngoingOrders: typeof import('./pages/Delegation/model').getHuntingOngoingOrders
+  const getHuntingOngoingStatus: typeof import('./pages/Delegation/model').getHuntingOngoingStatus
+  const getHuntingQuoteActionLabel: typeof import('./pages/Delegation/model').getHuntingQuoteActionLabel
+  const getHuntingTaskAmountText: typeof import('./pages/Delegation/model').getHuntingTaskAmountText
+  const getHuntingTaskPublishTimeText: typeof import('./pages/Delegation/model').getHuntingTaskPublishTimeText
   const getLatestLocalPublishInfoDraft: typeof import('./tools/publishInfo').getLatestLocalPublishInfoDraft
   const getLocalPublishInfoDrafts: typeof import('./tools/publishInfo').getLocalPublishInfoDrafts
   const getOrderModuleCounts: typeof import('./components/OrderModuleCard/model').getOrderModuleCounts
@@ -139,6 +153,7 @@ declare global {
   const getProfileRequirement: typeof import('./shared/clientPageModel').getProfileRequirement
   const getProfileRequirementTemplate: typeof import('./shared/clientPageModel').getProfileRequirementTemplate
   const getPublishDestinationLabel: typeof import('./tools/publishInfo').getPublishDestinationLabel
+  const getRecommendedHuntingTasks: typeof import('./pages/Delegation/model').getRecommendedHuntingTasks
   const getRoleHint: typeof import('./shared/clientPageModel').getRoleHint
   const getRouteForTab: typeof import('./shared/clientPageModel').getRouteForTab
   const getStoredAddressBook: typeof import('./shared/clientPageModel').getStoredAddressBook
@@ -156,16 +171,29 @@ declare global {
   const getWalletMonthOptions: typeof import('./tools/wallet').getWalletMonthOptions
   const getWalletMonthlySummary: typeof import('./tools/wallet').getWalletMonthlySummary
   const getWalletTotalAmount: typeof import('./tools/wallet').getWalletTotalAmount
+  const hasCounterQuoteAmount: typeof import('./pages/Delegation/model').hasCounterQuoteAmount
+  const hasInvalidCounterQuoteAmount: typeof import('./pages/Delegation/model').hasInvalidCounterQuoteAmount
   const hasStoredPendingRegistration: typeof import('./shared/clientPageModel').hasStoredPendingRegistration
+  const hasValidCounterQuoteAmount: typeof import('./pages/Delegation/model').hasValidCounterQuoteAmount
   const huntingCertificationStatusLabels: typeof import('./components/HuntingCertificationCard/model').huntingCertificationStatusLabels
+  const isHuntingCancelledStatus: typeof import('./pages/Delegation/model').isHuntingCancelledStatus
+  const isHuntingCompletedStatus: typeof import('./pages/Delegation/model').isHuntingCompletedStatus
+  const isHuntingFulfillingStatus: typeof import('./pages/Delegation/model').isHuntingFulfillingStatus
+  const isHuntingPublishedStatus: typeof import('./pages/Delegation/model').isHuntingPublishedStatus
+  const isHuntingQuoteStatus: typeof import('./pages/Delegation/model').isHuntingQuoteStatus
+  const isHuntingQuoteWaitingHunter: typeof import('./pages/Delegation/model').isHuntingQuoteWaitingHunter
+  const isHuntingQuoteWaitingPublisher: typeof import('./pages/Delegation/model').isHuntingQuoteWaitingPublisher
   const isHuntingTaskPublishType: typeof import('./tools/publishInfo').isHuntingTaskPublishType
   const isNegotiableAmount: typeof import('./tools/publishInfo').isNegotiableAmount
+  const isNegotiatingHuntingQuote: typeof import('./pages/Delegation/model').isNegotiatingHuntingQuote
   const isPositiveAmount: typeof import('./tools/publishInfo').isPositiveAmount
+  const isQuoteLockedForPublisher: typeof import('./pages/Delegation/model').isQuoteLockedForPublisher
   const jobFilters: typeof import('./shared/clientPageModel').jobFilters
   const lazy: typeof import('react').lazy
   const localAuthCode: typeof import('./tools/localAuth').localAuthCode
   const localPasswordMinLength: typeof import('./tools/localAuth').localPasswordMinLength
   const memo: typeof import('react').memo
+  const messageToastMeta: typeof import('./tools/messageToast').messageToastMeta
   const mineEntryLabels: typeof import('@unknown/domain').mineEntryLabels
   const moduleRoutePaths: typeof import('./shared/clientPageModel').moduleRoutePaths
   const normalizeAddressBookItems: typeof import('./shared/clientPageModel').normalizeAddressBookItems
@@ -232,8 +260,9 @@ declare global {
   const useLayoutEffect: typeof import('react').useLayoutEffect
   const useLocation: typeof import('react-router-dom').useLocation
   const useMemo: typeof import('react').useMemo
-  const useMessageToast: typeof import('./components/MessageToast/index').useMessageToast
+  const useMessageToast: typeof import('./tools/messageToast').useMessageToast
   const useNavigate: typeof import('react-router-dom').useNavigate
+  const useOngoingQuoteFlow: typeof import('./pages/Delegation/useOngoingQuoteFlow').useOngoingQuoteFlow
   const useOptimistic: typeof import('react').useOptimistic
   const useProducts: typeof import('@unknown/hooks').useProducts
   const usePublishHuntingTask: typeof import('@unknown/hooks').usePublishHuntingTask

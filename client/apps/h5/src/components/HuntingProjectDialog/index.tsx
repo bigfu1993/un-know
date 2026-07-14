@@ -1,3 +1,4 @@
+import "./index.less";
 import { ArrowDownUp, CheckCircle2, GripVertical, Plus, RadioTower, XCircle } from "lucide-react";
 
 /** 创建默认下一站区域，保持表单始终有一项可编辑目的地。 */

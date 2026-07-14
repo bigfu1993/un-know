@@ -1,0 +1,43 @@
+.publish-info-sheet {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(540px, calc(100vw - 28px));
+}
+
+.publish-info-header,
+.publish-info-footer {
+  position: relative;
+  z-index: 1;
+  background: #fff;
+}
+
+.publish-info-body {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.publish-info-footer {
+  padding-top: 10px;
+  border-top: 1px solid #edf1f4;
+}
+
+.publish-info-sheet .sheet-actions {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.publish-time-options button,
+.publish-tag-list button {
+  min-height: 34px;
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: #f3f6f9;
+  color: #475466;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.publish-time-options button.active,
+.publish-tag-list button.active {
+  background: #dceef3;
+  color: #175e75;
+}

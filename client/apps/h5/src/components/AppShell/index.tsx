@@ -1,3 +1,4 @@
+import "./index.less";
 import { useGlobalUser } from "@h5/store/global";
 import { HuntingCertificationCard } from "@components/HuntingCertificationCard";
 import {

@@ -1,3 +1,4 @@
+import "./index.less";
 import { TutorTrialJobCard } from "@components/PageWidgets";
 
 /** 学生兼职页展开的工具面板。 */

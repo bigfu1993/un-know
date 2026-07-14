@@ -73,6 +73,8 @@
 - 新增类型文件后必须同步更新 `src/types/global.d.ts` 或确认 auto-import 生成声明包含该类型，避免业务代码隐式依赖失效。
 - 已被 `unplugin-auto-import` 或 `src/types/global.d.ts` 覆盖的 TypeScript 类型，不得在 H5 页面、组件和工具文件中继续显式 `import type` 或 `, type` 导入；只保留确实无法全局声明的局部类型。
 - `pages` 目录按业务模块组织；同一业务域的主页面、子页面和流程页应收敛到同一目录，例如 `pages/Tutor/index.tsx` 与 `pages/Tutor/TutorCertification.tsx`，避免在 `pages` 根部平铺孤立的同域页面。
+- `pages/<Module>/components` 下的业务私有组件使用扁平文件维护，例如 `pages/Delegation/components/OngoingQuoteDialog.tsx`；不要再为 page 私有组件创建单独组件文件夹。
+- 每个 `pages/<Module>` 必须维护 `index.less` 并由 `index.tsx` 引入；该页面及其 `components` 下的业务私有样式收敛到对应页面的 `index.less`，避免继续堆到全局 `styles.less`。
 - 与页面业务无关、可复用的纯计算工具应放入 `client/apps/h5/src/tools/*.ts`，例如金额格式化、月份计算、日期 key 生成、日历任务映射和字段校验；页面与组件内不保留可复用工具函数。
 - 页面组件负责业务编排，通用组件负责展示；组件需要数据时通过 props 传入，不直接读取全局用户资料或自行拼装业务数据。
 - 登录用户信息统一维护在 `client/apps/h5/src/store/global.ts` 的 `global.user`。
@@ -87,6 +89,8 @@
 - 我的页和头像弹窗的账户、钱包展示必须复用 `client/apps/h5/src/components/SummaryCards`；账户卡和钱包卡均需支持默认卡片和简单卡片，简单卡片仅展示指定核心字段。
 - 我的页和头像弹窗的家教信息展示必须复用 `client/apps/h5/src/components/TutorCard`；家教卡需要支持认证入口、简单卡片和默认卡片三种模式。
 - H5 表单校验必须优先复用 `client/apps/h5/src/tools/validation.ts`，通过 `validateByKey(key, value)` 按字段 key 匹配规则；手机号校验不得在页面或组件中重复写正则。
+- 开发新逻辑前必须先分析现有模块、组件、hooks、共享类型和 `tools` 是否已有可复用能力；确认无法复用后再新增逻辑。业务相关复用方法沉淀在对应模块或组件目录，业务无关纯函数沉淀到 `client/apps/h5/src/tools`，避免在页面内重复实现。
+- H5 根组件 `App.tsx` 只保留登录态、路由、全局数据请求和跨业务弹窗组合；单一业务的模型函数、弹窗、卡片和流程组件必须维护在对应业务目录下，例如委托/狩猎归入 `pages/Delegation`，家教归入 `pages/Tutor`，避免相同业务散落在根组件或通用组件目录。
 - 登录页支持验证码登录和密码登录切换；后端密码接口上线前，H5 密码凭据仅保存本地哈希，不保存明文密码。
 - 具体业务操作需要资料时，再按场景提示用户补充。
 - `context-card` 只展示补充资料提示文案和快捷入口，不展示资料详情。

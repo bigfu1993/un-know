@@ -1,3 +1,4 @@
+import "./index.less";
 import {
   ArrowDownUp,
   Banknote,
@@ -31,11 +32,9 @@ export interface DelegationProps {
   huntingTasks: HuntingTask[];
   isRefreshing?: boolean;
   onAcceptTask: (task: HuntingTask) => Promise<void> | void;
-  onCertificationReviewing: () => void;
   onOpenHuntingCertification: () => void;
   onQuoteTask: (task: HuntingTask, amount: number) => Promise<void> | void;
   onRefreshTasks: () => void;
-  onSelfTaskAction: () => void;
 }
 
 /** 委托页顶部规则滚动字幕文案。 */
@@ -154,12 +153,11 @@ export function Delegation({
   huntingTasks,
   isRefreshing = false,
   onAcceptTask,
-  onCertificationReviewing,
   onOpenHuntingCertification,
   onQuoteTask,
-  onRefreshTasks,
-  onSelfTaskAction
+  onRefreshTasks
 }: DelegationProps) {
+  const { hideMessage, showMessage, toast } = useMessageToast();
   const [keyword, setKeyword] = useState("");
   const [activePanel, setActivePanel] = useState<DelegationToolbarPanel>(null);
   const [isHuntingModeEnabled, setIsHuntingModeEnabled] = useState(false);
@@ -220,11 +218,16 @@ export function Delegation({
   /** 未认证时打开认证提示弹窗。 */
   function openCertificationPrompt() {
     if (huntingCertificationStatus === "reviewing") {
-      onCertificationReviewing();
+      showMessage("狩猎认证系统审批中...", { type: "warning" });
       return;
     }
 
     setIsCertificationPromptOpen(true);
+  }
+
+  /** 自己发布的委托只能在发布方流程中处理，列表操作给出本页提示。 */
+  function showSelfTaskWarning() {
+    showMessage("不能联系、报价或接受自己发布的委托。", { type: "warning" });
   }
 
   /** 切换狩猎模式，认证未通过时先引导认证。 */
@@ -240,7 +243,7 @@ export function Delegation({
   /** 处理委托卡片操作，自己的委托或未认证狩猎时阻断。 */
   function handleTaskAction(task: HuntingTask) {
     if (task.isMine) {
-      onSelfTaskAction();
+      showSelfTaskWarning();
       return;
     }
     if (!isHuntingCertified) {
@@ -256,7 +259,7 @@ export function Delegation({
   /** 校验委托领取或报价动作是否允许继续。 */
   function validateTaskOperation(task: HuntingTask) {
     if (task.isMine) {
-      onSelfTaskAction();
+      showSelfTaskWarning();
       return false;
     }
     if (!isHuntingCertified) {
@@ -312,6 +315,7 @@ export function Delegation({
 
   return (
     <section className="module-stack delegation-page grid gap-[10px]">
+      <MessageToast onClose={hideMessage} toast={toast} />
       <ScrollingTicker ariaLabel="委托规则" items={delegationRuleTickerItems} />
 
       <div className="delegation-toolbar grid gap-[8px]">

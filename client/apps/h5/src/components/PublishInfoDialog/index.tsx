@@ -1,3 +1,4 @@
+import "./index.less";
 import { BriefcaseBusiness, CheckCircle2, GraduationCap, PackageCheck, Plus, XCircle } from "lucide-react";
 import { tutorSubjectOptions } from "@shared/tutorModel";
 import {

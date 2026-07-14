@@ -1,3 +1,4 @@
+import "./index.less";
 import { CheckCircle2, GraduationCap, Pencil, Plus, RefreshCw, Trash2, XCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { tutorSubjectOptions } from "@shared/tutorModel";

@@ -1,3 +1,5 @@
+import "./index.less";
+
 /** 滚动字幕方向。 */
 export type ScrollingTickerDirection = "horizontal" | "vertical";
 

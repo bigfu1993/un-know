@@ -1,70 +1,52 @@
 /** 跨页面流程弹窗，仅负责采集或展示数据，提交和导航由调用方处理。 */
 import { AddressInfoForm } from "@components/AddressInfoForm";
+import { OngoingOrdersList } from "@components/OngoingOrdersList";
 import { validateByKey } from "@tools/validation";
-
-/** 进行中列表筛选类型。 */
-type OngoingOrderFilter = "all" | "delegation" | "featured" | "hunting" | "tutor";
-
-/** 进行中列表筛选标签配置。 */
-const ongoingOrderFilterOptions: Array<{ label: string; value: OngoingOrderFilter }> = [
-  { label: "全部", value: "all" },
-  { label: "优选", value: "featured" },
-  { label: "委托", value: "delegation" },
-  { label: "狩猎", value: "hunting" },
-  { label: "家教", value: "tutor" }
-];
-
-/** 获取进行中事项分类，未标记的订单默认归入优选。 */
-function getOngoingOrderCategory(order: ClientOrder): Exclude<OngoingOrderFilter, "all"> {
-  return order.category === "delegation" || order.category === "hunting" || order.category === "tutor"
-    ? order.category
-    : "featured";
-}
 
 /** 进行中事项弹窗，支持分类筛选和面板高度配置。 */
 export function OngoingOrdersDialog({
   maxHeight = "min(72vh, 620px)",
   orders,
-  onCallOrder,
   onClose,
   onConfirmCancel,
   onConfirmComplete,
-  onMessageOrder,
   onOpenQuoteList,
   onOpenTutorApplications,
-  onOpenTrialResult,
-  onOpenTrialSchedule,
-  onRejectTrial,
-  onAgreeTrial,
   onRepublish,
   onRequestCancel,
   onRequestComplete
 }: {
   maxHeight?: string;
   orders: ClientOrder[];
-  onCallOrder?: (order: ClientOrder) => void;
   onClose: () => void;
   onConfirmCancel?: (order: ClientOrder) => void;
   onConfirmComplete?: (order: ClientOrder) => void;
-  onMessageOrder?: (order: ClientOrder) => void;
   onOpenQuoteList?: (order: ClientOrder) => void;
   onOpenTutorApplications?: (order: ClientOrder) => void;
-  onOpenTrialResult?: (order: ClientOrder) => void;
-  onOpenTrialSchedule?: (order: ClientOrder) => void;
-  onRejectTrial?: (order: ClientOrder) => void;
-  onAgreeTrial?: (order: ClientOrder) => void;
   onRepublish?: (order: ClientOrder) => void;
   onRequestCancel?: (order: ClientOrder) => void;
   onRequestComplete?: (order: ClientOrder) => void;
 }) {
-  const [activeFilter, setActiveFilter] = useState<OngoingOrderFilter>("all");
-  const filteredOrders = useMemo(
-    () => orders.filter((order) => activeFilter === "all" || getOngoingOrderCategory(order) === activeFilter),
-    [activeFilter, orders]
-  );
+  const { hideMessage, showMessage, toast } = useMessageToast();
+
+  /** 当前试课动作还没有独立后端状态提交，弹窗内部直接给出操作反馈。 */
+  function showTutorWorkflowMessage(message: string) {
+    showMessage(message, { type: "success" });
+  }
+
+  /** 消息入口当前仅展示后续沟通能力提示，属于弹窗内部反馈。 */
+  function handleMessageOrder(order: ClientOrder) {
+    showMessage(`${order.title} 的消息能力后续接入。`, { type: "warning" });
+  }
+
+  /** 电话入口当前仅展示服务端返回的脱敏联系电话，属于弹窗内部反馈。 */
+  function handleCallOrder(order: ClientOrder) {
+    showMessage(order.phoneNumber ? `联系电话：${order.phoneNumber}` : "暂无可用联系电话。", { type: "success" });
+  }
 
   return (
     <section className="ongoing-dialog" aria-label="进行中的列表">
+      <MessageToast onClose={hideMessage} toast={toast} />
       <div className="sheet-backdrop" onClick={onClose} />
       <article
         className="ongoing-panel mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]"
@@ -85,191 +67,22 @@ export function OngoingOrdersDialog({
             <XCircle size={20} />
           </button>
         </div>
-        <div className="ongoing-filter-tags flex flex-wrap gap-[8px]" aria-label="筛选进行中事项">
-          {ongoingOrderFilterOptions.map((option) => (
-            <button
-              className={activeFilter === option.value ? "active" : ""}
-              key={option.value}
-              onClick={() => setActiveFilter(option.value)}
-              type="button"
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-        <div className="ongoing-list grid gap-[10px]">
-          {filteredOrders.map((order) => (
-            <article className={`flow-card compact p-[12px] ${order.risk ? "risk-card" : ""}`} key={order.id}>
-              <div className="card-title flex items-center justify-between gap-[10px]">
-                <div>
-                  <strong>{order.title}</strong>
-                  <span>{order.id}</span>
-                </div>
-                <em>{order.status}</em>
-              </div>
-              <p>{order.detail}</p>
-              <div className="meta-line mt-[10px] flex flex-wrap items-center gap-[6px] text-[13px] leading-[1.45] text-[#657181]">
-                <span>{order.amountLabel ?? formatCurrency(order.amount)}</span>
-                <span>{order.contact}</span>
-              </div>
-              {getOngoingOrderCategory(order) === "delegation" && order.quoteCount && order.quoteCount > 0 ? (
-                <div className="ongoing-card-actions mt-[10px] flex flex-wrap gap-[8px]">
-                  <button
-                    className="primary-button delegation-quote-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-                    onClick={() => onOpenQuoteList?.(order)}
-                    type="button"
-                  >
-                    查看报价
-                    <span className="delegation-quote-badge">{order.quoteCount}</span>
-                  </button>
-                </div>
-              ) : null}
-              {getOngoingOrderCategory(order) === "hunting" && order.quoteId && order.quoteActionLabel ? (
-                <div className="ongoing-card-actions mt-[10px] flex flex-wrap gap-[8px]">
-                  <button
-                    className="primary-button delegation-quote-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-                    onClick={() => onOpenQuoteList?.(order)}
-                    type="button"
-                  >
-                    {order.quoteActionLabel}
-                  </button>
-                </div>
-              ) : null}
-              {order.canCall ||
-              order.canMessage ||
-              order.canOpenTutorApplications ||
-              order.canOpenTrialSchedule ||
-              order.canRejectTrial ||
-              order.canAgreeTrial ||
-              order.canOpenTrialResult ||
-              order.canRequestCancel ||
-              order.canRequestComplete ||
-              order.canConfirmCancel ||
-              order.canConfirmComplete ||
-              order.canRepublish ? (
-                <div className="ongoing-card-actions mt-[10px] flex flex-wrap gap-[8px]">
-                  {order.canCall ? (
-                    <button
-                      className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
-                      onClick={() => onCallOrder?.(order)}
-                      type="button"
-                    >
-                      电话
-                    </button>
-                  ) : null}
-                  {order.canMessage ? (
-                    <button
-                      className="secondary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
-                      onClick={() => onMessageOrder?.(order)}
-                      type="button"
-                    >
-                      <MessageCircle size={15} />
-                      消息
-                    </button>
-                  ) : null}
-                  {order.canOpenTutorApplications ? (
-                    <button
-                      className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-                      onClick={() => onOpenTutorApplications?.(order)}
-                      type="button"
-                    >
-                      申请列表
-                    </button>
-                  ) : null}
-                  {order.canOpenTrialSchedule ? (
-                    <button
-                      className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
-                      onClick={() => onOpenTrialSchedule?.(order)}
-                      type="button"
-                    >
-                      <CalendarClock size={15} />
-                      试课安排
-                    </button>
-                  ) : null}
-                  {order.canRejectTrial ? (
-                    <button
-                      className="danger-outline-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
-                      onClick={() => onRejectTrial?.(order)}
-                      type="button"
-                    >
-                      拒绝
-                    </button>
-                  ) : null}
-                  {order.canAgreeTrial ? (
-                    <button
-                      className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-                      onClick={() => onAgreeTrial?.(order)}
-                      type="button"
-                    >
-                      同意试课
-                    </button>
-                  ) : null}
-                  {order.canOpenTrialResult ? (
-                    <button
-                      className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-                      onClick={() => onOpenTrialResult?.(order)}
-                      type="button"
-                    >
-                      试课结果
-                    </button>
-                  ) : null}
-                  {order.canRequestCancel ? (
-                    <button
-                      className="danger-outline-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
-                      onClick={() => onRequestCancel?.(order)}
-                      type="button"
-                    >
-                      取消
-                    </button>
-                  ) : null}
-                  {order.canRequestComplete ? (
-                    <button
-                      className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-                      onClick={() => onRequestComplete?.(order)}
-                      type="button"
-                    >
-                      完成
-                    </button>
-                  ) : null}
-                  {order.canConfirmCancel ? (
-                    <button
-                      className="danger-outline-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
-                      onClick={() => onConfirmCancel?.(order)}
-                      type="button"
-                    >
-                      确认取消
-                    </button>
-                  ) : null}
-                  {order.canConfirmComplete ? (
-                    <button
-                      className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-                      onClick={() => onConfirmComplete?.(order)}
-                      type="button"
-                    >
-                      <CheckCircle2 size={15} />
-                      确认完成
-                    </button>
-                  ) : null}
-                  {order.canRepublish ? (
-                    <button
-                      className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-                      onClick={() => onRepublish?.(order)}
-                      type="button"
-                    >
-                      重新发布
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
-            </article>
-          ))}
-          {filteredOrders.length === 0 ? (
-            <article className="empty-state p-[14px] text-center">
-              <strong>暂无当前筛选事项</strong>
-              <span>切换筛选标签查看其它进行中内容。</span>
-            </article>
-          ) : null}
-        </div>
+        <OngoingOrdersList
+          orders={orders}
+          onCallOrder={handleCallOrder}
+          onConfirmCancel={onConfirmCancel}
+          onConfirmComplete={onConfirmComplete}
+          onMessageOrder={handleMessageOrder}
+          onOpenQuoteList={onOpenQuoteList}
+          onOpenTutorApplications={onOpenTutorApplications}
+          onOpenTrialResult={() => showTutorWorkflowMessage("试课结果流程待后端结算接口接入。")}
+          onOpenTrialSchedule={() => showTutorWorkflowMessage("试课日程已记录，等待双方确认。")}
+          onRejectTrial={() => showTutorWorkflowMessage("已拒绝试课申请。")}
+          onAgreeTrial={() => showTutorWorkflowMessage("已同意试课，家教兼职进入试课流程。")}
+          onRepublish={onRepublish}
+          onRequestCancel={onRequestCancel}
+          onRequestComplete={onRequestComplete}
+        />
       </article>
     </section>
   );
@@ -291,10 +104,12 @@ export function ProfileCompletionDialog({
   onClose: () => void;
   onSave: () => void;
 }) {
+  /** 当前资料模板是否存在未通过校验的必填项。 */
   const hasInvalidFields = template.fields.some(
     (field) => !validateByKey(field.key, profileDraft[field.key] ?? "", { label: field.label, required: true }).isValid
   );
 
+  /** 拦截表单默认提交，并在校验通过后交给调用方保存。 */
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -360,7 +175,7 @@ export function ProfileCompletionDialog({
 export function CheckoutSheet({
   checkout,
   role,
-  purchasePending,
+  purchasePending = false,
   onClose,
   onDeliveryChange,
   onPaymentChange,
@@ -368,14 +183,17 @@ export function CheckoutSheet({
 }: {
   checkout: CheckoutState;
   role: Role;
-  purchasePending: boolean;
+  purchasePending?: boolean;
   onClose: () => void;
   onDeliveryChange: (mode: DeliveryMode) => void;
   onPaymentChange: (method: PaymentMethod) => void;
   onSubmit: () => void;
 }) {
+  /** 家长端商品购买第一版仅开放快递配送，其它角色沿用商品可用配送方式。 */
   const availableModes = role === "parent" ? ["express" as DeliveryMode] : checkout.product.deliveryModes;
+  /** 当前配送方式对应的履约费用。 */
   const deliveryFee = getDeliveryFee(checkout.deliveryMode);
+  /** 购买确认页展示和提交的订单合计金额。 */
   const total = checkout.product.price + checkout.product.serviceFee + deliveryFee;
 
   return (

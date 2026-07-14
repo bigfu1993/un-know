@@ -1,4 +1,6 @@
 /** 家教课程日历任务数据。 */
+import "./index.less";
+
 export interface TutorCalendarTask {
   date: string;
   duration: string;

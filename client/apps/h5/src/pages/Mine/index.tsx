@@ -1,3 +1,4 @@
+import "./index.less";
 import { useGlobalUser } from "@h5/store/global";
 import { OrderModuleCard } from "@components/OrderModuleCard";
 import { AccountSummaryCard, WalletSummaryCard } from "@components/SummaryCards";

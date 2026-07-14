@@ -1,3 +1,4 @@
+import "./index.less";
 import { ChevronRight, UserRound, WalletCards } from "lucide-react";
 import { formatCompactWalletAmount, getWalletTotalAmount, parseWalletBucketAmount } from "@tools/wallet";
 

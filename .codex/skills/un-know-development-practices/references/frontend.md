@@ -6,9 +6,12 @@ Applies to `client/apps/h5`, `client/packages/domain`, `client/packages/api-clie
 
 ## React/H5 Rules
 
-- Keep pages in `client/apps/h5/src/pages/<Module>/index.tsx`; shared display units go under `components/<Component>/index.tsx` with adjacent style file when needed.
+- Keep pages in `client/apps/h5/src/pages/<Module>/index.tsx`; each page imports `index.less`. Page-private components live as flat files under `pages/<Module>/components/*.tsx`, and their styles live in the page `index.less`.
+- Shared display units outside `pages` keep the existing `components/<Component>/index.tsx` folder convention with adjacent style file when needed.
 - Keep business orchestration in pages and generic display in components. Components receive data by props and should not read global user state directly.
 - Keep reusable pure functions in `client/apps/h5/src/tools/*.ts`.
+- Before adding a new branch of UI or business logic, scan nearby pages/components/hooks/tools for a reusable unit. Extract repeated business helpers to the owning module and non-business helpers to `tools`.
+- Keep `App.tsx` lean. Business-specific dialogs and derived models should live under the matching page module; use `App.tsx` only to wire global state, routing, and cross-module workflows.
 - Keep login user data in `client/apps/h5/src/store/global.ts`; avoid prop drilling of the whole user object.
 - Keep API types in `client/packages/domain`. Update `api-client` and hooks together when backend contracts change.
 - For operation results, use the project toast/message component instead of alert or ad hoc inline state.
