@@ -5,9 +5,15 @@ import com.unknown.platform.modules.auth.model.ClientRole;
 import com.unknown.platform.modules.clientworkspace.application.ClientWorkspaceAppService;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.HuntingTask;
+import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorDemand;
+import com.unknown.platform.modules.clientworkspace.model.ApplyTutorTrialRequest;
+import com.unknown.platform.modules.clientworkspace.model.ConfirmTutorTrialRequest;
+import com.unknown.platform.modules.clientworkspace.model.CreateHuntingProjectRequest;
+import com.unknown.platform.modules.clientworkspace.model.HuntingProjectResponse;
 import com.unknown.platform.modules.clientworkspace.model.HuntingQuoteDecisionRequest;
 import com.unknown.platform.modules.clientworkspace.model.HuntingTaskFulfillmentActionRequest;
 import com.unknown.platform.modules.clientworkspace.model.PublishHuntingTaskRequest;
+import com.unknown.platform.modules.clientworkspace.model.PublishTutorDemandRequest;
 import com.unknown.platform.modules.clientworkspace.model.QuoteHuntingTaskRequest;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -51,6 +57,45 @@ public class ClientWorkspaceController {
       @RequestHeader(value = "Authorization", required = false) String authorization
   ) {
     return ApiResponse.ok(clientWorkspaceAppService.publishHuntingTask(request, authorization));
+  }
+
+  /** 创建狩猎项目，系统据此匹配推荐委托。 */
+  @PostMapping("/workspace/hunting-projects")
+  public ApiResponse<HuntingProjectResponse> createHuntingProject(
+      @Valid @RequestBody CreateHuntingProjectRequest request,
+      @RequestHeader(value = "Authorization", required = false) String authorization
+  ) {
+    return ApiResponse.ok(clientWorkspaceAppService.createHuntingProject(request, authorization));
+  }
+
+  /** 家长发布家教需求，发布后进入进行中列表。 */
+  @PostMapping("/workspace/tutor-demands")
+  public ApiResponse<TutorDemand> publishTutorDemand(
+      @Valid @RequestBody PublishTutorDemandRequest request,
+      @RequestHeader(value = "Authorization", required = false) String authorization
+  ) {
+    return ApiResponse.ok(clientWorkspaceAppService.publishTutorDemand(request, authorization));
+  }
+
+  /** 学生申请家教试课。 */
+  @PostMapping("/workspace/tutor-demands/{demandId}/applications")
+  public ApiResponse<TutorDemand> applyTutorTrial(
+      @PathVariable String demandId,
+      @RequestBody(required = false) ApplyTutorTrialRequest request,
+      @RequestHeader(value = "Authorization", required = false) String authorization
+  ) {
+    return ApiResponse.ok(clientWorkspaceAppService.applyTutorTrial(demandId, request, authorization));
+  }
+
+  /** 家长确认学生家教试课安排。 */
+  @PostMapping("/workspace/tutor-demands/{demandId}/applications/{applicationId}/trial")
+  public ApiResponse<TutorDemand> confirmTutorTrial(
+      @PathVariable String demandId,
+      @PathVariable String applicationId,
+      @Valid @RequestBody ConfirmTutorTrialRequest request,
+      @RequestHeader(value = "Authorization", required = false) String authorization
+  ) {
+    return ApiResponse.ok(clientWorkspaceAppService.confirmTutorTrial(demandId, applicationId, request, authorization));
   }
 
   /** 服务方接受固定金额委托，后端完成锁单和押金冻结校验。 */

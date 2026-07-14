@@ -1,6 +1,3 @@
-import type { PublishHuntingTaskRequest } from "@unknown/domain";
-import type { AddressBookItem } from "@app-types/profile";
-
 /** 本地发布草稿存储 key，用于保存未正式发布的信息。 */
 const localPublishInfoStorageKey = "unknown_h5_publish_info_drafts_v1";
 
@@ -124,6 +121,34 @@ export function buildPublishHuntingTaskRequest(
   };
 }
 
+
+/** 根据发布弹窗草稿构建家教需求发布接口参数。 */
+export function buildPublishTutorDemandRequest(
+  draft: PublishInfoDraft,
+  addressItems: AddressBookItem[],
+  childOptions: ChildProfileOption[]
+): PublishTutorDemandRequest {
+  const selectedChild = childOptions.find((child) => child.id === draft.childId);
+  const addressLabel = getPublishDestinationLabel(draft.addressId, addressItems);
+
+  return {
+    addressId: draft.addressId,
+    addressLabel,
+    childId: draft.childId,
+    childName: selectedChild?.name ?? "孩子",
+    description: draft.description.trim(),
+    periodEnd: draft.tutorDateEnd.trim(),
+    periodStart: draft.tutorDateStart.trim(),
+    requirement: draft.requirement.trim(),
+    schoolTags: draft.tutorSchoolTags,
+    subject: draft.tutorSubject.trim() || "待沟通",
+    title: draft.title.trim(),
+    trialDuration: draft.trialDuration.trim(),
+    trialEnabled: draft.trialEnabled === "是",
+    wageMode: draft.tutorWageMode
+  };
+}
+
 /** 容错读取本地发布草稿。 */
 export function getLocalPublishInfoDrafts(): LocalPublishInfoDraft[] {
   if (typeof window === "undefined") {
@@ -156,4 +181,16 @@ export function saveLocalPublishInfoDraft(draft: PublishInfoDraft, publishState:
 
   window.localStorage.setItem(localPublishInfoStorageKey, JSON.stringify(nextDrafts));
   return nextDrafts;
+}
+
+
+/** 获取最近一条本地发布草稿，支持按类型过滤。 */
+export function getLatestLocalPublishInfoDraft(type?: PublishInfoType) {
+  return getLocalPublishInfoDrafts().find((draft) => {
+    if (draft.publishState !== "draft") {
+      return false;
+    }
+
+    return type ? draft.type === type : true;
+  }) ?? null;
 }

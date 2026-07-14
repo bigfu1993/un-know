@@ -30,14 +30,21 @@ import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceRespons
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorDemand;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.WalletRecord;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.WalletSummary;
+import com.unknown.platform.modules.clientworkspace.model.ApplyTutorTrialRequest;
+import com.unknown.platform.modules.clientworkspace.model.ConfirmTutorTrialRequest;
+import com.unknown.platform.modules.clientworkspace.model.CreateHuntingProjectRequest;
+import com.unknown.platform.modules.clientworkspace.model.HuntingProjectResponse;
+import com.unknown.platform.modules.clientworkspace.model.HuntingProjectStopResponse;
 import com.unknown.platform.modules.clientworkspace.model.HuntingQuoteDecisionRequest;
 import com.unknown.platform.modules.clientworkspace.model.HuntingTaskFulfillmentActionRequest;
 import com.unknown.platform.modules.clientworkspace.model.PublishHuntingTaskRequest;
+import com.unknown.platform.modules.clientworkspace.model.PublishTutorDemandRequest;
 import com.unknown.platform.modules.clientworkspace.model.QuoteHuntingTaskRequest;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -74,11 +81,11 @@ public class ClientWorkspaceAppService {
     Long currentUserId = clientSessionService.userIdOrNull(authorization);
 
     return new ClientWorkspaceResponse(
-        orders(role),
+        orders(role, currentUserId),
         partTimeJobs(),
         huntingSummary(),
         huntingTasks(currentUserId),
-        tutorDemands(),
+        tutorDemands(role, currentUserId),
         merchantDashboard(),
         merchantProducts(),
         walletSummary(role),
@@ -483,7 +490,172 @@ public class ClientWorkspaceAppService {
     return findHuntingTask(publicId, currentUserId);
   }
 
-  private List<ClientOrder> orders(ClientRole role) {
+  /** 家长发布家教需求，发布后进入自己的进行中家教列表。 */
+  @Transactional
+  public TutorDemand publishTutorDemand(PublishTutorDemandRequest request, String authorization) {
+    long currentUserId = clientSessionService.requireUserId(authorization);
+    ensureUserRole(currentUserId, ClientRole.parent, "TUTOR_DEMAND_PARENT_ONLY", "仅家长账号可以发布家教需求");
+    String publicId = nextTutorDemandPublicId();
+    String childName = defaultText(request.childName(), "孩子");
+    String subject = defaultText(request.subject(), "待沟通");
+    String title = defaultText(request.title(), childName + subject + "家教");
+    String addressLabel = defaultText(request.addressLabel(), "地址待补充");
+    String periodStart = defaultText(request.periodStart(), "待定");
+    String periodEnd = defaultText(request.periodEnd(), "待定");
+    String budget = Boolean.TRUE.equals(request.trialEnabled()) ? "支持试课" : "待议价";
+    String school = addressLabel;
+
+    jdbcTemplate.update(
+        """
+            INSERT INTO tutor_demand (
+              public_id, parent_user_id, child, subject, school, budget, status,
+              title, description, requirement, address_id, address_label, child_id,
+              period_start, period_end, trial_enabled, trial_duration, wage_mode, school_tags,
+              enabled, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, '家教招募中', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, NOW())
+            """,
+        publicId,
+        currentUserId,
+        childName,
+        subject,
+        school,
+        budget,
+        title,
+        defaultText(request.description(), "暂无描述"),
+        defaultText(request.requirement(), "暂无要求"),
+        clean(request.addressId()),
+        addressLabel,
+        clean(request.childId()),
+        periodStart,
+        periodEnd,
+        Boolean.TRUE.equals(request.trialEnabled()),
+        defaultText(request.trialDuration(), ""),
+        defaultText(request.wageMode(), "按课时结算"),
+        joinTags(request.schoolTags())
+    );
+    return findTutorDemand(publicId);
+  }
+
+  /** 学生申请家教试课，申请记录进入双方进行中列表。 */
+  @Transactional
+  public TutorDemand applyTutorTrial(String demandId, ApplyTutorTrialRequest request, String authorization) {
+    long currentUserId = clientSessionService.requireUserId(authorization);
+    ensureUserRole(currentUserId, ClientRole.student, "TUTOR_TRIAL_STUDENT_ONLY", "仅学生账号可以申请家教试课");
+    TutorDemandRow demand = requireTutorDemandForUpdate(demandId);
+    UserContact student = userContact(currentUserId);
+
+    Integer existingCount = jdbcTemplate.queryForObject(
+        "SELECT COUNT(*) FROM tutor_applicant WHERE tutor_demand_id = ? AND applicant_user_id = ? AND enabled = TRUE",
+        Integer.class,
+        demand.id(),
+        currentUserId
+    );
+    if (existingCount != null && existingCount > 0) {
+      throw new BusinessException("TUTOR_TRIAL_ALREADY_APPLIED", "你已申请该家教试课");
+    }
+
+    jdbcTemplate.update(
+        """
+            INSERT INTO tutor_applicant (
+              public_id, tutor_demand_id, applicant_user_id, name, school, major, gpa,
+              hired_times, availability, status, message, updated_at
+            )
+            VALUES (?, ?, ?, ?, '学校待补充', '专业待补充', '待补充', 0, '等待家长确认试课', '等待家长确认试课', ?, NOW())
+            """,
+        nextTutorApplicantPublicId(),
+        demand.id(),
+        currentUserId,
+        student.name(),
+        request == null ? "" : clean(request.message())
+    );
+    return findTutorDemand(demand.publicId());
+  }
+
+  /** 家长确认学生试课安排，后续由聊天或进行中流程继续承接。 */
+  @Transactional
+  public TutorDemand confirmTutorTrial(
+      String demandId,
+      String applicationId,
+      ConfirmTutorTrialRequest request,
+      String authorization
+  ) {
+    long currentUserId = clientSessionService.requireUserId(authorization);
+    TutorDemandRow demand = requireTutorDemandForUpdate(demandId);
+    if (demand.parentUserId() == null || !demand.parentUserId().equals(currentUserId)) {
+      throw new BusinessException("TUTOR_TRIAL_PARENT_FORBIDDEN", "仅发布该家教需求的家长可以确认试课");
+    }
+
+    int updatedRows = jdbcTemplate.update(
+        """
+            UPDATE tutor_applicant
+            SET trial_start = ?,
+                trial_end = ?,
+                trial_half_day = ?,
+                availability = ?,
+                status = '试课已确认',
+                updated_at = NOW()
+            WHERE tutor_demand_id = ?
+              AND public_id = ?
+              AND enabled = TRUE
+            """,
+        request.trialStart(),
+        request.trialEnd(),
+        request.trialHalfDay(),
+        request.trialStart() + " 至 " + request.trialEnd() + " · " + request.trialHalfDay(),
+        demand.id(),
+        applicationId
+    );
+    if (updatedRows == 0) {
+      throw new BusinessException("TUTOR_APPLICATION_NOT_FOUND", "试课申请不存在或无权操作");
+    }
+    return findTutorDemand(demand.publicId());
+  }
+
+  /** 创建狩猎项目并根据动线粗略计算系统推荐委托数量。 */
+  @Transactional
+  public HuntingProjectResponse createHuntingProject(CreateHuntingProjectRequest request, String authorization) {
+    long currentUserId = clientSessionService.requireUserId(authorization);
+    ensureUserRole(currentUserId, ClientRole.student, "HUNTING_PROJECT_STUDENT_ONLY", "仅学生账号可以创建狩猎项目");
+    String publicId = nextHuntingProjectPublicId();
+    List<HuntingProjectStopResponse> stops = normalizedHuntingProjectStops(request.nextStops());
+    int matchedCount = matchedHuntingTaskCount(request.currentArea(), stops);
+    Long projectId = jdbcTemplate.queryForObject(
+        """
+            INSERT INTO hunting_project (public_id, user_id, current_area, matched_count, updated_at)
+            VALUES (?, ?, ?, ?, NOW())
+            RETURNING id
+            """,
+        Long.class,
+        publicId,
+        currentUserId,
+        request.currentArea().strip(),
+        matchedCount
+    );
+
+    for (int index = 0; index < stops.size(); index += 1) {
+      HuntingProjectStopResponse stop = stops.get(index);
+      jdbcTemplate.update(
+          """
+              INSERT INTO hunting_project_stop (
+                project_id, sort_order, input_mode, area, custom_area, eta_start, eta_end
+              )
+              VALUES (?, ?, ?, ?, ?, ?, ?)
+              """,
+          projectId,
+          index,
+          stop.inputMode(),
+          stop.area(),
+          stop.customArea(),
+          stop.etaStart(),
+          stop.etaEnd()
+      );
+    }
+
+    return new HuntingProjectResponse(publicId, request.currentArea().strip(), "matching", matchedCount, stops);
+  }
+
+  private List<ClientOrder> orders(ClientRole role, Long currentUserId) {
     String sql = role == ClientRole.merchant
         ? """
             SELECT po.order_no, p.title, po.status, po.total_amount_cents,
@@ -504,15 +676,16 @@ public class ClientWorkspaceAppService {
             LIMIT 20
             """;
 
-    if (role == ClientRole.merchant) {
-      return jdbcTemplate.query(sql, (rs, rowNum) -> mapOrder(role, rs.getString("order_no"),
-          rs.getString("title"), rs.getString("status"), rs.getLong("total_amount_cents"),
-          rs.getString("contact_phone"), rs.getString("detail"), rs.getString("risk")));
-    }
+    List<ClientOrder> orders = role == ClientRole.merchant
+        ? new ArrayList<>(jdbcTemplate.query(sql, (rs, rowNum) -> mapOrder(role, rs.getString("order_no"),
+            rs.getString("title"), rs.getString("status"), rs.getLong("total_amount_cents"),
+            rs.getString("contact_phone"), rs.getString("detail"), rs.getString("risk"))))
+        : new ArrayList<>(jdbcTemplate.query(sql, (rs, rowNum) -> mapOrder(role, rs.getString("order_no"),
+            rs.getString("title"), rs.getString("status"), rs.getLong("total_amount_cents"),
+            rs.getString("contact_phone"), rs.getString("detail"), rs.getString("risk")), role.name()));
 
-    return jdbcTemplate.query(sql, (rs, rowNum) -> mapOrder(role, rs.getString("order_no"),
-        rs.getString("title"), rs.getString("status"), rs.getLong("total_amount_cents"),
-        rs.getString("contact_phone"), rs.getString("detail"), rs.getString("risk")), role.name());
+    orders.addAll(tutorOrders(role, currentUserId));
+    return orders;
   }
 
   private ClientOrder mapOrder(
@@ -533,7 +706,128 @@ public class ClientWorkspaceAppService {
         toAmount(amountCents),
         contactPhone,
         detail == null ? "" : detail,
-        risk
+        risk,
+        null,
+        null,
+        contactPhone,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+    );
+  }
+
+  /** 将家教需求和试课申请并入进行中列表，避免 H5 只维护本地临时订单。 */
+  private List<ClientOrder> tutorOrders(ClientRole role, Long currentUserId) {
+    if (currentUserId == null || role == ClientRole.merchant) {
+      return List.of();
+    }
+
+    if (role == ClientRole.parent) {
+      return jdbcTemplate.query(
+          """
+              SELECT public_id, title, child, subject, budget, status, address_label,
+                     period_start, period_end
+              FROM tutor_demand
+              WHERE parent_user_id = ?
+                AND enabled = TRUE
+                AND status NOT IN ('已结束', '已取消')
+              ORDER BY created_at DESC, id DESC
+              """,
+          (rs, rowNum) -> new ClientOrder(
+              rs.getString("public_id"),
+              role,
+              defaultText(rs.getString("title"), rs.getString("child") + rs.getString("subject") + "家教"),
+              rs.getString("status"),
+              BigDecimal.ZERO,
+              "孩子：" + rs.getString("child"),
+              "周期：" + defaultText(rs.getString("period_start"), "待定") + " 至 "
+                  + defaultText(rs.getString("period_end"), "待定") + " · 地址："
+                  + defaultText(rs.getString("address_label"), "地址待补充") + " · 学科：" + rs.getString("subject"),
+              null,
+              rs.getString("budget"),
+              "tutor",
+              null,
+              null,
+              null,
+              null,
+              null,
+              false,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              true,
+              false
+          ),
+          currentUserId
+      );
+    }
+
+    return jdbcTemplate.query(
+        """
+            SELECT ta.public_id, ta.status, td.title, td.subject, td.budget,
+                   td.address_label, td.period_start, td.period_end,
+                   COALESCE(NULLIF(parent.nickname, ''), parent.phone, '家长用户') AS parent_name,
+                   COALESCE(parent.phone, '') AS parent_phone
+            FROM tutor_applicant ta
+            JOIN tutor_demand td ON td.id = ta.tutor_demand_id
+            LEFT JOIN app_user parent ON parent.id = td.parent_user_id
+            WHERE ta.applicant_user_id = ?
+              AND ta.enabled = TRUE
+              AND td.enabled = TRUE
+              AND ta.status NOT IN ('已拒绝', '已结束')
+            ORDER BY ta.updated_at DESC, ta.id DESC
+            """,
+        (rs, rowNum) -> new ClientOrder(
+            rs.getString("public_id"),
+            role,
+            rs.getString("title"),
+            rs.getString("status"),
+            BigDecimal.ZERO,
+            rs.getString("parent_name"),
+            "试课申请 · " + rs.getString("subject") + " · " + defaultText(rs.getString("period_start"), "待定")
+                + " 至 " + defaultText(rs.getString("period_end"), "待定") + " · "
+                + defaultText(rs.getString("address_label"), "地址待补充"),
+            null,
+            rs.getString("budget"),
+            "tutor",
+            maskPhone(rs.getString("parent_phone")),
+            null,
+            null,
+            null,
+            null,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true
+        ),
+        currentUserId
     );
   }
 
@@ -730,13 +1024,64 @@ public class ClientWorkspaceAppService {
     );
   }
 
-  private List<TutorDemand> tutorDemands() {
+  private List<TutorDemand> tutorDemands(ClientRole role, Long currentUserId) {
+    if (role == ClientRole.parent) {
+      List<TutorDemand> demands = new ArrayList<>(tutorExposedStudents());
+      demands.addAll(parentTutorDemands(currentUserId));
+      return demands;
+    }
+
+    return publishedTutorDemands();
+  }
+
+  /** 家长端家教列表展示已开启家教开关且认证通过的学生信息。 */
+  private List<TutorDemand> tutorExposedStudents() {
     return jdbcTemplate.query(
         """
-            SELECT id, public_id, child, subject, school, budget, status
-            FROM tutor_demand
-            WHERE enabled = TRUE
-            ORDER BY created_at DESC, id DESC
+            SELECT id, COALESCE(NULLIF(nickname, ''), phone, '学生用户') AS name,
+                   phone, credit_score
+            FROM app_user
+            WHERE role = 'student'
+              AND tutor_certification_status = 'normal'
+              AND tutor_exposure_enabled = TRUE
+            ORDER BY credit_score DESC, updated_at DESC, id DESC
+            """,
+        (rs, rowNum) -> new TutorDemand(
+            "student-" + rs.getLong("id"),
+            rs.getString("name"),
+            "已开启家教",
+            "认证学生",
+            "可沟通",
+            "可联系",
+            rs.getString("name") + "的家教资料",
+            "该学生已开启家教开关，认证信息可被家长查看。",
+            "平台认证",
+            "长期可沟通",
+            rs.getString("name"),
+            maskPhone(rs.getString("phone")),
+            "tutorStudent",
+            List.of()
+        )
+    );
+  }
+
+
+  /** 家长本人发布的家教需求，仅用于进行中申请列表数据，不在家教主列表直接展示。 */
+  private List<TutorDemand> parentTutorDemands(Long parentUserId) {
+    if (parentUserId == null) {
+      return List.of();
+    }
+    return jdbcTemplate.query(
+        """
+            SELECT td.id, td.public_id, td.child, td.subject, td.school, td.budget, td.status,
+                   td.title, td.description, td.address_label, td.period_start, td.period_end,
+                   COALESCE(NULLIF(u.nickname, ''), u.phone, '家长用户') AS publisher_name,
+                   COALESCE(u.phone, '') AS publisher_phone
+            FROM tutor_demand td
+            LEFT JOIN app_user u ON u.id = td.parent_user_id
+            WHERE td.parent_user_id = ?
+              AND td.enabled = TRUE
+            ORDER BY td.created_at DESC, td.id DESC
             """,
         (rs, rowNum) -> new TutorDemand(
             rs.getString("public_id"),
@@ -745,9 +1090,56 @@ public class ClientWorkspaceAppService {
             rs.getString("school"),
             rs.getString("budget"),
             rs.getString("status"),
+            defaultText(rs.getString("title"), rs.getString("child") + rs.getString("subject") + "家教"),
+            defaultText(rs.getString("description"), "暂无描述"),
+            defaultText(rs.getString("address_label"), rs.getString("school")),
+            tutorPeriod(rs.getString("period_start"), rs.getString("period_end")),
+            rs.getString("publisher_name"),
+            maskPhone(rs.getString("publisher_phone")),
+            "tutorDemand",
+            tutorApplicants(rs.getLong("id"))
+        ),
+        parentUserId
+    );
+  }
+
+  /** 学生端兼职列表展示家长已发布的家教需求。 */
+  private List<TutorDemand> publishedTutorDemands() {
+    return jdbcTemplate.query(
+        """
+            SELECT td.id, td.public_id, td.child, td.subject, td.school, td.budget, td.status,
+                   td.title, td.description, td.address_label, td.period_start, td.period_end,
+                   COALESCE(NULLIF(u.nickname, ''), u.phone, '家长用户') AS publisher_name,
+                   COALESCE(u.phone, '') AS publisher_phone
+            FROM tutor_demand td
+            LEFT JOIN app_user u ON u.id = td.parent_user_id
+            WHERE td.enabled = TRUE
+            ORDER BY td.created_at DESC, td.id DESC
+            """,
+        (rs, rowNum) -> new TutorDemand(
+            rs.getString("public_id"),
+            rs.getString("child"),
+            rs.getString("subject"),
+            rs.getString("school"),
+            rs.getString("budget"),
+            rs.getString("status"),
+            defaultText(rs.getString("title"), rs.getString("child") + rs.getString("subject") + "家教"),
+            defaultText(rs.getString("description"), "暂无描述"),
+            defaultText(rs.getString("address_label"), rs.getString("school")),
+            tutorPeriod(rs.getString("period_start"), rs.getString("period_end")),
+            rs.getString("publisher_name"),
+            maskPhone(rs.getString("publisher_phone")),
+            "tutorDemand",
             tutorApplicants(rs.getLong("id"))
         )
     );
+  }
+
+  private TutorDemand findTutorDemand(String publicId) {
+    return publishedTutorDemands().stream()
+        .filter((demand) -> demand.id().equals(publicId))
+        .findFirst()
+        .orElseThrow(() -> new BusinessException("TUTOR_DEMAND_NOT_FOUND", "家教需求不存在或已不可用"));
   }
 
   private List<TutorApplicant> tutorApplicants(long tutorDemandId) {
@@ -1164,6 +1556,96 @@ public class ClientWorkspaceAppService {
     );
   }
 
+  private TutorDemandRow requireTutorDemandForUpdate(String publicId) {
+    List<TutorDemandRow> rows = jdbcTemplate.query(
+        """
+            SELECT id, public_id, parent_user_id
+            FROM tutor_demand
+            WHERE public_id = ?
+              AND enabled = TRUE
+            FOR UPDATE
+            """,
+        (rs, rowNum) -> new TutorDemandRow(
+            rs.getLong("id"),
+            rs.getString("public_id"),
+            rs.getObject("parent_user_id", Long.class)
+        ),
+        publicId
+    );
+    if (rows.isEmpty()) {
+      throw new BusinessException("TUTOR_DEMAND_NOT_FOUND", "家教需求不存在或已不可用");
+    }
+    return rows.get(0);
+  }
+
+  private void ensureUserRole(long userId, ClientRole expectedRole, String errorCode, String errorMessage) {
+    if (userRole(userId) != expectedRole) {
+      throw new BusinessException(errorCode, errorMessage);
+    }
+  }
+
+  private ClientRole userRole(long userId) {
+    String role = jdbcTemplate.queryForObject("SELECT role FROM app_user WHERE id = ?", String.class, userId);
+    return ClientRole.valueOf(role);
+  }
+
+  private String tutorPeriod(String periodStart, String periodEnd) {
+    String start = defaultText(periodStart, "待定");
+    String end = defaultText(periodEnd, "待定");
+    return start + " 至 " + end;
+  }
+
+  private String joinTags(List<String> tags) {
+    if (tags == null || tags.isEmpty()) {
+      return "";
+    }
+    return String.join("、", tags.stream().map(String::strip).filter((tag) -> !tag.isBlank()).toList());
+  }
+
+  private List<HuntingProjectStopResponse> normalizedHuntingProjectStops(
+      List<com.unknown.platform.modules.clientworkspace.model.HuntingProjectStopRequest> stops
+  ) {
+    if (stops == null) {
+      return List.of();
+    }
+    return stops.stream()
+        .map((stop) -> new HuntingProjectStopResponse(
+            defaultText(stop.inputMode(), "select"),
+            defaultText(stop.area(), ""),
+            defaultText(stop.customArea(), ""),
+            defaultText(stop.etaStart(), ""),
+            defaultText(stop.etaEnd(), "")
+        ))
+        .filter((stop) -> !stop.area().isBlank() || !stop.customArea().isBlank())
+        .toList();
+  }
+
+  private int matchedHuntingTaskCount(String currentArea, List<HuntingProjectStopResponse> stops) {
+    List<String> areas = new ArrayList<>();
+    areas.add(defaultText(currentArea, ""));
+    stops.forEach((stop) -> areas.add(defaultText(stop.customArea().isBlank() ? stop.area() : stop.customArea(), "")));
+    int matchedCount = 0;
+    for (String area : areas.stream().filter((item) -> !item.isBlank()).distinct().toList()) {
+      Integer count = jdbcTemplate.queryForObject(
+          """
+              SELECT COUNT(*)
+              FROM hunting_task
+              WHERE enabled = TRUE
+                AND status IN (?, ?)
+                AND (location ILIKE ? OR title ILIKE ? OR COALESCE(description, '') ILIKE ?)
+              """,
+          Integer.class,
+          TASK_PUBLISHED,
+          TASK_QUOTE,
+          "%" + area + "%",
+          "%" + area + "%",
+          "%" + area + "%"
+      );
+      matchedCount += count == null ? 0 : count;
+    }
+    return matchedCount;
+  }
+
   private long roleUserId(ClientRole role) {
     List<Long> ids = jdbcTemplate.query(
         "SELECT id FROM app_user WHERE role = ? ORDER BY updated_at DESC, id DESC LIMIT 1",
@@ -1255,6 +1737,24 @@ public class ClientWorkspaceAppService {
     return amount.setScale(2, RoundingMode.HALF_UP).movePointRight(2).longValueExact();
   }
 
+  /** 生成家教需求对外编号。 */
+  private String nextTutorDemandPublicId() {
+    String randomSuffix = UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
+    return "TD" + System.currentTimeMillis() + randomSuffix;
+  }
+
+  /** 生成家教试课申请对外编号。 */
+  private String nextTutorApplicantPublicId() {
+    String randomSuffix = UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
+    return "TA" + System.currentTimeMillis() + randomSuffix;
+  }
+
+  /** 生成狩猎项目对外编号。 */
+  private String nextHuntingProjectPublicId() {
+    String randomSuffix = UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
+    return "HP" + System.currentTimeMillis() + randomSuffix;
+  }
+
   /** 生成委托任务对外编号。 */
   private String nextHuntingTaskPublicId() {
     String randomSuffix = UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
@@ -1308,6 +1808,11 @@ public class ClientWorkspaceAppService {
     return requirementItems.isEmpty() ? "无特殊要求" : String.join("、", requirementItems);
   }
 
+  /** 清理用户输入文本，为空时返回空字符串。 */
+  private String clean(String value) {
+    return value == null ? "" : value.strip();
+  }
+
   /** 清理用户输入文本，为空时使用默认展示值。 */
   private String defaultText(String value, String fallback) {
     if (value == null || value.isBlank()) {
@@ -1324,6 +1829,13 @@ public class ClientWorkspaceAppService {
     }
 
     return value.substring(0, maxLength);
+  }
+
+  private record TutorDemandRow(
+      long id,
+      String publicId,
+      Long parentUserId
+  ) {
   }
 
   private record HuntingTaskRow(

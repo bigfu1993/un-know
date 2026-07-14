@@ -1,4 +1,3 @@
-import type { ClientOrder } from "@unknown/domain";
 
 /** 订单模块卡片展示的业务分类统计。 */
 export interface OrderModuleCounts {

@@ -1,5 +1,5 @@
 import { CheckCircle2, GraduationCap, Pencil, Plus, RefreshCw, Trash2, XCircle } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState } from "react";
 import { tutorSubjectOptions } from "@shared/tutorModel";
 import { normalizeByKey, validateByKey } from "@tools/validation";
 import { ScrollingTicker } from "@components/ScrollingTicker";

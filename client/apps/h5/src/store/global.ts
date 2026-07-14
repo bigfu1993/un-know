@@ -2,7 +2,7 @@ import { getStoredClientAuthSession, setStoredClientAuthSession, clearStoredClie
 import { accountStatusLabels, roleLabels } from "@unknown/domain";
 import { createContext, useContext } from "react";
 import { useStore } from "zustand";
-import { createStore, type StoreApi } from "zustand/vanilla";
+import { createStore } from "zustand/vanilla";
 import { getStoredProfileDraft, setStoredProfileDraft } from "@h5/shared/clientPageModel";
 
 export interface GlobalUser {
@@ -48,7 +48,8 @@ function buildGlobalUser(
     ? {
         ...profileDraft,
         tutorCertificationStatus: profile.tutorCertificationStatus,
-        huntingCertificationStatus: profile.huntingCertificationStatus
+        huntingCertificationStatus: profile.huntingCertificationStatus,
+        tutorExposureEnabled: profile.tutorExposureEnabled ? "true" : "false"
       }
     : profileDraft;
 

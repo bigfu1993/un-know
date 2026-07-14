@@ -7,6 +7,8 @@ import com.unknown.platform.modules.clientprofile.model.ClientAddressRequest;
 import com.unknown.platform.modules.clientprofile.model.ClientAddressResponse;
 import com.unknown.platform.modules.clientprofile.model.SubmitHuntingCertificationRequest;
 import com.unknown.platform.modules.clientprofile.model.SubmitHuntingCertificationResponse;
+import com.unknown.platform.modules.clientprofile.model.TutorExposureResponse;
+import com.unknown.platform.modules.clientprofile.model.UpdateTutorExposureRequest;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
@@ -202,6 +204,46 @@ public class ClientProfileAppService {
         userId
     );
     return new SubmitHuntingCertificationResponse("reviewing");
+  }
+
+  /**
+   * 切换学生家教资料公开状态，未通过家教认证时不允许开启。
+   *
+   * @param authorization 客户端登录访问令牌
+   * @param request 开关请求
+   * @return 最新开关状态
+   */
+  @Transactional
+  public TutorExposureResponse updateTutorExposure(String authorization, UpdateTutorExposureRequest request) {
+    long userId = clientSessionService.requireUserId(authorization);
+    ClientRole role = userRole(userId);
+    if (role != ClientRole.student) {
+      throw new BusinessException("TUTOR_EXPOSURE_STUDENT_ONLY", "仅学生账号可以开启家教资料公开");
+    }
+    if (request.enabled() && !hasNormalTutorCertification(userId)) {
+      throw new BusinessException("TUTOR_EXPOSURE_CERTIFICATION_REQUIRED", "家教认证通过后才能开启公开");
+    }
+
+    jdbcTemplate.update(
+        """
+            UPDATE app_user
+            SET tutor_exposure_enabled = ?,
+                updated_at = NOW()
+            WHERE id = ?
+            """,
+        request.enabled(),
+        userId
+    );
+    return new TutorExposureResponse(request.enabled());
+  }
+
+  private boolean hasNormalTutorCertification(long userId) {
+    List<Boolean> rows = jdbcTemplate.query(
+        "SELECT tutor_certification_status = 'normal' FROM app_user WHERE id = ?",
+        (rs, rowNum) -> rs.getBoolean(1),
+        userId
+    );
+    return !rows.isEmpty() && rows.get(0);
   }
 
   private List<ClientAddressResponse> addresses(long userId) {

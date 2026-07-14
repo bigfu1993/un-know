@@ -1,24 +1,24 @@
 import { useGlobalStore, useGlobalUser } from "@h5/store/global";
 import {
   useAcceptHuntingTask,
+  useApplyTutorTrial,
   useClientAddresses,
   useCreateClientAddress,
+  useCreateHuntingProject,
   useDecideHuntingTaskQuote,
   useHandleHuntingTaskFulfillmentAction,
   usePublishHuntingTask,
+  usePublishTutorDemand,
   useQuoteHuntingTask,
-  useUpdateClientAddress
+  useUpdateClientAddress,
+  useUpdateTutorExposure
 } from "@unknown/hooks";
-import type { HuntingCertificationStatus, HuntingTaskFulfillmentActionRequest } from "@unknown/domain";
 import { Banknote, MapPin, RadioTower } from "lucide-react";
 import { getHuntingCertificationDataFromDraft } from "@components/HuntingCertificationCard/model";
 import { HuntingProjectDialog } from "@components/HuntingProjectDialog";
 import { PublishInfoDialog } from "@components/PublishInfoDialog";
 import { TutorCalendarDialog } from "@components/TutorCalendar";
-import {
-  TutorCertificationInfoDialog,
-  type TutorCertificationInfoSaveMode
-} from "@components/TutorCertificationInfoDialog";
+import { TutorCertificationInfoDialog } from "@components/TutorCertificationInfoDialog";
 import { HuntingCertification } from "@pages/HuntingCertification";
 import { TutorCertification } from "@pages/Tutor/TutorCertification";
 import {
@@ -31,11 +31,10 @@ import {
 } from "@shared/clientPageModel";
 import {
   buildPublishHuntingTaskRequest,
-  getPublishDestinationLabel,
+  buildPublishTutorDemandRequest,
+  getLatestLocalPublishInfoDraft,
   isHuntingTaskPublishType,
-  saveLocalPublishInfoDraft,
-  type PublishInfoDraft,
-  type PublishInfoType
+  saveLocalPublishInfoDraft
 } from "@tools/publishInfo";
 import { getTutorCalendarTasks, getTutorDateKey } from "@tools/tutorCalendar";
 
@@ -356,13 +355,14 @@ export function App() {
   const [isTutorCertificationInfoOpen, setIsTutorCertificationInfoOpen] = useState(false);
   const [isPublishInfoOpen, setIsPublishInfoOpen] = useState(false);
   const [publishInfoInitialType, setPublishInfoInitialType] = useState<PublishInfoType>("delegation");
+  const [publishInfoInitialDraft, setPublishInfoInitialDraft] = useState<PublishInfoDraft | null>(null);
+  const [pendingPublishDraft, setPendingPublishDraft] = useState<LocalPublishInfoDraft | null>(null);
+  const [pendingPublishType, setPendingPublishType] = useState<PublishInfoType>("delegation");
   const [isHuntingProjectOpen, setIsHuntingProjectOpen] = useState(false);
   const [isHuntingRecommendationOpen, setIsHuntingRecommendationOpen] = useState(false);
   const [isHuntingShortcutEnabled, setIsHuntingShortcutEnabled] = useState(false);
   const [huntingShortcutProject, setHuntingShortcutProject] = useState<HuntingProject | null>(null);
   const [publishedHuntingTasks, setPublishedHuntingTasks] = useState<HuntingTask[]>([]);
-  const [publishedTutorOrders, setPublishedTutorOrders] = useState<ClientOrder[]>([]);
-  const [studentTutorOrders, setStudentTutorOrders] = useState<ClientOrder[]>([]);
   const [isTutorApplicationOpen, setIsTutorApplicationOpen] = useState(false);
   const avatarClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const avatarLastClickAt = useRef(0);
@@ -392,6 +392,10 @@ export function App() {
   } = useClientAddresses(isAuthenticated, user.session?.accessToken);
   const purchaseMutation = usePurchaseProduct();
   const publishHuntingTaskMutation = usePublishHuntingTask();
+  const publishTutorDemandMutation = usePublishTutorDemand();
+  const createHuntingProjectMutation = useCreateHuntingProject();
+  const applyTutorTrialMutation = useApplyTutorTrial();
+  const updateTutorExposureMutation = useUpdateTutorExposure();
   const acceptHuntingTaskMutation = useAcceptHuntingTask();
   const quoteHuntingTaskMutation = useQuoteHuntingTask();
   const decideHuntingTaskQuoteMutation = useDecideHuntingTaskQuote();
@@ -482,27 +486,46 @@ export function App() {
     setIsOngoingOpen(false);
   }
 
-  /** 创建狩猎项目并开启系统推荐，推荐数量由项目区域匹配任务池生成。 */
+  /** 创建狩猎项目并开启系统推荐，推荐数量由服务端根据动线匹配任务池生成。 */
   function handleCreateHuntingProject(draft: HuntingProjectDraft) {
-    const nextProject: HuntingProject = {
-      ...draft,
-      createdAt: new Date().toISOString(),
-      id: globalThis.crypto?.randomUUID?.() ?? `hunting_project_${Date.now()}`,
-      matchedTaskIds: [],
-      status: "matching"
-    };
+    createHuntingProjectMutation.mutate(
+      {
+        currentArea: draft.currentArea,
+        nextStops: draft.nextStops
+      },
+      {
+        onSuccess: (project) => {
+          const nextProject: HuntingProject = {
+            createdAt: new Date().toISOString(),
+            currentArea: project.currentArea,
+            id: project.id,
+            matchedTaskIds: [],
+            nextStops: project.nextStops.map((stop, index) => ({
+              ...stop,
+              id: `stop_${index}_${project.id}`,
+              inputMode: stop.inputMode === "custom" ? "custom" : "preset"
+            })),
+            status: project.status === "closed" ? "closed" : "matching"
+          };
 
-    setHuntingShortcutProject(nextProject);
-    setIsHuntingShortcutEnabled(true);
-    setIsHuntingProjectOpen(false);
-    setActiveTab("hunting");
-    setPageStack([]);
-    setIsOngoingOpen(false);
-    setIsMineOpen(false);
-    setIsProfileCompletionOpen(false);
-    closeTutorDialogs();
-    navigate(getRouteForTab("hunting"));
-    showMessage("狩猎项目已创建，系统将按动线推送推荐委托。", { type: "success" });
+          setHuntingShortcutProject(nextProject);
+          setIsHuntingShortcutEnabled(true);
+          setIsHuntingProjectOpen(false);
+          setActiveTab("hunting");
+          setPageStack([]);
+          setIsOngoingOpen(false);
+          setIsMineOpen(false);
+          setIsProfileCompletionOpen(false);
+          closeTutorDialogs();
+          navigate(getRouteForTab("hunting"));
+          showMessage(`狩猎项目已创建，系统匹配到 ${project.matchedCount} 个推荐委托。`, { type: "success" });
+          void refetchWorkspace();
+        },
+        onError: (error) => {
+          showMessage(getErrorMessage(error, "狩猎项目创建失败，请稍后重试。"), { type: "error" });
+        }
+      }
+    );
   }
 
   /** 关闭狩猎快捷推荐推送。 */
@@ -562,8 +585,6 @@ export function App() {
     setIsProfileCompletionOpen(false);
     setIsPublishInfoOpen(false);
     setPublishedHuntingTasks([]);
-    setPublishedTutorOrders([]);
-    setStudentTutorOrders([]);
     setIsTutorApplicationOpen(false);
     setIsHuntingShortcutEnabled(false);
     setHuntingShortcutProject(null);
@@ -588,8 +609,6 @@ export function App() {
     setIsProfileCompletionOpen(false);
     setIsPublishInfoOpen(false);
     setPublishedHuntingTasks([]);
-    setPublishedTutorOrders([]);
-    setStudentTutorOrders([]);
     setIsTutorApplicationOpen(false);
     setIsHuntingShortcutEnabled(false);
     setHuntingShortcutProject(null);
@@ -724,28 +743,42 @@ export function App() {
     closeHuntingShortcutDialogs();
   }
 
-  /** 打开发布信息弹窗。 */
-  function handleOpenPublishInfo() {
+  /** 按类型打开发布信息弹窗，打开前先检查本地草稿。 */
+  function requestOpenPublishInfo(type: PublishInfoType) {
     setIsMineOpen(false);
     setIsOngoingOpen(false);
     setIsQuickDockExpanded(true);
     setIsProfileCompletionOpen(false);
     closeTutorDialogs();
     closeHuntingShortcutDialogs();
-    setPublishInfoInitialType(role === "parent" ? "tutor" : "delegation");
+
+    const latestDraft = getLatestLocalPublishInfoDraft(type);
+    if (latestDraft) {
+      setPendingPublishDraft(latestDraft);
+      setPendingPublishType(type);
+      setIsPublishInfoOpen(false);
+      return;
+    }
+
+    openPublishInfo(type, null);
+  }
+
+  /** 使用指定草稿打开发布信息弹窗。 */
+  function openPublishInfo(type: PublishInfoType, draft: PublishInfoDraft | null) {
+    setPublishInfoInitialType(type);
+    setPublishInfoInitialDraft(draft);
+    setPendingPublishDraft(null);
     setIsPublishInfoOpen(true);
+  }
+
+  /** 打开发布信息弹窗。 */
+  function handleOpenPublishInfo() {
+    requestOpenPublishInfo(role === "parent" ? "tutor" : "delegation");
   }
 
   /** 打开回收发布弹窗，复用发布表单但固定为回收类型。 */
   function handleOpenRecycleInfo() {
-    setIsMineOpen(false);
-    setIsOngoingOpen(false);
-    setIsQuickDockExpanded(true);
-    setIsProfileCompletionOpen(false);
-    closeTutorDialogs();
-    closeHuntingShortcutDialogs();
-    setPublishInfoInitialType("recycle");
-    setIsPublishInfoOpen(true);
+    requestOpenPublishInfo("recycle");
   }
 
   /** 打开家教认证信息弹窗，供我的页面家教卡片查看和编辑。 */
@@ -762,16 +795,25 @@ export function App() {
   /** 切换家教资料公开状态，开启后允许家教认证信息被查看。 */
   function handleToggleTutorExposure() {
     const nextEnabled = user.profileDraft.tutorExposureEnabled !== "true";
-    const nextProfileDraft = {
-      ...user.profileDraft,
-      tutorExposureEnabled: nextEnabled ? "true" : "false"
-    };
+    updateTutorExposureMutation.mutate(nextEnabled, {
+      onSuccess: (response) => {
+        const nextProfileDraft = {
+          ...user.profileDraft,
+          tutorExposureEnabled: response.enabled ? "true" : "false"
+        };
 
-    setUserProfileDraft(nextProfileDraft);
-    setSavedProfileDraft(nextProfileDraft);
-    setProfileDraft(nextProfileDraft);
-    showMessage(nextEnabled ? "开启家教，认证信息可被查看，我的-家教卡片可修改信息。" : "已关闭家教资料公开。", {
-      type: "success"
+        setUserProfileDraft(nextProfileDraft);
+        setSavedProfileDraft(nextProfileDraft);
+        setProfileDraft(nextProfileDraft);
+        showMessage(response.enabled ? "开启家教，认证信息可被查看，我的-家教卡片可修改信息。" : "已关闭家教资料公开。", {
+          type: "success"
+        });
+        void refetchHome();
+        void refetchWorkspace();
+      },
+      onError: (error) => {
+        showMessage(getErrorMessage(error, "家教开关切换失败，请稍后重试。"), { type: "error" });
+      }
     });
   }
 
@@ -825,34 +867,22 @@ export function App() {
   /** 发布委托或回收任务；家教发布当前在 H5 侧进入进行中，后续接入真实接口。 */
   function handlePublishInfo(draft: PublishInfoDraft) {
     if (draft.type === "tutor") {
-      const childOptions = getChildProfileOptions(user.profileDraft);
-      const selectedChild = childOptions.find((child) => child.id === draft.childId);
-      const addressLabel = getPublishDestinationLabel(draft.addressId, publishAddressItems);
-      const order: ClientOrder = {
-        amount: 0,
-        amountLabel: draft.trialEnabled === "是" ? "支持试课" : "待议价",
-        canMessage: true,
-        canOpenTutorApplications: true,
-        category: "tutor",
-        contact: selectedChild ? `孩子：${selectedChild.name}` : "未指定孩子",
-        detail: `周期：${draft.tutorDateStart} 至 ${draft.tutorDateEnd} · 地址：${addressLabel} · 学科：${draft.tutorSubject || "待沟通"} · 要求：${draft.requirement || "暂无"}`,
-        id: `tutor_${Date.now()}`,
-        role,
-        status: "家教招募中",
-        title: draft.title.trim()
-      };
+      const payload = buildPublishTutorDemandRequest(draft, publishAddressItems, publishChildOptions);
 
-      try {
-        saveLocalPublishInfoDraft(draft, "published");
-        setPublishedTutorOrders((orders) => [order, ...orders]);
-        setIsPublishInfoOpen(false);
-        setActiveTab("tutor");
-        setPageStack([]);
-        navigate(getRouteForTab("tutor"));
-        showMessage("家教需求已发布，已加入进行中列表。", { type: "success" });
-      } catch {
-        showMessage("家教发布保存失败，请检查浏览器存储权限。", { type: "error" });
-      }
+      publishTutorDemandMutation.mutate(payload, {
+        onSuccess: () => {
+          saveLocalPublishInfoDraft(draft, "published");
+          setIsPublishInfoOpen(false);
+          setActiveTab("tutor");
+          setPageStack([]);
+          navigate(getRouteForTab("tutor"));
+          showMessage("家教需求已发布，已加入进行中列表。", { type: "success" });
+          void refetchWorkspace();
+        },
+        onError: (error) => {
+          showMessage(getErrorMessage(error, "家教发布失败，请稍后重试。"), { type: "error" });
+        }
+      });
       return;
     }
 
@@ -1033,29 +1063,21 @@ export function App() {
     showMessage(order.phoneNumber ? `联系电话：${order.phoneNumber}` : "暂无可用联系电话。", { type: "success" });
   }
 
-  /** 学生端提交家教试课申请，进入本地进行中列表。 */
+  /** 学生端提交家教试课申请，申请记录由服务端进入进行中列表。 */
   function handleApplyTutorTrial(job: TutorTrialJob) {
-    const order: ClientOrder = {
-      amount: 0,
-      amountLabel: job.budget,
-      canCall: true,
-      canMessage: true,
-      canOpenTrialSchedule: true,
-      canRejectTrial: true,
-      canAgreeTrial: true,
-      category: "tutor",
-      contact: job.publisher,
-      detail: `试课申请 · ${job.subject} · ${job.period} · ${job.address}`,
-      id: `trial_${job.id}_${Date.now()}`,
-      phoneNumber: job.parentPhone,
-      role,
-      status: "等待家长确认试课",
-      title: job.title
-    };
-
-    setStudentTutorOrders((orders) => [order, ...orders]);
-    setIsOngoingOpen(true);
-    showMessage("试课申请已提交，可在进行中查看状态。", { type: "success" });
+    applyTutorTrialMutation.mutate(
+      { demandId: job.id, message: "申请试课" },
+      {
+        onSuccess: () => {
+          setIsOngoingOpen(true);
+          showMessage("试课申请已提交，可在进行中查看状态。", { type: "success" });
+          void refetchWorkspace();
+        },
+        onError: (error) => {
+          showMessage(getErrorMessage(error, "试课申请提交失败，请稍后重试。"), { type: "error" });
+        }
+      }
+    );
   }
 
   /** 打开家长端试课申请选择弹窗。 */
@@ -1210,19 +1232,21 @@ export function App() {
       (task) => !publishedHuntingTasks.some((publishedTask) => publishedTask.id === task.id)
     )
   ];
-  const tutorTrialJobs: TutorTrialJob[] = workspaceData.tutorDemands.map((demand) => ({
-    address: demand.school,
-    budget: demand.budget,
-    description: `${demand.child} 需要 ${demand.subject} 家教，学校：${demand.school}`,
-    id: demand.id,
-    parentPhone: "家长电话待平台授权",
-    period: demand.status,
-    publisher: "家长用户",
-    requirement: `${demand.subject} · ${demand.school}`,
-    status: demand.status,
-    subject: demand.subject,
-    title: `${demand.child}${demand.subject}家教`
-  }));
+  const tutorTrialJobs: TutorTrialJob[] = workspaceData.tutorDemands
+    .filter((demand) => demand.sourceType !== "tutorStudent")
+    .map((demand) => ({
+      address: demand.addressLabel ?? demand.school,
+      budget: demand.budget,
+      description: demand.description ?? `${demand.child} 需要 ${demand.subject} 家教，学校：${demand.school}`,
+      id: demand.id,
+      parentPhone: demand.publisherPhone ?? "家长电话待平台授权",
+      period: demand.period ?? demand.status,
+      publisher: demand.publisherName ?? "家长用户",
+      requirement: `${demand.subject} · ${demand.school}`,
+      status: demand.status,
+      subject: demand.subject,
+      title: demand.title ?? `${demand.child}${demand.subject}家教`
+    }));
   const tutorApplicationCandidates: TutorApplicationCandidate[] = workspaceData.tutorDemands
     .flatMap((demand) => demand.applicants)
     .map((applicant) => ({
@@ -1234,8 +1258,6 @@ export function App() {
     }));
   const ongoingOrders = [
     ...getHuntingOngoingOrders(mergedHuntingTasks, role),
-    ...publishedTutorOrders.filter((order) => order.role === role),
-    ...studentTutorOrders.filter((order) => order.role === role),
     ...baseOngoingOrders
   ];
   const orderDetailOrders = [...getHuntingHistoryOrders(mergedHuntingTasks, role), ...roleOrders];
@@ -1657,12 +1679,56 @@ export function App() {
         />
       ) : null}
 
+
+      {pendingPublishDraft ? (
+        <section className="checkout-sheet" aria-label="使用发布草稿">
+          <div className="sheet-backdrop" onClick={() => setPendingPublishDraft(null)} />
+          <article className="sheet-panel mx-auto grid max-w-[420px] gap-[12px] p-[14px]">
+            <div className="card-title flex items-center justify-between gap-[10px]">
+              <ClipboardCheck size={18} />
+              <div>
+                <strong>检测到本地草稿</strong>
+                <span>是否使用上次保存的{pendingPublishDraft.type === "tutor" ? "家教" : pendingPublishDraft.type === "recycle" ? "回收" : "委托"}草稿？</span>
+              </div>
+              <button
+                aria-label="关闭"
+                className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
+                onClick={() => setPendingPublishDraft(null)}
+                type="button"
+              >
+                <XCircle size={20} />
+              </button>
+            </div>
+            <p className="text-[13px] leading-[1.6] text-[#657181]">
+              草稿标题：{pendingPublishDraft.title || "未填写标题"}，保存时间：{new Date(pendingPublishDraft.createdAt).toLocaleString()}
+            </p>
+            <div className="sheet-actions grid gap-[8px]">
+              <button
+                className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+                onClick={() => openPublishInfo(pendingPublishType, null)}
+                type="button"
+              >
+                不使用
+              </button>
+              <button
+                className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+                onClick={() => openPublishInfo(pendingPublishType, pendingPublishDraft)}
+                type="button"
+              >
+                使用草稿
+              </button>
+            </div>
+          </article>
+        </section>
+      ) : null}
+
       {isPublishInfoOpen ? (
         <PublishInfoDialog
           addressItems={publishAddressItems}
           childOptions={publishChildOptions}
+          initialDraft={publishInfoInitialDraft}
           initialType={publishInfoInitialType}
-          isPublishing={publishHuntingTaskMutation.isPending}
+          isPublishing={publishHuntingTaskMutation.isPending || publishTutorDemandMutation.isPending}
           onClose={() => setIsPublishInfoOpen(false)}
           onPublish={handlePublishInfo}
           onSave={handleSavePublishInfo}

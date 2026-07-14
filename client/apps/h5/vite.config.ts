@@ -30,17 +30,27 @@ export default defineConfig({
             "roleLabels"
           ],
           "@unknown/hooks": [
+            "useApplyTutorTrial",
+            "useChatConversations",
+            "useChatMessages",
+            "useChatQuickActions",
             "useClientAddresses",
             "useClientHome",
             "useClientLogin",
             "useClientRegister",
             "useClientWorkspace",
+            "useCreateChatConversation",
+            "useCreateChatQuickAction",
             "useCreateClientAddress",
+            "useCreateHuntingProject",
             "useDeleteClientAddress",
             "usePublishHuntingTask",
+            "usePublishTutorDemand",
             "useProducts",
             "usePurchaseProduct",
+            "useSendChatMessage",
             "useUpdateClientAddress",
+            "useUpdateTutorExposure",
             "useUseClientAddress"
           ],
           "lucide-react": [

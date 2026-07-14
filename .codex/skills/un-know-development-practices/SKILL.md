@@ -9,7 +9,7 @@ description: Frontend and backend development workflow for the un-know project. 
 
 1. Read `AGENTS.md` before making changes; it is the project-level source of truth.
 2. Keep product behavior synchronized with `docs/产品需求文档.md` whenever features, states, APIs, UI entries, validation, or copy changes.
-3. Prefer real API/database implementation. Use mock data or local cache only when explicitly requested and document the temporary boundary.
+3. Prefer real API/database implementation. For product features, complete database migration, backend API, shared domain type, api-client, hooks, H5 usage, and PRD update together; do not leave half frontend or half backend work unless the user explicitly scopes the change.
 4. Preserve user changes. Read files before editing and keep refactors scoped to the requested business area.
 
 ## Choose References
@@ -23,11 +23,12 @@ description: Frontend and backend development workflow for the un-know project. 
 1. Locate the current module owner: page/component/hook for H5, controller/application/model/migration for backend.
 2. Update code and comments together. Java uses JavaDoc; TypeScript/React uses TSDoc/JSDoc for exported or business-heavy units.
 3. Keep domain states centralized. Avoid scattering Chinese status strings across frontend and backend.
-4. Validate after changes:
+4. H5 reusable types live in `client/apps/h5/src/types` and are exposed through auto-import/global declarations; remove explicit type imports when a type is globally provided.
+5. Validate after changes:
    - H5: `cd client && npm run typecheck:h5 && npm run lint:h5`
    - Backend: `cd server && mvn -q -DskipTests compile`
    - Runtime when APIs or data changed: health check and at least one targeted real-interface flow.
-5. If backend behavior changed and a running server needs refresh, restart it unless the user explicitly asks not to.
+6. If backend behavior changed and a running server needs refresh, restart it unless the user explicitly asks not to.
 
 ## Completion Standard
 

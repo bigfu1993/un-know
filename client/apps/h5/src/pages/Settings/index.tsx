@@ -1,6 +1,6 @@
 import { useGlobalStore, useGlobalUser } from "@h5/store/global";
 import { AddressInfoForm } from "@components/AddressInfoForm";
-import { tutorCertificationStatusLabels, type TutorCertificationStatus } from "@components/TutorCard/model";
+import { tutorCertificationStatusLabels } from "@components/TutorCard/model";
 import {
   campusAreaOptions,
   clientAddressesToAddressBookItems,

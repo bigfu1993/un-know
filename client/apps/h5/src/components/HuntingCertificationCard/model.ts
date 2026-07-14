@@ -1,4 +1,3 @@
-import type { HuntingCertificationStatus } from "@unknown/domain";
 
 export type { HuntingCertificationStatus };
 

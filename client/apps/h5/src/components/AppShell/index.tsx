@@ -1,5 +1,4 @@
 import { useGlobalUser } from "@h5/store/global";
-import type { LucideIcon } from "lucide-react";
 import { HuntingCertificationCard } from "@components/HuntingCertificationCard";
 import {
   getHuntingCertificationCardMode,

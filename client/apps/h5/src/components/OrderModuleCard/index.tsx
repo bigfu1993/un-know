@@ -1,4 +1,3 @@
-import type { ClientOrder } from "@unknown/domain";
 import { ChevronRight, PackageCheck } from "lucide-react";
 import { getOrderModuleCounts } from "@components/OrderModuleCard/model";
 

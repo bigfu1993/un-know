@@ -25,7 +25,26 @@ public record ClientWorkspaceResponse(
       BigDecimal amount,
       String contact,
       String detail,
-      String risk
+      String risk,
+      String amountLabel,
+      String category,
+      String phoneNumber,
+      BigDecimal quoteAmount,
+      Integer quoteCount,
+      String quoteActionLabel,
+      String quoteId,
+      Boolean canCall,
+      Boolean canMessage,
+      Boolean canRequestCancel,
+      Boolean canRequestComplete,
+      Boolean canConfirmCancel,
+      Boolean canConfirmComplete,
+      Boolean canRepublish,
+      Boolean canAgreeTrial,
+      Boolean canOpenTrialResult,
+      Boolean canOpenTrialSchedule,
+      Boolean canOpenTutorApplications,
+      Boolean canRejectTrial
   ) {
   }
 
@@ -124,6 +143,13 @@ public record ClientWorkspaceResponse(
       String school,
       String budget,
       String status,
+      String title,
+      String description,
+      String addressLabel,
+      String period,
+      String publisherName,
+      String publisherPhone,
+      String sourceType,
       List<TutorApplicant> applicants
   ) {
   }

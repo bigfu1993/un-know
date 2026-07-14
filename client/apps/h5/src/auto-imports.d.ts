@@ -18,6 +18,7 @@ declare global {
   const BriefcaseBusiness: typeof import('lucide-react').BriefcaseBusiness
   const BrowserRouter: typeof import('react-router-dom').BrowserRouter
   const CalendarClock: typeof import('lucide-react').CalendarClock
+  const ChatModule: typeof import('./components/ChatModule/index').ChatModule
   const CheckCircle2: typeof import('lucide-react').CheckCircle2
   const CheckoutSheet: typeof import('./components/WorkflowDialogs/index').CheckoutSheet
   const ChevronRight: typeof import('lucide-react').ChevronRight
@@ -96,6 +97,7 @@ declare global {
   const addressInfoFields: typeof import('./shared/clientPageModel').addressInfoFields
   const addressInfoTemplate: typeof import('./shared/clientPageModel').addressInfoTemplate
   const buildPublishHuntingTaskRequest: typeof import('./tools/publishInfo').buildPublishHuntingTaskRequest
+  const buildPublishTutorDemandRequest: typeof import('./tools/publishInfo').buildPublishTutorDemandRequest
   const cache: typeof import('react').cache
   const cacheSignal: typeof import('react').cacheSignal
   const campusAreaOptions: typeof import('./shared/clientPageModel').campusAreaOptions
@@ -130,6 +132,7 @@ declare global {
   const getFilledProfileDraft: typeof import('./shared/clientPageModel').getFilledProfileDraft
   const getHuntingCertificationCardMode: typeof import('./components/HuntingCertificationCard/model').getHuntingCertificationCardMode
   const getHuntingCertificationDataFromDraft: typeof import('./components/HuntingCertificationCard/model').getHuntingCertificationDataFromDraft
+  const getLatestLocalPublishInfoDraft: typeof import('./tools/publishInfo').getLatestLocalPublishInfoDraft
   const getLocalPublishInfoDrafts: typeof import('./tools/publishInfo').getLocalPublishInfoDrafts
   const getOrderModuleCounts: typeof import('./components/OrderModuleCard/model').getOrderModuleCounts
   const getProductFilterLabel: typeof import('./shared/clientPageModel').getProductFilterLabel
@@ -201,14 +204,21 @@ declare global {
   const tutorSubjectOptions: typeof import('./shared/tutorModel').tutorSubjectOptions
   const use: typeof import('react').use
   const useActionState: typeof import('react').useActionState
+  const useApplyTutorTrial: typeof import('@unknown/hooks').useApplyTutorTrial
   const useCallback: typeof import('react').useCallback
+  const useChatConversations: typeof import('@unknown/hooks').useChatConversations
+  const useChatMessages: typeof import('@unknown/hooks').useChatMessages
+  const useChatQuickActions: typeof import('@unknown/hooks').useChatQuickActions
   const useClientAddresses: typeof import('@unknown/hooks').useClientAddresses
   const useClientHome: typeof import('@unknown/hooks').useClientHome
   const useClientLogin: typeof import('@unknown/hooks').useClientLogin
   const useClientRegister: typeof import('@unknown/hooks').useClientRegister
   const useClientWorkspace: typeof import('@unknown/hooks').useClientWorkspace
   const useContext: typeof import('react').useContext
+  const useCreateChatConversation: typeof import('@unknown/hooks').useCreateChatConversation
+  const useCreateChatQuickAction: typeof import('@unknown/hooks').useCreateChatQuickAction
   const useCreateClientAddress: typeof import('@unknown/hooks').useCreateClientAddress
+  const useCreateHuntingProject: typeof import('@unknown/hooks').useCreateHuntingProject
   const useDebugValue: typeof import('react').useDebugValue
   const useDeferredValue: typeof import('react').useDeferredValue
   const useDeleteClientAddress: typeof import('@unknown/hooks').useDeleteClientAddress
@@ -227,13 +237,16 @@ declare global {
   const useOptimistic: typeof import('react').useOptimistic
   const useProducts: typeof import('@unknown/hooks').useProducts
   const usePublishHuntingTask: typeof import('@unknown/hooks').usePublishHuntingTask
+  const usePublishTutorDemand: typeof import('@unknown/hooks').usePublishTutorDemand
   const usePurchaseProduct: typeof import('@unknown/hooks').usePurchaseProduct
   const useReducer: typeof import('react').useReducer
   const useRef: typeof import('react').useRef
+  const useSendChatMessage: typeof import('@unknown/hooks').useSendChatMessage
   const useState: typeof import('react').useState
   const useSyncExternalStore: typeof import('react').useSyncExternalStore
   const useTransition: typeof import('react').useTransition
   const useUpdateClientAddress: typeof import('@unknown/hooks').useUpdateClientAddress
+  const useUpdateTutorExposure: typeof import('@unknown/hooks').useUpdateTutorExposure
   const useUseClientAddress: typeof import('@unknown/hooks').useUseClientAddress
   const validateByKey: typeof import('./tools/validation').validateByKey
   const verifyLocalPasswordCredential: typeof import('./tools/localAuth').verifyLocalPasswordCredential
@@ -241,8 +254,65 @@ declare global {
 // for type re-export
 declare global {
   // @ts-ignore
-  export type { HuntingCertificationCardProps, HuntingCertificationCardMode, HuntingCertificationCardData, HuntingCertificationStatus, OrderModuleCardVariant, OrderModuleCardProps, OrderModuleCounts, PublishInfoDialogProps, ScrollingTickerDirection, ScrollingTickerProps, SummaryCardVariant, AccountSummaryCardProps, WalletSummaryCardProps, TutorCalendarTask, TutorCalendarDialogProps, TutorCardProps, TutorCardMode, TutorSubjectLevelItem, TutorCardData, TutorCertificationStatus, TutorCertificationInfoSaveMode, TutorCertificationInfoDialogProps, DelegationProps, StoredPasswordCredential, PasswordCredentialStore, PendingRegistrationRecord, PendingRegistrationStore, GlobalUser, GlobalStoreState, GlobalStoreApi, PublishInfoType, DelegationAmountMode, PublishInfoDraft, LocalPublishInfoDraft, ValidationResult, ValidationContext, WalletMonthOption, WalletMonthlySummary, PageSurface, AuthMode, LoginCredentialMode, ProductFilter, JobFilter, TutorSort, CheckoutState, LoginRegisterCardProps } from './types/auto-imports.d'
-  import('./types/auto-imports.d')
+  export type { ChatModuleProps } from './components/ChatModule/index'
+  import('./components/ChatModule/index')
+  // @ts-ignore
+  export type { HuntingCertificationCardProps } from './components/HuntingCertificationCard/index'
+  import('./components/HuntingCertificationCard/index')
+  // @ts-ignore
+  export type { HuntingCertificationCardMode, HuntingCertificationCardData, HuntingCertificationStatus } from './components/HuntingCertificationCard/model'
+  import('./components/HuntingCertificationCard/model')
+  // @ts-ignore
+  export type { OrderModuleCardVariant, OrderModuleCardProps } from './components/OrderModuleCard/index'
+  import('./components/OrderModuleCard/index')
+  // @ts-ignore
+  export type { OrderModuleCounts } from './components/OrderModuleCard/model'
+  import('./components/OrderModuleCard/model')
+  // @ts-ignore
+  export type { PublishInfoDialogProps } from './components/PublishInfoDialog/index'
+  import('./components/PublishInfoDialog/index')
+  // @ts-ignore
+  export type { ScrollingTickerDirection, ScrollingTickerProps } from './components/ScrollingTicker/index'
+  import('./components/ScrollingTicker/index')
+  // @ts-ignore
+  export type { SummaryCardVariant, AccountSummaryCardProps, WalletSummaryCardProps } from './components/SummaryCards/index'
+  import('./components/SummaryCards/index')
+  // @ts-ignore
+  export type { TutorCalendarTask, TutorCalendarDialogProps } from './components/TutorCalendar/index'
+  import('./components/TutorCalendar/index')
+  // @ts-ignore
+  export type { TutorCardProps } from './components/TutorCard/index'
+  import('./components/TutorCard/index')
+  // @ts-ignore
+  export type { TutorCardMode, TutorSubjectLevelItem, TutorCardData, TutorCertificationStatus } from './components/TutorCard/model'
+  import('./components/TutorCard/model')
+  // @ts-ignore
+  export type { TutorCertificationInfoSaveMode, TutorCertificationInfoDialogProps } from './components/TutorCertificationInfoDialog/index'
+  import('./components/TutorCertificationInfoDialog/index')
+  // @ts-ignore
+  export type { DelegationProps } from './pages/Delegation/index'
+  import('./pages/Delegation/index')
+  // @ts-ignore
+  export type { StoredPasswordCredential, PasswordCredentialStore, PendingRegistrationRecord, PendingRegistrationStore } from './shared/clientPageModel'
+  import('./shared/clientPageModel')
+  // @ts-ignore
+  export type { GlobalUser, GlobalStoreState, GlobalStoreApi } from './store/global'
+  import('./store/global')
+  // @ts-ignore
+  export type { PublishInfoType, DelegationAmountMode, PublishInfoDraft, LocalPublishInfoDraft } from './tools/publishInfo'
+  import('./tools/publishInfo')
+  // @ts-ignore
+  export type { ValidationResult, ValidationContext } from './tools/validation'
+  import('./tools/validation')
+  // @ts-ignore
+  export type { WalletMonthOption, WalletMonthlySummary } from './tools/wallet'
+  import('./tools/wallet')
+  // @ts-ignore
+  export type { PageSurface, AuthMode, LoginCredentialMode, ProductFilter, JobFilter, TutorSort, CheckoutState } from './types/app'
+  import('./types/app')
+  // @ts-ignore
+  export type { LoginRegisterCardProps } from './types/auth'
+  import('./types/auth')
   // @ts-ignore
   export type { HuntingAreaInputMode, HuntingProjectStop, HuntingProjectDraft, HuntingProject, HuntingProjectDialogProps } from './types/hunting-project'
   import('./types/hunting-project')

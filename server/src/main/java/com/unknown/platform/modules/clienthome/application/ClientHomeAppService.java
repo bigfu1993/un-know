@@ -44,7 +44,7 @@ public class ClientHomeAppService {
         profileSql("u.role = ?", "ORDER BY u.updated_at DESC, u.id DESC"),
         (rs, rowNum) -> mapRoleProfile(role, rs.getString("nickname"), rs.getString("account_label"),
             rs.getInt("credit_score"), rs.getLong("withdrawable_cents"), rs.getString("status"),
-            rs.getString("tutor_certification_status"), rs.getString("hunting_certification_status")),
+            rs.getString("tutor_certification_status"), rs.getString("hunting_certification_status"), rs.getBoolean("tutor_exposure_enabled")),
         role.name()
     );
   }
@@ -54,7 +54,7 @@ public class ClientHomeAppService {
         profileSql("u.id = ? AND u.role = ?", ""),
         (rs, rowNum) -> mapRoleProfile(role, rs.getString("nickname"), rs.getString("account_label"),
             rs.getInt("credit_score"), rs.getLong("withdrawable_cents"), rs.getString("status"),
-            rs.getString("tutor_certification_status"), rs.getString("hunting_certification_status")),
+            rs.getString("tutor_certification_status"), rs.getString("hunting_certification_status"), rs.getBoolean("tutor_exposure_enabled")),
         userId,
         role.name()
     );
@@ -65,6 +65,7 @@ public class ClientHomeAppService {
             SELECT u.nickname, u.account_label, u.credit_score, u.status,
                    COALESCE(u.tutor_certification_status, 'pending') AS tutor_certification_status,
                    COALESCE(u.hunting_certification_status, 'pending') AS hunting_certification_status,
+                   COALESCE(u.tutor_exposure_enabled, FALSE) AS tutor_exposure_enabled,
                    COALESCE(w.withdrawable_cents, 0) AS withdrawable_cents
             FROM app_user u
             LEFT JOIN wallet_account w ON w.user_id = u.id
@@ -82,7 +83,8 @@ public class ClientHomeAppService {
       long withdrawableCents,
       String status,
       String tutorCertificationStatus,
-      String huntingCertificationStatus
+      String huntingCertificationStatus,
+      boolean tutorExposureEnabled
   ) {
     return new RoleProfile(
         role,
@@ -92,7 +94,8 @@ public class ClientHomeAppService {
         balanceText(role, withdrawableCents),
         accountStatus(status),
         certificationStatus(tutorCertificationStatus),
-        certificationStatus(huntingCertificationStatus)
+        certificationStatus(huntingCertificationStatus),
+        tutorExposureEnabled
     );
   }
 

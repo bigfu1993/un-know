@@ -11,6 +11,7 @@ public record RoleProfile(
     String balanceText,
     String accountStatus,
     String tutorCertificationStatus,
-    String huntingCertificationStatus
+    String huntingCertificationStatus,
+    boolean tutorExposureEnabled
 ) {
 }

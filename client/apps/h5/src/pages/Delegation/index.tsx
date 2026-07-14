@@ -16,10 +16,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { ScrollingTicker } from "@components/ScrollingTicker";
-import {
-  huntingCertificationStatusLabels,
-  type HuntingCertificationStatus
-} from "@components/HuntingCertificationCard/model";
+import { huntingCertificationStatusLabels } from "@components/HuntingCertificationCard/model";
 import { formatCurrency } from "@shared/clientPageModel";
 
 /** 委托任务排序方式。 */
@@ -622,7 +619,7 @@ export function Delegation({
               <ShieldAlert size={18} />
               <div>
                 <strong>需要完成狩猎认证</strong>
-                <span>当前状态：{huntingCertificationStatusLabels[huntingCertificationStatus]}</span>
+                <span>当前状态：{huntingCertificationStatusLabels[huntingCertificationStatus as keyof typeof huntingCertificationStatusLabels]}</span>
               </div>
               <button
                 aria-label="关闭"

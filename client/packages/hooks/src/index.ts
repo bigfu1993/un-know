@@ -1,38 +1,56 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   acceptHuntingTask,
+  applyTutorTrial,
   confirmHuntingTaskQuote,
+  confirmTutorTrial,
+  createChatConversation,
+  createChatQuickAction,
+  createHuntingProject,
   createClientAddress,
   decideHuntingTaskQuote,
   deleteClientAddress,
   getClientAddresses,
   getClientHome,
+  getChatConversations,
+  getChatMessages,
+  getChatQuickActions,
   getClientWorkspace,
   getProducts,
   handleHuntingTaskFulfillmentAction,
   loginClient,
   miniappOneTapLogin,
   publishHuntingTask,
+  publishTutorDemand,
   purchaseProduct,
   quoteHuntingTask,
   registerClient,
   selectClientRole,
+  sendChatMessage,
   submitHuntingCertification,
   updateClientAddress,
+  updateTutorExposure,
   useClientAddress
 } from "@unknown/api-client";
 import {
+  ApplyTutorTrialRequest,
+  ChatQuickActionRequest,
+  ConfirmTutorTrialRequest,
+  CreateChatConversationRequest,
+  CreateHuntingProjectRequest,
   ClientAddressRequest,
   HuntingQuoteDecisionRequest,
   HuntingTaskFulfillmentActionRequest,
   LoginRequest,
   MiniappOneTapLoginRequest,
   PublishHuntingTaskRequest,
+  PublishTutorDemandRequest,
   PurchaseRequest,
   QuoteHuntingTaskRequest,
   RegisterRequest,
   Role,
   SelectRoleRequest,
+  SendChatMessageRequest,
   SubmitHuntingCertificationRequest
 } from "@unknown/domain";
 
@@ -181,6 +199,68 @@ export function useHandleHuntingTaskFulfillmentAction() {
   });
 }
 
+export function useCreateHuntingProject() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateHuntingProjectRequest) => createHuntingProject(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["client-workspace"] });
+    }
+  });
+}
+
+export function usePublishTutorDemand() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: PublishTutorDemandRequest) => publishTutorDemand(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["client-workspace"] });
+    }
+  });
+}
+
+export function useApplyTutorTrial() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: ApplyTutorTrialRequest & { demandId: string }) => {
+      const { demandId, ...request } = payload;
+      return applyTutorTrial(demandId, request);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["client-workspace"] });
+    }
+  });
+}
+
+export function useConfirmTutorTrial() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: ConfirmTutorTrialRequest & { applicationId: string; demandId: string }) => {
+      const { applicationId, demandId, ...request } = payload;
+      return confirmTutorTrial(demandId, applicationId, request);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["client-workspace"] });
+    }
+  });
+}
+
+export function useUpdateTutorExposure() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (enabled: boolean) => updateTutorExposure(enabled),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["client-home"] });
+      void queryClient.invalidateQueries({ queryKey: ["client-workspace"] });
+    }
+  });
+}
+
 export function useCreateClientAddress() {
   const queryClient = useQueryClient();
 
@@ -231,5 +311,66 @@ export function useDeleteClientAddress() {
 export function useSubmitHuntingCertification() {
   return useMutation({
     mutationFn: (payload: SubmitHuntingCertificationRequest) => submitHuntingCertification(payload)
+  });
+}
+
+export function useChatConversations(enabled = true) {
+  return useQuery({
+    queryKey: ["client-chat", "conversations"],
+    queryFn: getChatConversations,
+    enabled
+  });
+}
+
+export function useChatMessages(conversationId: string | null, enabled = true) {
+  return useQuery({
+    queryKey: ["client-chat", "messages", conversationId],
+    queryFn: () => getChatMessages(conversationId ?? ""),
+    enabled: enabled && Boolean(conversationId)
+  });
+}
+
+export function useChatQuickActions(enabled = true) {
+  return useQuery({
+    queryKey: ["client-chat", "quick-actions"],
+    queryFn: getChatQuickActions,
+    enabled
+  });
+}
+
+export function useCreateChatConversation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateChatConversationRequest) => createChatConversation(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["client-chat", "conversations"] });
+    }
+  });
+}
+
+export function useSendChatMessage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: SendChatMessageRequest & { conversationId: string }) => {
+      const { conversationId, ...message } = payload;
+      return sendChatMessage(conversationId, message);
+    },
+    onSuccess: (_message, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ["client-chat", "conversations"] });
+      void queryClient.invalidateQueries({ queryKey: ["client-chat", "messages", variables.conversationId] });
+    }
+  });
+}
+
+export function useCreateChatQuickAction() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: ChatQuickActionRequest) => createChatQuickAction(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["client-chat", "quick-actions"] });
+    }
   });
 }

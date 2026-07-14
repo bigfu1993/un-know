@@ -1,8 +1,17 @@
 import {
+  ApplyTutorTrialRequest,
+  ChatConversation,
+  ChatMessage,
+  ChatQuickAction,
+  ChatQuickActionRequest,
   ClientAddress,
   ClientAddressRequest,
   ClientHomePayload,
   ClientWorkspacePayload,
+  ConfirmTutorTrialRequest,
+  CreateChatConversationRequest,
+  CreateHuntingProjectRequest,
+  HuntingProjectResponse,
   LoginRequest,
   LoginResponse,
   MiniappOneTapLoginRequest,
@@ -11,14 +20,18 @@ import {
   HuntingTask,
   ProductSummary,
   PublishHuntingTaskRequest,
+  PublishTutorDemandRequest,
   PurchaseRequest,
   PurchaseResponse,
   QuoteHuntingTaskRequest,
   RegisterRequest,
   Role,
   SelectRoleRequest,
+  SendChatMessageRequest,
   SubmitHuntingCertificationRequest,
-  SubmitHuntingCertificationResponse
+  SubmitHuntingCertificationResponse,
+  TutorDemand,
+  TutorExposureResponse
 } from "@unknown/domain";
 
 type ApiEnvelope<T> = {
@@ -315,6 +328,82 @@ export async function submitHuntingCertification(
   payload: SubmitHuntingCertificationRequest
 ): Promise<SubmitHuntingCertificationResponse> {
   return requestJson<SubmitHuntingCertificationResponse>("/api/client/profile/hunting-certification", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+
+export async function updateTutorExposure(enabled: boolean): Promise<TutorExposureResponse> {
+  return requestJson<TutorExposureResponse>("/api/client/profile/tutor-exposure", {
+    method: "PUT",
+    body: JSON.stringify({ enabled })
+  });
+}
+
+export async function createHuntingProject(payload: CreateHuntingProjectRequest): Promise<HuntingProjectResponse> {
+  return requestJson<HuntingProjectResponse>("/api/client/workspace/hunting-projects", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function publishTutorDemand(payload: PublishTutorDemandRequest): Promise<TutorDemand> {
+  return requestJson<TutorDemand>("/api/client/workspace/tutor-demands", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function applyTutorTrial(demandId: string, payload: ApplyTutorTrialRequest): Promise<TutorDemand> {
+  return requestJson<TutorDemand>(`/api/client/workspace/tutor-demands/${encodeURIComponent(demandId)}/applications`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function confirmTutorTrial(
+  demandId: string,
+  applicationId: string,
+  payload: ConfirmTutorTrialRequest
+): Promise<TutorDemand> {
+  return requestJson<TutorDemand>(
+    `/api/client/workspace/tutor-demands/${encodeURIComponent(demandId)}/applications/${encodeURIComponent(applicationId)}/trial`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }
+  );
+}
+
+export async function getChatConversations(): Promise<ChatConversation[]> {
+  return requestJson<ChatConversation[]>("/api/client/chat/conversations");
+}
+
+export async function createChatConversation(payload: CreateChatConversationRequest): Promise<ChatConversation> {
+  return requestJson<ChatConversation>("/api/client/chat/conversations", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function getChatMessages(conversationId: string): Promise<ChatMessage[]> {
+  return requestJson<ChatMessage[]>(`/api/client/chat/conversations/${encodeURIComponent(conversationId)}/messages`);
+}
+
+export async function sendChatMessage(conversationId: string, payload: SendChatMessageRequest): Promise<ChatMessage> {
+  return requestJson<ChatMessage>(`/api/client/chat/conversations/${encodeURIComponent(conversationId)}/messages`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function getChatQuickActions(): Promise<ChatQuickAction[]> {
+  return requestJson<ChatQuickAction[]>("/api/client/chat/quick-actions");
+}
+
+export async function createChatQuickAction(payload: ChatQuickActionRequest): Promise<ChatQuickAction> {
+  return requestJson<ChatQuickAction>("/api/client/chat/quick-actions", {
     method: "POST",
     body: JSON.stringify(payload)
   });

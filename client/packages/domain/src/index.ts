@@ -50,6 +50,7 @@ export interface RoleProfile {
   accountStatus: AccountStatus;
   tutorCertificationStatus: TutorCertificationStatus;
   huntingCertificationStatus: HuntingCertificationStatus;
+  tutorExposureEnabled: boolean;
 }
 
 export interface ClientHomePayload {
@@ -308,7 +309,129 @@ export interface TutorDemand {
   school: string;
   budget: string;
   status: string;
+  title?: string;
+  description?: string;
+  addressLabel?: string;
+  period?: string;
+  publisherName?: string;
+  publisherPhone?: string;
+  sourceType?: "tutorDemand" | "tutorStudent";
   applicants: TutorApplicant[];
+}
+
+/** 家长发布家教需求请求。 */
+export interface PublishTutorDemandRequest {
+  title: string;
+  description?: string;
+  subject: string;
+  addressId: string;
+  addressLabel: string;
+  childId?: string;
+  childName?: string;
+  periodStart: string;
+  periodEnd: string;
+  trialEnabled?: boolean;
+  trialDuration?: string;
+  wageMode?: string;
+  schoolTags?: string[];
+  requirement?: string;
+}
+
+/** 学生申请家教试课请求。 */
+export interface ApplyTutorTrialRequest {
+  message?: string;
+}
+
+/** 家长确认家教试课安排请求。 */
+export interface ConfirmTutorTrialRequest {
+  trialStart: string;
+  trialEnd: string;
+  trialHalfDay: string;
+}
+
+/** 家教公开开关响应。 */
+export interface TutorExposureResponse {
+  enabled: boolean;
+}
+
+/** 狩猎项目下一站。 */
+export interface HuntingProjectStopPayload {
+  inputMode: "select" | "custom" | string;
+  area: string;
+  customArea: string;
+  etaStart: string;
+  etaEnd: string;
+}
+
+/** 创建狩猎项目请求。 */
+export interface CreateHuntingProjectRequest {
+  currentArea: string;
+  nextStops: HuntingProjectStopPayload[];
+}
+
+/** 狩猎项目响应。 */
+export interface HuntingProjectResponse {
+  id: string;
+  currentArea: string;
+  status: string;
+  matchedCount: number;
+  nextStops: HuntingProjectStopPayload[];
+}
+
+/** 聊天会话摘要。 */
+export interface ChatConversation {
+  id: string;
+  peerName: string;
+  title: string;
+  relatedBizType?: string;
+  relatedBizId?: string;
+  lastMessage: string;
+  updatedAt: string;
+  unreadCount: number;
+}
+
+/** 聊天消息，支持文本、进行中卡片和订单卡片。 */
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  mine: boolean;
+  senderName: string;
+  messageType: "text" | "order" | "ongoing" | string;
+  content: string;
+  relatedCardType?: string;
+  relatedCardId?: string;
+  createdAt: string;
+}
+
+/** 聊天快捷按钮。 */
+export interface ChatQuickAction {
+  id: string;
+  label: string;
+  content: string;
+  sortOrder: number;
+}
+
+/** 创建或复用聊天会话请求。 */
+export interface CreateChatConversationRequest {
+  peerUserId: string;
+  title?: string;
+  relatedBizType?: string;
+  relatedBizId?: string;
+}
+
+/** 发送聊天消息请求。 */
+export interface SendChatMessageRequest {
+  content: string;
+  messageType?: "text" | "order" | "ongoing" | string;
+  relatedCardType?: string;
+  relatedCardId?: string;
+}
+
+/** 新增聊天快捷按钮请求。 */
+export interface ChatQuickActionRequest {
+  label: string;
+  content: string;
+  sortOrder?: number;
 }
 
 export interface MerchantDashboard {

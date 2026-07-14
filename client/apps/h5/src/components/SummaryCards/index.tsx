@@ -1,5 +1,4 @@
 import { ChevronRight, UserRound, WalletCards } from "lucide-react";
-import type { ReactNode } from "react";
 import { formatCompactWalletAmount, getWalletTotalAmount, parseWalletBucketAmount } from "@tools/wallet";
 
 /** 账户卡和钱包卡共用的展示密度。 */

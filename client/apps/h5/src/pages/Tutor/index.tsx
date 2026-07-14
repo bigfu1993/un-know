@@ -2,10 +2,12 @@
 export function Tutor({ tutorDemands }: { tutorDemands: TutorDemand[] }) {
   const [tutorSort, setTutorSort] = useState<TutorSort>("recommended");
 
+  const visibleTutorStudents = tutorDemands.filter((demand) => demand.sourceType !== "tutorDemand");
+
   return (
     <section className="module-stack grid gap-[10px]">
       <SectionHeader
-        countText="1 个需求"
+        countText={`${visibleTutorStudents.length} 个学生`}
         eyebrow="按学校、学科筛选，按收藏、受聘次数、系统推荐、可兼职时长排序"
         title="家教招募"
       />
@@ -28,7 +30,7 @@ export function Tutor({ tutorDemands }: { tutorDemands: TutorDemand[] }) {
         </div>
         <p>发布时选择孩子档案，强校验年级和科目；可填写是否试课、试课时长和试课费用。</p>
       </article>
-      {tutorDemands.map((demand) => (
+      {visibleTutorStudents.map((demand) => (
         <article className="flow-card p-[14px]" key={demand.id}>
           <div className="card-title flex items-center justify-between gap-[10px]">
             <GraduationCap size={18} />

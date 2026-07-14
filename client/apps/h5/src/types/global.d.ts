@@ -5,13 +5,18 @@ declare global {
   type ReactNode = import("react").ReactNode;
   type CSSProperties = import("react").CSSProperties;
   type LucideIcon = import("lucide-react").LucideIcon;
+  type StoreApi<T> = import("zustand/vanilla").StoreApi<T>;
 
   type ClientOrder = import("@unknown/domain").ClientOrder;
   type ClientModuleKey = import("@unknown/domain").ClientModuleKey;
   type DeliveryMode = import("@unknown/domain").DeliveryMode;
   type HuntingSummary = import("@unknown/domain").HuntingSummary;
   type HuntingQuote = import("@unknown/domain").HuntingQuote;
+  type HuntingCertificationStatus = import("@unknown/domain").HuntingCertificationStatus;
   type HuntingTask = import("@unknown/domain").HuntingTask;
+  type HuntingTaskFulfillmentActionRequest = import("@unknown/domain").HuntingTaskFulfillmentActionRequest;
+  type PublishHuntingTaskRequest = import("@unknown/domain").PublishHuntingTaskRequest;
+  type PublishTutorDemandRequest = import("@unknown/domain").PublishTutorDemandRequest;
   type LoginResponse = import("@unknown/domain").LoginResponse;
   type MerchantDashboard = import("@unknown/domain").MerchantDashboard;
   type MerchantProduct = import("@unknown/domain").MerchantProduct;
@@ -20,6 +25,11 @@ declare global {
   type ProductSummary = import("@unknown/domain").ProductSummary;
   type Role = import("@unknown/domain").Role;
   type TutorDemand = import("@unknown/domain").TutorDemand;
+  type TutorApplicant = import("@unknown/domain").TutorApplicant;
+  type TutorExposureResponse = import("@unknown/domain").TutorExposureResponse;
+  type ChatConversation = import("@unknown/domain").ChatConversation;
+  type ChatMessage = import("@unknown/domain").ChatMessage;
+  type ChatQuickAction = import("@unknown/domain").ChatQuickAction;
   type WalletRecord = import("@unknown/domain").WalletRecord;
   type WalletSummary = import("@unknown/domain").WalletSummary;
 
@@ -54,7 +64,17 @@ declare global {
   type HuntingProject = import("@app-types/hunting-project").HuntingProject;
   type HuntingProjectDialogProps = import("@app-types/hunting-project").HuntingProjectDialogProps;
 
+  type PublishInfoType = import("@tools/publishInfo").PublishInfoType;
+  type DelegationAmountMode = import("@tools/publishInfo").DelegationAmountMode;
+  type PublishInfoDraft = import("@tools/publishInfo").PublishInfoDraft;
+  type LocalPublishInfoDraft = import("@tools/publishInfo").LocalPublishInfoDraft;
+
   type ChildProfileOption = import("@app-types/tutor-workflow").ChildProfileOption;
   type TutorTrialJob = import("@app-types/tutor-workflow").TutorTrialJob;
   type TutorApplicationCandidate = import("@app-types/tutor-workflow").TutorApplicationCandidate;
+  type TutorCalendarTask = import("@components/TutorCalendar").TutorCalendarTask;
+  type TutorCardData = import("@components/TutorCard/model").TutorCardData;
+  type TutorCardMode = import("@components/TutorCard/model").TutorCardMode;
+  type TutorCertificationStatus = import("@unknown/domain").TutorCertificationStatus;
+  type TutorCertificationInfoSaveMode = import("@components/TutorCertificationInfoDialog").TutorCertificationInfoSaveMode;
 }

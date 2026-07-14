@@ -1,18 +1,16 @@
 import { BriefcaseBusiness, CheckCircle2, GraduationCap, PackageCheck, Plus, XCircle } from "lucide-react";
-import type { FormEvent } from "react";
 import { tutorSubjectOptions } from "@shared/tutorModel";
 import {
   delegationRequirementTags,
   isNegotiableAmount,
-  isPositiveAmount,
-  type PublishInfoDraft,
-  type PublishInfoType
+  isPositiveAmount
 } from "@tools/publishInfo";
 
 /** 发布信息弹窗属性。 */
 export interface PublishInfoDialogProps {
   addressItems: AddressBookItem[];
   childOptions?: ChildProfileOption[];
+  initialDraft?: PublishInfoDraft | null;
   initialType?: PublishInfoType;
   isPublishing?: boolean;
   onClose: () => void;
@@ -114,6 +112,7 @@ function getPublishFormValid(draft: PublishInfoDraft) {
 export function PublishInfoDialog({
   addressItems,
   childOptions = [],
+  initialDraft = null,
   initialType = "delegation",
   isPublishing = false,
   onClose,
@@ -129,9 +128,10 @@ export function PublishInfoDialog({
         : publishTypeOptions.filter((option) => !option.parentOnly);
   const [draft, setDraft] = useState<PublishInfoDraft>(() => ({
     ...initialPublishInfoDraft,
-    addressId: addressItems.find((item) => item.isCurrent)?.id ?? addressItems[0]?.id ?? "",
-    childId: childOptions[0]?.id ?? "",
-    type: role === "parent" && initialType !== "recycle" ? "tutor" : initialType
+    ...(initialDraft ?? {}),
+    addressId: initialDraft?.addressId || addressItems.find((item) => item.isCurrent)?.id || addressItems[0]?.id || "",
+    childId: initialDraft?.childId || childOptions[0]?.id || "",
+    type: initialDraft?.type ?? (role === "parent" && initialType !== "recycle" ? "tutor" : initialType)
   }));
   const isFormValid = getPublishFormValid(draft);
   const selectedType = availablePublishTypeOptions.find((option) => option.value === draft.type) ?? availablePublishTypeOptions[0];

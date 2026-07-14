@@ -6,6 +6,8 @@ import com.unknown.platform.modules.clientprofile.model.ClientAddressRequest;
 import com.unknown.platform.modules.clientprofile.model.ClientAddressResponse;
 import com.unknown.platform.modules.clientprofile.model.SubmitHuntingCertificationRequest;
 import com.unknown.platform.modules.clientprofile.model.SubmitHuntingCertificationResponse;
+import com.unknown.platform.modules.clientprofile.model.TutorExposureResponse;
+import com.unknown.platform.modules.clientprofile.model.UpdateTutorExposureRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -103,6 +105,21 @@ public class ClientProfileController {
       @PathVariable String addressId
   ) {
     return ApiResponse.ok(clientProfileAppService.deleteAddress(authorization, addressId));
+  }
+
+  /**
+   * 切换家教资料公开状态，开启后家长端可以看到该学生的家教信息。
+   *
+   * @param authorization 登录访问令牌
+   * @param request 开关状态
+   * @return 最新开关状态
+   */
+  @PutMapping("/tutor-exposure")
+  public ApiResponse<TutorExposureResponse> updateTutorExposure(
+      @RequestHeader(value = "Authorization", required = false) String authorization,
+      @RequestBody UpdateTutorExposureRequest request
+  ) {
+    return ApiResponse.ok(clientProfileAppService.updateTutorExposure(authorization, request));
   }
 
   /**

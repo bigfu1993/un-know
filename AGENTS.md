@@ -53,7 +53,8 @@
 
 - 技术栈：Java 21、Spring Boot、Maven、PostgreSQL、Flyway。
 - 后端开发默认遵循项目内 skill：`.codex/skills/un-know-development-practices/SKILL.md`；每次开始较大前后端或后端结构调整前，先读取该 skill 与本规范。
-- 新增或调整业务功能时，默认使用后端接口和数据库实现闭环；除非用户明确要求临时方案，不使用 mock 数据、本地缓存或纯前端假状态承接真实业务流程。
+- 新增或调整业务功能时，必须按完整闭环开发：数据库迁移、后端接口、共享 domain 类型、api-client、hooks、H5 页面/组件和产品需求文档同步完成；除非用户明确只要求视觉或纯 H5 静态调整，不允许只做前端或只做后端。
+- 前后端同时涉及的能力不得以 mock 数据、本地缓存或纯前端假状态替代真实业务流程；确需临时方案时必须先说明边界，并在 PRD 与代码注释中标明待接接口。
 - 确需临时使用 mock 数据或本地缓存时，必须在代码注释或对应文档中标明临时原因、影响范围和后续迁移到接口的待办。
 - 本地联调验证码固定为 `000000`。
 - 登录接口只提交手机号和验证码，由后端识别账号。
@@ -64,12 +65,13 @@
 
 ## H5 前端规范
 
-- 第一阶段调整仅修改 H5 代码；除非用户明确要求，不修改后端、小程序、admin、共享包或数据库迁移。
+- 第一阶段功能调整默认以 H5 + 共享包 + 后端接口 + 数据库迁移的闭环为准；只有样式、文案、组件重排等明确不涉及服务端状态的调整，才可以仅修改 H5。
 - 技术栈：React、TypeScript、Vite。
 - H5 必须配置并使用全局别名引用源码目录：`@h5`、`@components`、`@pages`、`@shared`、`@store`、`@tools`、`@app-types`；业务源码中不得继续新增跨目录相对路径引用，生成文件除外。
 - H5 业务 TypeScript 类型必须集中维护在 `client/apps/h5/src/types` 目录；页面和组件内只保留局部不可复用类型，共享类型不得散落在业务组件内。
 - H5 类型通过 `unplugin-auto-import` 生成声明和 `src/types/global.d.ts` 暴露给业务代码；自动导入生成文件固定为 `client/apps/h5/src/auto-imports.d.ts`，不得放入 `src/types` 避免被当作业务类型反向扫描。
 - 新增类型文件后必须同步更新 `src/types/global.d.ts` 或确认 auto-import 生成声明包含该类型，避免业务代码隐式依赖失效。
+- 已被 `unplugin-auto-import` 或 `src/types/global.d.ts` 覆盖的 TypeScript 类型，不得在 H5 页面、组件和工具文件中继续显式 `import type` 或 `, type` 导入；只保留确实无法全局声明的局部类型。
 - `pages` 目录按业务模块组织；同一业务域的主页面、子页面和流程页应收敛到同一目录，例如 `pages/Tutor/index.tsx` 与 `pages/Tutor/TutorCertification.tsx`，避免在 `pages` 根部平铺孤立的同域页面。
 - 与页面业务无关、可复用的纯计算工具应放入 `client/apps/h5/src/tools/*.ts`，例如金额格式化、月份计算、日期 key 生成、日历任务映射和字段校验；页面与组件内不保留可复用工具函数。
 - 页面组件负责业务编排，通用组件负责展示；组件需要数据时通过 props 传入，不直接读取全局用户资料或自行拼装业务数据。

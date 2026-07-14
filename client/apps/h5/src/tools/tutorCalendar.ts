@@ -1,4 +1,3 @@
-import type { TutorCalendarTask } from "@components/TutorCalendar";
 import { parseTutorSubjects } from "@shared/tutorModel";
 
 /** 获取家教日历使用的日期字符串。 */
