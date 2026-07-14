@@ -24,6 +24,7 @@ import { useCheckoutFlow } from "@h5/hooks/useCheckoutFlow";
 import { useClientWorkspaceViewModel } from "@h5/hooks/useClientWorkspaceViewModel";
 import { useOverlayController } from "@h5/hooks/useOverlayController";
 import { useProfileCompletionFlow } from "@h5/hooks/useProfileCompletionFlow";
+import { usePrimaryTabWorkspaceRefresh } from "@h5/hooks/usePrimaryTabWorkspaceRefresh";
 import { usePublishInfoFlow } from "@h5/hooks/usePublishInfoFlow";
 import { useRootNavigation } from "@h5/hooks/useRootNavigation";
 import { HuntingRecommendationDialog } from "@pages/Delegation/components/HuntingRecommendationDialog";
@@ -293,6 +294,15 @@ export function App() {
   const refreshWorkspace = useCallback(() => {
     void refetchWorkspace();
   }, [refetchWorkspace]);
+  usePrimaryTabWorkspaceRefresh({
+    activePage,
+    activeTab,
+    isAuthenticated,
+    isMineRoute,
+    isSettingsRoute,
+    isWorkspaceFetching,
+    refetchWorkspace: refreshWorkspace
+  });
 
   function handleOpenHuntingShortcut() {
     if (isHuntingShortcutEnabled) {
