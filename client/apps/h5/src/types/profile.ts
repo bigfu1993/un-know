@@ -51,23 +51,3 @@ export interface AddressInfoFormProps {
   previewVariant?: AddressInfoPreviewVariant;
 }
 
-/** 注册后资料表单属性，包含必填密码设置。 */
-export interface RegistrationProfileCompletionProps {
-  areaOptions: string[];
-  birthday: string;
-  draft: RegistrationProfileDraft;
-  isSubmitting?: boolean;
-  nickname: string;
-  password: string;
-  passwordConfirm: string;
-  onChange: (key: string, value: string) => void;
-  onBack: () => void;
-  onBirthdayChange: (birthday: string) => void;
-  onNicknameChange: (nickname: string) => void;
-  onPasswordChange: (password: string) => void;
-  onPasswordConfirmChange: (passwordConfirm: string) => void;
-  onSubmit: () => void;
-  role: Role;
-  roleLabel: string;
-  template: RegistrationProfileTemplate;
-}

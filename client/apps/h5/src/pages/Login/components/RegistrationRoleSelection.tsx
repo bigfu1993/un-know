@@ -6,7 +6,7 @@ const registrationRoleIcons = {
 } satisfies Record<Role, LucideIcon>;
 
 /** 注册成功后立即展示的强制角色选择面板。 */
-export function RegistrationRoleSelection({ isPending, onBack, onSelect }: RegistrationRoleSelectionProps) {
+export function RegistrationRoleSelection({ onBack, onSelect }: RegistrationRoleSelectionProps) {
   return (
     <section className="login-card registration-role-card grid w-full min-w-0 gap-[12px] p-[16px]">
       <div className="card-title flex min-w-0 items-center justify-start gap-[10px]">
@@ -24,7 +24,6 @@ export function RegistrationRoleSelection({ isPending, onBack, onSelect }: Regis
           return (
             <button
               className="registration-role-option grid min-w-0 items-center gap-[10px] p-[12px] text-left"
-              disabled={isPending}
               key={item}
               onClick={() => onSelect(item)}
               type="button"
@@ -47,7 +46,6 @@ export function RegistrationRoleSelection({ isPending, onBack, onSelect }: Regis
 
       <button
         className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
-        disabled={isPending}
         onClick={onBack}
         type="button"
       >

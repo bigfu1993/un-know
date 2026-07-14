@@ -81,7 +81,7 @@ declare global {
   const QueryClient: typeof import('@tanstack/react-query').QueryClient
   const QueryClientProvider: typeof import('@tanstack/react-query').QueryClientProvider
   const RegisterForm: typeof import('./pages/Login/components/RegisterForm').RegisterForm
-  const RegistrationProfileCompletion: typeof import('./components/RegistrationProfileCompletion/index').RegistrationProfileCompletion
+  const RegistrationProfileCompletion: typeof import('./pages/Login/components/RegistrationProfileCompletion').RegistrationProfileCompletion
   const RegistrationProfileStep: typeof import('./pages/Login/components/RegistrationProfileStep').RegistrationProfileStep
   const RegistrationRoleSelection: typeof import('./pages/Login/components/RegistrationRoleSelection').RegistrationRoleSelection
   const Route: typeof import('react-router-dom').Route
@@ -383,7 +383,7 @@ declare global {
   export type { PageSurface, AuthMode, LoginCredentialMode, ProductFilter, JobFilter, TutorSort, CheckoutState } from './types/app'
   import('./types/app')
   // @ts-ignore
-  export type { H5RuntimeGlobals, ApiEnvelope, PasswordResetResult, LoginProps, LoginShellProps, LoginFormProps, RegisterFormProps, LoginRegisterCardProps, PasswordResetCardProps, RegistrationRoleSelectionProps, RegistrationProfileStepProps } from './types/auth'
+  export type { H5RuntimeGlobals, ApiEnvelope, PasswordResetResult, LoginProps, LoginShellProps, LoginFormProps, RegisterFormProps, LoginRegisterCardProps, PasswordResetCardProps, RegistrationRoleSelectionProps, RegistrationProfileStepProps, RegistrationProfileCompletionProps } from './types/auth'
   import('./types/auth')
   // @ts-ignore
   export type { HuntingAreaInputMode, HuntingProjectStop, HuntingProjectDraft, HuntingProject, HuntingProjectDialogProps } from './types/hunting-project'
@@ -392,7 +392,7 @@ declare global {
   export type { MessageToastType, MessageToastState, MessageToastOptions, MessageToastProps } from './types/message-toast'
   import('./types/message-toast')
   // @ts-ignore
-  export type { ProfileRequirementField, ProfileRequirementTemplate, ProfileRequirement, ProfileDraftState, RegistrationProfileField, RegistrationProfileTemplate, RegistrationProfileDraft, AddressInfoFormMode, AddressInfoPreviewVariant, AddressBookItem, AddressInfoFormProps, RegistrationProfileCompletionProps } from './types/profile'
+  export type { ProfileRequirementField, ProfileRequirementTemplate, ProfileRequirement, ProfileDraftState, RegistrationProfileField, RegistrationProfileTemplate, RegistrationProfileDraft, AddressInfoFormMode, AddressInfoPreviewVariant, AddressBookItem, AddressInfoFormProps } from './types/profile'
   import('./types/profile')
   // @ts-ignore
   export type { ChildProfileOption, TutorTrialJob, TutorApplicationCandidate } from './types/tutor-workflow'

@@ -53,6 +53,7 @@ declare global {
   type PasswordResetCardProps = import("@app-types/auth").PasswordResetCardProps;
   type RegistrationRoleSelectionProps = import("@app-types/auth").RegistrationRoleSelectionProps;
   type RegistrationProfileStepProps = import("@app-types/auth").RegistrationProfileStepProps;
+  type RegistrationProfileCompletionProps = import("@app-types/auth").RegistrationProfileCompletionProps;
   type LoginRegisterCardProps = import("@app-types/auth").LoginRegisterCardProps;
 
   type MessageToastType = import("@app-types/message-toast").MessageToastType;
@@ -66,7 +67,6 @@ declare global {
   type ProfileDraftState = import("@app-types/profile").ProfileDraftState;
   type AddressBookItem = import("@app-types/profile").AddressBookItem;
   type AddressInfoFormProps = import("@app-types/profile").AddressInfoFormProps;
-  type RegistrationProfileCompletionProps = import("@app-types/profile").RegistrationProfileCompletionProps;
 
   type HuntingAreaInputMode = import("@app-types/hunting-project").HuntingAreaInputMode;
   type HuntingProjectStop = import("@app-types/hunting-project").HuntingProjectStop;

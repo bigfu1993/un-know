@@ -2,7 +2,7 @@ import { AddressInfoForm } from "@components/AddressInfoForm";
 import { parentChildInfoFields, parentRegistrationAddressFields } from "@shared/clientPageModel";
 import { getFilledFieldCount, hasInvalidFields, validateByKey } from "@tools/validation";
 
-/** 进入 H5 前渲染注册后的昵称、地址和密码设置表单。 */
+/** 注册后的昵称、地址和密码设置表单，只负责展示与字段级交互。 */
 export function RegistrationProfileCompletion({
   areaOptions,
   birthday,
@@ -43,12 +43,12 @@ export function RegistrationProfileCompletion({
     : isNicknameInvalid
       ? "填写昵称并进入"
       : isPasswordMissing || isPasswordConfirmMissing || isPasswordConfirmInvalid
-      ? "设置密码并进入"
-      : hasInvalidProfileFields
-        ? "修正资料并进入"
-      : hasMissingProfileFields
-        ? "留空资料并进入"
-        : "确认并进入";
+        ? "设置密码并进入"
+        : hasInvalidProfileFields
+          ? "修正资料并进入"
+          : hasMissingProfileFields
+            ? "留空资料并进入"
+            : "确认并进入";
 
   /** 必填昵称和选填地址格式通过本地校验后提交。 */
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -75,7 +75,11 @@ export function RegistrationProfileCompletion({
       <p className="login-tip m-0 text-[13px] leading-[1.5] text-[#657181]">{template.description}</p>
 
       <div className="registration-profile-fields grid gap-[10px]">
-        <label className={`registration-profile-field grid gap-[7px] w-full min-w-0 font-bold ${isNicknameInvalid ? "missing" : ""}`}>
+        <label
+          className={`registration-profile-field grid gap-[7px] w-full min-w-0 font-bold ${
+            isNicknameInvalid ? "missing" : ""
+          }`}
+        >
           <span>昵称（必填）</span>
           <input
             autoComplete="nickname"
