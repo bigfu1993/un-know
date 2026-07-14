@@ -82,20 +82,10 @@ export interface RegisterFormProps {
  * 登录注册卡片组件属性。
  */
 export interface LoginRegisterCardProps {
-  /** 忘记密码完成后的登录凭据结果。 */
-  passwordResetResult?: PasswordResetResult | null;
-  /**
-   * 完成登录后的业务回调。
-   */
-  onAuthenticated: (session: LoginResponse, phone: string) => void;
-  /**
-   * 进入忘记密码流程的业务回调。
-   */
-  onForgotPassword: (phone?: string) => void;
-  /**
-   * 完成注册后的业务回调。
-   */
-  onRegistered: (session: LoginResponse, phone: string) => void;
+  /** 登录表单插槽。 */
+  loginForm: ReactNode;
+  /** 注册表单插槽。 */
+  registerForm: ReactNode;
 }
 
 /**

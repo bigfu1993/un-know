@@ -1,13 +1,5 @@
-import { LoginForm } from "./LoginForm";
-import { RegisterForm } from "./RegisterForm";
-
-/** 登录/注册入口卡片，只负责切换两个独立业务表单并向页面层回传最终业务结果。 */
-export function LoginRegisterCard({
-  passwordResetResult,
-  onAuthenticated,
-  onForgotPassword,
-  onRegistered
-}: LoginRegisterCardProps) {
+/** 登录/注册入口卡片，只负责切换两个表单插槽。 */
+export function LoginRegisterCard({ loginForm, registerForm }: LoginRegisterCardProps) {
   const [authMode, setAuthMode] = useState<AuthMode>("login");
 
   return (
@@ -25,15 +17,7 @@ export function LoginRegisterCard({
         </button>
       </div>
 
-      {authMode === "login" ? (
-        <LoginForm
-          passwordResetResult={passwordResetResult}
-          onAuthenticated={onAuthenticated}
-          onForgotPassword={onForgotPassword}
-        />
-      ) : (
-        <RegisterForm onRegistered={onRegistered} />
-      )}
+      {authMode === "login" ? loginForm : registerForm}
     </section>
   );
 }

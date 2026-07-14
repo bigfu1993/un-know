@@ -1,9 +1,10 @@
 import "./index.less";
 import { hasStoredPendingRegistration, setStoredPendingRegistration } from "@shared/clientPageModel";
-import { LoginGuideCard } from "./components/LoginGuideCard";
+import { LoginForm } from "./components/LoginForm";
 import { LoginRegisterCard } from "./components/LoginRegisterCard";
 import { LoginShell } from "./components/LoginShell";
 import { PasswordResetCard } from "./components/PasswordResetCard";
+import { RegisterForm } from "./components/RegisterForm";
 import { RegistrationProfileStep } from "./components/RegistrationProfileStep";
 import { RegistrationRoleSelection } from "./components/RegistrationRoleSelection";
 
@@ -113,15 +114,16 @@ export function Login({ onLoginSuccess }: LoginProps) {
     }
 
     return (
-      <>
-        <LoginGuideCard />
-        <LoginRegisterCard
-          passwordResetResult={passwordResetResult}
-          onAuthenticated={handleAuthenticatedSession}
-          onForgotPassword={handleOpenPasswordReset}
-          onRegistered={handleRegisterSuccess}
-        />
-      </>
+      <LoginRegisterCard
+        loginForm={
+          <LoginForm
+            passwordResetResult={passwordResetResult}
+            onAuthenticated={handleAuthenticatedSession}
+            onForgotPassword={handleOpenPasswordReset}
+          />
+        }
+        registerForm={<RegisterForm onRegistered={handleRegisterSuccess} />}
+      />
     );
   }
 

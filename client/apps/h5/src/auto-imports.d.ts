@@ -48,7 +48,6 @@ declare global {
   const LogOut: typeof import('lucide-react').LogOut
   const Login: typeof import('./pages/Login/index').Login
   const LoginForm: typeof import('./pages/Login/components/LoginForm').LoginForm
-  const LoginGuideCard: typeof import('./pages/Login/components/LoginGuideCard').LoginGuideCard
   const LoginRegisterCard: typeof import('./pages/Login/components/LoginRegisterCard').LoginRegisterCard
   const LoginShell: typeof import('./pages/Login/components/LoginShell').LoginShell
   const Marketing: typeof import('./pages/Marketing/index').Marketing

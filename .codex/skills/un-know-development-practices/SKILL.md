@@ -22,10 +22,11 @@ description: Methodology and validation workflow for the un-know project. Use wh
 6. Keep state and hooks close to the real consumer. Do not call a hook in a parent only to pass its result through child layers.
 7. Let global data flow through Provider/Context/store. Descendants should read global state through store/context hooks instead of prop drilling global objects.
 8. Keep components narrow. Local feedback, button event wrapping, default props, and temporary drafts belong inside the owning component/page. Emit final data or business result callbacks upward.
-9. Keep roots and pages lean: root wires application-level providers, session, routing, global data, and cross-module composition; pages orchestrate feature flow; components own display and local interaction.
-10. Keep styles and types by ownership: page styles in `pages/<Module>/index.less`, shared component styles beside the component, H5 reusable types in `client/apps/h5/src/types`, pure reusable utilities in `client/apps/h5/src/tools`.
-11. Run broad refactors in batches. Each batch declares scope, classifies issues, makes focused edits, validates, then moves to the next batch.
-12. Before deleting or splitting exports, search explicit imports, JSX usage, generated declarations, and auto-import configuration.
+9. Prefer slots for pure containers. Layout, grouping, and tab-switching components should use `children` or named slots for content instead of forwarding child business props; keep their props limited to their own layout, switching, and display configuration.
+10. Keep roots and pages lean: root wires application-level providers, session, routing, global data, and cross-module composition; pages orchestrate feature flow; components own display and local interaction.
+11. Keep styles and types by ownership: page styles in `pages/<Module>/index.less`, shared component styles beside the component, H5 reusable types in `client/apps/h5/src/types`, pure reusable utilities in `client/apps/h5/src/tools`.
+12. Run broad refactors in batches. Each batch declares scope, classifies issues, makes focused edits, validates, then moves to the next batch.
+13. Before deleting or splitting exports, search explicit imports, JSX usage, generated declarations, and auto-import configuration.
 
 ## Choose References
 

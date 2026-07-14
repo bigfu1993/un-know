@@ -10,6 +10,7 @@ Applies to `client/apps/h5`, `client/packages/domain`, `client/packages/api-clie
 - Shared display units outside `pages` keep the existing `components/<Component>/index.tsx` folder convention with adjacent style file when needed.
 - Keep flow orchestration in pages and generic display in components. Components should not read global state unless that state is explicitly app-wide and provided by the root store/context.
 - Let components own interaction details that do not change external business state: toast-only feedback, button event wrapping, default prop values, and temporary form drafts. Emit final data or item-level callbacks upward.
+- Use slots for pure container components. If a component only provides layout, grouping, tabs, or shell behavior, pass the inner content through `children` or named slots instead of forwarding the child component's business props.
 - Prefer stable component defaults over repetitive props. Callers should not pass values that are already the component default.
 - For list preview cards, pass the whole item when available and let the component bind `onUse(item)`, `onEdit(item)`, or `onDelete(item)` internally instead of wrapping callbacks in every `.map`.
 - Keep reusable pure functions in `client/apps/h5/src/tools/*.ts`.
