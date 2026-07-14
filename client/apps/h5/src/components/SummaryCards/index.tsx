@@ -33,7 +33,6 @@ export interface WalletSummaryCardProps {
   className?: string;
   onOpen?: () => void;
   rechargeText?: string;
-  status?: string;
   variant?: SummaryCardVariant;
   walletSummary: WalletSummary;
 }
@@ -152,7 +151,6 @@ export function WalletSummaryCard({
   className,
   onOpen,
   rechargeText = "充值",
-  status = "正常",
   variant = "default",
   walletSummary
 }: WalletSummaryCardProps) {
@@ -176,7 +174,6 @@ export function WalletSummaryCard({
         </span>
         <div className="summary-card-title min-w-0 flex-1">
           <strong>{getWalletTotalAmount(walletSummary)}</strong>
-          <p className="summary-card-status-text">{status}</p>
         </div>
         {onOpen ? <ChevronRight className="summary-card-chevron shrink-0" size={17} /> : null}
       </div>

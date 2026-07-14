@@ -1,5 +1,48 @@
-/** 业务页面共用展示组件，除纯视觉状态外保持无状态。 */
-export function SectionHeader({ eyebrow, title, countText }: { eyebrow: string; title: string; countText: string }) {
+/** 业务页面标题栏属性。 */
+interface SectionHeaderProps {
+  countText?: string;
+  eyebrow: string;
+  title: string;
+}
+
+/** 工作台指标字段。 */
+interface WorkbenchMetricItem {
+  label: string;
+  value: string;
+}
+
+/** 工作台快捷入口字段。 */
+interface WorkbenchQuickEntryItem {
+  icon: LucideIcon;
+  label: string;
+  text: string;
+}
+
+/** 工作台信息卡片属性。 */
+interface WorkbenchInfoCardProps {
+  description: string;
+  icon: LucideIcon;
+  metrics?: WorkbenchMetricItem[];
+  title: string;
+  variant?: "default" | "large";
+}
+
+/** 工作台快捷入口卡片属性。 */
+interface WorkbenchQuickEntryCardProps {
+  description: string;
+  entries?: WorkbenchQuickEntryItem[];
+  icon: LucideIcon;
+  title: string;
+}
+
+/** 默认空指标列表，避免组件默认值创建新数组。 */
+const emptyWorkbenchMetrics: WorkbenchMetricItem[] = [];
+
+/** 默认空快捷入口列表，避免组件默认值创建新数组。 */
+const emptyWorkbenchQuickEntries: WorkbenchQuickEntryItem[] = [];
+
+/** 业务页面标题栏，右侧数量文案可按页面需要省略。 */
+export function SectionHeader({ eyebrow, title, countText = "" }: SectionHeaderProps) {
   return (
     <section className="section-title mb-[12px] mt-[20px] flex items-end justify-between gap-[12px]">
       <div className="min-w-0">
@@ -11,7 +54,8 @@ export function SectionHeader({ eyebrow, title, countText }: { eyebrow: string; 
   );
 }
 
-export function Metric({ label, value }: { label: string; value: string }) {
+/** 工作台和看板内使用的单个指标块。 */
+export function Metric({ label, value }: WorkbenchMetricItem) {
   return (
     <div className="metric-card p-[12px]">
       <span>{label}</span>
@@ -25,15 +69,9 @@ export function WorkbenchInfoCard({
   icon: Icon,
   title,
   description,
-  metrics,
+  metrics = emptyWorkbenchMetrics,
   variant = "default"
-}: {
-  icon: LucideIcon;
-  title: string;
-  description: string;
-  metrics: Array<{ label: string; value: string }>;
-  variant?: "default" | "large";
-}) {
+}: WorkbenchInfoCardProps) {
   return (
     <article className="flow-card compact workbench-info-card p-[13px]">
       <div className="card-title flex items-center justify-between gap-[10px]">
@@ -59,13 +97,8 @@ export function WorkbenchQuickEntryCard({
   icon: Icon,
   title,
   description,
-  entries
-}: {
-  icon: LucideIcon;
-  title: string;
-  description: string;
-  entries: Array<{ icon: LucideIcon; label: string; text: string }>;
-}) {
+  entries = emptyWorkbenchQuickEntries
+}: WorkbenchQuickEntryCardProps) {
   return (
     <article className="flow-card compact workbench-quick-card p-[13px]">
       <div className="card-title flex items-center justify-between gap-[10px]">
@@ -84,7 +117,8 @@ export function WorkbenchQuickEntryCard({
   );
 }
 
-function QuickEntry({ icon: Icon, label, text }: { icon: LucideIcon; label: string; text: string }) {
+/** 工作台快捷入口中的单项说明。 */
+function QuickEntry({ icon: Icon, label, text }: WorkbenchQuickEntryItem) {
   return (
     <article className="quick-entry flex items-start gap-[10px] p-[10px]">
       <Icon size={18} />
@@ -165,7 +199,7 @@ export function ProductListCard({
 }
 
 /** 按学生和商户两种操作布局展示的兼职卡片。 */
-export function PartTimeJobCard({ job, mode }: { job: PartTimeJob; mode: "student" | "merchant" }) {
+export function PartTimeJobCard({ job, mode = "student" }: { job: PartTimeJob; mode?: "student" | "merchant" }) {
   if (mode === "merchant") {
     return (
       <article className="flow-card p-[14px]">

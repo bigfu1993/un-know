@@ -27,26 +27,8 @@ export function OngoingOrdersDialog({
   onRequestCancel?: (order: ClientOrder) => void;
   onRequestComplete?: (order: ClientOrder) => void;
 }) {
-  const { hideMessage, showMessage, toast } = useMessageToast();
-
-  /** 当前试课动作还没有独立后端状态提交，弹窗内部直接给出操作反馈。 */
-  function showTutorWorkflowMessage(message: string) {
-    showMessage(message, { type: "success" });
-  }
-
-  /** 消息入口当前仅展示后续沟通能力提示，属于弹窗内部反馈。 */
-  function handleMessageOrder(order: ClientOrder) {
-    showMessage(`${order.title} 的消息能力后续接入。`, { type: "warning" });
-  }
-
-  /** 电话入口当前仅展示服务端返回的脱敏联系电话，属于弹窗内部反馈。 */
-  function handleCallOrder(order: ClientOrder) {
-    showMessage(order.phoneNumber ? `联系电话：${order.phoneNumber}` : "暂无可用联系电话。", { type: "success" });
-  }
-
   return (
     <section className="ongoing-dialog" aria-label="进行中的列表">
-      <MessageToast onClose={hideMessage} toast={toast} />
       <div className="sheet-backdrop" onClick={onClose} />
       <article
         className="ongoing-panel mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]"
@@ -69,16 +51,10 @@ export function OngoingOrdersDialog({
         </div>
         <OngoingOrdersList
           orders={orders}
-          onCallOrder={handleCallOrder}
           onConfirmCancel={onConfirmCancel}
           onConfirmComplete={onConfirmComplete}
-          onMessageOrder={handleMessageOrder}
           onOpenQuoteList={onOpenQuoteList}
           onOpenTutorApplications={onOpenTutorApplications}
-          onOpenTrialResult={() => showTutorWorkflowMessage("试课结果流程待后端结算接口接入。")}
-          onOpenTrialSchedule={() => showTutorWorkflowMessage("试课日程已记录，等待双方确认。")}
-          onRejectTrial={() => showTutorWorkflowMessage("已拒绝试课申请。")}
-          onAgreeTrial={() => showTutorWorkflowMessage("已同意试课，家教兼职进入试课流程。")}
           onRepublish={onRepublish}
           onRequestCancel={onRequestCancel}
           onRequestComplete={onRequestComplete}
@@ -145,8 +121,7 @@ export function ProfileCompletionDialog({
           areaOptions={campusAreaOptions}
           draft={profileDraft}
           fields={template.fields}
-          mode="edit"
-          onChange={onChange}
+          onChange={(nextDraft, changedKey) => onChange(changedKey, nextDraft[changedKey] ?? "")}
         />
 
         <div className="sheet-actions grid gap-[8px]">

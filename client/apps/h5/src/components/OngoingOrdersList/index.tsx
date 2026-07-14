@@ -5,19 +5,23 @@ type OngoingOrderFilter = "all" | "delegation" | "featured" | "hunting" | "tutor
 
 /** 进行中事项动作回调集合，由弹窗或页面注入业务处理。 */
 interface OngoingOrderActionHandlers {
-  onCallOrder?: (order: ClientOrder) => void;
   onConfirmCancel?: (order: ClientOrder) => void;
   onConfirmComplete?: (order: ClientOrder) => void;
-  onMessageOrder?: (order: ClientOrder) => void;
   onOpenQuoteList?: (order: ClientOrder) => void;
   onOpenTutorApplications?: (order: ClientOrder) => void;
-  onOpenTrialResult?: (order: ClientOrder) => void;
-  onOpenTrialSchedule?: (order: ClientOrder) => void;
-  onRejectTrial?: (order: ClientOrder) => void;
-  onAgreeTrial?: (order: ClientOrder) => void;
   onRepublish?: (order: ClientOrder) => void;
   onRequestCancel?: (order: ClientOrder) => void;
   onRequestComplete?: (order: ClientOrder) => void;
+}
+
+/** 进行中列表内部即可闭环的提示类动作。 */
+interface OngoingOrderLocalActionHandlers {
+  onAgreeTrial: (order: ClientOrder) => void;
+  onCallOrder: (order: ClientOrder) => void;
+  onMessageOrder: (order: ClientOrder) => void;
+  onOpenTrialResult: (order: ClientOrder) => void;
+  onOpenTrialSchedule: (order: ClientOrder) => void;
+  onRejectTrial: (order: ClientOrder) => void;
 }
 
 /** 进行中事项列表组件入参。 */
@@ -60,7 +64,10 @@ function hasOngoingOrderActions(order: ClientOrder): boolean {
 }
 
 /** 渲染进行中事项的报价入口和履约动作。 */
-function OngoingOrderActions({ order, ...handlers }: { order: ClientOrder } & OngoingOrderActionHandlers) {
+function OngoingOrderActions({
+  order,
+  ...handlers
+}: { order: ClientOrder } & OngoingOrderActionHandlers & OngoingOrderLocalActionHandlers) {
   /** 当前卡片所属业务分类，用于隔离委托报价和狩猎报价入口。 */
   const category = getOngoingOrderCategory(order);
   /** 发布方委托卡片是否展示报价列表入口。 */
@@ -221,14 +228,31 @@ function OngoingOrderActions({ order, ...handlers }: { order: ClientOrder } & On
 /** 进行中事项列表，负责分类筛选、空状态和卡片动作展示。 */
 export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProps) {
   const [activeFilter, setActiveFilter] = useState<OngoingOrderFilter>("all");
+  const { hideMessage, showMessage, toast } = useMessageToast();
   /** 按当前标签过滤后的进行中事项列表。 */
   const filteredOrders = useMemo(
     () => orders.filter((order) => activeFilter === "all" || getOngoingOrderCategory(order) === activeFilter),
     [activeFilter, orders]
   );
 
+  /** 消息入口当前仅展示后续沟通能力提示，真实聊天接口接入后再替换为业务回调。 */
+  function handleMessageOrder(order: ClientOrder) {
+    showMessage(`${order.title} 的消息能力后续接入。`, { type: "warning" });
+  }
+
+  /** 电话入口展示订单返回的脱敏联系电话，避免上层重复包一层纯提示回调。 */
+  function handleCallOrder(order: ClientOrder) {
+    showMessage(order.phoneNumber ? `联系电话：${order.phoneNumber}` : "暂无可用联系电话。", { type: "success" });
+  }
+
+  /** 试课动作第一版不改变后端状态，只在列表内部反馈操作结果。 */
+  function showTutorWorkflowMessage(message: string) {
+    showMessage(message, { type: "success" });
+  }
+
   return (
     <>
+      <MessageToast onClose={hideMessage} toast={toast} />
       <div className="ongoing-filter-tags flex flex-wrap gap-[8px]" aria-label="筛选进行中事项">
         {ongoingOrderFilterOptions.map((option) => (
           <button
@@ -256,7 +280,16 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
               <span>{order.amountLabel ?? formatCurrency(order.amount)}</span>
               <span>{order.contact}</span>
             </div>
-            <OngoingOrderActions order={order} {...handlers} />
+            <OngoingOrderActions
+              order={order}
+              {...handlers}
+              onAgreeTrial={() => showTutorWorkflowMessage("已同意试课，家教兼职进入试课流程。")}
+              onCallOrder={handleCallOrder}
+              onMessageOrder={handleMessageOrder}
+              onOpenTrialResult={() => showTutorWorkflowMessage("试课结果流程待后端结算接口接入。")}
+              onOpenTrialSchedule={() => showTutorWorkflowMessage("试课日程已记录，等待双方确认。")}
+              onRejectTrial={() => showTutorWorkflowMessage("已拒绝试课申请。")}
+            />
           </article>
         ))}
         {filteredOrders.length === 0 ? (

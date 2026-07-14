@@ -25,14 +25,17 @@ description: Frontend and backend development workflow for the un-know project. 
 3. Keep `client/apps/h5/src/App.tsx` as the root coordinator only: login/session, routing, global data loading, and cross-business dialog composition. Move single-business models, dialogs, cards, and workflow components into the matching page module such as `pages/Delegation` or `pages/Tutor`.
 4. Keep page-private components flat under `pages/<Module>/components/*.tsx`; do not create nested component folders inside `pages`.
 5. Keep every page module style entry in `pages/<Module>/index.less`, imported by `index.tsx`. Page-private component styles should live in that page stylesheet instead of global `styles.less`.
-6. Update code and comments together. Java uses JavaDoc; TypeScript/React uses TSDoc/JSDoc for exported or business-heavy units.
-7. Keep domain states centralized. Avoid scattering Chinese status strings across frontend and backend.
-8. H5 reusable types live in `client/apps/h5/src/types` and are exposed through auto-import/global declarations; remove explicit type imports when a type is globally provided.
-9. Validate after changes:
+6. Keep shared component-specific styles next to the component in `components/<Component>/index.less`; reserve `styles.less` for global primitives and truly shared utility styles.
+7. Keep component boundaries tight: local UI feedback, button event wrapping, default prop values, and temporary form drafts should live in the component/page that owns the interaction. Parents should receive final data or business callbacks instead of field-level or toast-only plumbing.
+8. Before deleting or splitting a component folder, search explicit imports, JSX usage, `auto-imports.d.ts`, and auto-import configuration. Auto-imported exports can be used without visible import statements.
+9. Update code and comments together. Java uses JavaDoc; TypeScript/React uses TSDoc/JSDoc for exported or business-heavy units.
+10. Keep domain states centralized. Avoid scattering Chinese status strings across frontend and backend.
+11. H5 reusable types live in `client/apps/h5/src/types` and are exposed through auto-import/global declarations; remove explicit type imports when a type is globally provided.
+12. Validate after changes:
    - H5: `cd client && npm run typecheck:h5 && npm run lint:h5`
    - Backend: `cd server && mvn -q -DskipTests compile`
    - Runtime when APIs or data changed: health check and at least one targeted real-interface flow.
-10. If backend behavior changed and a running server needs refresh, restart it unless the user explicitly asks not to.
+13. If backend behavior changed and a running server needs refresh, restart it unless the user explicitly asks not to.
 
 ## Completion Standard
 

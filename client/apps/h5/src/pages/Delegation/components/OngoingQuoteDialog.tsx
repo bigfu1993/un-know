@@ -1,38 +1,97 @@
 import { Banknote } from "lucide-react";
-import { hasCounterQuoteAmount, isQuoteLockedForPublisher } from "@pages/Delegation/model";
+import {
+  canConfirmHuntingQuote,
+  canCounterHuntingQuote,
+  hasCounterQuoteAmount,
+  hasInvalidCounterQuoteAmount,
+  hasValidCounterQuoteAmount,
+  isQuoteLockedForPublisher
+} from "@pages/Delegation/model";
 
 /** 进行中委托报价处理弹窗属性。 */
 interface OngoingQuoteDialogProps {
-  actionLabel: string;
-  canReject: boolean;
-  canSubmit: boolean;
-  counterAmount: string;
-  counterPrompt: string;
+  initialQuoteId?: string;
   onClose: () => void;
-  onCounterAmountChange: (value: string) => void;
-  onReject: () => void;
-  onSelectQuote: (quote: HuntingQuote | null) => void;
-  onSubmit: () => void;
-  selectedQuoteId: string;
+  onConfirmQuote: (task: HuntingTask, quote: HuntingQuote) => Promise<void> | void;
+  onCounterQuote: (task: HuntingTask, quote: HuntingQuote, amount: number) => Promise<void> | void;
+  onRejectQuote: (task: HuntingTask, quote: HuntingQuote) => Promise<void> | void;
   task: HuntingTask;
 }
 
+/** 进行中报价弹窗默认空列表，避免无报价任务重复创建数组。 */
+const emptyHuntingQuotes: HuntingQuote[] = [];
+
 /** 进行中入口打开的委托报价列表，负责报价选择、协商金额输入和操作按钮展示。 */
 export function OngoingQuoteDialog({
-  actionLabel,
-  canReject,
-  canSubmit,
-  counterAmount,
-  counterPrompt,
+  initialQuoteId = "",
   onClose,
-  onCounterAmountChange,
-  onReject,
-  onSelectQuote,
-  onSubmit,
-  selectedQuoteId,
+  onConfirmQuote,
+  onCounterQuote,
+  onRejectQuote,
   task
 }: OngoingQuoteDialogProps) {
-  const quotes = task.quotes ?? [];
+  const quotes = task.quotes ?? emptyHuntingQuotes;
+  const initialQuote = initialQuoteId ? quotes.find((quote) => quote.id === initialQuoteId) ?? null : null;
+  const quoteSignature = quotes.map((quote) => `${quote.id}:${quote.amount}:${quote.status}`).join("|");
+  const [selectedQuoteId, setSelectedQuoteId] = useState(initialQuote?.id ?? "");
+  const [counterAmount, setCounterAmount] = useState(initialQuote ? String(initialQuote.amount) : "");
+  const selectedQuote = quotes.find((quote) => quote.id === selectedQuoteId) ?? null;
+  const canConfirmSelectedQuote = canConfirmHuntingQuote(task, selectedQuote);
+  const canCounterSelectedQuote = canCounterHuntingQuote(task, selectedQuote);
+  const hasCounterInputAmount = hasValidCounterQuoteAmount(selectedQuote, counterAmount);
+  const hasInvalidCounterAmount = hasInvalidCounterQuoteAmount(selectedQuote, counterAmount);
+  const isCounterAction = canCounterSelectedQuote && hasCounterInputAmount;
+  const canReject = canConfirmSelectedQuote || canCounterSelectedQuote;
+  const canSubmit = !hasInvalidCounterAmount && (canConfirmSelectedQuote || isCounterAction);
+  const actionLabel = isCounterAction ? "协商报价" : selectedQuote ? "确认报价" : "选择报价";
+  const counterPrompt = task.isMine ? "输入协商金额后推送给报价方" : "输入协商金额后推送给发布方";
+
+  useEffect(() => {
+    const nextInitialQuote = initialQuoteId ? quotes.find((quote) => quote.id === initialQuoteId) ?? null : null;
+
+    setSelectedQuoteId(nextInitialQuote?.id ?? "");
+    setCounterAmount(nextInitialQuote ? String(nextInitialQuote.amount) : "");
+  }, [initialQuoteId, quoteSignature, quotes, task.id]);
+
+  /** 选中或取消当前报价，并把协商金额草稿同步为该报价金额。 */
+  function handleSelectQuote(quote: HuntingQuote) {
+    const isSameQuote = selectedQuoteId === quote.id;
+
+    setSelectedQuoteId(isSameQuote ? "" : quote.id);
+    setCounterAmount(isSameQuote ? "" : String(quote.amount));
+  }
+
+  /** 根据当前弹窗草稿执行确认报价或协商报价。 */
+  async function handleSubmit() {
+    if (!selectedQuote || !canSubmit) {
+      return;
+    }
+
+    try {
+      if (isCounterAction) {
+        await Promise.resolve(onCounterQuote(task, selectedQuote, Number(counterAmount)));
+      } else {
+        await Promise.resolve(onConfirmQuote(task, selectedQuote));
+      }
+      onClose();
+    } catch {
+      // 业务回调已负责错误提示，弹窗保持打开方便继续处理。
+    }
+  }
+
+  /** 拒绝当前选中的报价。 */
+  async function handleReject() {
+    if (!selectedQuote || !canReject) {
+      return;
+    }
+
+    try {
+      await Promise.resolve(onRejectQuote(task, selectedQuote));
+      onClose();
+    } catch {
+      // 业务回调已负责错误提示，弹窗保持打开方便继续处理。
+    }
+  }
 
   return (
     <section className="checkout-sheet" aria-label="报价列表">
@@ -65,7 +124,7 @@ export function OngoingQuoteDialog({
                 } ${isLockedQuote ? "locked" : ""}`}
                 disabled={isLockedQuote}
                 key={quote.id}
-                onClick={() => onSelectQuote(selectedQuoteId === quote.id ? null : quote)}
+                onClick={() => handleSelectQuote(quote)}
                 type="button"
               >
                 <span className="flex items-center justify-between gap-[8px]">
@@ -92,7 +151,7 @@ export function OngoingQuoteDialog({
           <span>{counterPrompt}</span>
           <input
             inputMode="decimal"
-            onChange={(event) => onCounterAmountChange(event.target.value)}
+            onChange={(event) => setCounterAmount(event.target.value)}
             placeholder="输入协商金额"
             type="number"
             value={counterAmount}
@@ -102,7 +161,7 @@ export function OngoingQuoteDialog({
           <button
             className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
             disabled={!canSubmit}
-            onClick={onSubmit}
+            onClick={() => void handleSubmit()}
             type="button"
           >
             <CheckCircle2 size={16} />
@@ -111,7 +170,7 @@ export function OngoingQuoteDialog({
           <button
             className="danger-outline-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
             disabled={!canReject}
-            onClick={onReject}
+            onClick={() => void handleReject()}
             type="button"
           >
             拒绝报价

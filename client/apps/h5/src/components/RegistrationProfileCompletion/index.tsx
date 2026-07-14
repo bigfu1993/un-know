@@ -123,8 +123,7 @@ export function RegistrationProfileCompletion({
                 areaOptions={areaOptions}
                 draft={draft}
                 fields={parentRegistrationAddressFields}
-                mode="edit"
-                onChange={onChange}
+                onChange={(nextDraft, changedKey) => onChange(changedKey, nextDraft[changedKey] ?? "")}
               />
             ) : null}
 
@@ -133,8 +132,7 @@ export function RegistrationProfileCompletion({
                 areaOptions={areaOptions}
                 draft={draft}
                 fields={parentChildInfoFields}
-                mode="edit"
-                onChange={onChange}
+                onChange={(nextDraft, changedKey) => onChange(changedKey, nextDraft[changedKey] ?? "")}
               />
             ) : null}
           </div>
@@ -143,8 +141,7 @@ export function RegistrationProfileCompletion({
             areaOptions={areaOptions}
             draft={draft}
             fields={template.fields}
-            mode="edit"
-            onChange={onChange}
+            onChange={(nextDraft, changedKey) => onChange(changedKey, nextDraft[changedKey] ?? "")}
           />
         )}
 

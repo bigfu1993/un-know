@@ -162,7 +162,7 @@ export function PartTime({
           <TutorTrialJobCard job={job} key={job.id} onApplyTrial={onApplyTutorTrial} />
         ))}
         {visibleJobs.map((job) => (
-          <PartTimeJobCard job={job} key={job.id} mode="student" />
+          <PartTimeJobCard job={job} key={job.id} />
         ))}
         {totalVisibleCount === 0 ? (
           <article className="empty-state p-[16px] text-center">

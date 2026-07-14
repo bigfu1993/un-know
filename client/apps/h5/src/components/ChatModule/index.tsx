@@ -1,10 +1,10 @@
 /** 独立聊天模块属性，暂不绑定现有消息入口，由后续页面按需接入。 */
 export interface ChatModuleProps {
   activeConversationId?: string | null;
-  conversations: ChatConversation[];
-  messages: ChatMessage[];
+  conversations?: ChatConversation[];
+  messages?: ChatMessage[];
   orderCards?: ClientOrder[];
-  quickActions: ChatQuickAction[];
+  quickActions?: ChatQuickAction[];
   sending?: boolean;
   onCreateQuickAction?: (label: string, content: string) => void;
   onSelectConversation: (conversation: ChatConversation) => void;
@@ -12,13 +12,25 @@ export interface ChatModuleProps {
   onSendOrderCard?: (order: ClientOrder) => void;
 }
 
+/** 聊天模块默认空会话，避免默认数组在渲染时重复创建。 */
+const emptyConversations: ChatConversation[] = [];
+
+/** 聊天模块默认空消息列表，供未接入消息接口的页面复用。 */
+const emptyMessages: ChatMessage[] = [];
+
+/** 聊天模块默认空快捷按钮列表。 */
+const emptyQuickActions: ChatQuickAction[] = [];
+
+/** 聊天模块默认空订单卡列表。 */
+const emptyOrderCards: ClientOrder[] = [];
+
 /** 独立聊天模块，支持文字消息、订单卡片和自定义快捷按钮，不包含表情与语音。 */
 export function ChatModule({
-  activeConversationId,
-  conversations,
-  messages,
-  orderCards = [],
-  quickActions,
+  activeConversationId = null,
+  conversations = emptyConversations,
+  messages = emptyMessages,
+  orderCards = emptyOrderCards,
+  quickActions = emptyQuickActions,
   sending = false,
   onCreateQuickAction,
   onSelectConversation,

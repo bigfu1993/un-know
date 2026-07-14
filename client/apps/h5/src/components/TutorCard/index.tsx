@@ -5,7 +5,7 @@ import { tutorCertificationStatusLabels } from "@components/TutorCard/model";
 /** 家教卡片属性。 */
 export interface TutorCardProps extends TutorCardData {
   className?: string;
-  mode: TutorCardMode;
+  mode?: TutorCardMode;
   onOpenInfo?: () => void;
   onStartCertification?: () => void;
 }
@@ -16,7 +16,7 @@ export function TutorCard({
   className,
   grade,
   level,
-  mode,
+  mode = "default",
   onOpenInfo,
   onStartCertification,
   subject

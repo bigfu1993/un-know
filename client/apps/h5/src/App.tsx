@@ -229,23 +229,11 @@ export function App() {
     workspaceData: workspaceResponse ?? emptyWorkspaceData
   });
   const {
-    canRejectSelectedOngoingQuote,
-    canSubmitSelectedOngoingQuote,
     closeOngoingQuoteList: handleCloseOngoingQuoteList,
-    ongoingQuoteActionLabel,
-    ongoingQuoteCounterPrompt,
+    ongoingQuoteInitialQuoteId,
     ongoingQuoteTask,
-    openOngoingQuoteList: handleOpenOngoingQuoteList,
-    quoteCounterAmount,
-    rejectOngoingQuote: handleRejectOngoingQuote,
-    selectOngoingQuote,
-    selectedOngoingQuoteId,
-    setQuoteCounterAmount,
-    submitOngoingQuoteAction: handleSubmitOngoingQuoteAction
+    openOngoingQuoteList: handleOpenOngoingQuoteList
   } = useOngoingQuoteFlow({
-    confirmQuote: handleConfirmHuntingQuote,
-    counterQuote: handleCounterHuntingQuote,
-    rejectQuote: handleRejectHuntingQuote,
     showMessage,
     tasks: mergedHuntingTasks
   });
@@ -927,17 +915,11 @@ export function App() {
 
       {ongoingQuoteTask ? (
         <OngoingQuoteDialog
-          actionLabel={ongoingQuoteActionLabel}
-          canReject={canRejectSelectedOngoingQuote}
-          canSubmit={canSubmitSelectedOngoingQuote}
-          counterAmount={quoteCounterAmount}
-          counterPrompt={ongoingQuoteCounterPrompt}
+          initialQuoteId={ongoingQuoteInitialQuoteId}
           onClose={handleCloseOngoingQuoteList}
-          onCounterAmountChange={setQuoteCounterAmount}
-          onReject={handleRejectOngoingQuote}
-          onSelectQuote={selectOngoingQuote}
-          onSubmit={handleSubmitOngoingQuoteAction}
-          selectedQuoteId={selectedOngoingQuoteId}
+          onConfirmQuote={handleConfirmHuntingQuote}
+          onCounterQuote={handleCounterHuntingQuote}
+          onRejectQuote={handleRejectHuntingQuote}
           task={ongoingQuoteTask}
         />
       ) : null}

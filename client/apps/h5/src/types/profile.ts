@@ -38,15 +38,16 @@ export interface AddressBookItem {
 export interface AddressInfoFormProps {
   areaOptions: string[];
   actionLabel?: string;
-  draft: ProfileDraftState;
+  draft?: ProfileDraftState;
   emptyText?: string;
   fields: ProfileRequirementField[];
+  item?: AddressBookItem;
   isCurrent?: boolean;
-  mode: AddressInfoFormMode;
-  onChange?: (key: string, value: string) => void;
-  onDelete?: () => void;
-  onEdit?: () => void;
-  onUse?: () => void;
+  mode?: AddressInfoFormMode;
+  onChange?: (draft: ProfileDraftState, changedKey: string) => void;
+  onDelete?: (item: AddressBookItem) => void;
+  onEdit?: (item: AddressBookItem) => void;
+  onUse?: (item: AddressBookItem) => void;
   previewVariant?: AddressInfoPreviewVariant;
 }
 

@@ -1,6 +1,7 @@
 import "./index.less";
 import { Crosshair, ShieldCheck } from "lucide-react";
 import {
+  getHuntingCertificationCardMode,
   huntingCertificationStatusLabels,
   type HuntingCertificationCardData,
   type HuntingCertificationCardMode
@@ -9,7 +10,7 @@ import {
 /** 狩猎认证卡片属性。 */
 export interface HuntingCertificationCardProps extends HuntingCertificationCardData {
   className?: string;
-  mode: HuntingCertificationCardMode;
+  mode?: HuntingCertificationCardMode;
   onStartCertification?: () => void;
 }
 
@@ -17,7 +18,7 @@ export interface HuntingCertificationCardProps extends HuntingCertificationCardD
 export function HuntingCertificationCard({
   certificationStatus,
   className,
-  mode,
+  mode = getHuntingCertificationCardMode(certificationStatus),
   onStartCertification
 }: HuntingCertificationCardProps) {
   const rootClassName = ["hunting-certification-card", `hunting-certification-card--${mode}`, className]

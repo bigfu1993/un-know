@@ -416,14 +416,13 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
             <AddressInfoForm
               actionLabel="编辑"
               areaOptions={campusAreaOptions}
-              draft={item.draft}
               fields={addressTemplate.fields}
-              isCurrent={item.isCurrent}
+              item={item}
               key={item.id}
               mode="preview"
-              onDelete={() => handleDeleteAddress(item)}
-              onEdit={() => handleOpenEditAddress(item)}
-              onUse={() => handleUseAddress(item)}
+              onDelete={handleDeleteAddress}
+              onEdit={handleOpenEditAddress}
+              onUse={handleUseAddress}
               previewVariant="card"
             />
           ))
@@ -475,7 +474,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
           draft={addressDraft}
           fields={addressTemplate.fields}
           mode={addressEditorMode}
-          onChange={(key, value) => setAddressDraft((draft) => ({ ...draft, [key]: value }))}
+          onChange={setAddressDraft}
           onClose={() => {
             setAddressEditorMode(null);
             setEditingAddressId(null);
@@ -703,7 +702,7 @@ function AddressEditorDialog({
   fields: ProfileRequirementField[];
   isSubmitting?: boolean;
   mode: AddressEditorMode;
-  onChange: (key: string, value: string) => void;
+  onChange: (draft: ProfileDraftState) => void;
   onClose: () => void;
   onSave: () => void;
 }) {
@@ -738,7 +737,7 @@ function AddressEditorDialog({
           </button>
         </div>
 
-        <AddressInfoForm areaOptions={areaOptions} draft={draft} fields={fields} mode="edit" onChange={onChange} />
+        <AddressInfoForm areaOptions={areaOptions} draft={draft} fields={fields} onChange={onChange} />
 
         <div className="sheet-actions grid gap-[8px]">
           <button
