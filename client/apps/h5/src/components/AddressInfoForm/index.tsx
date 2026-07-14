@@ -7,7 +7,7 @@ const emptyAddressDraft: ProfileDraftState = {};
 /** 注册、资料补充和设置预览共用的地址信息表单。 */
 export function AddressInfoForm({
   actionLabel = "编辑",
-  areaOptions,
+  areaOptions = [],
   draft,
   emptyText = "未填写",
   fields,

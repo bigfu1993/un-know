@@ -174,6 +174,117 @@ export function getHuntingTaskAmountText(task: HuntingTask) {
   return task.amountNegotiable || task.fee <= 0 ? "协商" : formatCurrency(task.fee);
 }
 
+/** 委托任务排序方式。 */
+export type DelegationSortMode = "amountAsc" | "amountDesc" | "default" | "time";
+
+/** 委托页展开面板类型。 */
+export type DelegationToolbarPanel = "area" | "sort" | null;
+
+/** 委托页顶部规则滚动字幕文案。 */
+export const delegationRuleTickerItems = [
+  "结算规则：发布方确认服务结束后进入观察期，默认 3 天后进入可提现钱包。",
+  "取消协商规则：接受委托后 2 分钟内可自助取消，5 分钟内可协商取消。"
+];
+
+/** 委托任务排序选项。 */
+export const delegationSortOptions: Array<{ label: string; value: DelegationSortMode }> = [
+  { label: "默认排序", value: "default" },
+  { label: "时间优先", value: "time" },
+  { label: "金额从高到低", value: "amountDesc" },
+  { label: "金额从低到高", value: "amountAsc" }
+];
+
+/** 获取委托地址中的区域信息。 */
+export function getDelegationArea(location: string) {
+  return location.split(/->|→|·|,|，/)[0]?.trim() || "未知区域";
+}
+
+/** 获取委托时间排序权重，数字越小代表越靠前。 */
+export function getDelegationTimeWeight(latestTime: string) {
+  if (latestTime.includes("已超过")) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  const relativeMinutes = /发布后\s*(\d+)\s*分钟内/.exec(latestTime);
+  if (relativeMinutes) {
+    return Number(relativeMinutes[1]);
+  }
+
+  const clockTime = /(\d{1,2}):(\d{2})/.exec(latestTime);
+  if (!clockTime) {
+    return Number.MAX_SAFE_INTEGER - 1;
+  }
+
+  const minutes = Number(clockTime[1]) * 60 + Number(clockTime[2]);
+  return latestTime.includes("明天") || latestTime.includes("次日") ? minutes + 24 * 60 : minutes;
+}
+
+/** 获取委托目的地展示文案。 */
+export function getDelegationDestination(task: HuntingTask) {
+  return task.destination || task.location || "目的地待补充";
+}
+
+/** 获取委托发布时间展示文案。 */
+export function getDelegationPublishTime(task: HuntingTask) {
+  return task.publishTime || "平台同步";
+}
+
+/** 获取委托金额展示文案。 */
+export function getDelegationAmountText(task: HuntingTask) {
+  return getHuntingTaskAmountText(task);
+}
+
+/** 获取委托发布者展示文案，手机号由服务端返回脱敏值。 */
+export function getDelegationPublisherText(task: HuntingTask) {
+  return `${task.publisherName || "平台用户"} · ${task.publisherPhone || "暂无手机号"}`;
+}
+
+/** 获取委托要求标签。 */
+export function getDelegationRequirementTags(task: HuntingTask) {
+  const taggedRequirements = task.requirementTags ?? [];
+  const textRequirements = (task.requirement || task.urgency || "无特殊要求")
+    .split(/、|,|，|\s+/)
+    .map((tag) => tag.trim())
+    .filter((tag) => tag && tag !== "无特殊要求");
+  const requirementItems = Array.from(new Set([...taggedRequirements, ...textRequirements]));
+
+  return requirementItems.length > 0 ? requirementItems : ["无特殊要求"];
+}
+
+/** 判断委托是否处于报价阶段。 */
+export function isDelegationQuoteStatus(task: HuntingTask) {
+  return isHuntingQuoteStatus(task);
+}
+
+/** 委托任务池只展示发布和报价状态。 */
+export function isDelegationListVisible(task: HuntingTask) {
+  return isHuntingPublishedStatus(task) || isDelegationQuoteStatus(task);
+}
+
+/** 判断委托是否处于履约中。 */
+export function isDelegationFulfillingStatus(task: HuntingTask) {
+  return isHuntingFulfillingStatus(task);
+}
+
+/** 判断委托是否已进入不可重复领取/报价的业务状态。 */
+export function isDelegationTaskLocked(task: HuntingTask) {
+  const lockedStatusKeywords = ["履约中", "进行中", "已领取", "完成", "取消", "异常", "争议"];
+
+  return Boolean(task.pendingAmount) || lockedStatusKeywords.some((keyword) => task.status.includes(keyword));
+}
+
+/** 获取委托卡片主按钮文案。 */
+export function getDelegationPrimaryActionLabel(task: HuntingTask) {
+  if (isDelegationFulfillingStatus(task)) {
+    return "履约中";
+  }
+  if (task.status.includes("完成") || task.status.includes("取消") || task.status.includes("异常")) {
+    return task.status;
+  }
+
+  return isDelegationQuoteStatus(task) || task.amountNegotiable || task.fee <= 0 ? "报价" : "接受委托";
+}
+
 /** 获取狩猎快捷开启后系统推荐的委托任务。 */
 export function getRecommendedHuntingTasks(tasks: HuntingTask[], project: HuntingProject | null) {
   /** 可被推荐的委托状态关键字，兼容迁移前旧文案。 */

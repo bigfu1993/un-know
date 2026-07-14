@@ -58,13 +58,16 @@ export function useClientWorkspaceViewModel({
   );
   const tutorApplicationCandidates: TutorApplicationCandidate[] = useMemo(
     () =>
-      workspaceData.tutorDemands.flatMap((demand) => demand.applicants).map((applicant) => ({
-        id: applicant.id,
-        major: applicant.major,
-        name: applicant.name,
-        school: applicant.school,
-        status: applicant.status
-      })),
+      workspaceData.tutorDemands.flatMap((demand) =>
+        demand.applicants.map((applicant) => ({
+          demandId: demand.id,
+          id: applicant.id,
+          major: applicant.major,
+          name: applicant.name,
+          school: applicant.school,
+          status: applicant.status
+        }))
+      ),
     [workspaceData.tutorDemands]
   );
   const ongoingOrders = useMemo(

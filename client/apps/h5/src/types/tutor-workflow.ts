@@ -23,6 +23,7 @@ export interface TutorTrialJob {
 
 /** 家长端试课申请列表候选人。 */
 export interface TutorApplicationCandidate {
+  demandId: string;
   id: string;
   major: string;
   name: string;

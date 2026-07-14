@@ -1,7 +1,7 @@
 /** 跨页面流程弹窗，仅负责采集或展示数据，提交和导航由调用方处理。 */
 import { AddressInfoForm } from "@components/AddressInfoForm";
 import { OngoingOrdersList } from "@components/OngoingOrdersList";
-import { validateByKey } from "@tools/validation";
+import { hasInvalidRequiredFields } from "@tools/validation";
 
 /** 进行中事项弹窗，支持分类筛选和面板高度配置。 */
 export function OngoingOrdersDialog({
@@ -81,9 +81,7 @@ export function ProfileCompletionDialog({
   onSave: () => void;
 }) {
   /** 当前资料模板是否存在未通过校验的必填项。 */
-  const hasInvalidFields = template.fields.some(
-    (field) => !validateByKey(field.key, profileDraft[field.key] ?? "", { label: field.label, required: true }).isValid
-  );
+  const hasInvalidFields = hasInvalidRequiredFields(template.fields, profileDraft);
 
   /** 拦截表单默认提交，并在校验通过后交给调用方保存。 */
   function handleSubmit(event: FormEvent<HTMLFormElement>) {

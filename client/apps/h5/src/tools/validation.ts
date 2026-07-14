@@ -121,3 +121,24 @@ export function validateByKey(key: string, value: string, context: ValidationCon
 
   return rule(value, context);
 }
+
+/** 校验一组资料字段，便于页面和弹窗复用统一字段规则。 */
+export function hasInvalidFields(
+  fields: ProfileRequirementField[],
+  draft: ProfileDraftState,
+  context: Pick<ValidationContext, "required"> = {}
+) {
+  return fields.some(
+    (field) => !validateByKey(field.key, draft[field.key] ?? "", { label: field.label, ...context }).isValid
+  );
+}
+
+/** 校验一组必填资料字段是否存在无效项。 */
+export function hasInvalidRequiredFields(fields: ProfileRequirementField[], draft: ProfileDraftState) {
+  return hasInvalidFields(fields, draft, { required: true });
+}
+
+/** 统计一组资料字段中已填写的数量，用于资料完整度展示。 */
+export function getFilledFieldCount(fields: ProfileRequirementField[], draft: ProfileDraftState) {
+  return fields.filter((field) => draft[field.key]?.trim()).length;
+}

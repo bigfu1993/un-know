@@ -1,32 +1,44 @@
 /** 家长端试课申请列表弹窗属性。 */
 interface TutorApplicationsDialogProps {
   candidates: TutorApplicationCandidate[];
+  isConfirming?: boolean;
   onClose: () => void;
+  onConfirm: (payload: {
+    applicationId: string;
+    demandId: string;
+    trialEnd: string;
+    trialHalfDay: string;
+    trialStart: string;
+  }) => void;
 }
 
 /** 家长端选择试课家教并确认试课时间。 */
-export function TutorApplicationsDialog({ candidates, onClose }: TutorApplicationsDialogProps) {
+export function TutorApplicationsDialog({ candidates, isConfirming = false, onClose, onConfirm }: TutorApplicationsDialogProps) {
   const [selectedCandidateId, setSelectedCandidateId] = useState("");
-  const { hideMessage, showMessage, toast } = useMessageToast();
   const [trialDateStart, setTrialDateStart] = useState("");
   const [trialDateEnd, setTrialDateEnd] = useState("");
   const [trialHalfDay, setTrialHalfDay] = useState("上午");
+  const selectedCandidate = candidates.find((candidate) => candidate.id === selectedCandidateId);
   /** 试课确认按钮是否满足学生和起止日期必填要求。 */
-  const canConfirm = Boolean(selectedCandidateId && trialDateStart && trialDateEnd);
+  const canConfirm = Boolean(selectedCandidate && trialDateStart && trialDateEnd && !isConfirming);
 
-  /** 第一版试课确认还没有独立提交接口，弹窗内部完成临时反馈并关闭。 */
+  /** 提交家长端确认的试课安排，成功反馈和关闭由上层业务 hook 承接。 */
   function handleConfirm() {
-    if (!canConfirm) {
+    if (!canConfirm || !selectedCandidate) {
       return;
     }
 
-    showMessage("试课信息已确认，等待学生端处理。", { type: "success" });
-    window.setTimeout(onClose, 450);
+    onConfirm({
+      applicationId: selectedCandidate.id,
+      demandId: selectedCandidate.demandId,
+      trialEnd: trialDateEnd,
+      trialHalfDay,
+      trialStart: trialDateStart
+    });
   }
 
   return (
     <section className="checkout-sheet" aria-label="试课申请列表">
-      <MessageToast onClose={hideMessage} toast={toast} />
       <div className="sheet-backdrop" onClick={onClose} />
       <article className="sheet-panel tutor-applications-panel mx-auto grid max-h-[min(76vh,620px)] max-w-[540px] gap-[12px] overflow-hidden px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]">
         <div className="card-title flex items-center justify-between gap-[10px]">
@@ -102,7 +114,7 @@ export function TutorApplicationsDialog({ candidates, onClose }: TutorApplicatio
           type="button"
         >
           <CheckCircle2 size={16} />
-          {selectedCandidateId ? "试课信息确认" : "选择试课家教"}
+          {isConfirming ? "提交中" : selectedCandidateId ? "试课信息确认" : "选择试课家教"}
         </button>
       </article>
     </section>

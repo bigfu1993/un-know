@@ -783,8 +783,8 @@ public class ClientWorkspaceAppService {
 
     return jdbcTemplate.query(
         """
-            SELECT ta.public_id, ta.status, td.title, td.subject, td.budget,
-                   td.address_label, td.period_start, td.period_end,
+            SELECT ta.public_id, ta.status, ta.trial_start, ta.trial_end, ta.trial_half_day,
+                   td.title, td.subject, td.budget, td.address_label, td.period_start, td.period_end,
                    COALESCE(NULLIF(parent.nickname, ''), parent.phone, '家长用户') AS parent_name,
                    COALESCE(parent.phone, '') AS parent_phone
             FROM tutor_applicant ta
@@ -796,37 +796,42 @@ public class ClientWorkspaceAppService {
               AND ta.status NOT IN ('已拒绝', '已结束')
             ORDER BY ta.updated_at DESC, ta.id DESC
             """,
-        (rs, rowNum) -> new ClientOrder(
-            rs.getString("public_id"),
-            role,
-            rs.getString("title"),
-            rs.getString("status"),
-            BigDecimal.ZERO,
-            rs.getString("parent_name"),
-            "试课申请 · " + rs.getString("subject") + " · " + defaultText(rs.getString("period_start"), "待定")
-                + " 至 " + defaultText(rs.getString("period_end"), "待定") + " · "
-                + defaultText(rs.getString("address_label"), "地址待补充"),
-            null,
-            rs.getString("budget"),
-            "tutor",
-            maskPhone(rs.getString("parent_phone")),
-            null,
-            null,
-            null,
-            null,
-            true,
-            true,
-            false,
-            false,
-            false,
-            false,
-            false,
-            true,
-            false,
-            true,
-            false,
-            true
-        ),
+        (rs, rowNum) -> {
+          boolean hasTrialSchedule = !defaultText(rs.getString("trial_start"), "").isBlank()
+              && !defaultText(rs.getString("trial_end"), "").isBlank()
+              && !defaultText(rs.getString("trial_half_day"), "").isBlank();
+          return new ClientOrder(
+              rs.getString("public_id"),
+              role,
+              rs.getString("title"),
+              rs.getString("status"),
+              BigDecimal.ZERO,
+              rs.getString("parent_name"),
+              "试课申请 · " + rs.getString("subject") + " · " + defaultText(rs.getString("period_start"), "待定")
+                  + " 至 " + defaultText(rs.getString("period_end"), "待定") + " · "
+                  + defaultText(rs.getString("address_label"), "地址待补充"),
+              null,
+              rs.getString("budget"),
+              "tutor",
+              maskPhone(rs.getString("parent_phone")),
+              null,
+              null,
+              null,
+              null,
+              true,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              hasTrialSchedule,
+              false,
+              false
+          );
+        },
         currentUserId
     );
   }

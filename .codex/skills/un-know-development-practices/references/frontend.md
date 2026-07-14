@@ -13,8 +13,12 @@ Applies to `client/apps/h5`, `client/packages/domain`, `client/packages/api-clie
 - Prefer stable component defaults over repetitive props. For example, `AddressInfoForm` defaults to edit mode; callers should omit `mode="edit"`.
 - For list preview cards, pass the whole item when available and let the component bind `onUse(item)`, `onEdit(item)`, or `onDelete(item)` internally instead of wrapping callbacks in every `.map`.
 - Keep reusable pure functions in `client/apps/h5/src/tools/*.ts`.
+- Call hooks close to the component that actually consumes the state, data, or action. Do not call a hook in a parent only to pass its result through child layers.
+- Provide global data and state from the root Provider/Context, then let descendants read it through the project store/context hooks instead of prop drilling global objects.
+- Keep shared/global hooks in `client/apps/h5/src/hooks`; keep page or business-module local hooks in `pages/<Module>/hooks/*.ts` instead of next to the page component file.
 - Before adding a new branch of UI or business logic, scan nearby pages/components/hooks/tools for a reusable unit. Extract repeated business helpers to the owning module and non-business helpers to `tools`.
 - Keep `App.tsx` lean. Business-specific dialogs and derived models should live under the matching page module; use `App.tsx` only to wire global state, routing, and cross-module workflows.
+- Run full-H5 or repo-wide cleanups in batches. Each batch should declare scope, make a focused change, run the relevant validation commands, then continue to the next batch.
 - Treat component collection folders such as `AppShell` as transitional. Before deleting them, search the exported component names and `auto-imports.d.ts`; if the exports are still used, split them into focused folders before removal.
 - Keep login user data in `client/apps/h5/src/store/global.ts`; avoid prop drilling of the whole user object.
 - Keep API types in `client/packages/domain`. Update `api-client` and hooks together when backend contracts change.
@@ -29,6 +33,8 @@ Applies to `client/apps/h5`, `client/packages/domain`, `client/packages/api-clie
 
 ## Data And State
 
+- H5 must consume real backend workflow state for business flows. Button visibility, status text, role permissions, current/default records, application/confirmation/cancel/completion steps, and other workflow decisions must come from backend responses or be immediately backed by a real API action.
+- Do not implement business flow progression with H5-only state, local cache, mock data, toast-only actions, or temporary frontend flags. If an existing flow is local-only, convert it to backend API + database first, then adjust components.
 - Prefer server state through React Query hooks. Do not create local fake business state for real flows.
 - When a backend state has a UI-only display label, compute it in a small helper and document the boundary.
 - For role-specific behavior, make role checks explicit and keep labels consistent with `docs/产品需求文档.md`.

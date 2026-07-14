@@ -1,6 +1,6 @@
 import { AddressInfoForm } from "@components/AddressInfoForm";
 import { parentChildInfoFields, parentRegistrationAddressFields } from "@shared/clientPageModel";
-import { validateByKey } from "@tools/validation";
+import { getFilledFieldCount, hasInvalidFields, validateByKey } from "@tools/validation";
 
 /** 进入 H5 前渲染注册后的昵称、地址和密码设置表单。 */
 export function RegistrationProfileCompletion({
@@ -32,14 +32,12 @@ export function RegistrationProfileCompletion({
         ]
       : template.fields;
   const nicknameValidation = validateByKey("nickname", nickname, { label: "昵称", required: true });
-  const hasMissingProfileFields = visibleProfileFields.some((field) => !draft[field.key]?.trim());
+  const hasMissingProfileFields = getFilledFieldCount(visibleProfileFields, draft) < visibleProfileFields.length;
   const isNicknameInvalid = !nicknameValidation.isValid;
   const isPasswordMissing = !password.trim();
   const isPasswordConfirmMissing = !passwordConfirm.trim();
   const isPasswordConfirmInvalid = Boolean(passwordConfirm.trim()) && password !== passwordConfirm;
-  const hasInvalidProfileFields = visibleProfileFields.some(
-    (field) => !validateByKey(field.key, draft[field.key] ?? "", { label: field.label }).isValid
-  );
+  const hasInvalidProfileFields = hasInvalidFields(visibleProfileFields, draft);
   const submitLabel = isSubmitting
     ? "进入中"
     : isNicknameInvalid

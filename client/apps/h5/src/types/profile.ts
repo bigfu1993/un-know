@@ -36,7 +36,7 @@ export interface AddressBookItem {
 
 /** 地址信息表单在编辑和预览模式下使用的属性。 */
 export interface AddressInfoFormProps {
-  areaOptions: string[];
+  areaOptions?: string[];
   actionLabel?: string;
   draft?: ProfileDraftState;
   emptyText?: string;

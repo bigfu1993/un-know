@@ -8,6 +8,7 @@ export {}
 declare global {
   const AccountSummaryCard: typeof import('./components/SummaryCards/index').AccountSummaryCard
   const Activity: typeof import('react').Activity
+  const AddressEditorDialog: typeof import('./pages/Settings/components/SettingsDialogs').AddressEditorDialog
   const AddressInfoForm: typeof import('./components/AddressInfoForm/index').AddressInfoForm
   const AlertCircle: typeof import('lucide-react').AlertCircle
   const App: typeof import('@h5/App').App
@@ -26,6 +27,9 @@ declare global {
   const ClipboardCheck: typeof import('lucide-react').ClipboardCheck
   const Crosshair: typeof import('lucide-react').Crosshair
   const Delegation: typeof import('./pages/Delegation/index').Delegation
+  const DelegationAmountDialog: typeof import('./pages/Delegation/components/DelegationAmountDialog').DelegationAmountDialog
+  const DelegationTaskCard: typeof import('./pages/Delegation/components/DelegationTaskCard').DelegationTaskCard
+  const DelegationTaskDetailDialog: typeof import('./pages/Delegation/components/DelegationTaskDetailDialog').DelegationTaskDetailDialog
   const Featured: typeof import('./pages/Featured/index').Featured
   const Filter: typeof import('lucide-react').Filter
   const Fragment: typeof import('react').Fragment
@@ -37,6 +41,7 @@ declare global {
   const Home: typeof import('lucide-react').Home
   const HuntingCertification: typeof import('./pages/HuntingCertification/index').HuntingCertification
   const HuntingCertificationCard: typeof import('./components/HuntingCertificationCard/index').HuntingCertificationCard
+  const HuntingCertificationPromptDialog: typeof import('./pages/Delegation/components/HuntingCertificationPromptDialog').HuntingCertificationPromptDialog
   const HuntingProjectDialog: typeof import('./components/HuntingProjectDialog/index').HuntingProjectDialog
   const HuntingRecommendationDialog: typeof import('./pages/Delegation/components/HuntingRecommendationDialog').HuntingRecommendationDialog
   const KeyRound: typeof import('lucide-react').KeyRound
@@ -52,6 +57,7 @@ declare global {
   const Mine: typeof import('./pages/Mine/index').Mine
   const MinePopover: typeof import('./components/AppShell/index').MinePopover
   const Navigate: typeof import('react-router-dom').Navigate
+  const NicknameEditorDialog: typeof import('./pages/Settings/components/SettingsDialogs').NicknameEditorDialog
   const OngoingOrdersDialog: typeof import('./components/WorkflowDialogs/index').OngoingOrdersDialog
   const OngoingOrdersList: typeof import('./components/OngoingOrdersList/index').OngoingOrdersList
   const OngoingQuoteDialog: typeof import('./pages/Delegation/components/OngoingQuoteDialog').OngoingQuoteDialog
@@ -61,6 +67,8 @@ declare global {
   const PageShell: typeof import('./components/AppShell/index').PageShell
   const PartTime: typeof import('./pages/PartTime/index').PartTime
   const PartTimeJobCard: typeof import('./components/PageWidgets/index').PartTimeJobCard
+  const PasswordResetDialog: typeof import('./pages/Settings/components/SettingsDialogs').PasswordResetDialog
+  const PhoneChangeDialog: typeof import('./pages/Settings/components/SettingsDialogs').PhoneChangeDialog
   const Plus: typeof import('lucide-react').Plus
   const ProductListCard: typeof import('./components/PageWidgets/index').ProductListCard
   const ProfileCompletionDialog: typeof import('./components/WorkflowDialogs/index').ProfileCompletionDialog
@@ -88,6 +96,7 @@ declare global {
   const TutorCard: typeof import('./components/TutorCard/index').TutorCard
   const TutorCertification: typeof import('./pages/Tutor/TutorCertification').TutorCertification
   const TutorCertificationInfoDialog: typeof import('./components/TutorCertificationInfoDialog/index').TutorCertificationInfoDialog
+  const TutorQualificationInfoDialog: typeof import('./pages/Settings/components/SettingsDialogs').TutorQualificationInfoDialog
   const TutorTrialJobCard: typeof import('./components/PageWidgets/index').TutorTrialJobCard
   const UserRound: typeof import('lucide-react').UserRound
   const Wallet: typeof import('./pages/Wallet/index').Wallet
@@ -119,6 +128,8 @@ declare global {
   const createRef: typeof import('react').createRef
   const createRoot: typeof import('react-dom/client').createRoot
   const delegationRequirementTags: typeof import('./tools/publishInfo').delegationRequirementTags
+  const delegationRuleTickerItems: typeof import('./pages/Delegation/model').delegationRuleTickerItems
+  const delegationSortOptions: typeof import('./pages/Delegation/model').delegationSortOptions
   const deliveryModeLabels: typeof import('@unknown/domain').deliveryModeLabels
   const filterProducts: typeof import('./shared/clientPageModel').filterProducts
   const formatCompactWalletAmount: typeof import('./tools/wallet').formatCompactWalletAmount
@@ -131,10 +142,19 @@ declare global {
   const getDefaultDeliveryMode: typeof import('./shared/clientPageModel').getDefaultDeliveryMode
   const getDefaultPrimaryTab: typeof import('@unknown/domain').getDefaultPrimaryTab
   const getDefaultRouteForRole: typeof import('./shared/clientPageModel').getDefaultRouteForRole
+  const getDelegationAmountText: typeof import('./pages/Delegation/model').getDelegationAmountText
+  const getDelegationArea: typeof import('./pages/Delegation/model').getDelegationArea
+  const getDelegationDestination: typeof import('./pages/Delegation/model').getDelegationDestination
   const getDelegationLatestTimeLabel: typeof import('./tools/publishInfo').getDelegationLatestTimeLabel
+  const getDelegationPrimaryActionLabel: typeof import('./pages/Delegation/model').getDelegationPrimaryActionLabel
+  const getDelegationPublishTime: typeof import('./pages/Delegation/model').getDelegationPublishTime
+  const getDelegationPublisherText: typeof import('./pages/Delegation/model').getDelegationPublisherText
   const getDelegationRequirementLabel: typeof import('./tools/publishInfo').getDelegationRequirementLabel
+  const getDelegationRequirementTags: typeof import('./pages/Delegation/model').getDelegationRequirementTags
+  const getDelegationTimeWeight: typeof import('./pages/Delegation/model').getDelegationTimeWeight
   const getDeliveryFee: typeof import('./shared/clientPageModel').getDeliveryFee
   const getErrorMessage: typeof import('./tools/messageToast').getErrorMessage
+  const getFilledFieldCount: typeof import('./tools/validation').getFilledFieldCount
   const getFilledProfileDraft: typeof import('./shared/clientPageModel').getFilledProfileDraft
   const getHuntingCertificationCardMode: typeof import('./components/HuntingCertificationCard/model').getHuntingCertificationCardMode
   const getHuntingCertificationDataFromDraft: typeof import('./components/HuntingCertificationCard/model').getHuntingCertificationDataFromDraft
@@ -173,9 +193,15 @@ declare global {
   const getWalletTotalAmount: typeof import('./tools/wallet').getWalletTotalAmount
   const hasCounterQuoteAmount: typeof import('./pages/Delegation/model').hasCounterQuoteAmount
   const hasInvalidCounterQuoteAmount: typeof import('./pages/Delegation/model').hasInvalidCounterQuoteAmount
+  const hasInvalidFields: typeof import('./tools/validation').hasInvalidFields
+  const hasInvalidRequiredFields: typeof import('./tools/validation').hasInvalidRequiredFields
   const hasStoredPendingRegistration: typeof import('./shared/clientPageModel').hasStoredPendingRegistration
   const hasValidCounterQuoteAmount: typeof import('./pages/Delegation/model').hasValidCounterQuoteAmount
   const huntingCertificationStatusLabels: typeof import('./components/HuntingCertificationCard/model').huntingCertificationStatusLabels
+  const isDelegationFulfillingStatus: typeof import('./pages/Delegation/model').isDelegationFulfillingStatus
+  const isDelegationListVisible: typeof import('./pages/Delegation/model').isDelegationListVisible
+  const isDelegationQuoteStatus: typeof import('./pages/Delegation/model').isDelegationQuoteStatus
+  const isDelegationTaskLocked: typeof import('./pages/Delegation/model').isDelegationTaskLocked
   const isHuntingCancelledStatus: typeof import('./pages/Delegation/model').isHuntingCancelledStatus
   const isHuntingCompletedStatus: typeof import('./pages/Delegation/model').isHuntingCompletedStatus
   const isHuntingFulfillingStatus: typeof import('./pages/Delegation/model').isHuntingFulfillingStatus
@@ -249,11 +275,14 @@ declare global {
   const useCreateHuntingProject: typeof import('@unknown/hooks').useCreateHuntingProject
   const useDebugValue: typeof import('react').useDebugValue
   const useDeferredValue: typeof import('react').useDeferredValue
+  const useDelegationList: typeof import('./pages/Delegation/hooks/useDelegationList').useDelegationList
+  const useDelegationTaskFlow: typeof import('./pages/Delegation/hooks/useDelegationTaskFlow').useDelegationTaskFlow
   const useDeleteClientAddress: typeof import('@unknown/hooks').useDeleteClientAddress
   const useEffect: typeof import('react').useEffect
   const useEffectEvent: typeof import('react').useEffectEvent
   const useGlobalStore: typeof import('./store/global').useGlobalStore
   const useGlobalUser: typeof import('./store/global').useGlobalUser
+  const useHuntingTaskActions: typeof import('./pages/Delegation/hooks/useHuntingTaskActions').useHuntingTaskActions
   const useId: typeof import('react').useId
   const useImperativeHandle: typeof import('react').useImperativeHandle
   const useInsertionEffect: typeof import('react').useInsertionEffect
@@ -262,7 +291,7 @@ declare global {
   const useMemo: typeof import('react').useMemo
   const useMessageToast: typeof import('./tools/messageToast').useMessageToast
   const useNavigate: typeof import('react-router-dom').useNavigate
-  const useOngoingQuoteFlow: typeof import('./pages/Delegation/useOngoingQuoteFlow').useOngoingQuoteFlow
+  const useOngoingQuoteFlow: typeof import('./pages/Delegation/hooks/useOngoingQuoteFlow').useOngoingQuoteFlow
   const useOptimistic: typeof import('react').useOptimistic
   const useProducts: typeof import('@unknown/hooks').useProducts
   const usePublishHuntingTask: typeof import('@unknown/hooks').usePublishHuntingTask
@@ -274,6 +303,7 @@ declare global {
   const useState: typeof import('react').useState
   const useSyncExternalStore: typeof import('react').useSyncExternalStore
   const useTransition: typeof import('react').useTransition
+  const useTutorTrialActions: typeof import('./pages/Tutor/hooks/useTutorTrialActions').useTutorTrialActions
   const useUpdateClientAddress: typeof import('@unknown/hooks').useUpdateClientAddress
   const useUpdateTutorExposure: typeof import('@unknown/hooks').useUpdateTutorExposure
   const useUseClientAddress: typeof import('@unknown/hooks').useUseClientAddress
@@ -321,6 +351,12 @@ declare global {
   // @ts-ignore
   export type { DelegationProps } from './pages/Delegation/index'
   import('./pages/Delegation/index')
+  // @ts-ignore
+  export type { DelegationSortMode, DelegationToolbarPanel } from './pages/Delegation/model'
+  import('./pages/Delegation/model')
+  // @ts-ignore
+  export type { AddressEditorMode, PhoneChangeDraft, PasswordResetDraft } from './pages/Settings/components/SettingsDialogs'
+  import('./pages/Settings/components/SettingsDialogs')
   // @ts-ignore
   export type { StoredPasswordCredential, PasswordCredentialStore, PendingRegistrationRecord, PendingRegistrationStore } from './shared/clientPageModel'
   import('./shared/clientPageModel')

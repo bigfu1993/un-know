@@ -1,3 +1,5 @@
+import { messageToastMeta } from "@tools/messageToast";
+
 /** 顶部消息提示展示组件，仅负责根据 toast 状态渲染视觉层。 */
 export function MessageToast({ onClose, toast }: MessageToastProps) {
   if (!toast) {

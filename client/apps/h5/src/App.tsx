@@ -3,6 +3,7 @@ import {
   useAcceptHuntingTask,
   useApplyTutorTrial,
   useClientAddresses,
+  useConfirmTutorTrial,
   useCreateClientAddress,
   useCreateHuntingProject,
   useDecideHuntingTaskQuote,
@@ -26,10 +27,12 @@ import { usePublishInfoFlow } from "@h5/hooks/usePublishInfoFlow";
 import { useRootNavigation } from "@h5/hooks/useRootNavigation";
 import { HuntingRecommendationDialog } from "@pages/Delegation/components/HuntingRecommendationDialog";
 import { OngoingQuoteDialog } from "@pages/Delegation/components/OngoingQuoteDialog";
-import { useOngoingQuoteFlow } from "@pages/Delegation/useOngoingQuoteFlow";
+import { useHuntingTaskActions } from "@pages/Delegation/hooks/useHuntingTaskActions";
+import { useOngoingQuoteFlow } from "@pages/Delegation/hooks/useOngoingQuoteFlow";
 import { HuntingCertification } from "@pages/HuntingCertification";
 import { TutorCertification } from "@pages/Tutor/TutorCertification";
 import { TutorApplicationsDialog } from "@pages/Tutor/components/TutorApplicationsDialog";
+import { useTutorTrialActions } from "@pages/Tutor/hooks/useTutorTrialActions";
 import { campusAreaOptions, clientAddressesToAddressBookItems } from "@shared/clientPageModel";
 import { getTutorCalendarTasks, getTutorDateKey } from "@tools/tutorCalendar";
 
@@ -76,6 +79,7 @@ export function App() {
   });
   const [isHuntingShortcutEnabled, setIsHuntingShortcutEnabled] = useState(false);
   const [huntingShortcutProject, setHuntingShortcutProject] = useState<HuntingProject | null>(null);
+  const [activeTutorApplicationDemandId, setActiveTutorApplicationDemandId] = useState<string | null>(null);
   const { hideMessage, showMessage, toast } = useMessageToast();
   const {
     closeHuntingShortcutDialogs,
@@ -123,6 +127,7 @@ export function App() {
   const publishTutorDemandMutation = usePublishTutorDemand();
   const createHuntingProjectMutation = useCreateHuntingProject();
   const applyTutorTrialMutation = useApplyTutorTrial();
+  const confirmTutorTrialMutation = useConfirmTutorTrial();
   const updateTutorExposureMutation = useUpdateTutorExposure();
   const acceptHuntingTaskMutation = useAcceptHuntingTask();
   const quoteHuntingTaskMutation = useQuoteHuntingTask();
@@ -228,6 +233,13 @@ export function App() {
     role,
     workspaceData: workspaceResponse ?? emptyWorkspaceData
   });
+  const activeTutorApplicationCandidates = useMemo(
+    () =>
+      activeTutorApplicationDemandId
+        ? tutorApplicationCandidates.filter((candidate) => candidate.demandId === activeTutorApplicationDemandId)
+        : tutorApplicationCandidates,
+    [activeTutorApplicationDemandId, tutorApplicationCandidates]
+  );
   const {
     closeOngoingQuoteList: handleCloseOngoingQuoteList,
     ongoingQuoteInitialQuoteId,
@@ -236,6 +248,37 @@ export function App() {
   } = useOngoingQuoteFlow({
     showMessage,
     tasks: mergedHuntingTasks
+  });
+  const {
+    handleAcceptHuntingTask,
+    handleConfirmHuntingQuote,
+    handleCounterHuntingQuote,
+    handleHuntingTaskFulfillmentAction,
+    handleQuoteHuntingTask,
+    handleRejectHuntingQuote
+  } = useHuntingTaskActions({
+    acceptTask: (taskId) => acceptHuntingTaskMutation.mutateAsync(taskId),
+    decideQuote: (payload) => decideHuntingTaskQuoteMutation.mutateAsync(payload),
+    fulfillmentAction: (payload) => huntingTaskFulfillmentActionMutation.mutateAsync(payload),
+    mergedHuntingTasks,
+    quoteTask: (payload) => quoteHuntingTaskMutation.mutateAsync(payload),
+    refetchWorkspace: () => {
+      void refetchWorkspace();
+    },
+    showMessage
+  });
+  const { handleApplyTutorTrial, handleConfirmTutorTrial } = useTutorTrialActions({
+    applyTutorTrial: (payload) => applyTutorTrialMutation.mutateAsync(payload),
+    closeTutorApplications: () => {
+      setIsTutorApplicationOpen(false);
+      setActiveTutorApplicationDemandId(null);
+    },
+    confirmTutorTrial: (payload) => confirmTutorTrialMutation.mutateAsync(payload),
+    openOngoingOrders: () => setIsOngoingOpen(true),
+    refetchWorkspace: () => {
+      void refetchWorkspace();
+    },
+    showMessage
   });
   const dataError = homeError ?? workspaceError ?? addressError;
   const isInitialDataLoading = isHomeLoading || isWorkspaceLoading || isAddressLoading;
@@ -504,123 +547,9 @@ export function App() {
     return true;
   }
 
-  /** 接受固定金额委托，服务端负责锁单和押金冻结校验。 */
-  async function handleAcceptHuntingTask(task: HuntingTask) {
-    try {
-      await acceptHuntingTaskMutation.mutateAsync(task.id);
-      showMessage("已接受委托，任务已进入履约中。", { type: "success" });
-      void refetchWorkspace();
-    } catch (error) {
-      showMessage(getErrorMessage(error, "接受委托失败，请稍后重试。"), { type: "error" });
-      throw error;
-    }
-  }
-
-  /** 提交协商金额报价，发布方确认后才会进入履约。 */
-  async function handleQuoteHuntingTask(task: HuntingTask, amount: number) {
-    try {
-      await quoteHuntingTaskMutation.mutateAsync({ amount, taskId: task.id });
-      showMessage(`报价 ${formatCurrency(amount)} 已提交，等待发布方确认。`, { type: "success" });
-      void refetchWorkspace();
-    } catch (error) {
-      showMessage(getErrorMessage(error, "提交报价失败，请稍后重试。"), { type: "error" });
-      throw error;
-    }
-  }
-
-  /** 发布方确认报价，确认成功后委托进入履约中。 */
-  async function handleConfirmHuntingQuote(task: HuntingTask, quote: HuntingQuote) {
-    try {
-      await decideHuntingTaskQuoteMutation.mutateAsync({ action: "confirm", quoteId: quote.id, taskId: task.id });
-      showMessage(`已确认 ${quote.bidderName} 的报价，委托进入履约中。`, { type: "success" });
-      void refetchWorkspace();
-    } catch (error) {
-      showMessage(getErrorMessage(error, "确认报价失败，请稍后重试。"), { type: "error" });
-      throw error;
-    }
-  }
-
-  /** 拒绝进行中弹窗内选中的委托报价，报价将失效并保留委托待报价状态。 */
-  async function handleRejectHuntingQuote(task: HuntingTask, quote: HuntingQuote) {
-    try {
-      await decideHuntingTaskQuoteMutation.mutateAsync({ action: "reject", quoteId: quote.id, taskId: task.id });
-      showMessage("已拒绝报价，委托将继续等待其他报价。", { type: "success" });
-      void refetchWorkspace();
-    } catch (error) {
-      showMessage(getErrorMessage(error, "拒绝报价失败，请稍后重试。"), { type: "error" });
-      throw error;
-    }
-  }
-
-  /** 修改报价金额后推送给对方确认。 */
-  async function handleCounterHuntingQuote(task: HuntingTask, quote: HuntingQuote, amount: number) {
-    try {
-      await decideHuntingTaskQuoteMutation.mutateAsync({
-        action: "counter",
-        amount,
-        quoteId: quote.id,
-        taskId: task.id
-      });
-      showMessage("已提交修改后的报价，等待对方确认。", { type: "success" });
-      void refetchWorkspace();
-    } catch (error) {
-      showMessage(getErrorMessage(error, "提交修改报价失败，请稍后重试。"), { type: "error" });
-      throw error;
-    }
-  }
-
-  /** 处理履约中委托的取消、完成确认和再次发布动作。 */
-  async function handleHuntingTaskFulfillmentAction(
-    order: ClientOrder,
-    action: HuntingTaskFulfillmentActionRequest["action"]
-  ) {
-    const actionMessages: Record<HuntingTaskFulfillmentActionRequest["action"], string> = {
-      confirm_cancel: "已确认取消委托，已进入订单详情。",
-      confirm_complete: "已确认完成委托。",
-      republish: "委托已再次发布。",
-      request_cancel: "取消委托申请已提交，等待对方确认。",
-      request_complete: "完成委托申请已提交，等待发布方确认。"
-    };
-
-    try {
-      const task = mergedHuntingTasks.find((item) => item.id === order.id);
-
-      if (action === "republish" && task?.fulfillmentAction === "取消待确认") {
-        await huntingTaskFulfillmentActionMutation.mutateAsync({ action: "confirm_cancel", taskId: order.id });
-        await huntingTaskFulfillmentActionMutation.mutateAsync({ action: "republish", taskId: order.id });
-        showMessage("已取消原委托并重新发布。", { type: "success" });
-        void refetchWorkspace();
-        return;
-      }
-
-      await huntingTaskFulfillmentActionMutation.mutateAsync({ action, taskId: order.id });
-      showMessage(actionMessages[action], { type: "success" });
-      void refetchWorkspace();
-    } catch (error) {
-      showMessage(getErrorMessage(error, "委托履约操作失败，请稍后重试。"), { type: "error" });
-      throw error;
-    }
-  }
-
-  /** 学生端提交家教试课申请，申请记录由服务端进入进行中列表。 */
-  function handleApplyTutorTrial(job: TutorTrialJob) {
-    applyTutorTrialMutation.mutate(
-      { demandId: job.id, message: "申请试课" },
-      {
-        onSuccess: () => {
-          setIsOngoingOpen(true);
-          showMessage("试课申请已提交，可在进行中查看状态。", { type: "success" });
-          void refetchWorkspace();
-        },
-        onError: (error) => {
-          showMessage(getErrorMessage(error, "试课申请提交失败，请稍后重试。"), { type: "error" });
-        }
-      }
-    );
-  }
-
   /** 打开家长端试课申请选择弹窗。 */
-  function handleOpenTutorApplications() {
+  function handleOpenTutorApplications(order?: ClientOrder) {
+    setActiveTutorApplicationDemandId(order?.id ?? null);
     setIsTutorApplicationOpen(true);
   }
 
@@ -1006,8 +935,13 @@ export function App() {
 
       {isTutorApplicationOpen ? (
         <TutorApplicationsDialog
-          candidates={tutorApplicationCandidates}
-          onClose={() => setIsTutorApplicationOpen(false)}
+          candidates={activeTutorApplicationCandidates}
+          isConfirming={confirmTutorTrialMutation.isPending}
+          onClose={() => {
+            setIsTutorApplicationOpen(false);
+            setActiveTutorApplicationDemandId(null);
+          }}
+          onConfirm={handleConfirmTutorTrial}
         />
       ) : null}
 
