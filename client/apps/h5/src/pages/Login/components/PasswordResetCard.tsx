@@ -14,7 +14,7 @@ export function PasswordResetCard({ initialPhone = "", onBack, onCompleted }: Pa
     setPhone(initialPhone);
   }, [initialPhone]);
 
-  /** 校验本地验证码和新密码，成功后保存本地密码凭据并回传结果。 */
+  /** 校验本地验证码和新密码，成功后保存本地密码凭据并触发后续自动登录。 */
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     hideMessage();
@@ -41,7 +41,7 @@ export function PasswordResetCard({ initialPhone = "", onBack, onCompleted }: Pa
     setIsSubmitting(true);
     try {
       await saveLocalPasswordCredential(phone, password);
-      onCompleted({ phone, password });
+      await onCompleted({ phone });
     } catch (error) {
       showMessage(getErrorMessage(error, "密码保存失败，请稍后重试。"), { type: "error" });
     } finally {
@@ -139,7 +139,7 @@ export function PasswordResetCard({ initialPhone = "", onBack, onCompleted }: Pa
             type="submit"
           >
             <CheckCircle2 size={16} />
-            {isSubmitting ? "保存中" : "确认重置"}
+            {isSubmitting ? "处理中" : "确认重置"}
           </button>
         </div>
       </form>

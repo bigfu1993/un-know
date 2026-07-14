@@ -21,13 +21,11 @@ export interface ApiEnvelope<T> {
 }
 
 /**
- * 忘记密码完成后回填登录表单的凭据结果。
+ * 忘记密码完成后用于自动登录的重置结果。
  */
 export interface PasswordResetResult {
   /** 完成密码重置的手机号。 */
   phone: string;
-  /** 本地保存后的登录密码。 */
-  password: string;
 }
 
 /**
@@ -56,8 +54,6 @@ export interface LoginShellProps {
  * 登录表单组件属性。
  */
 export interface LoginFormProps {
-  /** 忘记密码完成后的回填结果。 */
-  passwordResetResult?: PasswordResetResult | null;
   /**
    * 完成登录后的业务回调。
    */
@@ -99,32 +95,20 @@ export interface PasswordResetCardProps {
   /**
    * 密码重置完成后的业务回调。
    */
-  onCompleted: (result: PasswordResetResult) => void;
+  onCompleted: (result: PasswordResetResult) => Promise<void> | void;
 }
 
 /**
- * 注册角色选择组件属性。
+ * 注册后引导组件属性。
  */
-export interface RegistrationRoleSelectionProps {
-  /** 返回登录注册入口的回调。 */
-  onBack: () => void;
-  /** 确认注册角色的回调。 */
-  onSelect: (role: Role) => void;
-}
-
-/**
- * 注册资料补充组件属性。
- */
-export interface RegistrationProfileStepProps {
+export interface RegistrationGuideProps {
   /** 注册临时会话令牌，用于确认最终角色。 */
   accessToken: string;
-  /** 注册流程对应的手机号，用于读取草稿和保存本地密码。 */
+  /** 注册流程对应的手机号，用于读取资料草稿和保存本地密码。 */
   ownerPhone: string;
-  /** 当前选择角色。 */
-  role: Role;
-  /** 返回角色选择的回调。 */
+  /** 返回登录注册入口的回调。 */
   onBack: () => void;
-  /** 角色确认和资料补充完成后的业务回调。 */
+  /** 注册引导完成后的业务回调。 */
   onCompleted: (session: LoginResponse) => void;
 }
 
@@ -164,6 +148,4 @@ export interface RegistrationProfileCompletionProps {
   role: Role;
   /** 当前角色显示文案。 */
   roleLabel: string;
-  /** 当前角色的资料补充模板。 */
-  template: ProfileRequirementTemplate;
 }

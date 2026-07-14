@@ -1,8 +1,8 @@
 import { AddressInfoForm } from "@components/AddressInfoForm";
-import { parentChildInfoFields, parentRegistrationAddressFields } from "@shared/clientPageModel";
+import { addressInfoFields, merchantRegistrationBusinessFields, parentChildInfoFields } from "@shared/clientPageModel";
 import { getFilledFieldCount, hasInvalidFields, validateByKey } from "@tools/validation";
 
-/** 注册后的昵称、地址和密码设置表单，只负责展示与字段级交互。 */
+/** 注册引导内的资料与密码设置表单，只负责展示、字段切换和字段级交互。 */
 export function RegistrationProfileCompletion({
   areaOptions,
   birthday,
@@ -19,18 +19,16 @@ export function RegistrationProfileCompletion({
   onPasswordConfirmChange,
   onSubmit,
   role,
-  roleLabel,
-  template
+  roleLabel
 }: RegistrationProfileCompletionProps) {
-  const [isParentAddressVisible, setIsParentAddressVisible] = useState(false);
-  const [isParentChildVisible, setIsParentChildVisible] = useState(false);
-  const visibleProfileFields =
-    role === "parent"
-      ? [
-          ...(isParentAddressVisible ? parentRegistrationAddressFields : []),
-          ...(isParentChildVisible ? parentChildInfoFields : [])
-        ]
-      : template.fields;
+  const [isAddressVisible, setIsAddressVisible] = useState(false);
+  const [isBusinessVisible, setIsBusinessVisible] = useState(false);
+  const [isChildVisible, setIsChildVisible] = useState(false);
+  const visibleProfileFields = [
+    ...(isAddressVisible ? addressInfoFields : []),
+    ...(role === "parent" && isChildVisible ? parentChildInfoFields : []),
+    ...(role === "merchant" && isBusinessVisible ? merchantRegistrationBusinessFields : [])
+  ];
   const nicknameValidation = validateByKey("nickname", nickname, { label: "昵称", required: true });
   const hasMissingProfileFields = getFilledFieldCount(visibleProfileFields, draft) < visibleProfileFields.length;
   const isNicknameInvalid = !nicknameValidation.isValid;
@@ -60,20 +58,10 @@ export function RegistrationProfileCompletion({
   }
 
   return (
-    <form
-      className="login-card registration-profile-card grid w-full min-w-0 gap-[12px] p-[16px]"
-      onSubmit={handleSubmit}
-    >
-      <div className="card-title flex min-w-0 items-center justify-start gap-[10px]">
-        <BadgeCheck size={18} />
-        <div className="min-w-0 flex-1">
-          <strong>{template.title}</strong>
-          <span>{roleLabel} · 进入前确认资料</span>
-        </div>
-      </div>
-
-      <p className="login-tip m-0 text-[13px] leading-[1.5] text-[#657181]">{template.description}</p>
-
+    <form className="registration-profile-form grid w-full min-w-0 gap-[12px]" onSubmit={handleSubmit}>
+      <p className="login-tip m-0 text-[13px] leading-[1.5] text-[#657181]">
+        {roleLabel}资料可先补充必要信息；昵称和登录密码必须设置后才能进入。
+      </p>
       <div className="registration-profile-fields grid gap-[10px]">
         <label
           className={`registration-profile-field grid gap-[7px] w-full min-w-0 font-bold ${
@@ -101,51 +89,65 @@ export function RegistrationProfileCompletion({
           />
         </label>
 
-        {role === "parent" ? (
-          <div className="parent-registration-shortcuts grid gap-[10px]">
-            <div className="parent-registration-shortcut-row flex flex-wrap gap-[8px]">
+        <div className="registration-profile-shortcuts grid gap-[10px]">
+          <div className="registration-profile-shortcut-row flex flex-wrap gap-[8px]">
+            <button
+              className="ghost-button inline-flex min-h-[32px] items-center justify-center gap-[5px] px-[10px] py-[7px] text-[#475466]"
+              onClick={() => setIsAddressVisible((visible) => !visible)}
+              type="button"
+            >
+              <Plus size={15} />
+              {isAddressVisible ? "收起地址" : "添加地址"}
+            </button>
+            {role === "parent" ? (
               <button
                 className="ghost-button inline-flex min-h-[32px] items-center justify-center gap-[5px] px-[10px] py-[7px] text-[#475466]"
-                onClick={() => setIsParentAddressVisible((visible) => !visible)}
+                onClick={() => setIsChildVisible((visible) => !visible)}
                 type="button"
               >
-                {isParentAddressVisible ? "收起地址信息" : "添加地址信息"}
+                <Plus size={15} />
+                {isChildVisible ? "收起孩子" : "添加孩子"}
               </button>
-              <button
-                className="ghost-button inline-flex min-h-[32px] items-center justify-center gap-[5px] px-[10px] py-[7px] text-[#475466]"
-                onClick={() => setIsParentChildVisible((visible) => !visible)}
-                type="button"
-              >
-                {isParentChildVisible ? "收起孩子信息" : "添加孩子信息"}
-              </button>
-            </div>
-
-            {isParentAddressVisible ? (
-              <AddressInfoForm
-                areaOptions={areaOptions}
-                draft={draft}
-                fields={parentRegistrationAddressFields}
-                onChange={(nextDraft, changedKey) => onChange(changedKey, nextDraft[changedKey] ?? "")}
-              />
             ) : null}
-
-            {isParentChildVisible ? (
-              <AddressInfoForm
-                areaOptions={areaOptions}
-                draft={draft}
-                fields={parentChildInfoFields}
-                onChange={(nextDraft, changedKey) => onChange(changedKey, nextDraft[changedKey] ?? "")}
-              />
+            {role === "merchant" ? (
+              <button
+                className="ghost-button inline-flex min-h-[32px] items-center justify-center gap-[5px] px-[10px] py-[7px] text-[#475466]"
+                onClick={() => setIsBusinessVisible((visible) => !visible)}
+                type="button"
+              >
+                <Plus size={15} />
+                {isBusinessVisible ? "收起工商信息" : "添加工商信息"}
+              </button>
             ) : null}
           </div>
-        ) : (
-          <AddressInfoForm
-            areaOptions={areaOptions}
-            draft={draft}
-            fields={template.fields}
-            onChange={(nextDraft, changedKey) => onChange(changedKey, nextDraft[changedKey] ?? "")}
-          />
-        )}
+
+          {isAddressVisible ? (
+            <AddressInfoForm
+              areaOptions={areaOptions}
+              draft={draft}
+              fields={addressInfoFields}
+              onChange={(nextDraft, changedKey) => onChange(changedKey, nextDraft[changedKey] ?? "")}
+            />
+          ) : null}
+
+          {role === "parent" && isChildVisible ? (
+            <AddressInfoForm
+              areaOptions={areaOptions}
+              draft={draft}
+              fields={parentChildInfoFields}
+              onChange={(nextDraft, changedKey) => onChange(changedKey, nextDraft[changedKey] ?? "")}
+            />
+          ) : null}
+
+          {role === "merchant" && isBusinessVisible ? (
+            <AddressInfoForm
+              areaOptions={areaOptions}
+              draft={draft}
+              fields={merchantRegistrationBusinessFields}
+              onChange={(nextDraft, changedKey) => onChange(changedKey, nextDraft[changedKey] ?? "")}
+            />
+          ) : null}
+        </div>
 
         <label
           className={`registration-profile-field grid gap-[7px] w-full min-w-0 font-bold ${
@@ -199,7 +201,7 @@ export function RegistrationProfileCompletion({
         </button>
       </div>
       <p className="login-tip m-0 text-[13px] leading-[1.5] text-[#657181]">
-        昵称和登录密码为必填；生日、地址和孩子信息可以先留空，后续可在设置页或业务流程中补充。
+        昵称和登录密码为必填；生日、地址、孩子和工商信息可以先留空，后续可在设置页或业务流程中补充。
       </p>
     </form>
   );

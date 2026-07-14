@@ -1,21 +1,20 @@
 import "./index.less";
 import { hasStoredPendingRegistration, setStoredPendingRegistration } from "@shared/clientPageModel";
+import { localAuthCode } from "@tools/localAuth";
 import { LoginForm } from "./components/LoginForm";
 import { LoginRegisterCard } from "./components/LoginRegisterCard";
 import { LoginShell } from "./components/LoginShell";
 import { PasswordResetCard } from "./components/PasswordResetCard";
 import { RegisterForm } from "./components/RegisterForm";
-import { RegistrationProfileStep } from "./components/RegistrationProfileStep";
-import { RegistrationRoleSelection } from "./components/RegistrationRoleSelection";
+import { RegistrationGuide } from "./components/RegistrationGuide";
 
 /** 登录页入口，负责登录后跨步骤业务流转、注册角色确认和资料补充流程装配。 */
 export function Login({ onLoginSuccess }: LoginProps) {
   const [pendingRegisterSession, setPendingRegisterSession] = useState<LoginResponse | null>(null);
   const [pendingRegisterPhone, setPendingRegisterPhone] = useState("");
-  const [selectedRegisterRole, setSelectedRegisterRole] = useState<Role | null>(null);
   const [isPasswordResetOpen, setIsPasswordResetOpen] = useState(false);
   const [passwordResetInitialPhone, setPasswordResetInitialPhone] = useState("");
-  const [passwordResetResult, setPasswordResetResult] = useState<PasswordResetResult | null>(null);
+  const passwordResetLoginMutation = useClientLogin();
   const { toast, showMessage, hideMessage } = useMessageToast();
 
   /** 暂存新注册会话，直到用户完成强制角色选择。 */
@@ -23,7 +22,6 @@ export function Login({ onLoginSuccess }: LoginProps) {
     setStoredPendingRegistration(rawPhone);
     setPendingRegisterSession(session);
     setPendingRegisterPhone(rawPhone);
-    setSelectedRegisterRole(null);
     showMessage("注册成功，请先选择角色。", { type: "success" });
   }
 
@@ -32,7 +30,6 @@ export function Login({ onLoginSuccess }: LoginProps) {
     if (hasStoredPendingRegistration(rawPhone)) {
       setPendingRegisterSession(session);
       setPendingRegisterPhone(rawPhone);
-      setSelectedRegisterRole(null);
       showMessage("该账号注册后尚未选择角色，请先完成角色选择。", { type: "warning" });
       return;
     }
@@ -53,30 +50,25 @@ export function Login({ onLoginSuccess }: LoginProps) {
     hideMessage();
   }
 
-  /** 接收忘记密码结果，并回到登录表单进行密码登录。 */
-  function handlePasswordResetCompleted(result: PasswordResetResult) {
-    setPasswordResetResult(result);
-    setIsPasswordResetOpen(false);
-    showMessage("密码已重置，请继续登录。", { type: "success" });
+  /** 接收忘记密码结果，并直接调用真实登录接口进入后续登录成功流程。 */
+  async function handlePasswordResetCompleted(result: PasswordResetResult) {
+    hideMessage();
+    showMessage("密码已重置，正在自动登录。", { type: "success" });
+
+    try {
+      const session = await passwordResetLoginMutation.mutateAsync({ phone: result.phone, code: localAuthCode });
+
+      setIsPasswordResetOpen(false);
+      handleAuthenticatedSession(session, result.phone);
+    } catch (error) {
+      showMessage(getErrorMessage(error, "密码已重置，但自动登录失败，请稍后重试。"), { type: "error" });
+    }
   }
 
   /** 取消注册后流程并返回普通登录入口。 */
   function handleCancelRegistrationFlow() {
     setPendingRegisterSession(null);
     setPendingRegisterPhone("");
-    setSelectedRegisterRole(null);
-    hideMessage();
-  }
-
-  /** 记录注册角色并打开资料草稿步骤。 */
-  function handleRegistrationRoleSelect(role: Role) {
-    setSelectedRegisterRole(role);
-    showMessage("已选择角色，请填写昵称并设置登录密码。", { type: "success" });
-  }
-
-  /** 从注册资料页返回强制角色选择页。 */
-  function handleBackToRegistrationRoleSelection() {
-    setSelectedRegisterRole(null);
     hideMessage();
   }
 
@@ -92,23 +84,13 @@ export function Login({ onLoginSuccess }: LoginProps) {
       );
     }
 
-    if (pendingRegisterSession && !selectedRegisterRole) {
+    if (pendingRegisterSession) {
       return (
-        <RegistrationRoleSelection
-          onBack={handleCancelRegistrationFlow}
-          onSelect={handleRegistrationRoleSelect}
-        />
-      );
-    }
-
-    if (pendingRegisterSession && selectedRegisterRole) {
-      return (
-        <RegistrationProfileStep
+        <RegistrationGuide
           accessToken={pendingRegisterSession.accessToken}
           ownerPhone={pendingRegisterPhone}
-          onBack={handleBackToRegistrationRoleSelection}
+          onBack={handleCancelRegistrationFlow}
           onCompleted={onLoginSuccess}
-          role={selectedRegisterRole}
         />
       );
     }
@@ -117,7 +99,6 @@ export function Login({ onLoginSuccess }: LoginProps) {
       <LoginRegisterCard
         loginForm={
           <LoginForm
-            passwordResetResult={passwordResetResult}
             onAuthenticated={handleAuthenticatedSession}
             onForgotPassword={handleOpenPasswordReset}
           />

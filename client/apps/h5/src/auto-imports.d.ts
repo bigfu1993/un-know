@@ -80,9 +80,8 @@ declare global {
   const QueryClient: typeof import('@tanstack/react-query').QueryClient
   const QueryClientProvider: typeof import('@tanstack/react-query').QueryClientProvider
   const RegisterForm: typeof import('./pages/Login/components/RegisterForm').RegisterForm
+  const RegistrationGuide: typeof import('./pages/Login/components/RegistrationGuide').RegistrationGuide
   const RegistrationProfileCompletion: typeof import('./pages/Login/components/RegistrationProfileCompletion').RegistrationProfileCompletion
-  const RegistrationProfileStep: typeof import('./pages/Login/components/RegistrationProfileStep').RegistrationProfileStep
-  const RegistrationRoleSelection: typeof import('./pages/Login/components/RegistrationRoleSelection').RegistrationRoleSelection
   const Route: typeof import('react-router-dom').Route
   const Routes: typeof import('react-router-dom').Routes
   const ScrollingTicker: typeof import('./components/ScrollingTicker/index').ScrollingTicker
@@ -225,6 +224,7 @@ declare global {
   const localAuthCode: typeof import('./tools/localAuth').localAuthCode
   const localPasswordMinLength: typeof import('./tools/localAuth').localPasswordMinLength
   const memo: typeof import('react').memo
+  const merchantRegistrationBusinessFields: typeof import('./shared/clientPageModel').merchantRegistrationBusinessFields
   const messageToastMeta: typeof import('./tools/messageToast').messageToastMeta
   const mineEntryLabels: typeof import('@unknown/domain').mineEntryLabels
   const moduleRoutePaths: typeof import('./shared/clientPageModel').moduleRoutePaths
@@ -382,7 +382,7 @@ declare global {
   export type { PageSurface, AuthMode, LoginCredentialMode, ProductFilter, JobFilter, TutorSort, CheckoutState } from './types/app'
   import('./types/app')
   // @ts-ignore
-  export type { H5RuntimeGlobals, ApiEnvelope, PasswordResetResult, LoginProps, LoginShellProps, LoginFormProps, RegisterFormProps, LoginRegisterCardProps, PasswordResetCardProps, RegistrationRoleSelectionProps, RegistrationProfileStepProps, RegistrationProfileCompletionProps } from './types/auth'
+  export type { H5RuntimeGlobals, ApiEnvelope, PasswordResetResult, LoginProps, LoginShellProps, LoginFormProps, RegisterFormProps, LoginRegisterCardProps, PasswordResetCardProps, RegistrationGuideProps, RegistrationProfileCompletionProps } from './types/auth'
   import('./types/auth')
   // @ts-ignore
   export type { HuntingAreaInputMode, HuntingProjectStop, HuntingProjectDraft, HuntingProject, HuntingProjectDialogProps } from './types/hunting-project'

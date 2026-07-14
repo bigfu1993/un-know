@@ -172,6 +172,25 @@
   color: #175e75;
 }
 
+.registration-guide-card {
+  height: min(680px, calc(100vh - 56px));
+  max-height: calc(100vh - 56px);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.registration-guide-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+}
+
+.registration-profile-form,
+.registration-role-panel {
+  align-content: start;
+  min-height: 100%;
+}
+
 .registration-profile-field {
   input {
     box-sizing: border-box;
@@ -225,7 +244,7 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.parent-registration-shortcut-row .ghost-button {
+.registration-profile-shortcut-row .ghost-button {
   font-weight: 800;
 }
 

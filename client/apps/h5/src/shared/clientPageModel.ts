@@ -92,6 +92,14 @@ export const parentChildInfoFields: ProfileRequirementField[] = [
   { key: "childSchool", label: "就读学校", placeholder: "请输入学校名称" }
 ];
 
+/** 商户注册引导中可选添加的工商信息字段。 */
+export const merchantRegistrationBusinessFields: ProfileRequirementField[] = [
+  { key: "businessName", label: "主体名称", placeholder: "请输入营业执照或经营主体名称" },
+  { key: "businessLicenseNo", label: "统一社会信用代码", placeholder: "请输入统一社会信用代码" },
+  { key: "businessContactName", label: "经营联系人", placeholder: "请输入经营联系人姓名" },
+  { key: "businessContactPhone", label: "经营联系电话", placeholder: "请输入手机号", inputMode: "tel" }
+];
+
 /** H5 要求用户补充账户资料时共用的地址信息模板。 */
 export const addressInfoTemplate: ProfileRequirementTemplate = {
   title: "补充地址信息",

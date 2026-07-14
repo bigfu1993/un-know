@@ -25,7 +25,7 @@ const mobilePhonePattern = /^1[3-9]\d{9}$/;
 const idCardPattern = /^[1-9]\d{5}(18|19|20)\d{2}(0[1-9]|1[0-2])([0-2]\d|3[01])\d{3}[\dX]$/;
 
 /** 需要按手机号输入归一化的字段 key。 */
-const mobilePhoneKeys = new Set(["phone", "contactPhone"]);
+const mobilePhoneKeys = new Set(["phone", "contactPhone", "businessContactPhone"]);
 /** 需要按年龄输入归一化的字段 key。 */
 const ageKeys = new Set(["age", "tutorAge", "huntingAge"]);
 /** 需要按身份证输入归一化的字段 key。 */
@@ -85,6 +85,7 @@ function validateIdCard(value: string, context: ValidationContext) {
 const validationRules: Record<string, ValidationRule> = {
   phone: validateMobilePhone,
   contactPhone: validateMobilePhone,
+  businessContactPhone: validateMobilePhone,
   age: validateAge,
   tutorAge: validateAge,
   huntingAge: validateAge,

@@ -51,8 +51,7 @@ declare global {
   type LoginFormProps = import("@app-types/auth").LoginFormProps;
   type RegisterFormProps = import("@app-types/auth").RegisterFormProps;
   type PasswordResetCardProps = import("@app-types/auth").PasswordResetCardProps;
-  type RegistrationRoleSelectionProps = import("@app-types/auth").RegistrationRoleSelectionProps;
-  type RegistrationProfileStepProps = import("@app-types/auth").RegistrationProfileStepProps;
+  type RegistrationGuideProps = import("@app-types/auth").RegistrationGuideProps;
   type RegistrationProfileCompletionProps = import("@app-types/auth").RegistrationProfileCompletionProps;
   type LoginRegisterCardProps = import("@app-types/auth").LoginRegisterCardProps;
 

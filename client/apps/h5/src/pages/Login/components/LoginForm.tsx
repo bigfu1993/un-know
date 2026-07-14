@@ -3,24 +3,13 @@ import { localAuthCode, localPasswordMinLength, verifyLocalPasswordCredential } 
 import { normalizeByKey, validateByKey } from "@tools/validation";
 
 /** 登录表单，内部维护验证码登录和本地密码登录所需的输入、校验和提交逻辑。 */
-export function LoginForm({ passwordResetResult, onAuthenticated, onForgotPassword }: LoginFormProps) {
+export function LoginForm({ onAuthenticated, onForgotPassword }: LoginFormProps) {
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [credentialMode, setCredentialMode] = useState<LoginCredentialMode>("code");
   const [password, setPassword] = useState("");
   const loginMutation = useClientLogin();
   const { toast, showMessage, hideMessage } = useMessageToast();
-
-  useEffect(() => {
-    if (!passwordResetResult) {
-      return;
-    }
-
-    setPhone(passwordResetResult.phone);
-    setCode(localAuthCode);
-    setPassword(passwordResetResult.password);
-    setCredentialMode("password");
-  }, [passwordResetResult]);
 
   const submitLabel = loginMutation.isPending ? "登录中" : credentialMode === "password" ? "密码登录" : "验证码登录";
 
