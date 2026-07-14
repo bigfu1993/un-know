@@ -26,6 +26,7 @@ import {
   purchaseProduct,
   quoteHuntingTask,
   registerClient,
+  resetClientPassword,
   selectClientRole,
   sendChatMessage,
   submitHuntingCertification,
@@ -49,6 +50,7 @@ import {
   PurchaseRequest,
   QuoteHuntingTaskRequest,
   RegisterRequest,
+  ResetClientPasswordRequest,
   Role,
   SelectRoleRequest,
   SendChatMessageRequest,
@@ -115,6 +117,12 @@ export function useSelectClientRole() {
 export function useMiniappOneTapLogin() {
   return useMutation({
     mutationFn: (payload: MiniappOneTapLoginRequest) => miniappOneTapLogin(payload)
+  });
+}
+
+export function useResetClientPassword() {
+  return useMutation({
+    mutationFn: (payload: ResetClientPasswordRequest) => resetClientPassword(payload)
   });
 }
 

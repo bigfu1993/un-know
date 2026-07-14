@@ -9,6 +9,7 @@ import { HuntingCertificationPromptDialog } from "@pages/Delegation/components/H
 import { delegationRuleTickerItems, delegationSortOptions } from "@pages/Delegation/model";
 import { useDelegationList } from "@pages/Delegation/hooks/useDelegationList";
 import { useDelegationTaskFlow } from "@pages/Delegation/hooks/useDelegationTaskFlow";
+import { showMessage } from "@tools/messageToast";
 
 /** 委托页属性。 */
 export interface DelegationProps {
@@ -31,7 +32,6 @@ export function Delegation({
   onQuoteTask,
   onRefreshTasks
 }: DelegationProps) {
-  const { hideMessage, showMessage, toast } = useMessageToast();
   const [isHuntingModeEnabled, setIsHuntingModeEnabled] = useState(false);
   const {
     activePanel,
@@ -95,7 +95,6 @@ export function Delegation({
 
   return (
     <section className="module-stack delegation-page grid gap-[10px]">
-      <MessageToast onClose={hideMessage} toast={toast} />
       <ScrollingTicker ariaLabel="委托规则" items={delegationRuleTickerItems} />
 
       <div className="delegation-toolbar grid gap-[8px]">

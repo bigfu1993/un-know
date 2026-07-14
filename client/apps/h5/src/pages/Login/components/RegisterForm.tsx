@@ -1,4 +1,5 @@
 import { localAuthCode } from "@tools/localAuth";
+import { hideMessage, showMessage } from "@tools/messageToast";
 import { normalizeByKey, validateByKey } from "@tools/validation";
 
 /** 注册表单，内部维护手机号、验证码、邀请码和注册接口提交逻辑。 */
@@ -7,7 +8,6 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
   const [code, setCode] = useState("");
   const [invitationCode, setInvitationCode] = useState("");
   const registerMutation = useClientRegister();
-  const { toast, showMessage, hideMessage } = useMessageToast();
   const submitLabel = registerMutation.isPending ? "注册中" : "注册";
 
   /** 校验注册输入并调用真实注册接口创建临时会话。 */
@@ -39,9 +39,7 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
   }
 
   return (
-    <>
-      <MessageToast onClose={hideMessage} toast={toast} />
-      <form className="grid w-full min-w-0 gap-[14px]" onSubmit={handleSubmit}>
+    <form className="grid w-full min-w-0 gap-[14px]" onSubmit={handleSubmit}>
         <label className="login-field grid min-w-0 gap-[7px]">
           <span>手机号</span>
           <div>
@@ -104,7 +102,6 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
           <ShieldCheck size={16} />
           {submitLabel}
         </button>
-      </form>
-    </>
+    </form>
   );
 }

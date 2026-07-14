@@ -23,6 +23,7 @@ import {
 } from "@shared/clientPageModel";
 import { formatTutorSubjects, parseTutorSubjects } from "@shared/tutorModel";
 import { localAuthCode, localPasswordMinLength, saveLocalPasswordCredential } from "@tools/localAuth";
+import { showMessage } from "@tools/messageToast";
 import { getFilledFieldCount, hasInvalidRequiredFields, validateByKey } from "@tools/validation";
 
 /** 设置页手机号安全弹窗模式。 */
@@ -37,13 +38,13 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
   const setUserDisplayName = useGlobalStore((state) => state.setUserDisplayName);
   const setUserProfileDraft = useGlobalStore((state) => state.setUserProfileDraft);
   const setUserPhone = useGlobalStore((state) => state.setUserPhone);
-  const { hideMessage, showMessage, toast } = useMessageToast();
   const addressTemplate = registrationProfileTemplates[role];
   const { data: clientAddresses = emptyClientAddresses, error: addressError, isLoading: isAddressLoading } = useClientAddresses(true, session?.accessToken);
   const createAddressMutation = useCreateClientAddress();
   const updateAddressMutation = useUpdateClientAddress();
   const useAddressMutation = useUseClientAddress();
   const deleteAddressMutation = useDeleteClientAddress();
+  const resetPasswordMutation = useResetClientPassword();
   const addressItems = useMemo(() => clientAddressesToAddressBookItems(clientAddresses), [clientAddresses]);
   const [addressEditorMode, setAddressEditorMode] = useState<AddressEditorMode | null>(null);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
@@ -263,7 +264,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
     setSecurityFeedback("手机号已更新。密码登录前请确认该手机号已设置本地密码。");
   }
 
-  /** 手机号和验证码校验通过后重置 H5 本地密码。 */
+  /** 手机号和验证码校验通过后调用服务端接口重置密码，并同步 H5 本地密码凭据。 */
   async function handleSavePasswordReset() {
     const phoneValidation = validateByKey("phone", passwordResetDraft.phone, { label: "手机号", required: true });
 
@@ -277,17 +278,23 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
     }
 
     try {
+      await resetPasswordMutation.mutateAsync({
+        phone: passwordResetDraft.phone,
+        verifyMode: "code",
+        code: passwordResetDraft.code,
+        password: passwordResetDraft.password,
+        passwordConfirm: passwordResetDraft.passwordConfirm
+      });
       await saveLocalPasswordCredential(passwordResetDraft.phone, passwordResetDraft.password);
       setSecurityDialogMode(null);
       setSecurityFeedback("密码已重置，可在登录页使用密码登录。");
-    } catch {
-      setSecurityFeedback("密码保存失败，请检查浏览器本地存储权限。");
+    } catch (error) {
+      setSecurityFeedback(getErrorMessage(error, "密码重置失败，请稍后重试。"));
     }
   }
 
   return (
     <section className="page-view grid gap-[12px]">
-      <MessageToast onClose={hideMessage} toast={toast} />
       <header className="page-header grid items-center gap-[10px] p-[12px]">
         <button
           className="back-button grid h-[38px] w-[38px] place-items-center text-[#17212b]"

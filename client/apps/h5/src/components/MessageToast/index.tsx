@@ -1,7 +1,9 @@
-import { messageToastMeta } from "@tools/messageToast";
+import { getMessageToastSnapshot, hideMessage, messageToastMeta, subscribeMessageToast } from "@tools/messageToast";
 
-/** 顶部消息提示展示组件，仅负责根据 toast 状态渲染视觉层。 */
-export function MessageToast({ onClose, toast }: MessageToastProps) {
+/** 顶部消息提示全局单实例，订阅消息 API 状态并渲染视觉层。 */
+export function MessageToast() {
+  const toast = useSyncExternalStore(subscribeMessageToast, getMessageToastSnapshot, getMessageToastSnapshot);
+
   if (!toast) {
     return null;
   }
@@ -25,7 +27,7 @@ export function MessageToast({ onClose, toast }: MessageToastProps) {
           <strong>{meta.label}</strong>
           <p>{toast.content}</p>
         </div>
-        <button aria-label="关闭消息" onClick={onClose} type="button">
+        <button aria-label="关闭消息" onClick={hideMessage} type="button">
           ×
         </button>
       </div>

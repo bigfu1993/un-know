@@ -1,5 +1,6 @@
 import { getStoredPasswordCredential } from "@shared/clientPageModel";
 import { localAuthCode, localPasswordMinLength, verifyLocalPasswordCredential } from "@tools/localAuth";
+import { hideMessage, showMessage } from "@tools/messageToast";
 import { normalizeByKey, validateByKey } from "@tools/validation";
 
 /** 登录表单，内部维护验证码登录和本地密码登录所需的输入、校验和提交逻辑。 */
@@ -9,7 +10,6 @@ export function LoginForm({ onAuthenticated, onForgotPassword }: LoginFormProps)
   const [credentialMode, setCredentialMode] = useState<LoginCredentialMode>("code");
   const [password, setPassword] = useState("");
   const loginMutation = useClientLogin();
-  const { toast, showMessage, hideMessage } = useMessageToast();
 
   const submitLabel = loginMutation.isPending ? "登录中" : credentialMode === "password" ? "密码登录" : "验证码登录";
 
@@ -77,9 +77,7 @@ export function LoginForm({ onAuthenticated, onForgotPassword }: LoginFormProps)
   }
 
   return (
-    <>
-      <MessageToast onClose={hideMessage} toast={toast} />
-      <form className="grid w-full min-w-0 gap-[14px]" onSubmit={handleSubmit}>
+    <form className="grid w-full min-w-0 gap-[14px]" onSubmit={handleSubmit}>
         <div className="login-method-tabs flex min-w-0 gap-[8px] p-[4px]" aria-label="选择登录方式">
           <button
             className={credentialMode === "code" ? "active" : ""}
@@ -177,7 +175,6 @@ export function LoginForm({ onAuthenticated, onForgotPassword }: LoginFormProps)
           <ShieldCheck size={16} />
           {submitLabel}
         </button>
-      </form>
-    </>
+    </form>
   );
 }

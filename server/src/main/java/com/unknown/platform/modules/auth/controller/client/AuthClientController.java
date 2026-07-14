@@ -6,6 +6,8 @@ import com.unknown.platform.modules.auth.model.LoginRequest;
 import com.unknown.platform.modules.auth.model.LoginResponse;
 import com.unknown.platform.modules.auth.model.MiniappOneTapLoginRequest;
 import com.unknown.platform.modules.auth.model.RegisterRequest;
+import com.unknown.platform.modules.auth.model.ResetPasswordRequest;
+import com.unknown.platform.modules.auth.model.ResetPasswordResponse;
 import com.unknown.platform.modules.auth.model.SelectRoleRequest;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -44,6 +46,17 @@ public class AuthClientController {
   @PostMapping("/register")
   public ApiResponse<LoginResponse> register(@Valid @RequestBody RegisterRequest request) {
     return ApiResponse.ok(authAppService.register(request));
+  }
+
+  /**
+   * 重置客户端登录密码，验证码和旧密码两种校验方式均由服务端完成。
+   *
+   * @param request 重置密码请求
+   * @return 重置结果
+   */
+  @PostMapping("/reset-password")
+  public ApiResponse<ResetPasswordResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+    return ApiResponse.ok(authAppService.resetPassword(request));
   }
 
   /**

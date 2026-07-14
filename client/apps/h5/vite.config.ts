@@ -48,6 +48,7 @@ export default defineConfig({
             "usePublishTutorDemand",
             "useProducts",
             "usePurchaseProduct",
+            "useResetClientPassword",
             "useSendChatMessage",
             "useUpdateClientAddress",
             "useUpdateTutorExposure",

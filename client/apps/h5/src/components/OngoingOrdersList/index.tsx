@@ -1,4 +1,5 @@
 import "./index.less";
+import { showMessage } from "@tools/messageToast";
 
 /** 进行中列表筛选类型。 */
 type OngoingOrderFilter = "all" | "delegation" | "featured" | "hunting" | "tutor";
@@ -231,7 +232,6 @@ function OngoingOrderActions({
 /** 进行中事项列表，负责分类筛选、空状态和卡片动作展示。 */
 export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProps) {
   const [activeFilter, setActiveFilter] = useState<OngoingOrderFilter>("all");
-  const { hideMessage, showMessage, toast } = useMessageToast();
   /** 按当前标签过滤后的进行中事项列表。 */
   const filteredOrders = useMemo(
     () => orders.filter((order) => activeFilter === "all" || getOngoingOrderCategory(order) === activeFilter),
@@ -255,7 +255,6 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
 
   return (
     <>
-      <MessageToast onClose={hideMessage} toast={toast} />
       <div className="ongoing-filter-tags flex flex-wrap gap-[8px]" aria-label="筛选进行中事项">
         {ongoingOrderFilterOptions.map((option) => (
           <button

@@ -12,6 +12,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <GlobalStoreProvider>
       <QueryClientProvider client={queryClient}>
+        <MessageToast />
         <BrowserRouter>
           <App />
         </BrowserRouter>

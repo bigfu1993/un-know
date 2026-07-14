@@ -23,7 +23,7 @@ Applies to `client/apps/h5`, `client/packages/domain`, `client/packages/api-clie
 - Treat component collection folders as transitional. Before deleting them, search the exported component names, JSX usage, generated declarations, and auto-import configuration; split exports first if they are still used.
 - Keep authenticated user/session data in the global store/context; avoid prop drilling the whole user object.
 - Keep API types in `client/packages/domain`. Update `api-client` and hooks together when backend contracts change.
-- For operation results, use the project toast/message component instead of alert or ad hoc inline state.
+- For operation results, use the project toast/message component instead of alert or ad hoc inline state. When the toast is globally registered as a singleton, call it through direct API imports such as `showMessage`/`hideMessage` instead of adding a component-local hook wrapper.
 
 ## Styling
 

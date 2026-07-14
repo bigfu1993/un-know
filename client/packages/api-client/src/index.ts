@@ -25,6 +25,8 @@ import {
   PurchaseResponse,
   QuoteHuntingTaskRequest,
   RegisterRequest,
+  ResetClientPasswordRequest,
+  ResetClientPasswordResponse,
   Role,
   SelectRoleRequest,
   SendChatMessageRequest,
@@ -221,6 +223,15 @@ export async function selectClientRole(payload: SelectRoleRequest, accessToken: 
 
 export async function miniappOneTapLogin(payload: MiniappOneTapLoginRequest): Promise<LoginResponse> {
   return requestJson<LoginResponse>("/api/client/auth/miniapp/one-tap-login", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function resetClientPassword(
+  payload: ResetClientPasswordRequest
+): Promise<ResetClientPasswordResponse> {
+  return requestJson<ResetClientPasswordResponse>("/api/client/auth/reset-password", {
     method: "POST",
     body: JSON.stringify(payload)
   });

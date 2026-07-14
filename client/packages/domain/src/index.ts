@@ -80,6 +80,24 @@ export interface MiniappOneTapLoginRequest {
   role?: Role;
 }
 
+/** 客户端重置登录密码时使用的服务端校验方式。 */
+export type PasswordResetVerifyMode = "code" | "password";
+
+/** 客户端重置登录密码请求，旧密码模式必须由服务端校验旧密码是否正确。 */
+export interface ResetClientPasswordRequest {
+  phone: string;
+  verifyMode: PasswordResetVerifyMode;
+  code?: string;
+  oldPassword?: string;
+  password: string;
+  passwordConfirm: string;
+}
+
+/** 客户端重置登录密码结果。 */
+export interface ResetClientPasswordResponse {
+  success: boolean;
+}
+
 export interface SubmitHuntingCertificationRequest {
   realName: string;
   gender: string;

@@ -21,6 +21,7 @@ declare global {
   type MerchantDashboard = import("@unknown/domain").MerchantDashboard;
   type MerchantProduct = import("@unknown/domain").MerchantProduct;
   type PartTimeJob = import("@unknown/domain").PartTimeJob;
+  type PasswordResetVerifyMode = import("@unknown/domain").PasswordResetVerifyMode;
   type PaymentMethod = import("@unknown/domain").PaymentMethod;
   type ProductSummary = import("@unknown/domain").ProductSummary;
   type Role = import("@unknown/domain").Role;
@@ -46,19 +47,16 @@ declare global {
   type H5RuntimeGlobals = import("@app-types/auth").H5RuntimeGlobals;
   type ApiEnvelope<T> = import("@app-types/auth").ApiEnvelope<T>;
   type LoginProps = import("@app-types/auth").LoginProps;
-  type LoginShellProps = import("@app-types/auth").LoginShellProps;
   type PasswordResetResult = import("@app-types/auth").PasswordResetResult;
   type LoginFormProps = import("@app-types/auth").LoginFormProps;
   type RegisterFormProps = import("@app-types/auth").RegisterFormProps;
   type PasswordResetCardProps = import("@app-types/auth").PasswordResetCardProps;
   type RegistrationGuideProps = import("@app-types/auth").RegistrationGuideProps;
-  type RegistrationProfileCompletionProps = import("@app-types/auth").RegistrationProfileCompletionProps;
   type LoginRegisterCardProps = import("@app-types/auth").LoginRegisterCardProps;
 
   type MessageToastType = import("@app-types/message-toast").MessageToastType;
   type MessageToastState = import("@app-types/message-toast").MessageToastState;
   type MessageToastOptions = import("@app-types/message-toast").MessageToastOptions;
-  type MessageToastProps = import("@app-types/message-toast").MessageToastProps;
 
   type ProfileRequirementField = import("@app-types/profile").ProfileRequirementField;
   type ProfileRequirementTemplate = import("@app-types/profile").ProfileRequirementTemplate;

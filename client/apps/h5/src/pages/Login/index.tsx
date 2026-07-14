@@ -1,9 +1,9 @@
 import "./index.less";
 import { hasStoredPendingRegistration, setStoredPendingRegistration } from "@shared/clientPageModel";
 import { localAuthCode } from "@tools/localAuth";
+import { hideMessage, showMessage } from "@tools/messageToast";
 import { LoginForm } from "./components/LoginForm";
 import { LoginRegisterCard } from "./components/LoginRegisterCard";
-import { LoginShell } from "./components/LoginShell";
 import { PasswordResetCard } from "./components/PasswordResetCard";
 import { RegisterForm } from "./components/RegisterForm";
 import { RegistrationGuide } from "./components/RegistrationGuide";
@@ -15,7 +15,6 @@ export function Login({ onLoginSuccess }: LoginProps) {
   const [isPasswordResetOpen, setIsPasswordResetOpen] = useState(false);
   const [passwordResetInitialPhone, setPasswordResetInitialPhone] = useState("");
   const passwordResetLoginMutation = useClientLogin();
-  const { toast, showMessage, hideMessage } = useMessageToast();
 
   /** 暂存新注册会话，直到用户完成强制角色选择。 */
   function handleRegisterSuccess(session: LoginResponse, rawPhone: string) {
@@ -37,14 +36,14 @@ export function Login({ onLoginSuccess }: LoginProps) {
     onLoginSuccess(session);
   }
 
-  /** 打开本地重置密码流程，并带入当前登录表单手机号。 */
+  /** 打开重置密码流程，并带入当前登录表单手机号。 */
   function handleOpenPasswordReset(phone?: string) {
     setIsPasswordResetOpen(true);
     setPasswordResetInitialPhone(phone ?? "");
     hideMessage();
   }
 
-  /** 退出本地重置密码流程并返回普通登录表单。 */
+  /** 退出重置密码流程并返回普通登录表单。 */
   function handleBackFromPasswordReset() {
     setIsPasswordResetOpen(false);
     hideMessage();
@@ -109,8 +108,8 @@ export function Login({ onLoginSuccess }: LoginProps) {
   }
 
   return (
-    <LoginShell onToastClose={hideMessage} toast={toast}>
+    <main className="login-shell mx-auto grid min-h-screen w-full max-w-[540px] content-center gap-[14px] overflow-hidden px-[14px] py-[28px] text-[#17212b]">
       {renderLoginContent()}
-    </LoginShell>
+    </main>
   );
 }

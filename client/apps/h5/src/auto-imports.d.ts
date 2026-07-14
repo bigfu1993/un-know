@@ -49,7 +49,6 @@ declare global {
   const Login: typeof import('./pages/Login/index').Login
   const LoginForm: typeof import('./pages/Login/components/LoginForm').LoginForm
   const LoginRegisterCard: typeof import('./pages/Login/components/LoginRegisterCard').LoginRegisterCard
-  const LoginShell: typeof import('./pages/Login/components/LoginShell').LoginShell
   const Marketing: typeof import('./pages/Marketing/index').Marketing
   const Megaphone: typeof import('lucide-react').Megaphone
   const MerchantSales: typeof import('./pages/MerchantSales/index').MerchantSales
@@ -81,7 +80,6 @@ declare global {
   const QueryClientProvider: typeof import('@tanstack/react-query').QueryClientProvider
   const RegisterForm: typeof import('./pages/Login/components/RegisterForm').RegisterForm
   const RegistrationGuide: typeof import('./pages/Login/components/RegistrationGuide').RegistrationGuide
-  const RegistrationProfileCompletion: typeof import('./pages/Login/components/RegistrationProfileCompletion').RegistrationProfileCompletion
   const Route: typeof import('react-router-dom').Route
   const Routes: typeof import('react-router-dom').Routes
   const ScrollingTicker: typeof import('./components/ScrollingTicker/index').ScrollingTicker
@@ -173,6 +171,7 @@ declare global {
   const getHuntingTaskPublishTimeText: typeof import('./pages/Delegation/model').getHuntingTaskPublishTimeText
   const getLatestLocalPublishInfoDraft: typeof import('./tools/publishInfo').getLatestLocalPublishInfoDraft
   const getLocalPublishInfoDrafts: typeof import('./tools/publishInfo').getLocalPublishInfoDrafts
+  const getMessageToastSnapshot: typeof import('./tools/messageToast').getMessageToastSnapshot
   const getOrderModuleCounts: typeof import('./components/OrderModuleCard/model').getOrderModuleCounts
   const getProductFilterLabel: typeof import('./shared/clientPageModel').getProductFilterLabel
   const getProfileRequirement: typeof import('./shared/clientPageModel').getProfileRequirement
@@ -202,6 +201,7 @@ declare global {
   const hasInvalidRequiredFields: typeof import('./tools/validation').hasInvalidRequiredFields
   const hasStoredPendingRegistration: typeof import('./shared/clientPageModel').hasStoredPendingRegistration
   const hasValidCounterQuoteAmount: typeof import('./pages/Delegation/model').hasValidCounterQuoteAmount
+  const hideMessage: typeof import('./tools/messageToast').hideMessage
   const huntingCertificationStatusLabels: typeof import('./components/HuntingCertificationCard/model').huntingCertificationStatusLabels
   const isDelegationFulfillingStatus: typeof import('./pages/Delegation/model').isDelegationFulfillingStatus
   const isDelegationListVisible: typeof import('./pages/Delegation/model').isDelegationListVisible
@@ -225,6 +225,7 @@ declare global {
   const localPasswordMinLength: typeof import('./tools/localAuth').localPasswordMinLength
   const memo: typeof import('react').memo
   const merchantRegistrationBusinessFields: typeof import('./shared/clientPageModel').merchantRegistrationBusinessFields
+  const messageToastApi: typeof import('./tools/messageToast').messageToastApi
   const messageToastMeta: typeof import('./tools/messageToast').messageToastMeta
   const mineEntryLabels: typeof import('@unknown/domain').mineEntryLabels
   const moduleRoutePaths: typeof import('./shared/clientPageModel').moduleRoutePaths
@@ -254,8 +255,10 @@ declare global {
   const setStoredPasswordCredential: typeof import('./shared/clientPageModel').setStoredPasswordCredential
   const setStoredPendingRegistration: typeof import('./shared/clientPageModel').setStoredPendingRegistration
   const setStoredProfileDraft: typeof import('./shared/clientPageModel').setStoredProfileDraft
+  const showMessage: typeof import('./tools/messageToast').showMessage
   const startTransition: typeof import('react').startTransition
   const stringifyTutorSubjectLevelItems: typeof import('./components/TutorCard/model').stringifyTutorSubjectLevelItems
+  const subscribeMessageToast: typeof import('./tools/messageToast').subscribeMessageToast
   const tabIcons: typeof import('./shared/clientPageModel').tabIcons
   const tutorCertificationStatusLabels: typeof import('./components/TutorCard/model').tutorCertificationStatusLabels
   const tutorGradeOptions: typeof import('./components/TutorCard/model').tutorGradeOptions
@@ -295,7 +298,6 @@ declare global {
   const useLayoutEffect: typeof import('react').useLayoutEffect
   const useLocation: typeof import('react-router-dom').useLocation
   const useMemo: typeof import('react').useMemo
-  const useMessageToast: typeof import('./tools/messageToast').useMessageToast
   const useNavigate: typeof import('react-router-dom').useNavigate
   const useOngoingQuoteFlow: typeof import('./pages/Delegation/hooks/useOngoingQuoteFlow').useOngoingQuoteFlow
   const useOptimistic: typeof import('react').useOptimistic
@@ -305,6 +307,7 @@ declare global {
   const usePurchaseProduct: typeof import('@unknown/hooks').usePurchaseProduct
   const useReducer: typeof import('react').useReducer
   const useRef: typeof import('react').useRef
+  const useResetClientPassword: typeof import('@unknown/hooks').useResetClientPassword
   const useSendChatMessage: typeof import('@unknown/hooks').useSendChatMessage
   const useState: typeof import('react').useState
   const useSyncExternalStore: typeof import('react').useSyncExternalStore
@@ -382,13 +385,13 @@ declare global {
   export type { PageSurface, AuthMode, LoginCredentialMode, ProductFilter, JobFilter, TutorSort, CheckoutState } from './types/app'
   import('./types/app')
   // @ts-ignore
-  export type { H5RuntimeGlobals, ApiEnvelope, PasswordResetResult, LoginProps, LoginShellProps, LoginFormProps, RegisterFormProps, LoginRegisterCardProps, PasswordResetCardProps, RegistrationGuideProps, RegistrationProfileCompletionProps } from './types/auth'
+  export type { H5RuntimeGlobals, ApiEnvelope, PasswordResetResult, LoginProps, LoginFormProps, RegisterFormProps, LoginRegisterCardProps, PasswordResetCardProps, RegistrationGuideProps } from './types/auth'
   import('./types/auth')
   // @ts-ignore
   export type { HuntingAreaInputMode, HuntingProjectStop, HuntingProjectDraft, HuntingProject, HuntingProjectDialogProps } from './types/hunting-project'
   import('./types/hunting-project')
   // @ts-ignore
-  export type { MessageToastType, MessageToastState, MessageToastOptions, MessageToastProps } from './types/message-toast'
+  export type { MessageToastType, MessageToastState, MessageToastOptions } from './types/message-toast'
   import('./types/message-toast')
   // @ts-ignore
   export type { ProfileRequirementField, ProfileRequirementTemplate, ProfileRequirement, ProfileDraftState, RegistrationProfileField, RegistrationProfileTemplate, RegistrationProfileDraft, AddressInfoFormMode, AddressInfoPreviewVariant, AddressBookItem, AddressInfoFormProps } from './types/profile'

@@ -13,8 +13,3 @@ export interface MessageToastOptions {
   color?: string;
   duration?: number;
 }
-
-export interface MessageToastProps {
-  onClose: () => void;
-  toast: MessageToastState | null;
-}

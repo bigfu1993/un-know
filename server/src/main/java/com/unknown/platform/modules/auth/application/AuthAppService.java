@@ -6,7 +6,14 @@ import com.unknown.platform.modules.auth.model.LoginRequest;
 import com.unknown.platform.modules.auth.model.LoginResponse;
 import com.unknown.platform.modules.auth.model.MiniappOneTapLoginRequest;
 import com.unknown.platform.modules.auth.model.RegisterRequest;
+import com.unknown.platform.modules.auth.model.ResetPasswordRequest;
+import com.unknown.platform.modules.auth.model.ResetPasswordResponse;
 import com.unknown.platform.modules.auth.model.SelectRoleRequest;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -15,10 +22,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-/** 客户端认证应用服务，负责手机号验证码登录、注册、角色选择和小程序一键登录会话签发。 */
+/** 客户端认证应用服务，负责登录注册、角色选择、密码重置和小程序一键登录会话签发。 */
 @Service
 public class AuthAppService {
   private final JdbcTemplate jdbcTemplate;
+  private final SecureRandom secureRandom = new SecureRandom();
   private final WechatMiniappPhoneService wechatMiniappPhoneService;
 
   public AuthAppService(JdbcTemplate jdbcTemplate, WechatMiniappPhoneService wechatMiniappPhoneService) {
@@ -50,6 +58,28 @@ public class AuthAppService {
     long userId = createUser(request.phone(), role, request.displayName());
     ensureWalletAccount(userId, role);
     return issueSession(userId, request.phone(), role);
+  }
+
+  /** 校验验证码或旧密码后重置客户端登录密码，并将新密码凭据落到服务端。 */
+  @Transactional
+  public ResetPasswordResponse resetPassword(ResetPasswordRequest request) {
+    UserAccount account = findSingleUserByPhone(request.phone());
+
+    validateNewPassword(request.password(), request.passwordConfirm());
+
+    String verifyMode = request.verifyMode().trim().toLowerCase();
+    if ("code".equals(verifyMode)) {
+      if (!StringUtils.hasText(request.code()) || !isVerificationCodeValid(request.phone(), request.code())) {
+        throw new BusinessException("AUTH_CODE_INVALID", "验证码错误或已过期");
+      }
+    } else if ("password".equals(verifyMode)) {
+      assertOldPasswordValid(account.id(), request.oldPassword());
+    } else {
+      throw new BusinessException("AUTH_PASSWORD_RESET_MODE_INVALID", "请选择正确的密码重置校验方式");
+    }
+
+    savePasswordCredential(account.id(), request.password());
+    return new ResetPasswordResponse(true);
   }
 
   /** 注册后或未选角色账号再次登录时确认最终角色，并同步钱包账户角色归属。 */
@@ -105,6 +135,85 @@ public class AuthAppService {
         displayName(userId, role),
         profileCompletionRequired(userId)
     );
+  }
+
+  private void validateNewPassword(String password, String passwordConfirm) {
+    if (!StringUtils.hasText(password) || password.trim().length() < 6) {
+      throw new BusinessException("AUTH_PASSWORD_TOO_SHORT", "登录密码至少需要 6 位");
+    }
+    if (!password.equals(passwordConfirm)) {
+      throw new BusinessException("AUTH_PASSWORD_CONFIRM_MISMATCH", "两次输入的登录密码不一致");
+    }
+  }
+
+  private void assertOldPasswordValid(long userId, String oldPassword) {
+    if (!StringUtils.hasText(oldPassword) || oldPassword.trim().length() < 6) {
+      throw new BusinessException("AUTH_OLD_PASSWORD_REQUIRED", "请输入正确的旧密码");
+    }
+
+    PasswordCredential credential = findPasswordCredential(userId);
+    if (credential == null) {
+      throw new BusinessException("AUTH_PASSWORD_NOT_SET", "该手机号尚未设置服务端密码，请改用验证码重置");
+    }
+
+    String candidateHash = hashPassword(userId, credential.salt(), oldPassword);
+    if (!MessageDigest.isEqual(
+        candidateHash.getBytes(StandardCharsets.UTF_8),
+        credential.passwordHash().getBytes(StandardCharsets.UTF_8)
+    )) {
+      throw new BusinessException("AUTH_OLD_PASSWORD_INVALID", "旧密码不正确");
+    }
+  }
+
+  private PasswordCredential findPasswordCredential(long userId) {
+    List<PasswordCredential> credentials = jdbcTemplate.query(
+        """
+            SELECT password_hash, salt
+            FROM client_password_credential
+            WHERE user_id = ?
+            """,
+        (rs, rowNum) -> new PasswordCredential(rs.getString("password_hash"), rs.getString("salt")),
+        userId
+    );
+    return credentials.isEmpty() ? null : credentials.get(0);
+  }
+
+  private void savePasswordCredential(long userId, String password) {
+    String salt = createPasswordSalt();
+    String passwordHash = hashPassword(userId, salt, password);
+
+    jdbcTemplate.update(
+        """
+            INSERT INTO client_password_credential (user_id, password_hash, salt, updated_at)
+            VALUES (?, ?, ?, NOW())
+            ON CONFLICT (user_id)
+            DO UPDATE SET password_hash = EXCLUDED.password_hash,
+                          salt = EXCLUDED.salt,
+                          updated_at = NOW()
+            """,
+        userId,
+        passwordHash,
+        salt
+    );
+  }
+
+  private String createPasswordSalt() {
+    byte[] bytes = new byte[16];
+    secureRandom.nextBytes(bytes);
+    return HexFormat.of().formatHex(bytes);
+  }
+
+  private String hashPassword(long userId, String salt, String password) {
+    try {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      byte[] hashed = digest.digest(
+          ("unknown-client-password-v1:" + userId + ":" + salt + ":" + password)
+              .getBytes(StandardCharsets.UTF_8)
+      );
+      return HexFormat.of().formatHex(hashed);
+    } catch (NoSuchAlgorithmException exception) {
+      throw new IllegalStateException("SHA-256 is required for password hashing", exception);
+    }
   }
 
   private boolean isVerificationCodeValid(String phone, String code) {
@@ -329,5 +438,8 @@ public class AuthAppService {
   }
 
   private record UserAccount(long id, ClientRole role) {
+  }
+
+  private record PasswordCredential(String passwordHash, String salt) {
   }
 }

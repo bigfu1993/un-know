@@ -39,18 +39,6 @@ export interface LoginProps {
 }
 
 /**
- * 登录页外壳组件属性。
- */
-export interface LoginShellProps {
-  /** 页面主体内容。 */
-  children: ReactNode;
-  /** 关闭页面级提示的回调。 */
-  onToastClose: () => void;
-  /** 页面级提示元信息。 */
-  toast: MessageToastState | null;
-}
-
-/**
  * 登录表单组件属性。
  */
 export interface LoginFormProps {
@@ -110,42 +98,4 @@ export interface RegistrationGuideProps {
   onBack: () => void;
   /** 注册引导完成后的业务回调。 */
   onCompleted: (session: LoginResponse) => void;
-}
-
-/**
- * 注册后资料表单展示组件属性。
- */
-export interface RegistrationProfileCompletionProps {
-  /** 可选区域列表。 */
-  areaOptions: string[];
-  /** 生日字段值。 */
-  birthday: string;
-  /** 资料草稿。 */
-  draft: ProfileDraftState;
-  /** 是否正在提交。 */
-  isSubmitting?: boolean;
-  /** 昵称字段值。 */
-  nickname: string;
-  /** 登录密码字段值。 */
-  password: string;
-  /** 重复密码字段值。 */
-  passwordConfirm: string;
-  /** 资料字段变化回调。 */
-  onChange: (key: string, value: string) => void;
-  /** 返回上一步回调。 */
-  onBack: () => void;
-  /** 生日字段变化回调。 */
-  onBirthdayChange: (birthday: string) => void;
-  /** 昵称字段变化回调。 */
-  onNicknameChange: (nickname: string) => void;
-  /** 密码字段变化回调。 */
-  onPasswordChange: (password: string) => void;
-  /** 重复密码字段变化回调。 */
-  onPasswordConfirmChange: (passwordConfirm: string) => void;
-  /** 提交表单回调。 */
-  onSubmit: () => void;
-  /** 当前角色。 */
-  role: Role;
-  /** 当前角色显示文案。 */
-  roleLabel: string;
 }

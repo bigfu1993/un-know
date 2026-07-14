@@ -35,6 +35,7 @@ import { TutorCertification } from "@pages/Tutor/TutorCertification";
 import { TutorApplicationsDialog } from "@pages/Tutor/components/TutorApplicationsDialog";
 import { useTutorTrialActions } from "@pages/Tutor/hooks/useTutorTrialActions";
 import { campusAreaOptions, clientAddressesToAddressBookItems } from "@shared/clientPageModel";
+import { hideMessage, showMessage } from "@tools/messageToast";
 import { getTutorCalendarTasks, getTutorDateKey } from "@tools/tutorCalendar";
 
 /** React Query 首次返回数据前使用的稳定空地址，避免 effect 因默认数组反复触发。 */
@@ -81,7 +82,6 @@ export function App() {
   const [isHuntingShortcutEnabled, setIsHuntingShortcutEnabled] = useState(false);
   const [huntingShortcutProject, setHuntingShortcutProject] = useState<HuntingProject | null>(null);
   const [activeTutorApplicationDemandId, setActiveTutorApplicationDemandId] = useState<string | null>(null);
-  const { hideMessage, showMessage, toast } = useMessageToast();
   const {
     closeHuntingShortcutDialogs,
     closeRouteOverlays,
@@ -668,7 +668,6 @@ export function App() {
         isPrimaryListShell ? "list-shell" : ""
       } ${hasPrimaryContextCard ? "has-context-card" : "no-context-card"}`}
     >
-      <MessageToast onClose={hideMessage} toast={toast} />
       {activePage && pageMeta ? (
         <PageShell eyebrow={pageMeta.eyebrow} onBack={handleBack} title={pageMeta.title}>
           {activePage === "wallet" ? (

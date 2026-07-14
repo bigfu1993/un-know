@@ -88,6 +88,7 @@
 - `components/<Component>` 下的共享组件按文件夹维护，组件专属样式放在同目录并由组件入口导入。
 - 全局通用 hook 维护在 `client/apps/h5/src/hooks`；局部 hook 维护在对应模块的 `hooks` 目录，不与组件文件同级散落。
 - 表单校验、格式化、日期、金额、字段规则等通用纯逻辑优先复用或沉淀到 `client/apps/h5/src/tools`。
+- 全局消息提示由根节点注册单例组件；业务页面、组件和 hooks 直接从消息工具模块 import `showMessage`、`hideMessage` 触发或关闭提示，不为此在组件内调用额外 hook。
 - 已被 `unplugin-auto-import` 或 `src/types/global.d.ts` 覆盖的 TypeScript 类型，不在 H5 页面、组件和工具文件中重复显式导入；只保留确实无法全局声明的局部类型。
 
 ## UI 与交互
