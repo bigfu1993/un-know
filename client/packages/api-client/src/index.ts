@@ -8,6 +8,7 @@ import {
   ClientAddressRequest,
   ClientHomePayload,
   ClientWorkspacePayload,
+  CompleteTutorTrialEndRequest,
   ConfirmTutorTrialRequest,
   CreateChatConversationRequest,
   CreateHuntingProjectRequest,
@@ -393,6 +394,38 @@ export async function confirmTutorTrial(
 ): Promise<TutorDemand> {
   return requestJson<TutorDemand>(
     `/api/client/workspace/tutor-demands/${encodeURIComponent(demandId)}/applications/${encodeURIComponent(applicationId)}/trial`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }
+  );
+}
+
+export async function confirmTutorTrialStart(applicationId: string): Promise<TutorDemand> {
+  return requestJson<TutorDemand>(
+    `/api/client/workspace/tutor-applications/${encodeURIComponent(applicationId)}/trial/confirm`,
+    {
+      method: "POST"
+    }
+  );
+}
+
+export async function requestTutorTrialEnd(applicationId: string): Promise<TutorDemand> {
+  return requestJson<TutorDemand>(
+    `/api/client/workspace/tutor-applications/${encodeURIComponent(applicationId)}/trial/end-request`,
+    {
+      method: "POST"
+    }
+  );
+}
+
+export async function completeTutorTrialEnd(
+  demandId: string,
+  applicationId: string,
+  payload: CompleteTutorTrialEndRequest
+): Promise<TutorDemand> {
+  return requestJson<TutorDemand>(
+    `/api/client/workspace/tutor-demands/${encodeURIComponent(demandId)}/applications/${encodeURIComponent(applicationId)}/trial/end`,
     {
       method: "POST",
       body: JSON.stringify(payload)

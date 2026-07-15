@@ -92,6 +92,10 @@ declare global {
   const Store: typeof import('lucide-react').Store
   const StrictMode: typeof import('react').StrictMode
   const Suspense: typeof import('react').Suspense
+  const TUTOR_TRIALING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIALING_STATUS
+  const TUTOR_TRIAL_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_CONFIRMING_STATUS
+  const TUTOR_TRIAL_END_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_END_CONFIRMING_STATUS
+  const TrialScheduleCalendar: typeof import('./components/TrialScheduleCalendar/index').TrialScheduleCalendar
   const Truck: typeof import('lucide-react').Truck
   const Tutor: typeof import('./pages/Tutor/index').Tutor
   const TutorApplicationsDialog: typeof import('./pages/Tutor/components/TutorApplicationsDialog').TutorApplicationsDialog
@@ -101,6 +105,7 @@ declare global {
   const TutorCertificationInfoDialog: typeof import('./components/TutorCertificationInfoDialog/index').TutorCertificationInfoDialog
   const TutorQualificationInfoDialog: typeof import('./pages/Settings/components/SettingsDialogs').TutorQualificationInfoDialog
   const TutorTrialJobCard: typeof import('./components/PageWidgets/index').TutorTrialJobCard
+  const TutorTrialListDialog: typeof import('./pages/Tutor/components/TutorApplicationsDialog').TutorTrialListDialog
   const UserRound: typeof import('lucide-react').UserRound
   const Wallet: typeof import('./pages/Wallet/index').Wallet
   const WalletCards: typeof import('lucide-react').WalletCards
@@ -186,10 +191,18 @@ declare global {
   const getStoredProfileDraft: typeof import('./shared/clientPageModel').getStoredProfileDraft
   const getTabFromRoute: typeof import('./shared/clientPageModel').getTabFromRoute
   const getTabTitle: typeof import('./shared/clientPageModel').getTabTitle
+  const getTutorCalendarCells: typeof import('./tools/tutorCalendar').getTutorCalendarCells
   const getTutorCalendarTasks: typeof import('./tools/tutorCalendar').getTutorCalendarTasks
   const getTutorCardDataFromDraft: typeof import('./components/TutorCard/model').getTutorCardDataFromDraft
   const getTutorCardMode: typeof import('./components/TutorCard/model').getTutorCardMode
   const getTutorDateKey: typeof import('./tools/tutorCalendar').getTutorDateKey
+  const getTutorDemandBudgetLabel: typeof import('./tools/tutorDemand').getTutorDemandBudgetLabel
+  const getTutorMonthKey: typeof import('./tools/tutorCalendar').getTutorMonthKey
+  const getTutorTrialDateKeyFromLine: typeof import('./tools/tutorTrial').getTutorTrialDateKeyFromLine
+  const getTutorTrialOrderDisplayDetail: typeof import('./tools/tutorTrial').getTutorTrialOrderDisplayDetail
+  const getTutorTrialScheduleLines: typeof import('./tools/tutorTrial').getTutorTrialScheduleLines
+  const getTutorTrialScheduleSummaryFromOrderDetail: typeof import('./tools/tutorTrial').getTutorTrialScheduleSummaryFromOrderDetail
+  const getTutorTrialStatusLabel: typeof import('./tools/tutorTrial').getTutorTrialStatusLabel
   const getWalletDisplayDate: typeof import('./tools/wallet').getWalletDisplayDate
   const getWalletMonthKey: typeof import('./tools/wallet').getWalletMonthKey
   const getWalletMonthOptions: typeof import('./tools/wallet').getWalletMonthOptions
@@ -219,6 +232,11 @@ declare global {
   const isNegotiatingHuntingQuote: typeof import('./pages/Delegation/model').isNegotiatingHuntingQuote
   const isPositiveAmount: typeof import('./tools/publishInfo').isPositiveAmount
   const isQuoteLockedForPublisher: typeof import('./pages/Delegation/model').isQuoteLockedForPublisher
+  const isTutorApplicationListStatus: typeof import('./tools/tutorTrial').isTutorApplicationListStatus
+  const isTutorTrialConfirmingStatus: typeof import('./tools/tutorTrial').isTutorTrialConfirmingStatus
+  const isTutorTrialEndConfirmingStatus: typeof import('./tools/tutorTrial').isTutorTrialEndConfirmingStatus
+  const isTutorTrialListStatus: typeof import('./tools/tutorTrial').isTutorTrialListStatus
+  const isTutorTrialingStatus: typeof import('./tools/tutorTrial').isTutorTrialingStatus
   const jobFilters: typeof import('./shared/clientPageModel').jobFilters
   const lazy: typeof import('react').lazy
   const localAuthCode: typeof import('./tools/localAuth').localAuthCode
@@ -236,6 +254,7 @@ declare global {
   const parentRegistrationProfileTemplate: typeof import('./shared/clientPageModel').parentRegistrationProfileTemplate
   const parseTutorSubjectLevelItems: typeof import('./components/TutorCard/model').parseTutorSubjectLevelItems
   const parseTutorSubjects: typeof import('./shared/tutorModel').parseTutorSubjects
+  const parseTutorTrialSchedule: typeof import('./tools/tutorTrial').parseTutorTrialSchedule
   const parseWalletBucketAmount: typeof import('./tools/wallet').parseWalletBucketAmount
   const parseWalletRecordAmount: typeof import('./tools/wallet').parseWalletRecordAmount
   const passwordCredentialStorageKey: typeof import('./shared/clientPageModel').passwordCredentialStorageKey
@@ -265,6 +284,7 @@ declare global {
   const tutorLevelOptions: typeof import('./components/TutorCard/model').tutorLevelOptions
   const tutorSorts: typeof import('./shared/clientPageModel').tutorSorts
   const tutorSubjectOptions: typeof import('./shared/tutorModel').tutorSubjectOptions
+  const tutorTrialScheduleDetailMarker: typeof import('./tools/tutorTrial').tutorTrialScheduleDetailMarker
   const use: typeof import('react').use
   const useActionState: typeof import('react').useActionState
   const useApplyTutorTrial: typeof import('@unknown/hooks').useApplyTutorTrial
@@ -346,6 +366,9 @@ declare global {
   export type { SummaryCardVariant, AccountSummaryCardProps, WalletSummaryCardProps } from './components/SummaryCards/index'
   import('./components/SummaryCards/index')
   // @ts-ignore
+  export type { TrialScheduleCalendarPeriod, TrialScheduleCalendarItem, TrialScheduleCalendarProps } from './components/TrialScheduleCalendar/index'
+  import('./components/TrialScheduleCalendar/index')
+  // @ts-ignore
   export type { TutorCalendarTask, TutorCalendarDialogProps } from './components/TutorCalendar/index'
   import('./components/TutorCalendar/index')
   // @ts-ignore
@@ -375,6 +398,9 @@ declare global {
   // @ts-ignore
   export type { PublishInfoType, DelegationAmountMode, PublishInfoDraft, LocalPublishInfoDraft } from './tools/publishInfo'
   import('./tools/publishInfo')
+  // @ts-ignore
+  export type { TutorTrialScheduleLine } from './tools/tutorTrial'
+  import('./tools/tutorTrial')
   // @ts-ignore
   export type { ValidationResult, ValidationContext } from './tools/validation'
   import('./tools/validation')

@@ -32,3 +32,69 @@
   font-weight: 800;
   line-height: 1;
 }
+
+.ongoing-status-badge {
+  color: #475466;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.ongoing-status-badge.trial-confirming {
+  color: #d92d20;
+}
+
+.ongoing-status-badge.trialing {
+  color: #168a57;
+}
+
+.trial-schedule-preview-sheet {
+  border-radius: 18px 18px 0 0;
+}
+
+.trial-schedule-preview-sheet .ongoing-status-badge {
+  justify-self: start;
+  border-radius: 999px;
+  background: #fff1f0;
+  padding: 5px 9px;
+  font-size: 12px;
+}
+
+.trial-schedule-preview-content {
+  min-height: 0;
+}
+
+.trial-schedule-preview-list {
+  border: 1px solid rgba(23, 33, 43, 0.08);
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px;
+}
+
+.trial-schedule-preview-period {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #d9e1e8;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #17212b;
+  padding: 9px 10px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.trial-schedule-preview-period.selected {
+  border-color: rgba(29, 111, 85, 0.24);
+  background: #eef7f3;
+}
+
+.trial-schedule-preview-period strong {
+  color: #17212b;
+  font-weight: 900;
+}
+
+.trial-schedule-preview-period span {
+  color: #475466;
+  font-weight: 800;
+}

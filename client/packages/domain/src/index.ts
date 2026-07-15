@@ -209,6 +209,7 @@ export interface ClientOrder {
   canAgreeTrial?: boolean;
   canOpenTrialResult?: boolean;
   canOpenTrialSchedule?: boolean;
+  canOpenTutorTrialList?: boolean;
   canOpenTutorApplications?: boolean;
   canRejectTrial?: boolean;
   risk?: "payment" | "refund";
@@ -365,6 +366,12 @@ export interface ConfirmTutorTrialRequest {
   trialStart: string;
   trialEnd: string;
   trialHalfDay: string;
+}
+
+/** 家长确认结束试课时的聘用决策。 */
+export interface CompleteTutorTrialEndRequest {
+  hireTutor: boolean;
+  tutorSchedule?: string;
 }
 
 /** 家教公开开关响应。 */

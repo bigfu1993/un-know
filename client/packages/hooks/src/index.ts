@@ -4,7 +4,9 @@ import {
   applyTutorTrial,
   cancelTutorDemand,
   confirmHuntingTaskQuote,
+  completeTutorTrialEnd,
   confirmTutorTrial,
+  confirmTutorTrialStart,
   createChatConversation,
   createChatQuickAction,
   createHuntingProject,
@@ -29,6 +31,7 @@ import {
   purchaseProduct,
   quoteHuntingTask,
   registerClient,
+  requestTutorTrialEnd,
   resetClientPassword,
   selectClientRole,
   sendChatMessage,
@@ -40,6 +43,7 @@ import {
 import {
   ApplyTutorTrialRequest,
   ChatQuickActionRequest,
+  CompleteTutorTrialEndRequest,
   ConfirmTutorTrialRequest,
   CreateChatConversationRequest,
   CreateHuntingProjectRequest,
@@ -295,6 +299,45 @@ export function useConfirmTutorTrial() {
     mutationFn: (payload: ConfirmTutorTrialRequest & { applicationId: string; demandId: string }) => {
       const { applicationId, demandId, ...request } = payload;
       return confirmTutorTrial(demandId, applicationId, request);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });
+      void queryClient.invalidateQueries({ queryKey: clientTutorDemandsQueryKey });
+    }
+  });
+}
+
+export function useConfirmTutorTrialStart() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (applicationId: string) => confirmTutorTrialStart(applicationId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });
+      void queryClient.invalidateQueries({ queryKey: clientTutorDemandsQueryKey });
+    }
+  });
+}
+
+export function useRequestTutorTrialEnd() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (applicationId: string) => requestTutorTrialEnd(applicationId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });
+      void queryClient.invalidateQueries({ queryKey: clientTutorDemandsQueryKey });
+    }
+  });
+}
+
+export function useCompleteTutorTrialEnd() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CompleteTutorTrialEndRequest & { applicationId: string; demandId: string }) => {
+      const { applicationId, demandId, ...request } = payload;
+      return completeTutorTrialEnd(demandId, applicationId, request);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });

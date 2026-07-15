@@ -1,4 +1,5 @@
 import "./index.less";
+import { getTutorDemandBudgetLabel } from "@tools/tutorDemand";
 
 /** 家长家教招募页面，维护家教需求卡片的排序状态。 */
 export function Tutor({ tutorDemands }: { tutorDemands: TutorDemand[] }) {
@@ -30,7 +31,7 @@ export function Tutor({ tutorDemands }: { tutorDemands: TutorDemand[] }) {
           <Plus size={18} />
           <strong>发布家教需求</strong>
         </div>
-        <p>发布时选择孩子档案，强校验年级和科目；可填写是否试课、试课时长和试课费用。</p>
+        <p>发布时选择孩子档案，强校验年级和科目；可填写是否试课、周期和授课要求。</p>
       </article>
       {visibleTutorStudents.map((demand) => (
         <article className="flow-card p-[14px]" key={demand.id}>
@@ -41,7 +42,7 @@ export function Tutor({ tutorDemands }: { tutorDemands: TutorDemand[] }) {
                 {demand.child} · {demand.subject}
               </strong>
               <span>
-                {demand.school} · {demand.budget}
+                {demand.school} · {getTutorDemandBudgetLabel(demand.budget)}
               </span>
             </div>
             <em>{demand.status}</em>

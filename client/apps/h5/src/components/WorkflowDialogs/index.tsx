@@ -10,8 +10,10 @@ export function OngoingOrdersDialog({
   onClose,
   onConfirmCancel,
   onConfirmComplete,
+  onConfirmTutorTrialStart,
   onOpenQuoteList,
   onOpenTutorApplications,
+  onOpenTutorTrialList,
   onRepublish,
   onRequestCancel,
   onRequestComplete
@@ -21,8 +23,10 @@ export function OngoingOrdersDialog({
   onClose: () => void;
   onConfirmCancel?: (order: ClientOrder) => void;
   onConfirmComplete?: (order: ClientOrder) => void;
+  onConfirmTutorTrialStart?: (order: ClientOrder) => void;
   onOpenQuoteList?: (order: ClientOrder) => void;
   onOpenTutorApplications?: (order: ClientOrder) => void;
+  onOpenTutorTrialList?: (order: ClientOrder) => void;
   onRepublish?: (order: ClientOrder) => void;
   onRequestCancel?: (order: ClientOrder) => void;
   onRequestComplete?: (order: ClientOrder) => void;
@@ -53,8 +57,10 @@ export function OngoingOrdersDialog({
           orders={orders}
           onConfirmCancel={onConfirmCancel}
           onConfirmComplete={onConfirmComplete}
+          onConfirmTutorTrialStart={onConfirmTutorTrialStart}
           onOpenQuoteList={onOpenQuoteList}
           onOpenTutorApplications={onOpenTutorApplications}
+          onOpenTutorTrialList={onOpenTutorTrialList}
           onRepublish={onRepublish}
           onRequestCancel={onRequestCancel}
           onRequestComplete={onRequestComplete}

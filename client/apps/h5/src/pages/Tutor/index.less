@@ -45,14 +45,270 @@
   box-shadow: 0 0 0 3px rgba(29, 111, 85, 0.12);
 }
 
-.tutor-application-card em {
-  color: #1d6f55;
+.tutor-application-card.trial-confirming {
+  border-color: rgba(217, 45, 32, 0.24);
+  background: #fff8f7;
+}
+
+.tutor-application-card.trial-confirming .tutor-application-select {
+  cursor: pointer;
+}
+
+.tutor-application-card.trialing {
+  border-color: rgba(22, 138, 87, 0.24);
+  background: #f1fbf6;
+}
+
+.tutor-application-select {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+.tutor-application-select:disabled {
+  color: inherit;
+  opacity: 1;
+}
+
+.tutor-application-name-row {
+  min-width: 0;
+}
+
+.tutor-application-name-row strong {
+  min-width: 0;
+}
+
+.tutor-application-detail-button {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(23, 94, 117, 0.18);
+  border-radius: 999px;
+  background: #eef7f3;
+  color: #175e75;
+}
+
+.tutor-application-status {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #fff1f0;
+  color: #d92d20;
+  padding: 3px 7px;
+  font-size: 11px;
   font-style: normal;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.tutor-application-card.trialing .tutor-application-status {
+  background: #e8f7ef;
+  color: #168a57;
+}
+
+.tutor-trial-list-card {
+  width: 100%;
+}
+
+.tutor-trial-list-card p {
+  margin: 0;
+  color: #657181;
+  font-size: 12px;
   font-weight: 800;
+  line-height: 1.5;
+}
+
+.tutor-hire-decision-panel {
+  border-radius: 18px 18px 0 0;
+}
+
+.tutor-trial-schedule-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.tutor-applicant-detail-panel {
+  border-radius: 18px 18px 0 0;
+}
+
+.tutor-applicant-detail-item {
+  border: 1px solid rgba(112, 128, 148, 0.16);
+  border-radius: 10px;
+  background: #fff;
+  padding: 9px 10px;
+}
+
+.tutor-applicant-detail-item span {
+  color: #657181;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.tutor-applicant-detail-item strong {
+  color: #17212b;
+  font-size: 13px;
+  text-align: right;
 }
 
 .tutor-trial-job-card .card-title em {
   color: #c2410c;
   font-style: normal;
   font-weight: 900;
+}
+
+
+.tutor-trial-schedule-button {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #cfd8e3;
+  border-radius: 10px;
+  background: #fff;
+  color: #175e75;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.tutor-trial-schedule-button.filled {
+  border-color: rgba(29, 111, 85, 0.28);
+  background: #eef7f3;
+  color: #1d6f55;
+}
+
+.tutor-trial-schedule-summary {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.tutor-trial-schedule-summary {
+  background: #fff7ed;
+  color: #9a3412;
+  font-weight: 800;
+}
+
+
+.trial-schedule-sheet {
+  border-radius: 18px 18px 0 0;
+}
+
+.trial-schedule-body {
+  min-height: 0;
+}
+
+
+.trial-schedule-editor {
+  border: 1px solid rgba(112, 128, 148, 0.16);
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px;
+}
+
+.trial-schedule-editor-header strong {
+  color: #17212b;
+  font-size: 14px;
+}
+
+.trial-schedule-editor-header span,
+.trial-schedule-editor-header button {
+  color: #657181;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.trial-schedule-row {
+  display: grid;
+  grid-template-columns: minmax(70px, 0.55fr) minmax(0, 1.85fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.trial-schedule-toggle {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d9e1e8;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #475466;
+  padding: 7px 8px;
+  text-align: center;
+}
+
+.trial-schedule-toggle:disabled {
+  opacity: 0.56;
+}
+
+.trial-schedule-row.selected .trial-schedule-toggle {
+  border-color: rgba(29, 111, 85, 0.36);
+  background: #eef7f3;
+  color: #1d6f55;
+  opacity: 1;
+}
+
+.trial-schedule-toggle strong {
+  font-size: 13px;
+}
+
+.trial-schedule-time-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.trial-schedule-time-fields input {
+  min-width: 0;
+  border: 1px solid #d9e1e8;
+  border-radius: 9px;
+  background: #fff;
+  padding: 9px 7px;
+  color: #17212b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.trial-schedule-time-fields input:disabled {
+  background: #f4f6f8;
+  color: #9aa3ad;
+}
+
+.trial-schedule-row.selected .trial-schedule-time-fields input:disabled {
+  border-color: rgba(29, 111, 85, 0.22);
+  background: #f7fbf9;
+  color: #1d6f55;
+}
+
+.trial-schedule-time-fields span {
+  color: #657181;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.trial-schedule-clear-button {
+  min-height: 38px;
+  border: 0;
+  appearance: none;
+  background: transparent;
+  color: #657181;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.trial-schedule-clear-button:disabled {
+  color: #bac2cc;
+}
+
+@media (max-width: 420px) {
+  .trial-schedule-row {
+    grid-template-columns: minmax(64px, 0.48fr) minmax(0, 1.9fr);
+  }
 }

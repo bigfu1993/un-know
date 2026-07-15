@@ -8,6 +8,7 @@ import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceRespons
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.PartTimeJob;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorDemand;
 import com.unknown.platform.modules.clientworkspace.model.ApplyTutorTrialRequest;
+import com.unknown.platform.modules.clientworkspace.model.CompleteTutorTrialEndRequest;
 import com.unknown.platform.modules.clientworkspace.model.ConfirmTutorTrialRequest;
 import com.unknown.platform.modules.clientworkspace.model.CreateHuntingProjectRequest;
 import com.unknown.platform.modules.clientworkspace.model.HuntingProjectResponse;
@@ -121,6 +122,35 @@ public class ClientWorkspaceController {
       @RequestHeader(value = "Authorization", required = false) String authorization
   ) {
     return ApiResponse.ok(clientWorkspaceAppService.confirmTutorTrial(demandId, applicationId, request, authorization));
+  }
+
+  /** 学生确认家长试课安排并进入试课中。 */
+  @PostMapping("/workspace/tutor-applications/{applicationId}/trial/confirm")
+  public ApiResponse<TutorDemand> confirmTutorTrialStart(
+      @PathVariable String applicationId,
+      @RequestHeader(value = "Authorization", required = false) String authorization
+  ) {
+    return ApiResponse.ok(clientWorkspaceAppService.confirmTutorTrialStart(applicationId, authorization));
+  }
+
+  /** 学生发起结束试课确认。 */
+  @PostMapping("/workspace/tutor-applications/{applicationId}/trial/end-request")
+  public ApiResponse<TutorDemand> requestTutorTrialEnd(
+      @PathVariable String applicationId,
+      @RequestHeader(value = "Authorization", required = false) String authorization
+  ) {
+    return ApiResponse.ok(clientWorkspaceAppService.requestTutorTrialEnd(applicationId, authorization));
+  }
+
+  /** 家长同意结束试课，并决定是否进入正式家教。 */
+  @PostMapping("/workspace/tutor-demands/{demandId}/applications/{applicationId}/trial/end")
+  public ApiResponse<TutorDemand> completeTutorTrialEnd(
+      @PathVariable String demandId,
+      @PathVariable String applicationId,
+      @RequestBody(required = false) CompleteTutorTrialEndRequest request,
+      @RequestHeader(value = "Authorization", required = false) String authorization
+  ) {
+    return ApiResponse.ok(clientWorkspaceAppService.completeTutorTrialEnd(demandId, applicationId, request, authorization));
   }
 
   /** 家长取消尚未安排试课的家教兼职，取消后保留为兼职订单历史。 */

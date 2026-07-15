@@ -3,6 +3,7 @@ import {
   getHuntingOngoingOrders,
   getRecommendedHuntingTasks
 } from "@pages/Delegation/model";
+import { getTutorDemandBudgetLabel } from "@tools/tutorDemand";
 
 /** 用户端工作台派生数据入参。 */
 interface UseClientWorkspaceViewModelOptions {
@@ -49,7 +50,7 @@ export function useClientWorkspaceViewModel({
         .filter((demand) => demand.sourceType !== "tutorStudent")
         .map((demand) => ({
           address: demand.addressLabel ?? demand.school,
-          budget: demand.budget,
+          budget: getTutorDemandBudgetLabel(demand.budget),
           description: demand.description ?? `${demand.child} 需要 ${demand.subject} 家教，学校：${demand.school}`,
           id: demand.id,
           parentPhone: demand.publisherPhone ?? "家长电话待平台授权",
@@ -66,7 +67,10 @@ export function useClientWorkspaceViewModel({
     () =>
       workspaceData.tutorDemands.flatMap((demand) =>
         demand.applicants.map((applicant) => ({
+          availability: applicant.availability,
           demandId: demand.id,
+          gpa: applicant.gpa,
+          hiredTimes: applicant.hiredTimes,
           id: applicant.id,
           major: applicant.major,
           name: applicant.name,

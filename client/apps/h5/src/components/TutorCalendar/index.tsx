@@ -1,5 +1,6 @@
 /** 家教课程日历任务数据。 */
 import "./index.less";
+import { getTutorCalendarCells, getTutorDateKey, getTutorMonthKey } from "@tools/tutorCalendar";
 
 export interface TutorCalendarTask {
   date: string;
@@ -17,36 +18,6 @@ export interface TutorCalendarDialogProps {
   initialDate?: string;
   onClose: () => void;
   tasks: TutorCalendarTask[];
-}
-
-/** 获取日历使用的日期字符串。 */
-function getTutorDateKey(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
-/** 获取日历使用的月份字符串。 */
-function getTutorMonthKey(date: Date) {
-  return getTutorDateKey(date).slice(0, 7);
-}
-
-/** 生成指定月份的日历网格。 */
-function getTutorCalendarCells(monthKey: string) {
-  const [year, month] = monthKey.split("-").map(Number);
-  const firstDay = new Date(year, month - 1, 1);
-  const totalDays = new Date(year, month, 0).getDate();
-  const leadingEmptyCells = firstDay.getDay();
-  const emptyCells = Array.from({ length: leadingEmptyCells }, () => null);
-  const dayCells = Array.from({ length: totalDays }, (_, index) => {
-    const day = String(index + 1).padStart(2, "0");
-
-    return `${monthKey}-${day}`;
-  });
-
-  return [...emptyCells, ...dayCells];
 }
 
 /** 家教课程日历弹窗，通过传入的家教任务数据渲染日期标记和当天详情。 */

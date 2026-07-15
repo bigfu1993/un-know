@@ -140,10 +140,10 @@ export function buildPublishTutorDemandRequest(
     periodEnd: draft.tutorDateEnd.trim(),
     periodStart: draft.tutorDateStart.trim(),
     requirement: draft.requirement.trim(),
-    schoolTags: draft.tutorSchoolTags,
+    schoolTags: [],
     subject: draft.tutorSubject.trim() || "待沟通",
     title: draft.title.trim(),
-    trialDuration: draft.trialDuration.trim(),
+    trialDuration: "",
     trialEnabled: draft.trialEnabled === "是",
     wageMode: draft.tutorWageMode
   };

@@ -9,6 +9,27 @@ export function getTutorDateKey(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
+/** 获取家教日历使用的月份字符串。 */
+export function getTutorMonthKey(date: Date) {
+  return getTutorDateKey(date).slice(0, 7);
+}
+
+/** 生成指定月份的家教日历网格。 */
+export function getTutorCalendarCells(monthKey: string) {
+  const [year, month] = monthKey.split("-").map(Number);
+  const firstDay = new Date(year, month - 1, 1);
+  const totalDays = new Date(year, month, 0).getDate();
+  const leadingEmptyCells = firstDay.getDay();
+  const emptyCells = Array.from({ length: leadingEmptyCells }, () => null);
+  const dayCells = Array.from({ length: totalDays }, (_, index) => {
+    const day = String(index + 1).padStart(2, "0");
+
+    return `${monthKey}-${day}`;
+  });
+
+  return [...emptyCells, ...dayCells];
+}
+
 /** 根据当前家教学科生成课程日历展示任务，后续可替换为后端课程接口。 */
 export function getTutorCalendarTasks(profileDraft: ProfileDraftState): TutorCalendarTask[] {
   const today = new Date();

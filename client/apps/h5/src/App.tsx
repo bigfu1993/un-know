@@ -4,6 +4,8 @@ import {
   useApplyTutorTrial,
   useCancelTutorDemand,
   useClientAddresses,
+  useCompleteTutorTrialEnd,
+  useConfirmTutorTrialStart,
   useConfirmTutorTrial,
   useCreateClientAddress,
   useCreateHuntingProject,
@@ -14,6 +16,7 @@ import {
   usePublishHuntingTask,
   usePublishTutorDemand,
   useQuoteHuntingTask,
+  useRequestTutorTrialEnd,
   useTutorDemands,
   useUpdateClientAddress,
   useUpdateTutorExposure
@@ -36,7 +39,7 @@ import { useHuntingTaskActions } from "@pages/Delegation/hooks/useHuntingTaskAct
 import { useOngoingQuoteFlow } from "@pages/Delegation/hooks/useOngoingQuoteFlow";
 import { HuntingCertification } from "@pages/HuntingCertification";
 import { TutorCertification } from "@pages/Tutor/TutorCertification";
-import { TutorApplicationsDialog } from "@pages/Tutor/components/TutorApplicationsDialog";
+import { TutorApplicationsDialog, TutorTrialListDialog } from "@pages/Tutor/components/TutorApplicationsDialog";
 import { useTutorTrialActions } from "@pages/Tutor/hooks/useTutorTrialActions";
 import { campusAreaOptions, clientAddressesToAddressBookItems } from "@shared/clientPageModel";
 import { hideMessage, showMessage } from "@tools/messageToast";
@@ -93,6 +96,8 @@ export function App() {
   const [isHuntingShortcutEnabled, setIsHuntingShortcutEnabled] = useState(false);
   const [huntingShortcutProject, setHuntingShortcutProject] = useState<HuntingProject | null>(null);
   const [activeTutorApplicationDemandId, setActiveTutorApplicationDemandId] = useState<string | null>(null);
+  const [activeTutorTrialDemandId, setActiveTutorTrialDemandId] = useState<string | null>(null);
+  const [isTutorTrialListOpen, setIsTutorTrialListOpen] = useState(false);
   const {
     closeHuntingShortcutDialogs,
     closeRouteOverlays,
@@ -161,6 +166,9 @@ export function App() {
   const createHuntingProjectMutation = useCreateHuntingProject();
   const applyTutorTrialMutation = useApplyTutorTrial();
   const confirmTutorTrialMutation = useConfirmTutorTrial();
+  const confirmTutorTrialStartMutation = useConfirmTutorTrialStart();
+  const requestTutorTrialEndMutation = useRequestTutorTrialEnd();
+  const completeTutorTrialEndMutation = useCompleteTutorTrialEnd();
   const cancelTutorDemandMutation = useCancelTutorDemand();
   const updateTutorExposureMutation = useUpdateTutorExposure();
   const acceptHuntingTaskMutation = useAcceptHuntingTask();
@@ -306,6 +314,13 @@ export function App() {
         : tutorApplicationCandidates,
     [activeTutorApplicationDemandId, tutorApplicationCandidates]
   );
+  const activeTutorTrialCandidates = useMemo(
+    () =>
+      activeTutorTrialDemandId
+        ? tutorApplicationCandidates.filter((candidate) => candidate.demandId === activeTutorTrialDemandId)
+        : tutorApplicationCandidates,
+    [activeTutorTrialDemandId, tutorApplicationCandidates]
+  );
   const {
     closeOngoingQuoteList: handleCloseOngoingQuoteList,
     ongoingQuoteInitialQuoteId,
@@ -331,16 +346,30 @@ export function App() {
     refetchWorkspace: refetchHuntingTaskList,
     showMessage
   });
-  const { handleApplyTutorTrial, handleCancelTutorDemand, handleConfirmTutorTrial } = useTutorTrialActions({
+  const {
+    handleApplyTutorTrial,
+    handleCancelTutorDemand,
+    handleCompleteTutorTrialEnd,
+    handleConfirmTutorTrial,
+    handleConfirmTutorTrialStart,
+    handleRequestTutorTrialEnd
+  } = useTutorTrialActions({
     applyTutorTrial: (payload) => applyTutorTrialMutation.mutateAsync(payload),
     cancelTutorDemand: (demandId) => cancelTutorDemandMutation.mutateAsync(demandId),
     closeTutorApplications: () => {
       setIsTutorApplicationOpen(false);
       setActiveTutorApplicationDemandId(null);
     },
+    closeTutorTrialList: () => {
+      setIsTutorTrialListOpen(false);
+      setActiveTutorTrialDemandId(null);
+    },
+    completeTutorTrialEnd: (payload) => completeTutorTrialEndMutation.mutateAsync(payload),
+    confirmTutorTrialStart: (applicationId) => confirmTutorTrialStartMutation.mutateAsync(applicationId),
     confirmTutorTrial: (payload) => confirmTutorTrialMutation.mutateAsync(payload),
     openOngoingOrders: () => setIsOngoingOpen(true),
     refetchWorkspace: refetchWorkspaceData,
+    requestTutorTrialEnd: (applicationId) => requestTutorTrialEndMutation.mutateAsync(applicationId),
     showMessage
   });
   const dataError = homeError ?? workspaceError ?? partTimeJobsError ?? huntingTasksError ?? tutorDemandsError ?? addressError;
@@ -628,6 +657,12 @@ export function App() {
     setIsTutorApplicationOpen(true);
   }
 
+  /** 打开家长端试课中的家教列表。 */
+  function handleOpenTutorTrialList(order?: ClientOrder) {
+    setActiveTutorTrialDemandId(order?.id ?? null);
+    setIsTutorTrialListOpen(true);
+  }
+
   /** 进行中取消动作按业务类型分流，家教兼职走真实家教取消接口。 */
   function handleRequestOngoingCancel(order: ClientOrder) {
     if (order.category === "tutor") {
@@ -638,7 +673,16 @@ export function App() {
     void handleHuntingTaskFulfillmentAction(order, "request_cancel");
   }
 
-  /** 当前阶段家教试课动作先以消息承接，等待后端流程接口补齐。 */
+  /** 进行中完成动作按业务类型分流，家教试课走真实结束试课确认接口。 */
+  function handleRequestOngoingComplete(order: ClientOrder) {
+    if (order.category === "tutor") {
+      void handleRequestTutorTrialEnd(order);
+      return;
+    }
+
+    void handleHuntingTaskFulfillmentAction(order, "request_complete");
+  }
+
   useEffect(() => {
     if (isAuthenticated && homeData?.profile) {
       syncUserProfile(homeData.profile);
@@ -922,11 +966,13 @@ export function App() {
           onClose={() => setIsOngoingOpen(false)}
           onConfirmCancel={(order) => void handleHuntingTaskFulfillmentAction(order, "confirm_cancel")}
           onConfirmComplete={(order) => void handleHuntingTaskFulfillmentAction(order, "confirm_complete")}
+          onConfirmTutorTrialStart={handleConfirmTutorTrialStart}
           onOpenQuoteList={handleOpenOngoingQuoteList}
           onOpenTutorApplications={handleOpenTutorApplications}
+          onOpenTutorTrialList={handleOpenTutorTrialList}
           onRepublish={(order) => void handleHuntingTaskFulfillmentAction(order, "republish")}
           onRequestCancel={handleRequestOngoingCancel}
-          onRequestComplete={(order) => void handleHuntingTaskFulfillmentAction(order, "request_complete")}
+          onRequestComplete={handleRequestOngoingComplete}
           orders={ongoingOrders}
         />
       ) : null}
@@ -1034,6 +1080,18 @@ export function App() {
         />
       ) : null}
 
+      {isTutorTrialListOpen ? (
+        <TutorTrialListDialog
+          candidates={activeTutorTrialCandidates}
+          isSubmitting={completeTutorTrialEndMutation.isPending}
+          onClose={() => {
+            setIsTutorTrialListOpen(false);
+            setActiveTutorTrialDemandId(null);
+          }}
+          onConfirmEnd={handleCompleteTutorTrialEnd}
+        />
+      ) : null}
+
       {isTutorCertificationInfoOpen ? (
         <TutorCertificationInfoDialog
           onClose={() => setIsTutorCertificationInfoOpen(false)}
@@ -1052,5 +1110,3 @@ export function App() {
     </main>
   );
 }
-
-

@@ -1,5 +1,15 @@
 import "./index.less";
+import { TrialScheduleCalendar, type TrialScheduleCalendarPeriod } from "@components/TrialScheduleCalendar";
 import { showMessage } from "@tools/messageToast";
+import {
+  getTutorTrialOrderDisplayDetail,
+  getTutorTrialScheduleSummaryFromOrderDetail,
+  getTutorTrialStatusLabel,
+  isTutorTrialEndConfirmingStatus,
+  isTutorTrialConfirmingStatus,
+  isTutorTrialingStatus,
+  parseTutorTrialSchedule
+} from "@tools/tutorTrial";
 
 /** 进行中列表筛选类型。 */
 type OngoingOrderFilter = "all" | "delegation" | "featured" | "hunting" | "tutor";
@@ -8,8 +18,10 @@ type OngoingOrderFilter = "all" | "delegation" | "featured" | "hunting" | "tutor
 interface OngoingOrderActionHandlers {
   onConfirmCancel?: (order: ClientOrder) => void;
   onConfirmComplete?: (order: ClientOrder) => void;
+  onConfirmTutorTrialStart?: (order: ClientOrder) => void;
   onOpenQuoteList?: (order: ClientOrder) => void;
   onOpenTutorApplications?: (order: ClientOrder) => void;
+  onOpenTutorTrialList?: (order: ClientOrder) => void;
   onRepublish?: (order: ClientOrder) => void;
   onRequestCancel?: (order: ClientOrder) => void;
   onRequestComplete?: (order: ClientOrder) => void;
@@ -58,10 +70,119 @@ function hasOngoingOrderActions(order: ClientOrder): boolean {
       order.canOpenTrialResult ||
       order.canRequestCancel ||
       order.canRequestComplete ||
+      order.canOpenTutorTrialList ||
       order.canConfirmCancel ||
       order.canConfirmComplete ||
       order.canRepublish
   );
+}
+
+/** 根据时间段归类到试课日历三段展示。 */
+function getTrialSchedulePreviewPeriod(timeRange: string): TrialScheduleCalendarPeriod {
+  const startHour = Number(timeRange.split(":")[0]);
+
+  if (startHour < 12) {
+    return "morning";
+  }
+
+  return startHour < 18 ? "afternoon" : "evening";
+}
+
+/** 生成试课预览日历需要的日期标记。 */
+function getTrialSchedulePreviewItems(scheduleSummary: string) {
+  return parseTutorTrialSchedule(scheduleSummary)
+    .filter((scheduleLine) => scheduleLine.date)
+    .map((scheduleLine) => ({
+      date: scheduleLine.date,
+      periods: [...new Set(scheduleLine.times.map(getTrialSchedulePreviewPeriod))]
+    }));
+}
+
+/** 学生端查看家长提交的试课日程弹窗。 */
+function TrialSchedulePreviewDialog({
+  onClose,
+  onConfirmTrial,
+  order
+}: {
+  onClose: () => void;
+  onConfirmTrial?: (order: ClientOrder) => void;
+  order: ClientOrder;
+}) {
+  const scheduleSummary = getTutorTrialScheduleSummaryFromOrderDetail(order.detail);
+  const scheduleLines = parseTutorTrialSchedule(scheduleSummary);
+  const scheduleItems = getTrialSchedulePreviewItems(scheduleSummary);
+  const selectedDates = scheduleItems.map((item) => item.date);
+  const [selectedDate, setSelectedDate] = useState(selectedDates[0] ?? "");
+  const selectedScheduleLine = scheduleLines.find((line) => line.date === selectedDate);
+  const previewPeriods: Array<{ key: TrialScheduleCalendarPeriod; label: string }> = [
+    { key: "morning", label: "上午" },
+    { key: "afternoon", label: "下午" },
+    { key: "evening", label: "晚上" }
+  ];
+  const periodRows: Array<{ key: TrialScheduleCalendarPeriod; label: string; times: string[] }> = previewPeriods.map((period) => ({
+    ...period,
+    times:
+      selectedScheduleLine?.times.filter((timeRange) => getTrialSchedulePreviewPeriod(timeRange) === period.key) ?? []
+  }));
+
+  return (
+    <section className="checkout-sheet" aria-label="试课安排详情">
+      <div className="sheet-backdrop" onClick={onClose} />
+      <article className="sheet-panel trial-schedule-preview-sheet mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]">
+        <div className="card-title flex items-center justify-between gap-[10px]">
+          <CalendarClock size={18} />
+          <div>
+            <strong>试课安排</strong>
+            <span>{order.title}</span>
+          </div>
+          <button aria-label="关闭" className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button">
+            <XCircle size={20} />
+          </button>
+        </div>
+        <em className="ongoing-status-badge trial-confirming">{getTutorTrialStatusLabel(order.status)}</em>
+        {scheduleItems.length > 0 ? (
+          <div className="trial-schedule-preview-content grid gap-[12px]">
+            <TrialScheduleCalendar
+              activeDate={selectedDate}
+              initialDate={selectedDates[0]}
+              maxSelectedDates={selectedDates.length}
+              onActiveDateChange={setSelectedDate}
+              scheduleItems={scheduleItems}
+              selectedDates={selectedDates}
+            />
+            <div className="trial-schedule-preview-list grid gap-[8px]">
+              {periodRows.map((period) => (
+                <article className={`trial-schedule-preview-period ${period.times.length > 0 ? "selected" : ""}`} key={period.key}>
+                  <strong>{period.label}</strong>
+                  <span>{period.times.join("、") || "暂无安排"}</span>
+                </article>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p className="notice p-[10px] text-[#61420d]">暂无可查看的试课日程。</p>
+        )}
+        {order.canAgreeTrial ? (
+          <button
+            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+            onClick={() => {
+              onConfirmTrial?.(order);
+              onClose();
+            }}
+            type="button"
+          >
+            <CheckCircle2 size={16} />
+            确认试课
+          </button>
+        ) : null}
+      </article>
+    </section>
+  );
+}
+
+/** 获取进行中卡片正文详情，家教试课卡片隐藏流程说明。 */
+function getOngoingOrderDisplayDetail(order: ClientOrder) {
+  return getOngoingOrderCategory(order) === "tutor" ? getTutorTrialOrderDisplayDetail(order.detail) : order.detail;
 }
 
 /** 渲染进行中事项的报价入口和履约动作。 */
@@ -150,6 +271,16 @@ function OngoingOrderActions({
               试课安排
             </button>
           ) : null}
+          {order.canOpenTutorTrialList ? (
+            <button
+              className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+              onClick={() => handlers.onOpenTutorTrialList?.(order)}
+              type="button"
+            >
+              <CalendarClock size={15} />
+              试课列表
+            </button>
+          ) : null}
           {order.canRejectTrial ? (
             <button
               className="danger-outline-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
@@ -159,7 +290,7 @@ function OngoingOrderActions({
               拒绝
             </button>
           ) : null}
-          {order.canAgreeTrial ? (
+          {order.canAgreeTrial && category !== "tutor" ? (
             <button
               className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
               onClick={() => handlers.onAgreeTrial?.(order)}
@@ -192,7 +323,7 @@ function OngoingOrderActions({
               onClick={() => handlers.onRequestComplete?.(order)}
               type="button"
             >
-              完成
+              {category === "tutor" && isTutorTrialingStatus(order.status) ? "提交结束试课确认" : "完成"}
             </button>
           ) : null}
           {order.canConfirmCancel ? (
@@ -232,6 +363,7 @@ function OngoingOrderActions({
 /** 进行中事项列表，负责分类筛选、空状态和卡片动作展示。 */
 export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProps) {
   const [activeFilter, setActiveFilter] = useState<OngoingOrderFilter>("all");
+  const [trialScheduleOrder, setTrialScheduleOrder] = useState<ClientOrder | null>(null);
   /** 按当前标签过滤后的进行中事项列表。 */
   const filteredOrders = useMemo(
     () => orders.filter((order) => activeFilter === "all" || getOngoingOrderCategory(order) === activeFilter),
@@ -275,9 +407,17 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
                 <strong>{order.title}</strong>
                 <span>{order.id}</span>
               </div>
-              <em>{order.status}</em>
+              <em
+                className={`ongoing-status-badge ${
+                  isTutorTrialConfirmingStatus(order.status) || isTutorTrialEndConfirmingStatus(order.status)
+                    ? "trial-confirming"
+                    : ""
+                } ${isTutorTrialingStatus(order.status) ? "trialing" : ""}`}
+              >
+                {getTutorTrialStatusLabel(order.status)}
+              </em>
             </div>
-            <p>{order.detail}</p>
+            <p>{getOngoingOrderDisplayDetail(order)}</p>
             <div className="meta-line mt-[10px] flex flex-wrap items-center gap-[6px] text-[13px] leading-[1.45] text-[#657181]">
               <span>{order.amountLabel ?? formatCurrency(order.amount)}</span>
               <span>{order.contact}</span>
@@ -289,7 +429,7 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
               onCallOrder={handleCallOrder}
               onMessageOrder={handleMessageOrder}
               onOpenTrialResult={() => showTutorWorkflowMessage("试课结果流程待后端结算接口接入。")}
-              onOpenTrialSchedule={() => showTutorWorkflowMessage("试课日程已记录，等待双方确认。")}
+              onOpenTrialSchedule={(order) => setTrialScheduleOrder(order)}
               onRejectTrial={() => showTutorWorkflowMessage("已拒绝试课申请。")}
             />
           </article>
@@ -301,6 +441,13 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
           </article>
         ) : null}
       </div>
+      {trialScheduleOrder ? (
+        <TrialSchedulePreviewDialog
+          onClose={() => setTrialScheduleOrder(null)}
+          onConfirmTrial={handlers.onConfirmTutorTrialStart}
+          order={trialScheduleOrder}
+        />
+      ) : null}
     </>
   );
 }

@@ -44,8 +44,6 @@ const partTimeWageModeOptions = ["按日结算", "汇总结算"];
 /** 家教计薪方式。 */
 const tutorWageModeOptions = ["按课时结算", "按次结算", "汇总结算"];
 
-/** 家教报名学校要求标签。 */
-const tutorSchoolRequirementTags = ["985", "211", "博士", "硕士", "华5", "C9", "常青藤", "双一流", "师范类"];
 
 /** 发布信息表单初始值。 */
 const initialPublishInfoDraft: PublishInfoDraft = {
@@ -146,16 +144,6 @@ export function PublishInfoDialog({
     }));
   }
 
-  /** 切换家教报名学校要求标签。 */
-  function handleToggleTutorSchoolTag(tag: string) {
-    setDraft((currentDraft) => ({
-      ...currentDraft,
-      tutorSchoolTags: currentDraft.tutorSchoolTags.includes(tag)
-        ? currentDraft.tutorSchoolTags.filter((item) => item !== tag)
-        : [...currentDraft.tutorSchoolTags, tag]
-    }));
-  }
-
   /** 切换委托要求标签。 */
   function handleToggleDelegationRequirementTag(tag: string) {
     setDraft((currentDraft) => ({
@@ -237,7 +225,6 @@ export function PublishInfoDialog({
               childOptions={childOptions}
               draft={draft}
               onChange={handleFieldChange}
-              onToggleSchoolTag={handleToggleTutorSchoolTag}
             />
           )}
         </div>
@@ -466,14 +453,12 @@ function TutorPublishFields({
   addressItems,
   childOptions,
   draft,
-  onChange,
-  onToggleSchoolTag
+  onChange
 }: {
   addressItems: AddressBookItem[];
   childOptions: ChildProfileOption[];
   draft: PublishInfoDraft;
   onChange: (key: keyof PublishInfoDraft, value: string) => void;
-  onToggleSchoolTag: (tag: string) => void;
 }) {
   return (
     <div className="publish-form-fields grid gap-[10px]">
@@ -541,35 +526,12 @@ function TutorPublishFields({
         options={["否", "是"]}
         value={draft.trialEnabled}
       />
-      {draft.trialEnabled === "是" ? (
-        <TextField
-          label="试课时长"
-          onChange={(value) => onChange("trialDuration", value)}
-          placeholder="例如 30 分钟"
-          value={draft.trialDuration}
-        />
-      ) : null}
       <SegmentedField
         label="计薪方式"
         onChange={(value) => onChange("tutorWageMode", value)}
         options={tutorWageModeOptions}
         value={draft.tutorWageMode}
       />
-      <label className="profile-field publish-field grid gap-[7px]">
-        <span>报名学校要求</span>
-        <div className="publish-tag-list flex flex-wrap gap-[8px]" aria-label="选择报名学校要求">
-          {tutorSchoolRequirementTags.map((tag) => (
-            <button
-              className={draft.tutorSchoolTags.includes(tag) ? "active" : ""}
-              key={tag}
-              onClick={() => onToggleSchoolTag(tag)}
-              type="button"
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
-      </label>
       <TextAreaField
         label="要求"
         onChange={(value) => onChange("requirement", value)}

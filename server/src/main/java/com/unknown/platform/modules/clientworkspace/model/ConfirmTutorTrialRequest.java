@@ -6,6 +6,6 @@ import jakarta.validation.constraints.NotBlank;
 public record ConfirmTutorTrialRequest(
     @NotBlank(message = "试课开始日期不能为空") String trialStart,
     @NotBlank(message = "试课结束日期不能为空") String trialEnd,
-    @NotBlank(message = "试课时段不能为空") String trialHalfDay
+    @NotBlank(message = "试课安排不能为空") String trialHalfDay
 ) {
 }

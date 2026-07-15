@@ -43,6 +43,7 @@ public record ClientWorkspaceResponse(
       Boolean canAgreeTrial,
       Boolean canOpenTrialResult,
       Boolean canOpenTrialSchedule,
+      Boolean canOpenTutorTrialList,
       Boolean canOpenTutorApplications,
       Boolean canRejectTrial
   ) {
