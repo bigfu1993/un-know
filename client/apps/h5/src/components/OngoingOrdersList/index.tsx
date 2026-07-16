@@ -4,12 +4,9 @@ import { showMessage } from "@tools/messageToast";
 import {
   getTutorTrialOrderDisplayDetail,
   getTutorTrialScheduleSummaryFromOrderDetail,
-  getTutorTrialStatusLabel,
-  isTutorTrialEndConfirmingStatus,
-  isTutorTrialConfirmingStatus,
-  isTutorTrialingStatus,
   parseTutorTrialSchedule
 } from "@tools/tutorTrial";
+import { createTutorTaskModel } from "@tools/tutorTaskWorkflow";
 
 /** 进行中列表筛选类型。 */
 type OngoingOrderFilter = "all" | "delegation" | "featured" | "hunting" | "tutor";
@@ -60,6 +57,10 @@ function getOngoingOrderCategory(order: ClientOrder): Exclude<OngoingOrderFilter
 
 /** 判断进行中卡片是否存在常规履约动作。 */
 function hasOngoingOrderActions(order: ClientOrder): boolean {
+  if (getOngoingOrderCategory(order) === "tutor") {
+    return createTutorTaskModel({ order, role: order.role }).availableActions.length > 0;
+  }
+
   return Boolean(
     order.canCall ||
       order.canMessage ||
@@ -108,6 +109,7 @@ function TrialSchedulePreviewDialog({
   onConfirmTrial?: (order: ClientOrder) => void;
   order: ClientOrder;
 }) {
+  const tutorTask = createTutorTaskModel({ order, role: order.role });
   const scheduleSummary = getTutorTrialScheduleSummaryFromOrderDetail(order.detail);
   const scheduleLines = parseTutorTrialSchedule(scheduleSummary);
   const scheduleItems = getTrialSchedulePreviewItems(scheduleSummary);
@@ -139,7 +141,7 @@ function TrialSchedulePreviewDialog({
             <XCircle size={20} />
           </button>
         </div>
-        <em className="ongoing-status-badge trial-confirming">{getTutorTrialStatusLabel(order.status)}</em>
+        <em className={`ongoing-status-badge ${tutorTask.statusToneClassName}`}>{tutorTask.statusLabel}</em>
         {scheduleItems.length > 0 ? (
           <div className="trial-schedule-preview-content grid gap-[12px]">
             <TrialScheduleCalendar
@@ -162,7 +164,7 @@ function TrialSchedulePreviewDialog({
         ) : (
           <p className="notice p-[10px] text-[#61420d]">暂无可查看的试课日程。</p>
         )}
-        {order.canAgreeTrial ? (
+        {tutorTask.can("confirmTrialStart") ? (
           <button
             className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
             onClick={() => {
@@ -192,6 +194,8 @@ function OngoingOrderActions({
 }: { order: ClientOrder } & OngoingOrderActionHandlers & OngoingOrderLocalActionHandlers) {
   /** 当前卡片所属业务分类，用于隔离委托报价和狩猎报价入口。 */
   const category = getOngoingOrderCategory(order);
+  /** 家教任务模型集中承接家教流程节点和按钮显隐。 */
+  const tutorTask = category === "tutor" ? createTutorTaskModel({ order, role: order.role }) : null;
   /** 发布方委托卡片是否展示报价列表入口。 */
   const showDelegationQuote = category === "delegation" && Boolean(order.quoteCount && order.quoteCount > 0);
   /** 履约方狩猎卡片是否展示报价处理入口。 */
@@ -230,7 +234,7 @@ function OngoingOrderActions({
       ) : null}
       {showFulfillmentActions ? (
         <div className="ongoing-card-actions mt-[10px] flex flex-wrap gap-[8px]">
-          {order.canCall ? (
+          {(tutorTask ? tutorTask.can("call") : order.canCall) ? (
             <button
               className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
               onClick={() => handlers.onCallOrder?.(order)}
@@ -239,7 +243,7 @@ function OngoingOrderActions({
               电话
             </button>
           ) : null}
-          {order.canMessage ? (
+          {(tutorTask ? tutorTask.can("message") : order.canMessage) ? (
             <button
               className="secondary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
               onClick={() => handlers.onMessageOrder?.(order)}
@@ -249,7 +253,7 @@ function OngoingOrderActions({
               消息
             </button>
           ) : null}
-          {order.canOpenTutorApplications ? (
+          {(tutorTask ? tutorTask.can("openApplications") : order.canOpenTutorApplications) ? (
             <button
               className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
               onClick={() => handlers.onOpenTutorApplications?.(order)}
@@ -261,7 +265,7 @@ function OngoingOrderActions({
               ) : null}
             </button>
           ) : null}
-          {order.canOpenTrialSchedule ? (
+          {(tutorTask ? tutorTask.can("openTrialSchedule") : order.canOpenTrialSchedule) ? (
             <button
               className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
               onClick={() => handlers.onOpenTrialSchedule?.(order)}
@@ -271,7 +275,7 @@ function OngoingOrderActions({
               试课安排
             </button>
           ) : null}
-          {order.canOpenTutorTrialList ? (
+          {(tutorTask ? tutorTask.can("openTrialList") : order.canOpenTutorTrialList) ? (
             <button
               className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
               onClick={() => handlers.onOpenTutorTrialList?.(order)}
@@ -281,7 +285,7 @@ function OngoingOrderActions({
               试课列表
             </button>
           ) : null}
-          {order.canRejectTrial ? (
+          {(tutorTask ? tutorTask.can("rejectTrial") : order.canRejectTrial) ? (
             <button
               className="danger-outline-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
               onClick={() => handlers.onRejectTrial?.(order)}
@@ -299,7 +303,7 @@ function OngoingOrderActions({
               同意试课
             </button>
           ) : null}
-          {order.canOpenTrialResult ? (
+          {(tutorTask ? tutorTask.can("openTrialResult") : order.canOpenTrialResult) ? (
             <button
               className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
               onClick={() => handlers.onOpenTrialResult?.(order)}
@@ -308,7 +312,7 @@ function OngoingOrderActions({
               试课结果
             </button>
           ) : null}
-          {order.canRequestCancel ? (
+          {(tutorTask ? tutorTask.can("cancelDemand") : order.canRequestCancel) ? (
             <button
               className="danger-outline-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
               onClick={() => handlers.onRequestCancel?.(order)}
@@ -317,13 +321,13 @@ function OngoingOrderActions({
               取消
             </button>
           ) : null}
-          {order.canRequestComplete ? (
+          {(tutorTask ? tutorTask.can("requestTrialEnd") : order.canRequestComplete) ? (
             <button
               className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
               onClick={() => handlers.onRequestComplete?.(order)}
               type="button"
             >
-              {category === "tutor" && isTutorTrialingStatus(order.status) ? "提交结束试课确认" : "完成"}
+              {tutorTask?.can("requestTrialEnd") ? "提交结束试课确认" : "完成"}
             </button>
           ) : null}
           {order.canConfirmCancel ? (
@@ -400,40 +404,39 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
         ))}
       </div>
       <div className="ongoing-list grid gap-[10px]">
-        {filteredOrders.map((order) => (
-          <article className={`flow-card compact p-[12px] ${order.risk ? "risk-card" : ""}`} key={order.id}>
-            <div className="card-title flex items-center justify-between gap-[10px]">
-              <div>
-                <strong>{order.title}</strong>
-                <span>{order.id}</span>
+        {filteredOrders.map((order) => {
+          const tutorTask =
+            getOngoingOrderCategory(order) === "tutor" ? createTutorTaskModel({ order, role: order.role }) : null;
+
+          return (
+            <article className={`flow-card compact p-[12px] ${order.risk ? "risk-card" : ""}`} key={order.id}>
+              <div className="card-title flex items-center justify-between gap-[10px]">
+                <div>
+                  <strong>{order.title}</strong>
+                  <span>{order.id}</span>
+                </div>
+                <em className={`ongoing-status-badge ${tutorTask?.statusToneClassName ?? ""}`}>
+                  {tutorTask?.statusLabel ?? order.status}
+                </em>
               </div>
-              <em
-                className={`ongoing-status-badge ${
-                  isTutorTrialConfirmingStatus(order.status) || isTutorTrialEndConfirmingStatus(order.status)
-                    ? "trial-confirming"
-                    : ""
-                } ${isTutorTrialingStatus(order.status) ? "trialing" : ""}`}
-              >
-                {getTutorTrialStatusLabel(order.status)}
-              </em>
-            </div>
-            <p>{getOngoingOrderDisplayDetail(order)}</p>
-            <div className="meta-line mt-[10px] flex flex-wrap items-center gap-[6px] text-[13px] leading-[1.45] text-[#657181]">
-              <span>{order.amountLabel ?? formatCurrency(order.amount)}</span>
-              <span>{order.contact}</span>
-            </div>
-            <OngoingOrderActions
-              order={order}
-              {...handlers}
-              onAgreeTrial={() => showTutorWorkflowMessage("已同意试课，家教兼职进入试课流程。")}
-              onCallOrder={handleCallOrder}
-              onMessageOrder={handleMessageOrder}
-              onOpenTrialResult={() => showTutorWorkflowMessage("试课结果流程待后端结算接口接入。")}
-              onOpenTrialSchedule={(order) => setTrialScheduleOrder(order)}
-              onRejectTrial={() => showTutorWorkflowMessage("已拒绝试课申请。")}
-            />
-          </article>
-        ))}
+              <p>{getOngoingOrderDisplayDetail(order)}</p>
+              <div className="meta-line mt-[10px] flex flex-wrap items-center gap-[6px] text-[13px] leading-[1.45] text-[#657181]">
+                <span>{order.amountLabel ?? formatCurrency(order.amount)}</span>
+                <span>{order.contact}</span>
+              </div>
+              <OngoingOrderActions
+                order={order}
+                {...handlers}
+                onAgreeTrial={() => showTutorWorkflowMessage("已同意试课，家教兼职进入试课流程。")}
+                onCallOrder={handleCallOrder}
+                onMessageOrder={handleMessageOrder}
+                onOpenTrialResult={() => showTutorWorkflowMessage("试课结果流程待后端结算接口接入。")}
+                onOpenTrialSchedule={(order) => setTrialScheduleOrder(order)}
+                onRejectTrial={() => showTutorWorkflowMessage("已拒绝试课申请。")}
+              />
+            </article>
+          );
+        })}
         {filteredOrders.length === 0 ? (
           <article className="empty-state p-[14px] text-center">
             <strong>暂无当前筛选事项</strong>

@@ -135,6 +135,7 @@ declare global {
   const createGlobalStore: typeof import('./store/global').createGlobalStore
   const createRef: typeof import('react').createRef
   const createRoot: typeof import('react-dom/client').createRoot
+  const createTutorTaskModel: typeof import('./tools/tutorTaskWorkflow').createTutorTaskModel
   const delegationRequirementTags: typeof import('./tools/publishInfo').delegationRequirementTags
   const delegationRuleTickerItems: typeof import('./pages/Delegation/model').delegationRuleTickerItems
   const delegationSortOptions: typeof import('./pages/Delegation/model').delegationSortOptions
@@ -198,6 +199,10 @@ declare global {
   const getTutorDateKey: typeof import('./tools/tutorCalendar').getTutorDateKey
   const getTutorDemandBudgetLabel: typeof import('./tools/tutorDemand').getTutorDemandBudgetLabel
   const getTutorMonthKey: typeof import('./tools/tutorCalendar').getTutorMonthKey
+  const getTutorTaskCandidateAvailability: typeof import('./tools/tutorTaskWorkflow').getTutorTaskCandidateAvailability
+  const getTutorTaskNode: typeof import('./tools/tutorTaskWorkflow').getTutorTaskNode
+  const getTutorTaskStatusTone: typeof import('./tools/tutorTaskWorkflow').getTutorTaskStatusTone
+  const getTutorTaskStatusToneClassName: typeof import('./tools/tutorTaskWorkflow').getTutorTaskStatusToneClassName
   const getTutorTrialDateKeyFromLine: typeof import('./tools/tutorTrial').getTutorTrialDateKeyFromLine
   const getTutorTrialOrderDisplayDetail: typeof import('./tools/tutorTrial').getTutorTrialOrderDisplayDetail
   const getTutorTrialScheduleLines: typeof import('./tools/tutorTrial').getTutorTrialScheduleLines
@@ -398,6 +403,9 @@ declare global {
   // @ts-ignore
   export type { PublishInfoType, DelegationAmountMode, PublishInfoDraft, LocalPublishInfoDraft } from './tools/publishInfo'
   import('./tools/publishInfo')
+  // @ts-ignore
+  export type { TutorTaskNode, TutorTaskAction, TutorTaskStatusTone, TutorTaskModel } from './tools/tutorTaskWorkflow'
+  import('./tools/tutorTaskWorkflow')
   // @ts-ignore
   export type { TutorTrialScheduleLine } from './tools/tutorTrial'
   import('./tools/tutorTrial')

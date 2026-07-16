@@ -1,0 +1,322 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2550" height="3740" viewBox="-1350 0 2550 3740">
+  <defs>
+    <pattern id="grid" width="42" height="42" patternUnits="userSpaceOnUse">
+      <circle cx="21" cy="21" r="2" fill="#d8d8dc" />
+    </pattern>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2 2 L10 6 L2 10 Z" fill="#222" />
+    </marker>
+    <marker id="arrow-negative" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2 2 L10 6 L2 10 Z" fill="#d93025" />
+    </marker>
+    <style>
+      .page { fill: #f7f7f8; }
+      .node { fill: #fff; stroke: #222; stroke-width: 3; }
+      .dashed-node { fill: #fff; stroke: #222; stroke-width: 3; stroke-dasharray: 7 7; }
+      .joint { fill: none; stroke: #222; stroke-width: 2.8; stroke-linecap: square; stroke-linejoin: miter; }
+      .line { fill: none; stroke: #222; stroke-width: 2.8; stroke-linecap: square; stroke-linejoin: miter; marker-end: url(#arrow); }
+      .line.negative { stroke: #d93025; marker-end: url(#arrow-negative); }
+      .return { fill: none; stroke: #222; stroke-width: 2.4; stroke-dasharray: 7 7; stroke-linecap: square; stroke-linejoin: miter; marker-end: url(#arrow); }
+      .text { fill: #444; font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", Arial, sans-serif; font-size: 20px; text-anchor: middle; dominant-baseline: middle; }
+      .small { fill: #555; font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", Arial, sans-serif; font-size: 20px; text-anchor: middle; dominant-baseline: middle; }
+      .tag { fill: #555; font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", Arial, sans-serif; font-size: 20px; dominant-baseline: middle; }
+      .negative-target { opacity: 0.8; }
+    </style>
+  </defs>
+
+  <rect class="page" x="-1350" width="2550" height="3740" />
+  <rect x="-1350" width="2550" height="3740" fill="url(#grid)" opacity="0.95" />
+
+  <rect class="node" x="485" y="40" width="210" height="86" />
+  <text class="small" x="590" y="76">
+    <tspan x="590" dy="-8">1 家长发布</tspan>
+    <tspan x="590" dy="27">家教兼职</tspan>
+  </text>
+
+  <rect class="node" x="485" y="180" width="210" height="86" />
+  <text class="text" x="590" y="223">2 发布中</text>
+
+  <g transform="translate(0 140)">
+  <rect class="node" x="485" y="180" width="210" height="86" />
+  <text class="small" x="590" y="216">
+    <tspan x="590" dy="-8">3 学生申请试课+</tspan>
+    <tspan x="590" dy="27">提交可试课时间</tspan>
+  </text>
+
+  <polygon class="node" points="590,295 695,350 590,405 485,350" />
+  <text class="text" x="590" y="343">
+    <tspan x="590" dy="-8">4 家长是否同意</tspan>
+    <tspan x="590" dy="30">试课</tspan>
+  </text>
+
+  <rect class="node" x="220" y="467" width="210" height="86" />
+  <text class="small" x="325" y="503">
+    <tspan x="325" dy="-8">5A 家长创建</tspan>
+    <tspan x="325" dy="27">提交试课日程</tspan>
+  </text>
+
+  <rect class="node negative-target" x="750" y="467" width="210" height="86" />
+  <text class="text negative-target" x="855" y="510">5B 家长拒绝</text>
+
+  <polygon class="node" points="325,625 430,680 325,735 220,680" />
+  <text class="text" x="325" y="673">
+    <tspan x="325" dy="-8">6 学生确认</tspan>
+    <tspan x="325" dy="30">试课日程</tspan>
+  </text>
+
+  <rect class="node" x="15" y="797" width="210" height="86" />
+  <text class="small" x="120" y="833">
+    <tspan x="120" dy="-8">7A 学生同意</tspan>
+    <tspan x="120" dy="27">试课日程</tspan>
+  </text>
+
+  <rect class="node negative-target" x="425" y="797" width="210" height="86" />
+  <text class="small negative-target" x="530" y="833">
+    <tspan x="530" dy="-8">7B 学生修改</tspan>
+    <tspan x="530" dy="27">可试课时间</tspan>
+  </text>
+
+  <rect class="node" x="15" y="957" width="210" height="86" />
+  <text class="text" x="120" y="1000">8 试课中</text>
+
+  <rect class="node" x="-235" y="1097" width="210" height="86" />
+  <text class="text" x="-130" y="1133">
+    <tspan x="-130" dy="-8">9B 家长发起</tspan>
+    <tspan x="-130" dy="30">结束试课</tspan>
+  </text>
+
+  <rect class="node" x="265" y="1097" width="210" height="86" />
+  <text class="text" x="370" y="1133">
+    <tspan x="370" dy="-8">9A 学生发起</tspan>
+    <tspan x="370" dy="30">结束试课</tspan>
+  </text>
+
+  <rect class="node" x="265" y="1237" width="210" height="86" />
+  <text class="text" x="370" y="1273">
+    <tspan x="370" dy="-8">10 家长确认</tspan>
+    <tspan x="370" dy="30">试课结束</tspan>
+  </text>
+
+  <g transform="translate(0 -180)">
+  <polygon class="node" points="-130,1545 -25,1600 -130,1655 -235,1600" />
+  <text class="text" x="-130" y="1593">
+    <tspan x="-130" dy="-8">11 家长是否</tspan>
+    <tspan x="-130" dy="30">正式雇佣</tspan>
+  </text>
+
+  <rect class="node" x="-540" y="1717" width="210" height="86" />
+  <text class="small" x="-435" y="1753">
+    <tspan x="-435" dy="-8">12A 家长发起</tspan>
+    <tspan x="-435" dy="27">正式雇佣确认</tspan>
+  </text>
+
+  <polygon class="node" points="305,1705 410,1760 305,1815 200,1760" />
+  <text class="small" x="305" y="1753">
+    <tspan x="305" dy="-8">12B 家长是否</tspan>
+    <tspan x="305" dy="27">继续发布</tspan>
+  </text>
+
+  <rect class="node" x="55" y="1877" width="210" height="86" />
+  <text class="text" x="160" y="1920">13A 保持发布中</text>
+
+  <rect class="node negative-target" x="345" y="1877" width="210" height="86" />
+  <text class="small negative-target" x="450" y="1912">
+    <tspan x="450" dy="-8">13B 家长发起</tspan>
+    <tspan x="450" dy="27">结算确认</tspan>
+  </text>
+
+  <polygon class="node" points="450,2025 555,2080 450,2135 345,2080" />
+  <text class="small" x="450" y="2073">
+    <tspan x="450" dy="-8">14B 学生</tspan>
+    <tspan x="450" dy="27">结算确认</tspan>
+  </text>
+
+  <polygon class="node" points="-435,2015 -310,2080 -435,2145 -560,2080" />
+  <text class="small" x="-435" y="2062">
+    <tspan x="-435" dy="-18">14A 学生是否</tspan>
+    <tspan x="-435" dy="24">同意正式</tspan>
+    <tspan x="-435" dy="24">雇佣</tspan>
+  </text>
+
+  <rect class="node" x="-765" y="2197" width="210" height="86" />
+  <text class="small" x="-660" y="2233">
+    <tspan x="-660" dy="-8">15A 家长学生确认</tspan>
+    <tspan x="-660" dy="27">兼职日程</tspan>
+  </text>
+
+  <polygon class="node" points="-200,2165 -45,2240 -200,2315 -355,2240" />
+  <text class="small" x="-200" y="2233">
+    <tspan x="-200" dy="-8">15B 不同意原因</tspan>
+    <tspan x="-200" dy="27">是否为薪资</tspan>
+  </text>
+
+  <rect class="node negative-target" x="-305" y="2357" width="210" height="86" />
+  <text class="small negative-target" x="-200" y="2393">
+    <tspan x="-200" dy="-8">正式雇佣</tspan>
+    <tspan x="-200" dy="27">失效</tspan>
+  </text>
+
+  <rect class="node" x="345" y="2197" width="210" height="86" />
+  <text class="text" x="450" y="2240">15C 结算&amp;结束</text>
+
+  <rect class="node" x="-765" y="2357" width="210" height="86" />
+  <text class="text" x="-660" y="2400">16 正式家教服务</text>
+
+  <rect class="dashed-node" x="-765" y="2517" width="210" height="86" />
+  <text class="small" x="-660" y="2553">
+    <tspan x="-660" dy="-8">17 日程</tspan>
+    <tspan x="-660" dy="27">调整</tspan>
+  </text>
+
+  <rect class="node" x="-765" y="2677" width="210" height="86" />
+  <text class="text" x="-660" y="2720">18 结束</text>
+
+  <rect class="node" x="-1105" y="2837" width="210" height="86" />
+  <text class="text" x="-1000" y="2873">
+    <tspan x="-1000" dy="-8">19A 家长发起</tspan>
+    <tspan x="-1000" dy="30">结束</tspan>
+  </text>
+
+  <rect class="node" x="-305" y="2837" width="210" height="86" />
+  <text class="text" x="-200" y="2873">
+    <tspan x="-200" dy="-8">19B 学生发起</tspan>
+    <tspan x="-200" dy="30">结束</tspan>
+  </text>
+
+  <polygon class="node" points="-1000,2985 -895,3040 -1000,3095 -1105,3040" />
+  <text class="small" x="-1000" y="3032">
+    <tspan x="-1000" dy="-18">20A 是否</tspan>
+    <tspan x="-1000" dy="24">课时完成</tspan>
+    <tspan x="-1000" dy="24">结束兼职</tspan>
+  </text>
+
+  <polygon class="node" points="-200,2985 -95,3040 -200,3095 -305,3040" />
+  <text class="text" x="-200" y="3033">
+    <tspan x="-200" dy="-8">20B 是否</tspan>
+    <tspan x="-200" dy="30">提前结束</tspan>
+  </text>
+
+  <polygon class="node" points="-855,3145 -750,3200 -855,3255 -960,3200" />
+  <text class="small" x="-855" y="3193">
+    <tspan x="-855" dy="-8">21A 结束后</tspan>
+    <tspan x="-855" dy="27">是否继续招募</tspan>
+  </text>
+
+  <rect class="node negative-target" x="-1285" y="3157" width="210" height="86" />
+  <text class="small negative-target" x="-1180" y="3188">
+    <tspan x="-1180" dy="-18">22A 结算并</tspan>
+    <tspan x="-1180" dy="24">提交结束</tspan>
+    <tspan x="-1180" dy="24">确认</tspan>
+  </text>
+
+  <rect class="node" x="-815" y="3317" width="210" height="86" />
+  <text class="small" x="-710" y="3353">
+    <tspan x="-710" dy="-8">22D 兼职改为</tspan>
+    <tspan x="-710" dy="27">发布中</tspan>
+  </text>
+
+  <rect class="node" x="-450" y="3317" width="210" height="86" />
+  <text class="small" x="-345" y="3353">
+    <tspan x="-345" dy="-8">22B 家长确认</tspan>
+    <tspan x="-345" dy="27">提前结束</tspan>
+  </text>
+
+  <rect class="node negative-target" x="-160" y="3317" width="210" height="86" />
+  <text class="small negative-target" x="-55" y="3353">
+    <tspan x="-55" dy="-8">22C 家教服务</tspan>
+    <tspan x="-55" dy="27">完成</tspan>
+  </text>
+
+  <polygon class="node" points="-1180,3305 -1055,3360 -1180,3415 -1305,3360" />
+  <text class="small" x="-1180" y="3352">
+    <tspan x="-1180" dy="-18">23A 学生是否</tspan>
+    <tspan x="-1180" dy="24">确认服务</tspan>
+    <tspan x="-1180" dy="24">结束</tspan>
+  </text>
+
+  <rect class="node" x="-1285" y="3477" width="210" height="86" />
+  <text class="text" x="-1180" y="3520">兼职结束</text>
+
+  <rect class="node" x="-450" y="3477" width="210" height="86" />
+  <text class="text" x="-345" y="3520">23B 结算并结束</text>
+  </g>
+  </g>
+
+  <path class="line" d="M590 126 V180" />
+  <path class="line" d="M590 266 V320" />
+  <g transform="translate(0 140)">
+  <path class="line" d="M590 266 V295" />
+  <path class="line" d="M485 350 H325 V467" />
+  <text class="tag" x="345" y="438">是</text>
+  <path class="line negative" d="M695 350 H855 V467" />
+  <text class="tag" x="875" y="438">否</text>
+  <path class="line" d="M325 553 V625" />
+  <path class="line" d="M220 680 H120 V797" />
+  <text class="tag" x="140" y="768">是</text>
+  <path class="line negative" d="M430 680 H530 V797" />
+  <text class="tag" x="550" y="768">否</text>
+  <path class="line" d="M120 883 V957" />
+  <path class="joint" d="M120 1043 V1065 M-130 1065 H370" />
+  <path class="line" d="M-130 1065 V1097" />
+  <path class="line" d="M370 1065 V1097" />
+  <path class="line" d="M-130 1183 V1365" />
+  <path class="line" d="M370 1183 V1237" />
+  <path class="joint" d="M265 1280 H-130" />
+  <g transform="translate(0 -180)">
+  <path class="line" d="M-235 1600 H-435 V1717" />
+  <text class="tag" x="-415" y="1688">是</text>
+  <path class="line negative" d="M-25 1600 H305 V1705" />
+  <text class="tag" x="325" y="1676">否</text>
+  <path class="line" d="M-435 1803 V2015" />
+  <path class="line" d="M200 1760 H160 V1877" />
+  <text class="tag" x="180" y="1848">是</text>
+  <path class="line negative" d="M410 1760 H450 V1877" />
+  <text class="tag" x="470" y="1848">否</text>
+  <path class="line" d="M450 1963 V2025" />
+  <path class="line" d="M450 2135 V2197" />
+  <text class="tag" x="470" y="2168">是</text>
+  <path class="line negative" d="M555 2080 H630 V1920 H555" />
+  <text class="tag" x="650" y="1970">否</text>
+  <path class="line" d="M-560 2080 H-660 V2197" />
+  <text class="tag" x="-640" y="2168">是</text>
+  <path class="line negative" d="M-310 2080 H-200 V2165" />
+  <text class="tag" x="-180" y="2168">否</text>
+  <path class="line" d="M-45 2240 H-20 V1760 H-330" />
+  <text class="tag" x="-5" y="2210">是</text>
+  <path class="line negative" d="M-200 2315 V2357" />
+  <text class="tag" x="-180" y="2348">否</text>
+  <path class="line" d="M-660 2283 V2357" />
+  <path class="line" d="M-660 2443 V2517" />
+  <path class="return" d="M-555 2560 H-510 V2240 H-555" />
+  <path class="line" d="M-660 2603 V2677" />
+  <path class="joint" d="M-660 2763 V2800 M-1000 2800 H-200" />
+  <path class="line" d="M-1000 2800 V2837" />
+  <path class="line" d="M-200 2800 V2837" />
+  <path class="line" d="M-1000 2923 V2985" />
+  <path class="line" d="M-200 2923 V2985" />
+  <path class="line negative" d="M-895 3040 H-855 V3145" />
+  <text class="tag" x="-835" y="3116">否</text>
+
+  <path class="line negative" d="M-960 3200 H-1075" />
+  <text class="tag" x="-1015" y="3180">否</text>
+  <path class="line" d="M-750 3200 H-710 V3317" />
+  <text class="tag" x="-690" y="3288">是</text>
+
+  <path class="line" d="M-305 3040 H-345 V3317" />
+  <text class="tag" x="-325" y="3288">是</text>
+  <path class="line" d="M-1105 3040 H-1180 V3157" />
+  <text class="tag" x="-1160" y="3128">是</text>
+  <path class="line negative" d="M-95 3040 H-55 V3317" />
+  <text class="tag" x="-35" y="3288">否</text>
+  <path class="line" d="M-1180 3243 V3305" />
+  <path class="line" d="M-1180 3415 V3477" />
+  <text class="tag" x="-1160" y="3448">是</text>
+  <path class="line negative" d="M-1305 3360 H-1330 V3200 H-1285" />
+  <text class="tag" x="-1310" y="3250">否</text>
+  <path class="line" d="M-345 3403 V3477" />
+  </g>
+
+  <path class="line" d="M635 840 H1000 V223 H695" />
+  <text class="tag" x="1008" y="532">回到3重新提交</text>
+  </g>
+</svg>

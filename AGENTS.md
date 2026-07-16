@@ -53,32 +53,128 @@
 
 ## 本地运行快捷流程
 
-用户要求“本地运行”“重启项目”“接口不通”“登录接口报错”或“按运行部署文档启动”时，不再从零反复排查，优先直接执行以下固定流程：
+用户要求“本地运行”“重启项目”“接口不通”“登录接口报错”或“按运行部署文档启动”时，必须先判断当前设备环境，再执行对应流程；不要把 macOS/Linux 的 `screen`、`lsof`、`nc` 命令直接套到 Windows，也不要把 Windows PowerShell 命令套到 macOS/Linux。
 
-1. 确认或建立数据库 SSH 隧道，默认使用用户已授权的密钥：
+启动前先检查 `8899`、`9988`、`15432` 是否已有监听；已有监听且服务可用时优先复用。只有确认端口进程属于当前 `un-know` 项目，且确实需要重启时，才停止旧进程。
+
+### 环境判断
+
+Windows PowerShell：
+
+```powershell
+$RepoRoot = (Get-Location).Path
+$IsWindowsHost = $env:OS -eq "Windows_NT"
+Get-NetTCPConnection -State Listen -LocalPort 8899, 9988, 15432 -ErrorAction SilentlyContinue |
+  Select-Object LocalAddress, LocalPort, OwningProcess
+```
+
+macOS/Linux：
+
+```bash
+REPO_ROOT="$(pwd)"
+uname -s
+lsof -nP -iTCP:8899 -sTCP:LISTEN
+lsof -nP -iTCP:9988 -sTCP:LISTEN
+nc -zv 127.0.0.1 15432
+```
+
+### 数据库 SSH 隧道
+
+Windows PowerShell：
+
+```powershell
+$TunnelReady = Test-NetConnection 127.0.0.1 -Port 15432 -InformationLevel Quiet
+if (-not $TunnelReady) {
+  $KeyPath = "$env:USERPROFILE\.ssh\unknow\bigfu.m2pro.mac.home.pem"
+  if (-not (Test-Path -LiteralPath $KeyPath)) {
+    throw "未找到 SSH 密钥：$KeyPath。请提供明确密钥路径，或先手动建立 127.0.0.1:15432 隧道。"
+  }
+  $SshArguments = @(
+    "-i", $KeyPath,
+    "-o", "ExitOnForwardFailure=yes",
+    "-o", "ServerAliveInterval=60",
+    "-o", "ServerAliveCountMax=3",
+    "-N",
+    "-L", "15432:127.0.0.1:5432",
+    "root@8.153.110.192"
+  )
+  Start-Process -FilePath "ssh.exe" -ArgumentList $SshArguments -WindowStyle Hidden
+}
+```
+
+macOS/Linux：
 
 ```bash
 nc -zv 127.0.0.1 15432 || ssh -f -i ~/.ssh/unknow/bigfu.m2pro.mac.home.pem -o ExitOnForwardFailure=yes -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -N -L 15432:127.0.0.1:5432 root@8.153.110.192
 ```
 
-2. 清理旧的本地前后端运行会话和端口进程，只处理 `un-know` 项目相关进程，不误杀其他项目：
+不允许为寻找密钥而枚举整个 `.ssh` 目录；默认路径不存在时，向用户询问明确密钥路径，或要求用户先手动建立 `127.0.0.1:15432` 隧道。
+
+### 清理旧进程
+
+Windows PowerShell：
+
+```powershell
+foreach ($port in 8899, 9988) {
+  Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue |
+    ForEach-Object {
+      $process = Get-CimInstance Win32_Process -Filter "ProcessId = $($_.OwningProcess)" -ErrorAction SilentlyContinue
+      if ($process.CommandLine -like "*un-know*") {
+        Stop-Process -Id $_.OwningProcess -Force
+      }
+    }
+}
+```
+
+macOS/Linux：
 
 ```bash
 screen -S unknow-h5 -X quit 2>/dev/null || true
 screen -S unknow-server -X quit 2>/dev/null || true
-lsof -tiTCP:8899 -sTCP:LISTEN | xargs -r kill
-lsof -tiTCP:9988 -sTCP:LISTEN | xargs -r kill
+lsof -tiTCP:8899 -sTCP:LISTEN | xargs -r ps -o pid= -o command= -p
+lsof -tiTCP:9988 -sTCP:LISTEN | xargs -r ps -o pid= -o command= -p
 ```
 
-3. 按运行部署文档直接启动前端和后端，使用 `screen` 保持后台会话：
+macOS/Linux 下只有确认输出命令行属于当前项目后，才执行 `kill` 停止对应 PID。
+
+### 启动前后端
+
+Windows PowerShell：
+
+```powershell
+New-Item -ItemType Directory -Force -Path .\log\client, .\log\server | Out-Null
+Start-Process -FilePath "npm.cmd" -ArgumentList "run dev:h5" -WorkingDirectory "$RepoRoot\client" -RedirectStandardOutput "$RepoRoot\log\client\h5.screen.log" -RedirectStandardError "$RepoRoot\log\client\h5.screen.err.log" -WindowStyle Hidden
+
+Get-Content -LiteralPath "$RepoRoot\server\.env.prod.local" | ForEach-Object {
+  if ($_ -and $_ -notmatch "^\s*#") {
+    $name, $value = $_ -split "=", 2
+    if ($name -and $value) {
+      Set-Item -Path "Env:$name" -Value $value
+    }
+  }
+}
+Start-Process -FilePath "mvn.cmd" -ArgumentList "spring-boot:run" -WorkingDirectory "$RepoRoot\server" -RedirectStandardOutput "$RepoRoot\log\server\server.screen.log" -RedirectStandardError "$RepoRoot\log\server\server.screen.err.log" -WindowStyle Hidden
+```
+
+macOS/Linux：
 
 ```bash
-mkdir -p /Users/bigfu/code/un-know/log/client /Users/bigfu/code/un-know/log/server
-screen -dmS unknow-h5 bash -lc 'cd /Users/bigfu/code/un-know/client && npm run dev:h5 > /Users/bigfu/code/un-know/log/client/h5.screen.log 2>&1'
-screen -dmS unknow-server bash -lc 'cd /Users/bigfu/code/un-know/server && set -a && source .env.prod.local && set +a && mvn spring-boot:run > /Users/bigfu/code/un-know/log/server/server.screen.log 2>&1'
+mkdir -p "$REPO_ROOT/log/client" "$REPO_ROOT/log/server"
+screen -dmS unknow-h5 bash -lc "cd '$REPO_ROOT/client' && npm run dev:h5 > '$REPO_ROOT/log/client/h5.screen.log' 2>&1"
+screen -dmS unknow-server bash -lc "cd '$REPO_ROOT/server' && set -a && source .env.prod.local && set +a && mvn spring-boot:run > '$REPO_ROOT/log/server/server.screen.log' 2>&1"
 ```
 
-4. 启动后直接验证固定地址和登录接口：
+### 启动验证
+
+Windows PowerShell：
+
+```powershell
+Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8899/
+Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:9988/actuator/health
+Invoke-WebRequest -UseBasicParsing -Method Post -Uri http://127.0.0.1:9988/api/client/auth/login -ContentType "application/json" -Body '{"phone":"18000000009","code":"000000"}'
+```
+
+macOS/Linux：
 
 ```bash
 curl -I http://127.0.0.1:8899/
@@ -86,11 +182,18 @@ curl http://127.0.0.1:9988/actuator/health
 curl -sS -i -X POST http://127.0.0.1:9988/api/client/auth/login -H 'Content-Type: application/json' --data '{"phone":"18000000009","code":"000000"}'
 ```
 
-5. 只有上述固定流程失败时，才查看日志并深入排查：
+只有上述固定流程失败时，才查看日志并深入排查：
+
+```powershell
+Get-Content -LiteralPath .\log\client\h5.screen.log -Tail 160
+Get-Content -LiteralPath .\log\client\h5.screen.err.log -Tail 160 -ErrorAction SilentlyContinue
+Get-Content -LiteralPath .\log\server\server.screen.log -Tail 200
+Get-Content -LiteralPath .\log\server\server.screen.err.log -Tail 200 -ErrorAction SilentlyContinue
+```
 
 ```bash
-tail -n 160 /Users/bigfu/code/un-know/log/client/h5.screen.log
-tail -n 200 /Users/bigfu/code/un-know/log/server/server.screen.log
+tail -n 160 "$REPO_ROOT/log/client/h5.screen.log"
+tail -n 200 "$REPO_ROOT/log/server/server.screen.log"
 ```
 
 ## 核心方法论
@@ -146,6 +249,26 @@ tail -n 200 /Users/bigfu/code/un-know/log/server/server.screen.log
 - 按钮、输入框、卡片文本必须适配移动宽度，不应互相遮挡。
 - 同一表单组的字段行高度应稳定；输入框内辅助操作优先使用文字或图标型轻量入口，不得因按钮 padding、背景或高度撑大当前字段。
 - 表单基础字段、必填字段和选填补充字段应有清晰边界；可展开或可补录的信息使用整体卡片或面板承载。
+
+## 流程图与视觉文档
+
+- 需要精确控制布局、编号、轴线、分支和回流关系的流程图，优先使用可控 SVG 绘制；Mermaid 仅用于不要求精确视觉顺序的草图。
+- 流程图修改必须同时维护语义文档：节点含义、编号步骤表、状态迁移表和产品需求口径应与 SVG 保持一致。
+- 新增主链路节点时必须占用完整行高，并按从上到下的阅读顺序同步调整后续编号；不得把新节点压缩塞进相邻两行之间。
+- 新增、删除、拆分或改变节点类型时，先确定语义、编号和上下游关系，再同步调整节点尺寸、文本分行、锚点、上下间距、分支落点、回流线和相关文档；不得只改节点文字或只补一条线。
+- 流程节点改为判断节点时，必须同时补齐“是/否”分支目标、分支标签、线条样式和必要的结果节点；不允许让旧流程节点继续承载含义不清的判断结果。
+- 流程图必须先区分主链路、辅助分支、修改环路和终态节点。主链路表达读者默认的顺序推进，优先保持同轴向下；异常、否定、修改、回退等辅助链路走侧向分支或外侧回流。
+- 同一语义终点只保留一个结果节点；多个来源进入同一终态时，优先让多条链路接入同一个终点，不复制多个含义相同的结束节点。
+- 用户要求某节点“直接指向”另一节点时，必须重新判断二者是否已经构成主链路；若是，目标节点应与来源节点同轴，并由来源节点的主出线直达目标节点，不再保留多余中间终点或绕行支路。
+- 删除、合并或收敛分支后，必须清理孤立的 `A/B` 后缀、旧分支编号、旧说明和旧连接线；当同一编号只剩一个节点时，编号应回到无后缀形式，并同步 SVG、步骤表和说明文字。
+- 同一行只放相同编号或同一编号的不同分支；子节点必须落在父节点中轴线两侧或与父节点中轴线对齐，空间不足时扩展画布或延长分支，不压缩节点。子节点自身分支空间不足时，优先增大父节点分支横线长度或调整父子距离，再重算子节点分支路线。
+- 流程节点使用矩形，判断节点使用菱形；连线目标是流程节点时必须直接指向该节点本身，只有目标是判断节点或明确的汇合点时才连接到线段。
+- 多条链路共用同一条后续链路时，汇入线使用无箭头连接线，公共链路自身再保留方向箭头。
+- 辅助修改环路应体现“偏离主链路再回到主链路”的语义：修改节点和再次确认节点可布置在侧轴，确认通过时从清晰的侧边接入主链路终点，未通过时回到修改节点；不要让修改环路抢占主链路轴线。
+- 判断分支必须显式标注“是/否”；否分支使用红色线条和箭头，分支文字靠近箭头落点侧的竖线。分支左右方向以用户指定规则和视觉不交叉为准；如为避免交叉调整某个判断的左右方向，必须同步调整标签、颜色、箭头和文档描述。判断节点的侧向分支应从菱形左/右端点出线，向下主流程从底部端点出线，不用绕线假装侧向分支。
+- 回流线优先绕在已有层级外侧，避免交叉；同阶段修改可用实线回流，跨阶段或长距离回退使用虚线回流。流程变化后必须移除已经失效的旧回流线、旧标签和旧箭头。
+- 每次流程图修改后必须完成 SVG XML 解析、残留旧文案/旧编号搜索、浏览器整体图与修改局部渲染检查，并确认节点文字、连线、回流和全局布局无异常，最后执行 `git diff --check`。
+- 生产或维护流程图时优先遵循项目 skill：`.codex/skills/flowchart-production-practices/SKILL.md`。
 
 ## 验证命令
 

@@ -2,13 +2,9 @@ import { Info } from "lucide-react";
 import { TrialScheduleCalendar } from "@components/TrialScheduleCalendar";
 import { getTutorDateKey } from "@tools/tutorCalendar";
 import {
-  getTutorTrialStatusLabel,
-  isTutorApplicationListStatus,
-  isTutorTrialEndConfirmingStatus,
-  isTutorTrialConfirmingStatus,
-  isTutorTrialListStatus,
   parseTutorTrialSchedule
 } from "@tools/tutorTrial";
+import { createTutorTaskModel, getTutorTaskCandidateAvailability } from "@tools/tutorTaskWorkflow";
 
 /** 试课排期时段标识。 */
 type TrialSchedulePeriodKey = "morning" | "afternoon" | "evening";
@@ -222,7 +218,13 @@ function getTrialScheduleValueFromSummary(summary: string): TrialScheduleValue |
 
 /** 获取申请卡片中已确认过的试课日程摘要。 */
 function getCandidateTrialScheduleSummary(candidate: TutorApplicationCandidate | undefined) {
-  return isTutorTrialConfirmingStatus(candidate?.status) ? candidate?.availability ?? "" : "";
+  if (!candidate) {
+    return "";
+  }
+
+  const task = createTutorTaskModel({ candidate, role: "parent" });
+
+  return task.node === "trialScheduled" ? candidate.availability ?? "" : "";
 }
 
 /** 家长端选择试课家教并确认试课安排。 */
@@ -232,11 +234,14 @@ export function TutorApplicationsDialog({ candidates, isConfirming = false, onCl
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [trialScheduleValue, setTrialScheduleValue] = useState<TrialScheduleValue | null>(null);
   const visibleCandidates = useMemo(
-    () => candidates.filter((candidate) => isTutorApplicationListStatus(candidate.status)),
+    () => candidates.filter((candidate) => createTutorTaskModel({ candidate, role: "parent" }).isApplicationListVisible),
     [candidates]
   );
   const selectedCandidate = candidates.find((candidate) => candidate.id === selectedCandidateId);
-  const isSelectedCandidateTrialConfirming = isTutorTrialConfirmingStatus(selectedCandidate?.status);
+  const selectedCandidateTask = selectedCandidate
+    ? createTutorTaskModel({ candidate: selectedCandidate, role: "parent" })
+    : null;
+  const isSelectedCandidateTrialConfirming = selectedCandidateTask?.node === "trialScheduled";
   const selectedCandidateTrialScheduleSummary = getCandidateTrialScheduleSummary(selectedCandidate);
   const isTrialScheduleChanged = Boolean(
     isSelectedCandidateTrialConfirming &&
@@ -315,7 +320,8 @@ export function TutorApplicationsDialog({ candidates, isConfirming = false, onCl
 
         <div className="tutor-application-list grid gap-[10px] overflow-auto pr-[2px]">
           {visibleCandidates.map((candidate) => {
-            const isTrialConfirming = isTutorTrialConfirmingStatus(candidate.status);
+            const candidateTask = createTutorTaskModel({ candidate, role: "parent" });
+            const isTrialConfirming = candidateTask.node === "trialScheduled";
             const isCandidateSelected = selectedCandidateId === candidate.id;
 
             return (
@@ -334,7 +340,7 @@ export function TutorApplicationsDialog({ candidates, isConfirming = false, onCl
                     <strong>{candidate.name}</strong>
                   </button>
                   {isTrialConfirming ? (
-                    <em className="tutor-application-status">{getTutorTrialStatusLabel(candidate.status)}</em>
+                    <em className="tutor-application-status">{candidateTask.statusLabel}</em>
                   ) : null}
                   <button
                     aria-label={`查看${candidate.name}家教信息`}
@@ -421,14 +427,17 @@ export function TutorTrialListDialog({
   onConfirmEnd
 }: TutorTrialListDialogProps) {
   const trialCandidates = useMemo(
-    () => candidates.filter((candidate) => isTutorTrialListStatus(candidate.status)),
+    () => candidates.filter((candidate) => createTutorTaskModel({ candidate, role: "parent" }).isTrialListVisible),
     [candidates]
   );
   const [selectedCandidateId, setSelectedCandidateId] = useState("");
   const [isHireDecisionOpen, setIsHireDecisionOpen] = useState(false);
   const [isTutorScheduleOpen, setIsTutorScheduleOpen] = useState(false);
   const selectedCandidate = trialCandidates.find((candidate) => candidate.id === selectedCandidateId);
-  const canConfirmEnd = Boolean(selectedCandidate && isTutorTrialEndConfirmingStatus(selectedCandidate.status) && !isSubmitting);
+  const selectedCandidateTask = selectedCandidate
+    ? createTutorTaskModel({ candidate: selectedCandidate, role: "parent" })
+    : null;
+  const canConfirmEnd = Boolean(selectedCandidateTask?.can("completeTrialEnd") && !isSubmitting);
 
   /** 提交结束试课决策，是否正式聘用由父级接口落库。 */
   function handleConfirmEnd(hireTutor: boolean, tutorSchedule?: string) {
@@ -462,20 +471,20 @@ export function TutorTrialListDialog({
         <div className="tutor-application-list grid gap-[10px] overflow-auto pr-[2px]">
           {trialCandidates.map((candidate) => {
             const isCandidateSelected = selectedCandidateId === candidate.id;
-            const isEndConfirming = isTutorTrialEndConfirmingStatus(candidate.status);
+            const candidateTask = createTutorTaskModel({ candidate, role: "parent" });
 
             return (
               <button
                 className={`tutor-application-card tutor-trial-list-card flow-card compact grid gap-[7px] p-[12px] text-left ${
                   isCandidateSelected ? "active" : ""
-                } ${isEndConfirming ? "trial-confirming" : "trialing"}`}
+                } ${candidateTask.statusToneClassName}`}
                 key={candidate.id}
                 onClick={() => setSelectedCandidateId(isCandidateSelected ? "" : candidate.id)}
                 type="button"
               >
                 <div className="tutor-application-name-row flex items-center justify-between gap-[8px]">
                   <strong>{candidate.name}</strong>
-                  <em className="tutor-application-status">{getTutorTrialStatusLabel(candidate.status)}</em>
+                  <em className="tutor-application-status">{candidateTask.statusLabel}</em>
                 </div>
                 <span>
                   {candidate.school} · {candidate.major}
@@ -556,7 +565,7 @@ function TutorApplicantDetailDialog({ candidate, onClose }: TutorApplicantDetail
     { label: "专业", value: candidate.major || "待补充" },
     { label: "GPA", value: candidate.gpa || "待补充" },
     { label: "受聘次数", value: `${candidate.hiredTimes} 次` },
-    { label: "可用时间", value: isTutorTrialConfirmingStatus(candidate.status) ? "待补充" : candidate.availability || "待补充" }
+    { label: "可用时间", value: getTutorTaskCandidateAvailability(candidate) }
   ];
 
   return (
