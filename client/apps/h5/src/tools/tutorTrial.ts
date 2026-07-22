@@ -1,3 +1,6 @@
+/** 学生已提交试课申请、等待家长处理时的展示状态。 */
+export const TUTOR_APPLICATION_PENDING_STATUS = "申请试课中";
+
 /** 家长已提交试课安排后，学生端等待确认流程的展示状态。 */
 export const TUTOR_TRIAL_CONFIRMING_STATUS = "试课确认中";
 
@@ -7,6 +10,13 @@ export const TUTOR_TRIALING_STATUS = "试课中";
 /** 学生提交结束试课后，等待家长确认的展示状态。 */
 export const TUTOR_TRIAL_END_CONFIRMING_STATUS = "结束试课确认中";
 
+/** 判断申请是否处于等待家长处理阶段，并兼容迁移前状态。 */
+export function isTutorApplicationPendingStatus(status?: string) {
+  return Boolean(
+    status?.includes(TUTOR_APPLICATION_PENDING_STATUS) || status?.includes("等待家长确认试课")
+  );
+}
+
 /** 判断家教试课申请是否处于家长已确认日程、等待试课确认的状态。 */
 export function isTutorTrialConfirmingStatus(status?: string) {
   return Boolean(status?.includes(TUTOR_TRIAL_CONFIRMING_STATUS) || status?.includes("试课已确认"));
@@ -14,7 +24,14 @@ export function isTutorTrialConfirmingStatus(status?: string) {
 
 /** 判断家教试课申请是否处于试课中。 */
 export function isTutorTrialingStatus(status?: string) {
-  return Boolean(status?.includes(TUTOR_TRIALING_STATUS));
+  const normalizedStatus = status ?? "";
+
+  return Boolean(
+    normalizedStatus.includes(TUTOR_TRIALING_STATUS) &&
+      !isTutorApplicationPendingStatus(normalizedStatus) &&
+      !isTutorTrialConfirmingStatus(normalizedStatus) &&
+      !isTutorTrialEndConfirmingStatus(normalizedStatus)
+  );
 }
 
 /** 判断家教试课申请是否处于结束试课确认中。 */
@@ -24,6 +41,9 @@ export function isTutorTrialEndConfirmingStatus(status?: string) {
 
 /** 兼容旧数据状态值，统一返回当前产品文案。 */
 export function getTutorTrialStatusLabel(status?: string) {
+  if (isTutorApplicationPendingStatus(status)) {
+    return TUTOR_APPLICATION_PENDING_STATUS;
+  }
   if (isTutorTrialEndConfirmingStatus(status)) {
     return TUTOR_TRIAL_END_CONFIRMING_STATUS;
   }

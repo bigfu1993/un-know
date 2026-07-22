@@ -113,6 +113,15 @@ public class ClientWorkspaceController {
     return ApiResponse.ok(clientWorkspaceAppService.applyTutorTrial(demandId, request, authorization));
   }
 
+  /** 学生取消自己的试课申请，取消后申请退出家长处理链路。 */
+  @PostMapping("/workspace/tutor-applications/{applicationId}/cancel")
+  public ApiResponse<TutorDemand> cancelTutorApplication(
+      @PathVariable String applicationId,
+      @RequestHeader(value = "Authorization", required = false) String authorization
+  ) {
+    return ApiResponse.ok(clientWorkspaceAppService.cancelTutorApplication(applicationId, authorization));
+  }
+
   /** 家长确认学生家教试课安排。 */
   @PostMapping("/workspace/tutor-demands/{demandId}/applications/{applicationId}/trial")
   public ApiResponse<TutorDemand> confirmTutorTrial(

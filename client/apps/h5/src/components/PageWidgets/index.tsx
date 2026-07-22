@@ -1,3 +1,6 @@
+import { TutorTrialScheduleDialog } from "@components/TutorTrialScheduleDialog";
+import type { TrialScheduleValue } from "@components/TutorTrialScheduleDialog/model";
+
 /** 业务页面标题栏属性。 */
 interface SectionHeaderProps {
   countText?: string;
@@ -300,50 +303,84 @@ export function TutorTrialJobCard({
   onApplyTrial
 }: {
   job: TutorTrialJob;
-  onApplyTrial?: (job: TutorTrialJob) => void;
+  onApplyTrial?: (job: TutorTrialJob, availability: string) => Promise<unknown> | unknown;
 }) {
+  const [isApplyScheduleOpen, setIsApplyScheduleOpen] = useState(false);
+  const [isApplyingTrial, setIsApplyingTrial] = useState(false);
+
+  /** 提交学生可试课时间，并由上层业务 hook 调真实申请接口。 */
+  async function handleConfirmAvailability(value: TrialScheduleValue) {
+    if (!onApplyTrial || isApplyingTrial) {
+      return;
+    }
+
+    setIsApplyingTrial(true);
+    try {
+      const applied = await onApplyTrial(job, value.plan.summary);
+      if (applied !== false) {
+        setIsApplyScheduleOpen(false);
+      }
+    } finally {
+      setIsApplyingTrial(false);
+    }
+  }
+
   return (
-    <article className="flow-card tutor-trial-job-card p-[14px]">
-      <div className="card-title flex items-center justify-between gap-[10px]">
-        <GraduationCap size={18} />
-        <div>
-          <strong>{job.title}</strong>
-          <span>{job.publisher}</span>
+    <>
+      <article className="flow-card tutor-trial-job-card p-[14px]">
+        <div className="card-title flex items-center justify-between gap-[10px]">
+          <GraduationCap size={18} />
+          <div>
+            <strong>{job.title}</strong>
+            <span>{job.publisher}</span>
+          </div>
+          <em>{job.budget}</em>
         </div>
-        <em>{job.budget}</em>
-      </div>
-      <p>{job.description}</p>
-      <div className="meta-line mt-[10px] flex flex-wrap items-center gap-[6px] text-[13px] leading-[1.45] text-[#657181]">
-        <span>{job.subject}</span>
-        <span>{job.period}</span>
-        <span>{job.address}</span>
-        <span>{job.status}</span>
-      </div>
-      <div className="product-actions mt-[12px] flex flex-wrap items-center justify-between gap-[10px]">
-        <span>{job.requirement}</span>
-        <div>
-          <button
-            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
-            type="button"
-          >
-            <Smartphone size={15} /> 电话
-          </button>
-          <button
-            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
-            type="button"
-          >
-            <MessageCircle size={15} /> 消息
-          </button>
-          <button
-            className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-            onClick={() => onApplyTrial?.(job)}
-            type="button"
-          >
-            <CalendarClock size={15} /> 申请试课
-          </button>
+        <p>{job.description}</p>
+        <div className="meta-line mt-[10px] flex flex-wrap items-center gap-[6px] text-[13px] leading-[1.45] text-[#657181]">
+          <span>{job.subject}</span>
+          <span>{job.period}</span>
+          <span>{job.address}</span>
+          <span>{job.status}</span>
         </div>
-      </div>
-    </article>
+        <div className="product-actions mt-[12px] flex flex-wrap items-center justify-between gap-[10px]">
+          <span>{job.requirement}</span>
+          <div>
+            <button
+              className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+              type="button"
+            >
+              <Smartphone size={15} /> 电话
+            </button>
+            <button
+              className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+              type="button"
+            >
+              <MessageCircle size={15} /> 消息
+            </button>
+            <button
+              className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+              disabled={!onApplyTrial}
+              onClick={() => setIsApplyScheduleOpen(true)}
+              type="button"
+            >
+              <CalendarClock size={15} /> 申请试课
+            </button>
+          </div>
+        </div>
+      </article>
+      {isApplyScheduleOpen ? (
+        <TutorTrialScheduleDialog
+          confirmLabel={isApplyingTrial ? "提交中" : "提交申请"}
+          initialValue={null}
+          isConfirming={isApplyingTrial}
+          onClose={() => setIsApplyScheduleOpen(false)}
+          onConfirm={handleConfirmAvailability}
+          subtitle="最多选择 3 天，家长会基于这些时间制定试课日程。"
+          title="提交可试课时间"
+        />
+      ) : null}
+    </>
   );
 }
 

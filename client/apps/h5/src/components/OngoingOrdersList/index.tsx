@@ -1,6 +1,7 @@
 import "./index.less";
+import { useCancelTutorApplication } from "@unknown/hooks";
 import { TrialScheduleCalendar, type TrialScheduleCalendarPeriod } from "@components/TrialScheduleCalendar";
-import { showMessage } from "@tools/messageToast";
+import { getErrorMessage, showMessage } from "@tools/messageToast";
 import {
   getTutorTrialOrderDisplayDetail,
   getTutorTrialScheduleSummaryFromOrderDetail,
@@ -28,6 +29,7 @@ interface OngoingOrderActionHandlers {
 interface OngoingOrderLocalActionHandlers {
   onAgreeTrial: (order: ClientOrder) => void;
   onCallOrder: (order: ClientOrder) => void;
+  onCancelTutorApplication: (order: ClientOrder) => void;
   onMessageOrder: (order: ClientOrder) => void;
   onOpenTrialResult: (order: ClientOrder) => void;
   onOpenTrialSchedule: (order: ClientOrder) => void;
@@ -189,9 +191,13 @@ function getOngoingOrderDisplayDetail(order: ClientOrder) {
 
 /** 渲染进行中事项的报价入口和履约动作。 */
 function OngoingOrderActions({
+  isCancellingTutorApplication = false,
   order,
   ...handlers
-}: { order: ClientOrder } & OngoingOrderActionHandlers & OngoingOrderLocalActionHandlers) {
+}: {
+  isCancellingTutorApplication?: boolean;
+  order: ClientOrder;
+} & OngoingOrderActionHandlers & OngoingOrderLocalActionHandlers) {
   /** 当前卡片所属业务分类，用于隔离委托报价和狩猎报价入口。 */
   const category = getOngoingOrderCategory(order);
   /** 家教任务模型集中承接家教流程节点和按钮显隐。 */
@@ -312,6 +318,16 @@ function OngoingOrderActions({
               试课结果
             </button>
           ) : null}
+          {tutorTask?.can("cancelApplication") ? (
+            <button
+              className="danger-outline-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+              disabled={isCancellingTutorApplication}
+              onClick={() => handlers.onCancelTutorApplication(order)}
+              type="button"
+            >
+              取消试课申请
+            </button>
+          ) : null}
           {(tutorTask ? tutorTask.can("cancelDemand") : order.canRequestCancel) ? (
             <button
               className="danger-outline-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
@@ -366,7 +382,9 @@ function OngoingOrderActions({
 
 /** 进行中事项列表，负责分类筛选、空状态和卡片动作展示。 */
 export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProps) {
+  const cancelTutorApplicationMutation = useCancelTutorApplication();
   const [activeFilter, setActiveFilter] = useState<OngoingOrderFilter>("all");
+  const [cancellingTutorApplicationId, setCancellingTutorApplicationId] = useState<string | null>(null);
   const [trialScheduleOrder, setTrialScheduleOrder] = useState<ClientOrder | null>(null);
   /** 按当前标签过滤后的进行中事项列表。 */
   const filteredOrders = useMemo(
@@ -382,6 +400,23 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
   /** 电话入口展示订单返回的脱敏联系电话，避免上层重复包一层纯提示回调。 */
   function handleCallOrder(order: ClientOrder) {
     showMessage(order.phoneNumber ? `联系电话：${order.phoneNumber}` : "暂无可用联系电话。", { type: "success" });
+  }
+
+  /** 学生取消试课申请，成功后由查询缓存失效刷新服务端状态。 */
+  async function handleCancelTutorApplication(order: ClientOrder) {
+    if (cancelTutorApplicationMutation.isPending) {
+      return;
+    }
+
+    setCancellingTutorApplicationId(order.id);
+    try {
+      await cancelTutorApplicationMutation.mutateAsync(order.id);
+      showMessage("试课申请已取消。", { type: "success" });
+    } catch (error) {
+      showMessage(getErrorMessage(error, "取消试课申请失败，请稍后重试。"), { type: "error" });
+    } finally {
+      setCancellingTutorApplicationId(null);
+    }
   }
 
   /** 试课动作第一版不改变后端状态，只在列表内部反馈操作结果。 */
@@ -425,10 +460,12 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
                 <span>{order.contact}</span>
               </div>
               <OngoingOrderActions
+                isCancellingTutorApplication={cancellingTutorApplicationId === order.id}
                 order={order}
                 {...handlers}
                 onAgreeTrial={() => showTutorWorkflowMessage("已同意试课，家教兼职进入试课流程。")}
                 onCallOrder={handleCallOrder}
+                onCancelTutorApplication={handleCancelTutorApplication}
                 onMessageOrder={handleMessageOrder}
                 onOpenTrialResult={() => showTutorWorkflowMessage("试课结果流程待后端结算接口接入。")}
                 onOpenTrialSchedule={(order) => setTrialScheduleOrder(order)}

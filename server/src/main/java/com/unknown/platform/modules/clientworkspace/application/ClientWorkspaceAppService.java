@@ -62,6 +62,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ClientWorkspaceAppService {
   private static final DateTimeFormatter HUNTING_PUBLISH_TIME_FORMATTER = DateTimeFormatter.ofPattern("MM-dd HH:mm");
+  private static final String TUTOR_APPLICANT_STATUS_APPLICATION_PENDING = "申请试课中";
+  private static final String TUTOR_APPLICANT_STATUS_APPLICATION_PENDING_LEGACY = "等待家长确认试课";
   private static final String TUTOR_APPLICANT_STATUS_CANCELLED = "已取消";
   private static final String TUTOR_APPLICANT_STATUS_ENDED = "已结束";
   private static final String TUTOR_APPLICANT_STATUS_REJECTED = "已拒绝";
@@ -591,17 +593,34 @@ public class ClientWorkspaceAppService {
     if (isClosedTutorDemandStatus(demand.status())) {
       throw new BusinessException("TUTOR_DEMAND_CLOSED", "该家教兼职已结束或已取消");
     }
-    UserContact student = userContact(currentUserId);
-
-    Integer existingCount = jdbcTemplate.queryForObject(
-        "SELECT COUNT(*) FROM tutor_applicant WHERE tutor_demand_id = ? AND applicant_user_id = ? AND enabled = TRUE",
-        Integer.class,
-        demand.id(),
-        currentUserId
-    );
-    if (existingCount != null && existingCount > 0) {
-      throw new BusinessException("TUTOR_TRIAL_ALREADY_APPLIED", "你已申请该家教试课");
+    String availability = request == null ? "" : clean(request.availability());
+    if (availability.isBlank()) {
+      throw new BusinessException("TUTOR_TRIAL_AVAILABILITY_REQUIRED", "请先提交可试课时间");
     }
+    TutorApplicationRow existingApplication = findLatestTutorApplicationForStudent(demand, currentUserId);
+    if (existingApplication != null && !isTutorApplicationTerminalStatus(existingApplication.status())) {
+      if (!isTutorApplicationPendingStatus(existingApplication.status())) {
+        throw new BusinessException("TUTOR_TRIAL_ALREADY_APPLIED", "你已申请该家教试课");
+      }
+
+      jdbcTemplate.update(
+          """
+              UPDATE tutor_applicant
+              SET availability = ?,
+                  status = ?,
+                  message = ?,
+                  updated_at = NOW()
+              WHERE id = ?
+              """,
+          availability,
+          TUTOR_APPLICANT_STATUS_APPLICATION_PENDING,
+          request == null ? "" : clean(request.message()),
+          existingApplication.id()
+      );
+      return findTutorDemand(demand.publicId());
+    }
+
+    UserContact student = userContact(currentUserId);
 
     jdbcTemplate.update(
         """
@@ -609,15 +628,49 @@ public class ClientWorkspaceAppService {
               public_id, tutor_demand_id, applicant_user_id, name, school, major, gpa,
               hired_times, availability, status, message, updated_at
             )
-            VALUES (?, ?, ?, ?, '学校待补充', '专业待补充', '待补充', 0, '等待家长确认试课', '等待家长确认试课', ?, NOW())
+            VALUES (?, ?, ?, ?, '学校待补充', '专业待补充', '待补充', 0, ?, ?, ?, NOW())
             """,
         nextTutorApplicantPublicId(),
         demand.id(),
         currentUserId,
         student.name(),
+        availability,
+        TUTOR_APPLICANT_STATUS_APPLICATION_PENDING,
         request == null ? "" : clean(request.message())
     );
     return findTutorDemand(demand.publicId());
+  }
+
+  /**
+   * 学生取消自己的试课申请，服务端负责校验角色、归属和当前流程节点。
+   *
+   * @param applicationId 试课申请对外 ID
+   * @param authorization 客户端登录访问令牌
+   * @return 取消申请后的家教需求
+   */
+  @Transactional
+  public TutorDemand cancelTutorApplication(String applicationId, String authorization) {
+    long currentUserId = clientSessionService.requireUserId(authorization);
+    ensureUserRole(currentUserId, ClientRole.student, "TUTOR_TRIAL_STUDENT_ONLY", "仅学生账号可以取消试课申请");
+    TutorApplicationRow application = requireTutorApplicationForStudent(applicationId, currentUserId);
+    if (!isTutorApplicationCancellableStatus(application.status())) {
+      throw new BusinessException("TUTOR_APPLICATION_CANCEL_STATUS_INVALID", "当前状态不可取消试课申请");
+    }
+
+    jdbcTemplate.update(
+        """
+            UPDATE tutor_applicant
+            SET status = ?,
+                updated_at = NOW()
+            WHERE public_id = ?
+              AND applicant_user_id = ?
+              AND enabled = TRUE
+            """,
+        TUTOR_APPLICANT_STATUS_CANCELLED,
+        applicationId,
+        currentUserId
+    );
+    return findTutorDemand(application.demandPublicId());
   }
 
   /** 家长确认学生试课安排，后续由聊天或进行中流程继续承接。 */
@@ -650,6 +703,7 @@ public class ClientWorkspaceAppService {
                 updated_at = NOW()
             WHERE tutor_demand_id = ?
               AND public_id = ?
+              AND status IN (?, ?, ?)
               AND enabled = TRUE
             """,
         request.trialStart(),
@@ -658,7 +712,10 @@ public class ClientWorkspaceAppService {
         trialScheduleText,
         TUTOR_APPLICANT_STATUS_TRIAL_CONFIRMED,
         demand.id(),
-        applicationId
+        applicationId,
+        TUTOR_APPLICANT_STATUS_APPLICATION_PENDING,
+        TUTOR_APPLICANT_STATUS_APPLICATION_PENDING_LEGACY,
+        TUTOR_APPLICANT_STATUS_TRIAL_CONFIRMED
     );
     if (updatedRows == 0) {
       throw new BusinessException("TUTOR_APPLICATION_NOT_FOUND", "试课申请不存在或无权操作");
@@ -956,6 +1013,7 @@ public class ClientWorkspaceAppService {
         null,
         null,
         null,
+        null,
         null
     );
   }
@@ -990,6 +1048,7 @@ public class ClientWorkspaceAppService {
                        FROM tutor_applicant ta
                        WHERE ta.tutor_demand_id = td.id
                          AND ta.enabled = TRUE
+                         AND ta.status NOT IN ('已取消', '已结束', '已拒绝')
                          AND COALESCE(NULLIF(ta.trial_start, ''), '') <> ''
                          AND COALESCE(NULLIF(ta.trial_end, ''), '') <> ''
                          AND COALESCE(NULLIF(ta.trial_half_day, ''), '') <> ''
@@ -1034,6 +1093,7 @@ public class ClientWorkspaceAppService {
                 false,
                 hasTrialingTutor,
                 !isClosed,
+                false,
                 false
             );
           },
@@ -1043,7 +1103,7 @@ public class ClientWorkspaceAppService {
 
     return jdbcTemplate.query(
         """
-            SELECT ta.public_id, ta.status, ta.trial_start, ta.trial_end, ta.trial_half_day,
+            SELECT ta.public_id, ta.status, ta.availability, ta.trial_start, ta.trial_end, ta.trial_half_day,
                    td.title, td.subject, td.budget, td.address_label, td.period_start, td.period_end,
                    COALESCE(NULLIF(parent.nickname, ''), parent.phone, '家长用户') AS parent_name,
                    COALESCE(parent.phone, '') AS parent_phone
@@ -1064,6 +1124,7 @@ public class ClientWorkspaceAppService {
               && !defaultText(rs.getString("trial_half_day"), "").isBlank();
           boolean isTrialConfirmed = TUTOR_APPLICANT_STATUS_TRIAL_CONFIRMED.equals(status);
           boolean isTrialing = TUTOR_APPLICANT_STATUS_TRIALING.equals(status);
+          boolean isApplicationPending = isTutorApplicationPendingStatus(status);
           String trialScheduleText = hasTrialSchedule
               ? tutorTrialScheduleText(rs.getString("trial_start"), rs.getString("trial_end"), rs.getString("trial_half_day"))
               : "";
@@ -1071,6 +1132,7 @@ public class ClientWorkspaceAppService {
               + defaultText(rs.getString("period_start"), "待定") + " 至 "
               + defaultText(rs.getString("period_end"), "待定") + " · "
               + defaultText(rs.getString("address_label"), "地址待补充")
+              + " · 可试课时间：" + defaultText(rs.getString("availability"), "待补充")
               + (trialScheduleText.isBlank() ? "" : " · 试课安排：" + trialScheduleText);
           return new ClientOrder(
               rs.getString("public_id"),
@@ -1100,7 +1162,8 @@ public class ClientWorkspaceAppService {
               isTrialConfirmed && hasTrialSchedule,
               false,
               false,
-              false
+              false,
+              isApplicationPending
           );
         },
         currentUserId,
@@ -1930,6 +1993,39 @@ public class ClientWorkspaceAppService {
     return rows.get(0);
   }
 
+  /** 查询并锁定学生在同一需求下的最新试课申请，用于申请阶段重新提交可试课时间。 */
+  private TutorApplicationRow findLatestTutorApplicationForStudent(TutorDemandRow demand, long studentUserId) {
+    List<TutorApplicationRow> rows = jdbcTemplate.query(
+        """
+            SELECT id, public_id, ? AS demand_public_id, status,
+                   COALESCE(trial_start, '') AS trial_start,
+                   COALESCE(trial_end, '') AS trial_end,
+                   COALESCE(trial_half_day, '') AS trial_half_day
+            FROM tutor_applicant
+            WHERE tutor_demand_id = ?
+              AND applicant_user_id = ?
+              AND enabled = TRUE
+            ORDER BY id DESC
+            LIMIT 1
+            FOR UPDATE
+            """,
+        (rs, rowNum) -> new TutorApplicationRow(
+            rs.getLong("id"),
+            rs.getString("public_id"),
+            rs.getString("demand_public_id"),
+            rs.getString("status"),
+            rs.getString("trial_start"),
+            rs.getString("trial_end"),
+            rs.getString("trial_half_day")
+        ),
+        demand.publicId(),
+        demand.id(),
+        studentUserId
+    );
+
+    return rows.isEmpty() ? null : rows.get(0);
+  }
+
   private boolean hasTutorTrialSchedule(long tutorDemandId) {
     Integer count = jdbcTemplate.queryForObject(
         """
@@ -1937,12 +2033,16 @@ public class ClientWorkspaceAppService {
             FROM tutor_applicant
             WHERE tutor_demand_id = ?
               AND enabled = TRUE
+              AND status NOT IN (?, ?, ?)
               AND COALESCE(NULLIF(trial_start, ''), '') <> ''
               AND COALESCE(NULLIF(trial_end, ''), '') <> ''
               AND COALESCE(NULLIF(trial_half_day, ''), '') <> ''
             """,
         Integer.class,
-        tutorDemandId
+        tutorDemandId,
+        TUTOR_APPLICANT_STATUS_CANCELLED,
+        TUTOR_APPLICANT_STATUS_ENDED,
+        TUTOR_APPLICANT_STATUS_REJECTED
     );
     return count != null && count > 0;
   }
@@ -1960,6 +2060,24 @@ public class ClientWorkspaceAppService {
 
   private boolean isClosedTutorDemandStatus(String status) {
     return TUTOR_DEMAND_STATUS_CANCELLED.equals(status) || TUTOR_DEMAND_STATUS_ENDED.equals(status);
+  }
+
+  /** 判断申请是否仍处于家长处理前的申请阶段，并兼容迁移前状态。 */
+  private boolean isTutorApplicationPendingStatus(String status) {
+    return TUTOR_APPLICANT_STATUS_APPLICATION_PENDING.equals(status)
+        || TUTOR_APPLICANT_STATUS_APPLICATION_PENDING_LEGACY.equals(status);
+  }
+
+  /** 判断学生是否可在当前节点取消试课申请。 */
+  private boolean isTutorApplicationCancellableStatus(String status) {
+    return isTutorApplicationPendingStatus(status) || TUTOR_APPLICANT_STATUS_TRIAL_CONFIRMED.equals(status);
+  }
+
+  /** 判断申请是否已经进入不阻止重新申请的终态。 */
+  private boolean isTutorApplicationTerminalStatus(String status) {
+    return TUTOR_APPLICANT_STATUS_CANCELLED.equals(status)
+        || TUTOR_APPLICANT_STATUS_ENDED.equals(status)
+        || TUTOR_APPLICANT_STATUS_REJECTED.equals(status);
   }
 
   private void ensureUserRole(long userId, ClientRole expectedRole, String errorCode, String errorMessage) {

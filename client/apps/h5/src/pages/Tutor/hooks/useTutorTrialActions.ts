@@ -2,8 +2,9 @@ import { getErrorMessage } from "@tools/messageToast";
 
 /** 家教试课申请载荷。 */
 interface ApplyTutorTrialPayload {
+  availability: string;
   demandId: string;
-  message: string;
+  message?: string;
 }
 
 /** 家长端确认试课安排载荷。 */
@@ -53,14 +54,21 @@ export function useTutorTrialActions({
   showMessage
 }: UseTutorTrialActionsOptions) {
   /** 学生端提交家教试课申请，申请记录由服务端进入进行中列表。 */
-  async function handleApplyTutorTrial(job: TutorTrialJob) {
+  async function handleApplyTutorTrial(job: TutorTrialJob, availability: string) {
     try {
-      await applyTutorTrial({ demandId: job.id, message: "申请试课" });
+      if (!availability.trim()) {
+        showMessage("请先选择可试课时间。", { type: "warning" });
+        return false;
+      }
+
+      await applyTutorTrial({ availability, demandId: job.id, message: "申请试课" });
       openOngoingOrders();
       showMessage("试课申请已提交，可在进行中查看状态。", { type: "success" });
       refetchWorkspace();
+      return true;
     } catch (error) {
       showMessage(getErrorMessage(error, "试课申请提交失败，请稍后重试。"), { type: "error" });
+      return false;
     }
   }
 

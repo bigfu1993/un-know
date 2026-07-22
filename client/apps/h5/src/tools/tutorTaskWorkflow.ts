@@ -1,5 +1,6 @@
 import {
   getTutorTrialStatusLabel,
+  isTutorApplicationPendingStatus,
   isTutorApplicationListStatus,
   isTutorTrialConfirmingStatus,
   isTutorTrialEndConfirmingStatus,
@@ -30,6 +31,7 @@ export type TutorTaskAction =
   | "openTrialList"
   | "requestTrialEnd"
   | "completeTrialEnd"
+  | "cancelApplication"
   | "cancelDemand"
   | "rejectTrial"
   | "agreeTrial"
@@ -80,7 +82,7 @@ export function getTutorTaskNode(status?: string): TutorTaskNode {
   if (status?.includes("已结束")) {
     return "ended";
   }
-  if (status?.includes("等待家长确认试课")) {
+  if (isTutorApplicationPendingStatus(status)) {
     return "applicationPending";
   }
 
@@ -151,6 +153,9 @@ export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelO
     }
     if (order.canRequestCancel) {
       actions.add("cancelDemand");
+    }
+    if (order.canCancelTutorApplication && node === "applicationPending") {
+      actions.add("cancelApplication");
     }
     if (order.canRejectTrial) {
       actions.add("rejectTrial");

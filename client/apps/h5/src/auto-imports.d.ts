@@ -92,6 +92,7 @@ declare global {
   const Store: typeof import('lucide-react').Store
   const StrictMode: typeof import('react').StrictMode
   const Suspense: typeof import('react').Suspense
+  const TUTOR_APPLICATION_PENDING_STATUS: typeof import('./tools/tutorTrial').TUTOR_APPLICATION_PENDING_STATUS
   const TUTOR_TRIALING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIALING_STATUS
   const TUTOR_TRIAL_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_CONFIRMING_STATUS
   const TUTOR_TRIAL_END_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_END_CONFIRMING_STATUS
@@ -106,6 +107,7 @@ declare global {
   const TutorQualificationInfoDialog: typeof import('./pages/Settings/components/SettingsDialogs').TutorQualificationInfoDialog
   const TutorTrialJobCard: typeof import('./components/PageWidgets/index').TutorTrialJobCard
   const TutorTrialListDialog: typeof import('./pages/Tutor/components/TutorApplicationsDialog').TutorTrialListDialog
+  const TutorTrialScheduleDialog: typeof import('./components/TutorTrialScheduleDialog/index').TutorTrialScheduleDialog
   const UserRound: typeof import('lucide-react').UserRound
   const Wallet: typeof import('./pages/Wallet/index').Wallet
   const WalletCards: typeof import('lucide-react').WalletCards
@@ -132,6 +134,7 @@ declare global {
   const clientPublishPlatformLabels: typeof import('@unknown/domain').clientPublishPlatformLabels
   const createAddressBookItem: typeof import('./shared/clientPageModel').createAddressBookItem
   const createContext: typeof import('react').createContext
+  const createDefaultDaySchedule: typeof import('./components/TutorTrialScheduleDialog/model').createDefaultDaySchedule
   const createGlobalStore: typeof import('./store/global').createGlobalStore
   const createRef: typeof import('react').createRef
   const createRoot: typeof import('react-dom/client').createRoot
@@ -143,6 +146,7 @@ declare global {
   const filterProducts: typeof import('./shared/clientPageModel').filterProducts
   const formatCompactWalletAmount: typeof import('./tools/wallet').formatCompactWalletAmount
   const formatCurrency: typeof import('./shared/clientPageModel').formatCurrency
+  const formatTrialScheduleDate: typeof import('./components/TutorTrialScheduleDialog/model').formatTrialScheduleDate
   const formatTutorSubjects: typeof import('./shared/tutorModel').formatTutorSubjects
   const formatWalletAmount: typeof import('./tools/wallet').formatWalletAmount
   const forwardRef: typeof import('react').forwardRef
@@ -162,6 +166,7 @@ declare global {
   const getDelegationRequirementTags: typeof import('./pages/Delegation/model').getDelegationRequirementTags
   const getDelegationTimeWeight: typeof import('./pages/Delegation/model').getDelegationTimeWeight
   const getDeliveryFee: typeof import('./shared/clientPageModel').getDeliveryFee
+  const getEnabledPeriodSummaries: typeof import('./components/TutorTrialScheduleDialog/model').getEnabledPeriodSummaries
   const getErrorMessage: typeof import('./tools/messageToast').getErrorMessage
   const getFilledFieldCount: typeof import('./tools/validation').getFilledFieldCount
   const getFilledProfileDraft: typeof import('./shared/clientPageModel').getFilledProfileDraft
@@ -192,6 +197,10 @@ declare global {
   const getStoredProfileDraft: typeof import('./shared/clientPageModel').getStoredProfileDraft
   const getTabFromRoute: typeof import('./shared/clientPageModel').getTabFromRoute
   const getTabTitle: typeof import('./shared/clientPageModel').getTabTitle
+  const getTrialScheduleCalendarItems: typeof import('./components/TutorTrialScheduleDialog/model').getTrialScheduleCalendarItems
+  const getTrialSchedulePlan: typeof import('./components/TutorTrialScheduleDialog/model').getTrialSchedulePlan
+  const getTrialScheduleSummaryLines: typeof import('./components/TutorTrialScheduleDialog/model').getTrialScheduleSummaryLines
+  const getTrialScheduleValueFromSummary: typeof import('./components/TutorTrialScheduleDialog/model').getTrialScheduleValueFromSummary
   const getTutorCalendarCells: typeof import('./tools/tutorCalendar').getTutorCalendarCells
   const getTutorCalendarTasks: typeof import('./tools/tutorCalendar').getTutorCalendarTasks
   const getTutorCardDataFromDraft: typeof import('./components/TutorCard/model').getTutorCardDataFromDraft
@@ -238,6 +247,7 @@ declare global {
   const isPositiveAmount: typeof import('./tools/publishInfo').isPositiveAmount
   const isQuoteLockedForPublisher: typeof import('./pages/Delegation/model').isQuoteLockedForPublisher
   const isTutorApplicationListStatus: typeof import('./tools/tutorTrial').isTutorApplicationListStatus
+  const isTutorApplicationPendingStatus: typeof import('./tools/tutorTrial').isTutorApplicationPendingStatus
   const isTutorTrialConfirmingStatus: typeof import('./tools/tutorTrial').isTutorTrialConfirmingStatus
   const isTutorTrialEndConfirmingStatus: typeof import('./tools/tutorTrial').isTutorTrialEndConfirmingStatus
   const isTutorTrialListStatus: typeof import('./tools/tutorTrial').isTutorTrialListStatus
@@ -284,6 +294,7 @@ declare global {
   const stringifyTutorSubjectLevelItems: typeof import('./components/TutorCard/model').stringifyTutorSubjectLevelItems
   const subscribeMessageToast: typeof import('./tools/messageToast').subscribeMessageToast
   const tabIcons: typeof import('./shared/clientPageModel').tabIcons
+  const trialSchedulePeriods: typeof import('./components/TutorTrialScheduleDialog/model').trialSchedulePeriods
   const tutorCertificationStatusLabels: typeof import('./components/TutorCard/model').tutorCertificationStatusLabels
   const tutorGradeOptions: typeof import('./components/TutorCard/model').tutorGradeOptions
   const tutorLevelOptions: typeof import('./components/TutorCard/model').tutorLevelOptions
@@ -385,6 +396,9 @@ declare global {
   // @ts-ignore
   export type { TutorCertificationInfoSaveMode, TutorCertificationInfoDialogProps } from './components/TutorCertificationInfoDialog/index'
   import('./components/TutorCertificationInfoDialog/index')
+  // @ts-ignore
+  export type { TrialSchedulePeriodKey, TrialSchedulePeriodConfig, TrialSchedulePeriodState, TrialScheduleDraft, TrialSchedulePlan, TrialScheduleValue } from './components/TutorTrialScheduleDialog/model'
+  import('./components/TutorTrialScheduleDialog/model')
   // @ts-ignore
   export type { DelegationProps } from './pages/Delegation/index'
   import('./pages/Delegation/index')

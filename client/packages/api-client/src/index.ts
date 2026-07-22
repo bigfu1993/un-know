@@ -387,6 +387,14 @@ export async function applyTutorTrial(demandId: string, payload: ApplyTutorTrial
   });
 }
 
+/** 学生取消自己的家教试课申请。 */
+export async function cancelTutorApplication(applicationId: string): Promise<TutorDemand> {
+  return requestJson<TutorDemand>(
+    `/api/client/workspace/tutor-applications/${encodeURIComponent(applicationId)}/cancel`,
+    { method: "POST" }
+  );
+}
+
 export async function confirmTutorTrial(
   demandId: string,
   applicationId: string,

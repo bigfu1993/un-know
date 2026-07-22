@@ -212,6 +212,7 @@ export interface ClientOrder {
   canOpenTutorTrialList?: boolean;
   canOpenTutorApplications?: boolean;
   canRejectTrial?: boolean;
+  canCancelTutorApplication?: boolean;
   risk?: "payment" | "refund";
 }
 
@@ -358,6 +359,7 @@ export interface PublishTutorDemandRequest {
 
 /** 学生申请家教试课请求。 */
 export interface ApplyTutorTrialRequest {
+  availability: string;
   message?: string;
 }
 

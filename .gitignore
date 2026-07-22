@@ -8,6 +8,10 @@ log/**
 !log/server/
 !log/server/.gitkeep
 
+# Local temporary artifacts
+/tmp/
+/.tmp-codex/
+
 # Local secrets
 .env
 .env.*

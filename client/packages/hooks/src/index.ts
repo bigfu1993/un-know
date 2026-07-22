@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   acceptHuntingTask,
   applyTutorTrial,
+  cancelTutorApplication,
   cancelTutorDemand,
   confirmHuntingTaskQuote,
   completeTutorTrialEnd,
@@ -285,6 +286,19 @@ export function useApplyTutorTrial() {
       const { demandId, ...request } = payload;
       return applyTutorTrial(demandId, request);
     },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });
+      void queryClient.invalidateQueries({ queryKey: clientTutorDemandsQueryKey });
+    }
+  });
+}
+
+/** 取消学生自己的试课申请，并刷新家教需求与工作台订单。 */
+export function useCancelTutorApplication() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (applicationId: string) => cancelTutorApplication(applicationId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });
       void queryClient.invalidateQueries({ queryKey: clientTutorDemandsQueryKey });

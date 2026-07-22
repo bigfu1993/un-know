@@ -17,6 +17,7 @@
       .line { fill: none; stroke: #222; stroke-width: 2.8; stroke-linecap: square; stroke-linejoin: miter; marker-end: url(#arrow); }
       .line.negative { stroke: #d93025; marker-end: url(#arrow-negative); }
       .return { fill: none; stroke: #222; stroke-width: 2.4; stroke-dasharray: 7 7; stroke-linecap: square; stroke-linejoin: miter; marker-end: url(#arrow); }
+      .return.negative { stroke: #d93025; marker-end: url(#arrow-negative); }
       .text { fill: #444; font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", Arial, sans-serif; font-size: 20px; text-anchor: middle; dominant-baseline: middle; }
       .small { fill: #555; font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", Arial, sans-serif; font-size: 20px; text-anchor: middle; dominant-baseline: middle; }
       .tag { fill: #555; font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", Arial, sans-serif; font-size: 20px; dominant-baseline: middle; }
@@ -41,6 +42,12 @@
   <text class="small" x="590" y="216">
     <tspan x="590" dy="-8">3 学生申请试课+</tspan>
     <tspan x="590" dy="27">提交可试课时间</tspan>
+  </text>
+
+  <rect class="dashed-node negative-target" x="120" y="180" width="260" height="86" />
+  <text class="small negative-target" x="250" y="216">
+    <tspan x="250" dy="-8">3A 学生取消</tspan>
+    <tspan x="250" dy="27">试课申请</tspan>
   </text>
 
   <polygon class="node" points="590,295 695,350 590,405 485,350" />
@@ -70,10 +77,22 @@
     <tspan x="120" dy="27">试课日程</tspan>
   </text>
 
-  <rect class="node negative-target" x="425" y="797" width="210" height="86" />
-  <text class="small negative-target" x="530" y="833">
+  <polygon class="node" points="530,755 635,815 530,875 425,815" />
+  <text class="small" x="530" y="807">
+    <tspan x="530" dy="-8">是否日程</tspan>
+    <tspan x="530" dy="27">冲突</tspan>
+  </text>
+
+  <rect class="node" x="425" y="917" width="210" height="86" />
+  <text class="small" x="530" y="953">
     <tspan x="530" dy="-8">7B 学生修改</tspan>
     <tspan x="530" dy="27">可试课时间</tspan>
+  </text>
+
+  <rect class="dashed-node negative-target" x="750" y="917" width="210" height="86" />
+  <text class="small negative-target" x="855" y="953">
+    <tspan x="855" dy="-8">7C 学生取消</tspan>
+    <tspan x="855" dy="27">试课</tspan>
   </text>
 
   <rect class="node" x="15" y="957" width="210" height="86" />
@@ -201,6 +220,8 @@
   <path class="line" d="M590 126 V180" />
   <path class="line" d="M590 266 V320" />
   <g transform="translate(0 140)">
+  <path class="return" d="M485 223 H380" />
+  <text class="tag" x="400" y="198">取消</text>
   <path class="line" d="M590 266 V295" />
   <path class="line" d="M485 350 H325 V467" />
   <text class="tag" x="345" y="438">是</text>
@@ -209,8 +230,12 @@
   <path class="line" d="M325 553 V625" />
   <path class="line" d="M220 680 H120 V797" />
   <text class="tag" x="140" y="768">是</text>
-  <path class="line negative" d="M430 680 H530 V797" />
-  <text class="tag" x="550" y="768">否</text>
+  <path class="line negative" d="M430 680 H530 V755" />
+  <text class="tag" x="550" y="735">否</text>
+  <path class="line" d="M530 875 V917" />
+  <text class="tag" x="550" y="900">是</text>
+  <path class="return negative" d="M635 815 H855 V917" />
+  <text class="tag" x="875" y="888">否</text>
   <path class="line" d="M120 883 V957" />
   <path class="joint" d="M120 1043 V1065 M-130 1065 H370" />
   <path class="line" d="M-130 1065 V1097" />
@@ -258,7 +283,7 @@
   <text class="tag" x="-15" y="3260">否</text>
   </g>
 
-  <path class="line" d="M635 840 H1000 V223 H695" />
+  <path class="line" d="M530 1003 V1065 H1000 V223 H695" />
   <text class="tag" x="1008" y="532">回到3重新提交</text>
   </g>
 </svg>

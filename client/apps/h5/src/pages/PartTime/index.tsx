@@ -38,7 +38,7 @@ export function PartTime({
   dashboard: MerchantDashboard;
   jobs: PartTimeJob[];
   tutorJobs?: TutorTrialJob[];
-  onApplyTutorTrial?: (job: TutorTrialJob) => void;
+  onApplyTutorTrial?: (job: TutorTrialJob, availability: string) => Promise<unknown> | unknown;
 }) {
   const [keyword, setKeyword] = useState("");
   const [activePanel, setActivePanel] = useState<PartTimeToolbarPanel>(null);
