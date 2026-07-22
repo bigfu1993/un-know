@@ -15,6 +15,7 @@ export function OngoingOrdersDialog({
   onOpenTutorApplications,
   onOpenTutorTrialList,
   onRepublish,
+  onTutorWorkflowAction,
   onRequestCancel,
   onRequestComplete
 }: {
@@ -28,6 +29,7 @@ export function OngoingOrdersDialog({
   onOpenTutorApplications?: (order: ClientOrder) => void;
   onOpenTutorTrialList?: (order: ClientOrder) => void;
   onRepublish?: (order: ClientOrder) => void;
+  onTutorWorkflowAction?: (order: ClientOrder, action: TutorWorkflowAction, payload?: Partial<TutorWorkflowActionRequest>) => Promise<boolean> | boolean | void;
   onRequestCancel?: (order: ClientOrder) => void;
   onRequestComplete?: (order: ClientOrder) => void;
 }) {
@@ -62,6 +64,7 @@ export function OngoingOrdersDialog({
           onOpenTutorApplications={onOpenTutorApplications}
           onOpenTutorTrialList={onOpenTutorTrialList}
           onRepublish={onRepublish}
+          onTutorWorkflowAction={onTutorWorkflowAction}
           onRequestCancel={onRequestCancel}
           onRequestComplete={onRequestComplete}
         />

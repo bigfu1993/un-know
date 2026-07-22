@@ -14,10 +14,12 @@ export interface TrialScheduleCalendarItem {
 export interface TrialScheduleCalendarProps {
   activeDate?: string;
   initialDate?: string;
-  maxSelectedDates?: number;
+  maxSelectedDates?: number | null;
   onActiveDateChange?: (dateKey: string) => void;
+  onDayDoubleClick?: (dateKey: string) => void;
   onSelectedDatesChange?: (selectedDates: string[]) => void;
   scheduleItems: TrialScheduleCalendarItem[];
+  selectableDates?: string[];
   selectedDates: string[];
 }
 
@@ -30,7 +32,9 @@ export function TrialScheduleCalendar({
   initialDate,
   maxSelectedDates = 3,
   onActiveDateChange,
+  onDayDoubleClick,
   scheduleItems,
+  selectableDates,
   selectedDates
 }: TrialScheduleCalendarProps) {
   const today = useMemo(() => new Date(), []);
@@ -43,6 +47,8 @@ export function TrialScheduleCalendar({
     return new Map(scheduleItems.map((item) => [item.date, new Set(item.periods)]));
   }, [scheduleItems]);
   const selectedDateSet = useMemo(() => new Set(selectedDates), [selectedDates]);
+  const selectableDateSet = useMemo(() => new Set(selectableDates ?? []), [selectableDates]);
+  const hasSelectableDateLimit = selectableDateSet.size > 0;
 
   /** 切换日历月份并把当前焦点日期移动到新月份第一天。 */
   function handleChangeMonth(offset: number) {
@@ -55,9 +61,12 @@ export function TrialScheduleCalendar({
     onActiveDateChange?.(nextActiveDate);
   }
 
-  /** 点击日期仅切换查看焦点，排期是否存在由外层时段草稿决定。 */
-  function handleSelectDate(dateKey: string) {
+  /** 点击日期仅切换查看焦点，双击时交给外层切换当天三段排期。 */
+  function handleSelectDate(dateKey: string, clickCount: number) {
     onActiveDateChange?.(dateKey);
+    if (clickCount >= 2) {
+      onDayDoubleClick?.(dateKey);
+    }
   }
 
   return (
@@ -86,7 +95,10 @@ export function TrialScheduleCalendar({
 
           const periodSet = scheduleMap.get(dateKey);
           const isSelected = selectedDateSet.has(dateKey) || Boolean(periodSet);
-          const isDisabled = !isSelected && selectedDates.length >= maxSelectedDates;
+          const isOverMaxSelectedDates =
+            maxSelectedDates !== null && maxSelectedDates !== undefined && selectedDates.length >= maxSelectedDates;
+          const isOutsideSelectableDates = hasSelectableDateLimit && !selectableDateSet.has(dateKey);
+          const isDisabled = !isSelected && (isOverMaxSelectedDates || isOutsideSelectableDates);
           const dayNumber = Number(dateKey.slice(-2));
 
           return (
@@ -94,7 +106,7 @@ export function TrialScheduleCalendar({
               className={`trial-schedule-calendar__day ${activeDate === dateKey ? "active" : ""} ${dateKey === todayKey ? "today" : ""} ${isSelected ? "selected" : ""} ${periodSet?.has("morning") ? "has-morning" : ""} ${periodSet?.has("afternoon") ? "has-afternoon" : ""} ${periodSet?.has("evening") ? "has-evening" : ""}`}
               disabled={isDisabled}
               key={dateKey}
-              onClick={() => handleSelectDate(dateKey)}
+              onClick={(event) => handleSelectDate(dateKey, event.detail)}
               type="button"
             >
               {trialCalendarPeriods.map((period) => (

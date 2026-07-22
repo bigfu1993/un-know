@@ -24,6 +24,12 @@ interface CompleteTutorTrialEndPayload {
   tutorSchedule?: string;
 }
 
+/** 家教流程动作载荷，由前端按钮按流程图节点传入。 */
+interface TutorWorkflowActionPayload extends TutorWorkflowActionRequest {
+  applicationId: string;
+  demandId?: string;
+}
+
 /** 家教试课动作 hook 入参。 */
 interface UseTutorTrialActionsOptions {
   applyTutorTrial: (payload: ApplyTutorTrialPayload) => Promise<unknown>;
@@ -33,6 +39,7 @@ interface UseTutorTrialActionsOptions {
   completeTutorTrialEnd: (payload: CompleteTutorTrialEndPayload) => Promise<unknown>;
   confirmTutorTrialStart: (applicationId: string) => Promise<unknown>;
   confirmTutorTrial: (payload: ConfirmTutorTrialPayload) => Promise<unknown>;
+  handleTutorWorkflowAction: (payload: TutorWorkflowActionPayload) => Promise<unknown>;
   openOngoingOrders: () => void;
   refetchWorkspace: () => void;
   requestTutorTrialEnd: (applicationId: string) => Promise<unknown>;
@@ -48,6 +55,7 @@ export function useTutorTrialActions({
   completeTutorTrialEnd,
   confirmTutorTrialStart,
   confirmTutorTrial,
+  handleTutorWorkflowAction,
   openOngoingOrders,
   refetchWorkspace,
   requestTutorTrialEnd,
@@ -111,12 +119,45 @@ export function useTutorTrialActions({
     try {
       await completeTutorTrialEnd(payload);
       closeTutorTrialList();
-      showMessage(payload.hireTutor ? "已提交正式家教申请，家教进入进行中。" : "试课已结束，家教兼职继续招募。", {
+      showMessage(payload.hireTutor ? "已提交正式雇佣确认，等待学生确认。" : "试课已结束，家教兼职继续招募。", {
         type: "success"
       });
       refetchWorkspace();
     } catch (error) {
       showMessage(getErrorMessage(error, "结束试课确认处理失败，请稍后重试。"), { type: "error" });
+    }
+  }
+
+  /** 按流程图提交家教流程动作，服务端负责校验当前角色和状态。 */
+  async function handleTutorWorkflowActionSubmit(payload: TutorWorkflowActionPayload) {
+    try {
+      await handleTutorWorkflowAction(payload);
+      const successMessages: Partial<Record<TutorWorkflowAction, string>> = {
+        accept_service_offer: "已同意正式雇佣，等待家长提交兼职日程。",
+        cancel_trial: "已取消试课。",
+        close_trial_continue_recruiting: "本次试课已结束，家教兼职继续招募。",
+        confirm_service_schedule: "已确认兼职日程，正式家教服务开始。",
+        confirm_settlement: "已确认结算，家教流程结束。",
+        confirm_trial_end: "已确认结束试课，请继续处理试课结果。",
+        offer_service: "已发起正式雇佣确认，等待学生确认。",
+        reject_service_offer: "已拒绝正式雇佣。",
+        reject_service_offer_salary: "已反馈薪资原因，等待家长重新发起正式雇佣确认。",
+        reject_trial: "已拒绝试课申请。",
+        request_service_end: "已发起结束家教，等待结算确认。",
+        request_service_schedule_change: "已要求调整兼职日程，等待家长重新提交。",
+        request_settlement_revision: "已要求修改结算金额。",
+        request_trial_result: "试课已进入结果处理。",
+        request_trial_settlement: "已发起结算确认，等待学生确认。",
+        resubmit_settlement: "已重新提交结算确认。",
+        submit_service_schedule: "兼职日程已提交，等待学生确认。",
+        update_trial_availability: "已回到申请试课中，等待家长重新处理。"
+      };
+      showMessage(successMessages[payload.action] ?? "家教流程已更新。", { type: "success" });
+      refetchWorkspace();
+      return true;
+    } catch (error) {
+      showMessage(getErrorMessage(error, "家教流程处理失败，请稍后重试。"), { type: "error" });
+      return false;
     }
   }
 
@@ -137,6 +178,7 @@ export function useTutorTrialActions({
     handleCompleteTutorTrialEnd,
     handleConfirmTutorTrial,
     handleConfirmTutorTrialStart,
-    handleRequestTutorTrialEnd
+    handleRequestTutorTrialEnd,
+    handleTutorWorkflowAction: handleTutorWorkflowActionSubmit
   };
 }

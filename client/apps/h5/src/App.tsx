@@ -12,6 +12,7 @@ import {
   useDecideHuntingTaskQuote,
   useHandleHuntingTaskFulfillmentAction,
   useHuntingTasks,
+  useHandleTutorWorkflowAction,
   usePartTimeJobs,
   usePublishHuntingTask,
   usePublishTutorDemand,
@@ -169,6 +170,7 @@ export function App() {
   const confirmTutorTrialStartMutation = useConfirmTutorTrialStart();
   const requestTutorTrialEndMutation = useRequestTutorTrialEnd();
   const completeTutorTrialEndMutation = useCompleteTutorTrialEnd();
+  const tutorWorkflowActionMutation = useHandleTutorWorkflowAction();
   const cancelTutorDemandMutation = useCancelTutorDemand();
   const updateTutorExposureMutation = useUpdateTutorExposure();
   const acceptHuntingTaskMutation = useAcceptHuntingTask();
@@ -352,7 +354,8 @@ export function App() {
     handleCompleteTutorTrialEnd,
     handleConfirmTutorTrial,
     handleConfirmTutorTrialStart,
-    handleRequestTutorTrialEnd
+    handleRequestTutorTrialEnd,
+    handleTutorWorkflowAction
   } = useTutorTrialActions({
     applyTutorTrial: (payload) => applyTutorTrialMutation.mutateAsync(payload),
     cancelTutorDemand: (demandId) => cancelTutorDemandMutation.mutateAsync(demandId),
@@ -365,6 +368,7 @@ export function App() {
       setActiveTutorTrialDemandId(null);
     },
     completeTutorTrialEnd: (payload) => completeTutorTrialEndMutation.mutateAsync(payload),
+    handleTutorWorkflowAction: (payload) => tutorWorkflowActionMutation.mutateAsync(payload),
     confirmTutorTrialStart: (applicationId) => confirmTutorTrialStartMutation.mutateAsync(applicationId),
     confirmTutorTrial: (payload) => confirmTutorTrialMutation.mutateAsync(payload),
     openOngoingOrders: () => setIsOngoingOpen(true),
@@ -971,6 +975,7 @@ export function App() {
           onOpenTutorApplications={handleOpenTutorApplications}
           onOpenTutorTrialList={handleOpenTutorTrialList}
           onRepublish={(order) => void handleHuntingTaskFulfillmentAction(order, "republish")}
+          onTutorWorkflowAction={(order, action, payload) => handleTutorWorkflowAction({ ...payload, action, applicationId: order.id })}
           onRequestCancel={handleRequestOngoingCancel}
           onRequestComplete={handleRequestOngoingComplete}
           orders={ongoingOrders}
@@ -1071,24 +1076,27 @@ export function App() {
       {isTutorApplicationOpen ? (
         <TutorApplicationsDialog
           candidates={activeTutorApplicationCandidates}
-          isConfirming={confirmTutorTrialMutation.isPending}
+          isConfirming={confirmTutorTrialMutation.isPending || tutorWorkflowActionMutation.isPending}
           onClose={() => {
             setIsTutorApplicationOpen(false);
             setActiveTutorApplicationDemandId(null);
           }}
+          onCancelTrial={(payload) => void handleTutorWorkflowAction({ ...payload, action: "cancel_trial" })}
           onConfirm={handleConfirmTutorTrial}
+          onReject={(payload) => void handleTutorWorkflowAction({ ...payload, action: "reject_trial" })}
         />
       ) : null}
 
       {isTutorTrialListOpen ? (
         <TutorTrialListDialog
           candidates={activeTutorTrialCandidates}
-          isSubmitting={completeTutorTrialEndMutation.isPending}
+          isSubmitting={completeTutorTrialEndMutation.isPending || tutorWorkflowActionMutation.isPending}
           onClose={() => {
             setIsTutorTrialListOpen(false);
             setActiveTutorTrialDemandId(null);
           }}
           onConfirmEnd={handleCompleteTutorTrialEnd}
+          onWorkflowAction={handleTutorWorkflowAction}
         />
       ) : null}
 

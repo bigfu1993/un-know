@@ -2,9 +2,20 @@ import {
   getTutorTrialStatusLabel,
   isTutorApplicationPendingStatus,
   isTutorApplicationListStatus,
+  isTutorTrialListStatus,
+  isTutorFormalServiceStatus,
+  isTutorServiceConfirmingStatus,
+  isTutorServiceScheduleConfirmingStatus,
+  isTutorServiceSchedulePendingStatus,
+  isTutorSettlementStatus,
+  isTutorTerminalStatus,
   isTutorTrialConfirmingStatus,
   isTutorTrialEndConfirmingStatus,
-  isTutorTrialingStatus
+  isTutorTrialingStatus,
+  isTutorTrialResultProcessingStatus,
+  TUTOR_SETTLEMENT_CONFIRMING_STATUS,
+  TUTOR_SETTLEMENT_REVISING_STATUS,
+  TUTOR_SYSTEM_SETTLING_STATUS
 } from "@tools/tutorTrial";
 
 /** 家教任务流程节点，前端只做展示和动作编排，真实迁移以服务端状态为准。 */
@@ -13,6 +24,14 @@ export type TutorTaskNode =
   | "trialScheduled"
   | "trialing"
   | "trialEndRequested"
+  | "trialResultProcessing"
+  | "serviceConfirming"
+  | "serviceSchedulePending"
+  | "serviceScheduleConfirming"
+  | "formalTutoring"
+  | "settlementConfirming"
+  | "settlementRevising"
+  | "systemSettling"
   | "tutoring"
   | "ended"
   | "cancelled"
@@ -21,7 +40,6 @@ export type TutorTaskNode =
 
 /** 家教任务可触发事件，事件执行仍由业务 hook 调用真实接口。 */
 export type TutorTaskAction =
-  | "call"
   | "message"
   | "openApplications"
   | "scheduleTrial"
@@ -35,10 +53,24 @@ export type TutorTaskAction =
   | "cancelDemand"
   | "rejectTrial"
   | "agreeTrial"
-  | "openTrialResult";
+  | "openTrialResult"
+  | "requestTrialResult"
+  | "confirmTrialEnd"
+  | "offerTutorService"
+  | "closeTrialContinueRecruiting"
+  | "acceptServiceOffer"
+  | "rejectServiceOffer"
+  | "submitServiceSchedule"
+  | "confirmServiceSchedule"
+  | "requestServiceScheduleChange"
+  | "requestServiceEnd"
+  | "confirmSettlement"
+  | "requestSettlementRevision"
+  | "resubmitSettlement"
+  | "updateTrialAvailability";
 
 /** 家教任务状态视觉语义。 */
-export type TutorTaskStatusTone = "default" | "trialConfirming" | "trialing";
+export type TutorTaskStatusTone = "default" | "trialConfirming" | "trialing" | "warning" | "danger" | "success";
 
 /** 家教任务模型入参。 */
 interface TutorTaskModelOptions {
@@ -61,6 +93,32 @@ export interface TutorTaskModel {
 
 /** 从服务端状态文案归一化为家教任务流程节点。 */
 export function getTutorTaskNode(status?: string): TutorTaskNode {
+  if (isTutorSettlementStatus(status)) {
+    if (status?.includes(TUTOR_SETTLEMENT_REVISING_STATUS)) {
+      return "settlementRevising";
+    }
+    if (status?.includes(TUTOR_SYSTEM_SETTLING_STATUS)) {
+      return "systemSettling";
+    }
+    if (status?.includes(TUTOR_SETTLEMENT_CONFIRMING_STATUS)) {
+      return "settlementConfirming";
+    }
+  }
+  if (isTutorFormalServiceStatus(status)) {
+    return "formalTutoring";
+  }
+  if (isTutorServiceScheduleConfirmingStatus(status)) {
+    return "serviceScheduleConfirming";
+  }
+  if (isTutorServiceSchedulePendingStatus(status)) {
+    return "serviceSchedulePending";
+  }
+  if (isTutorServiceConfirmingStatus(status)) {
+    return "serviceConfirming";
+  }
+  if (isTutorTrialResultProcessingStatus(status)) {
+    return "trialResultProcessing";
+  }
   if (isTutorTrialEndConfirmingStatus(status)) {
     return "trialEndRequested";
   }
@@ -71,15 +129,15 @@ export function getTutorTaskNode(status?: string): TutorTaskNode {
     return "trialScheduled";
   }
   if (status?.includes("家教进行中")) {
-    return "tutoring";
+    return "formalTutoring";
   }
   if (status?.includes("已取消")) {
     return "cancelled";
   }
-  if (status?.includes("已拒绝")) {
+  if (status?.includes("已拒绝") || status?.includes("已失效") || status?.includes("正式雇佣失效")) {
     return "rejected";
   }
-  if (status?.includes("已结束")) {
+  if (isTutorTerminalStatus(status) || status?.includes("已结束")) {
     return "ended";
   }
   if (isTutorApplicationPendingStatus(status)) {
@@ -91,11 +149,17 @@ export function getTutorTaskNode(status?: string): TutorTaskNode {
 
 /** 根据流程节点给出家教任务状态样式。 */
 export function getTutorTaskStatusTone(node: TutorTaskNode): TutorTaskStatusTone {
-  if (node === "trialScheduled" || node === "trialEndRequested") {
+  if (node === "trialScheduled" || node === "trialEndRequested" || node === "serviceConfirming" || node === "serviceScheduleConfirming") {
     return "trialConfirming";
   }
-  if (node === "trialing") {
+  if (node === "trialing" || node === "formalTutoring") {
     return "trialing";
+  }
+  if (node === "trialResultProcessing" || node === "serviceSchedulePending" || node === "settlementConfirming") {
+    return "warning";
+  }
+  if (node === "settlementRevising" || node === "systemSettling") {
+    return "danger";
   }
 
   return "default";
@@ -109,15 +173,19 @@ export function getTutorTaskStatusToneClassName(tone: TutorTaskStatusTone) {
   if (tone === "trialing") {
     return "trialing";
   }
+  if (tone === "warning") {
+    return "trial-confirming";
+  }
+  if (tone === "danger") {
+    return "trial-confirming";
+  }
 
   return "";
 }
 
 /** 判断候选人可用时间是否应在当前节点隐藏。 */
 export function getTutorTaskCandidateAvailability(candidate: TutorApplicationCandidate) {
-  const task = createTutorTaskModel({ candidate, role: "parent" });
-
-  return task.node === "trialScheduled" ? "待补充" : candidate.availability || "待补充";
+  return candidate.availability || "待补充";
 }
 
 /** 创建家教任务纯模型，供订单卡片、申请列表和试课列表统一消费。 */
@@ -126,13 +194,10 @@ export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelO
   const node = getTutorTaskNode(status);
   const statusTone = getTutorTaskStatusTone(node);
   const isApplicationListVisible = candidate ? isTutorApplicationListStatus(candidate.status) : false;
-  const isTrialListVisible = node === "trialing" || node === "trialEndRequested";
+  const isTrialListVisible = candidate ? isTutorTrialListStatus(candidate.status) : false;
   const actions = new Set<TutorTaskAction>();
 
   if (order) {
-    if (order.canCall) {
-      actions.add("call");
-    }
     if (order.canMessage) {
       actions.add("message");
     }
@@ -154,7 +219,7 @@ export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelO
     if (order.canRequestCancel) {
       actions.add("cancelDemand");
     }
-    if (order.canCancelTutorApplication && node === "applicationPending") {
+    if (order.canCancelTutorApplication && (node === "applicationPending" || node === "trialScheduled")) {
       actions.add("cancelApplication");
     }
     if (order.canRejectTrial) {
@@ -163,16 +228,54 @@ export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelO
     if (order.canOpenTrialResult) {
       actions.add("openTrialResult");
     }
+    if (role === "student") {
+      if (node === "trialScheduled") {
+        actions.add("updateTrialAvailability");
+      }
+      if (node === "serviceConfirming") {
+        actions.add("acceptServiceOffer");
+        actions.add("rejectServiceOffer");
+      }
+      if (node === "serviceScheduleConfirming") {
+        actions.add("openTrialSchedule");
+        actions.add("confirmServiceSchedule");
+        actions.add("requestServiceScheduleChange");
+      }
+      if (node === "formalTutoring") {
+        actions.add("requestServiceEnd");
+      }
+      if (node === "settlementConfirming") {
+        actions.add("confirmSettlement");
+        actions.add("requestSettlementRevision");
+      }
+    }
   }
 
   if (candidate && role === "parent") {
     if (node === "trialScheduled") {
       actions.add("rescheduleTrial");
+      actions.add("cancelApplication");
     } else if (isApplicationListVisible) {
       actions.add("scheduleTrial");
     }
+    if (node === "trialing") {
+      actions.add("requestTrialResult");
+    }
     if (node === "trialEndRequested") {
-      actions.add("completeTrialEnd");
+      actions.add("confirmTrialEnd");
+    }
+    if (node === "trialResultProcessing") {
+      actions.add("offerTutorService");
+      actions.add("closeTrialContinueRecruiting");
+    }
+    if (node === "serviceSchedulePending" || node === "serviceScheduleConfirming") {
+      actions.add("submitServiceSchedule");
+    }
+    if (node === "formalTutoring") {
+      actions.add("requestServiceEnd");
+    }
+    if (node === "settlementRevising") {
+      actions.add("resubmitSettlement");
     }
   }
 

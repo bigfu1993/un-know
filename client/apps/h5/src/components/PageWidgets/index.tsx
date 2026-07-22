@@ -350,12 +350,6 @@ export function TutorTrialJobCard({
               className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
               type="button"
             >
-              <Smartphone size={15} /> 电话
-            </button>
-            <button
-              className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
-              type="button"
-            >
               <MessageCircle size={15} /> 消息
             </button>
             <button
@@ -374,13 +368,13 @@ export function TutorTrialJobCard({
           confirmLabel={isApplyingTrial ? "提交中" : "提交申请"}
           initialValue={null}
           isConfirming={isApplyingTrial}
+          maxSelectedDates={null}
           onClose={() => setIsApplyScheduleOpen(false)}
           onConfirm={handleConfirmAvailability}
-          subtitle="最多选择 3 天，家长会基于这些时间制定试课日程。"
+          subtitle="可提交多个可试课日期和时间段，家长会在这些时间内最多安排 3 天试课。"
           title="提交可试课时间"
         />
       ) : null}
     </>
   );
 }
-

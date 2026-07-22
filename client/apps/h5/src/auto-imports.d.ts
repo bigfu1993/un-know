@@ -93,9 +93,23 @@ declare global {
   const StrictMode: typeof import('react').StrictMode
   const Suspense: typeof import('react').Suspense
   const TUTOR_APPLICATION_PENDING_STATUS: typeof import('./tools/tutorTrial').TUTOR_APPLICATION_PENDING_STATUS
+  const TUTOR_FORMAL_SERVICE_LEGACY_STATUS: typeof import('./tools/tutorTrial').TUTOR_FORMAL_SERVICE_LEGACY_STATUS
+  const TUTOR_FORMAL_SERVICE_STATUS: typeof import('./tools/tutorTrial').TUTOR_FORMAL_SERVICE_STATUS
+  const TUTOR_REJECTED_LEGACY_STATUS: typeof import('./tools/tutorTrial').TUTOR_REJECTED_LEGACY_STATUS
+  const TUTOR_REJECTED_STATUS: typeof import('./tools/tutorTrial').TUTOR_REJECTED_STATUS
+  const TUTOR_SERVICE_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_CONFIRMING_STATUS
+  const TUTOR_SERVICE_INVALID_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_INVALID_STATUS
+  const TUTOR_SERVICE_SCHEDULE_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_SCHEDULE_CONFIRMING_STATUS
+  const TUTOR_SERVICE_SCHEDULE_PENDING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_SCHEDULE_PENDING_STATUS
+  const TUTOR_SETTLEMENT_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SETTLEMENT_CONFIRMING_STATUS
+  const TUTOR_SETTLEMENT_REVISING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SETTLEMENT_REVISING_STATUS
+  const TUTOR_SYSTEM_SETTLING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SYSTEM_SETTLING_STATUS
   const TUTOR_TRIALING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIALING_STATUS
+  const TUTOR_TRIAL_CONFIRMING_LEGACY_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_CONFIRMING_LEGACY_STATUS
   const TUTOR_TRIAL_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_CONFIRMING_STATUS
+  const TUTOR_TRIAL_ENDED_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_ENDED_STATUS
   const TUTOR_TRIAL_END_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_END_CONFIRMING_STATUS
+  const TUTOR_TRIAL_RESULT_PROCESSING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_RESULT_PROCESSING_STATUS
   const TrialScheduleCalendar: typeof import('./components/TrialScheduleCalendar/index').TrialScheduleCalendar
   const Truck: typeof import('lucide-react').Truck
   const Tutor: typeof import('./pages/Tutor/index').Tutor
@@ -198,6 +212,7 @@ declare global {
   const getTabFromRoute: typeof import('./shared/clientPageModel').getTabFromRoute
   const getTabTitle: typeof import('./shared/clientPageModel').getTabTitle
   const getTrialScheduleCalendarItems: typeof import('./components/TutorTrialScheduleDialog/model').getTrialScheduleCalendarItems
+  const getTrialScheduleDateKeysFromSummary: typeof import('./components/TutorTrialScheduleDialog/model').getTrialScheduleDateKeysFromSummary
   const getTrialSchedulePlan: typeof import('./components/TutorTrialScheduleDialog/model').getTrialSchedulePlan
   const getTrialScheduleSummaryLines: typeof import('./components/TutorTrialScheduleDialog/model').getTrialScheduleSummaryLines
   const getTrialScheduleValueFromSummary: typeof import('./components/TutorTrialScheduleDialog/model').getTrialScheduleValueFromSummary
@@ -212,6 +227,7 @@ declare global {
   const getTutorTaskNode: typeof import('./tools/tutorTaskWorkflow').getTutorTaskNode
   const getTutorTaskStatusTone: typeof import('./tools/tutorTaskWorkflow').getTutorTaskStatusTone
   const getTutorTaskStatusToneClassName: typeof import('./tools/tutorTaskWorkflow').getTutorTaskStatusToneClassName
+  const getTutorTrialAvailabilitySummaryFromOrderDetail: typeof import('./tools/tutorTrial').getTutorTrialAvailabilitySummaryFromOrderDetail
   const getTutorTrialDateKeyFromLine: typeof import('./tools/tutorTrial').getTutorTrialDateKeyFromLine
   const getTutorTrialOrderDisplayDetail: typeof import('./tools/tutorTrial').getTutorTrialOrderDisplayDetail
   const getTutorTrialScheduleLines: typeof import('./tools/tutorTrial').getTutorTrialScheduleLines
@@ -248,9 +264,16 @@ declare global {
   const isQuoteLockedForPublisher: typeof import('./pages/Delegation/model').isQuoteLockedForPublisher
   const isTutorApplicationListStatus: typeof import('./tools/tutorTrial').isTutorApplicationListStatus
   const isTutorApplicationPendingStatus: typeof import('./tools/tutorTrial').isTutorApplicationPendingStatus
+  const isTutorFormalServiceStatus: typeof import('./tools/tutorTrial').isTutorFormalServiceStatus
+  const isTutorServiceConfirmingStatus: typeof import('./tools/tutorTrial').isTutorServiceConfirmingStatus
+  const isTutorServiceScheduleConfirmingStatus: typeof import('./tools/tutorTrial').isTutorServiceScheduleConfirmingStatus
+  const isTutorServiceSchedulePendingStatus: typeof import('./tools/tutorTrial').isTutorServiceSchedulePendingStatus
+  const isTutorSettlementStatus: typeof import('./tools/tutorTrial').isTutorSettlementStatus
+  const isTutorTerminalStatus: typeof import('./tools/tutorTrial').isTutorTerminalStatus
   const isTutorTrialConfirmingStatus: typeof import('./tools/tutorTrial').isTutorTrialConfirmingStatus
   const isTutorTrialEndConfirmingStatus: typeof import('./tools/tutorTrial').isTutorTrialEndConfirmingStatus
   const isTutorTrialListStatus: typeof import('./tools/tutorTrial').isTutorTrialListStatus
+  const isTutorTrialResultProcessingStatus: typeof import('./tools/tutorTrial').isTutorTrialResultProcessingStatus
   const isTutorTrialingStatus: typeof import('./tools/tutorTrial').isTutorTrialingStatus
   const jobFilters: typeof import('./shared/clientPageModel').jobFilters
   const lazy: typeof import('react').lazy
@@ -300,6 +323,7 @@ declare global {
   const tutorLevelOptions: typeof import('./components/TutorCard/model').tutorLevelOptions
   const tutorSorts: typeof import('./shared/clientPageModel').tutorSorts
   const tutorSubjectOptions: typeof import('./shared/tutorModel').tutorSubjectOptions
+  const tutorTrialAvailabilityDetailMarker: typeof import('./tools/tutorTrial').tutorTrialAvailabilityDetailMarker
   const tutorTrialScheduleDetailMarker: typeof import('./tools/tutorTrial').tutorTrialScheduleDetailMarker
   const use: typeof import('react').use
   const useActionState: typeof import('react').useActionState
@@ -445,6 +469,6 @@ declare global {
   export type { ProfileRequirementField, ProfileRequirementTemplate, ProfileRequirement, ProfileDraftState, RegistrationProfileField, RegistrationProfileTemplate, RegistrationProfileDraft, AddressInfoFormMode, AddressInfoPreviewVariant, AddressBookItem, AddressInfoFormProps } from './types/profile'
   import('./types/profile')
   // @ts-ignore
-  export type { ChildProfileOption, TutorTrialJob, TutorApplicationCandidate } from './types/tutor-workflow'
+  export type { ChildProfileOption, TutorTrialJob, TutorApplicationCandidate, TutorWorkflowAction, TutorWorkflowActionRequest } from './types/tutor-workflow'
   import('./types/tutor-workflow')
 }

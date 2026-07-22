@@ -10,6 +10,7 @@ import {
   ClientWorkspacePayload,
   CompleteTutorTrialEndRequest,
   ConfirmTutorTrialRequest,
+  TutorWorkflowActionRequest,
   CreateChatConversationRequest,
   CreateHuntingProjectRequest,
   HuntingProjectResponse,
@@ -445,6 +446,19 @@ export async function cancelTutorDemand(demandId: string): Promise<TutorDemand> 
   return requestJson<TutorDemand>(`/api/client/workspace/tutor-demands/${encodeURIComponent(demandId)}/cancel`, {
     method: "POST"
   });
+}
+
+export async function handleTutorWorkflowAction(
+  applicationId: string,
+  payload: TutorWorkflowActionRequest
+): Promise<TutorDemand> {
+  return requestJson<TutorDemand>(
+    `/api/client/workspace/tutor-applications/${encodeURIComponent(applicationId)}/workflow-action`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }
+  );
 }
 
 export async function getChatConversations(): Promise<ChatConversation[]> {

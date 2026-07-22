@@ -75,7 +75,8 @@ export function useClientWorkspaceViewModel({
           major: applicant.major,
           name: applicant.name,
           school: applicant.school,
-          status: applicant.status
+          status: applicant.status,
+          trialSchedule: applicant.trialSchedule
         }))
       ),
     [workspaceData.tutorDemands]

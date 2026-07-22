@@ -122,6 +122,11 @@ export function getTrialScheduleSummaryLines(summary: string) {
   return summary.split("；").filter(Boolean);
 }
 
+/** 从试课时间摘要中提取可选日期 key，供家长排期按学生可用日期限制。 */
+export function getTrialScheduleDateKeysFromSummary(summary: string) {
+  return [...new Set(parseTutorTrialSchedule(summary).map((scheduleLine) => scheduleLine.date).filter(Boolean))].sort();
+}
+
 /** 根据时间段开始时间归入上午、下午或晚上。 */
 function getTrialSchedulePeriodKey(timeRange: string): TrialSchedulePeriodKey {
   const startHour = Number(timeRange.split(":")[0]);

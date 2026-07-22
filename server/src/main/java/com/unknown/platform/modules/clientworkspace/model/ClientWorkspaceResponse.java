@@ -133,7 +133,8 @@ public record ClientWorkspaceResponse(
       String gpa,
       int hiredTimes,
       String availability,
-      String status
+      String status,
+      String trialSchedule
   ) {
   }
 

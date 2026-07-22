@@ -17,6 +17,7 @@ import com.unknown.platform.modules.clientworkspace.model.HuntingTaskFulfillment
 import com.unknown.platform.modules.clientworkspace.model.PublishHuntingTaskRequest;
 import com.unknown.platform.modules.clientworkspace.model.PublishTutorDemandRequest;
 import com.unknown.platform.modules.clientworkspace.model.QuoteHuntingTaskRequest;
+import com.unknown.platform.modules.clientworkspace.model.TutorWorkflowActionRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -160,6 +161,16 @@ public class ClientWorkspaceController {
       @RequestHeader(value = "Authorization", required = false) String authorization
   ) {
     return ApiResponse.ok(clientWorkspaceAppService.completeTutorTrialEnd(demandId, applicationId, request, authorization));
+  }
+
+  /** 按流程图推进家教申请、试课、正式雇佣、兼职日程和结算动作。 */
+  @PostMapping("/workspace/tutor-applications/{applicationId}/workflow-action")
+  public ApiResponse<TutorDemand> handleTutorWorkflowAction(
+      @PathVariable String applicationId,
+      @RequestBody(required = false) TutorWorkflowActionRequest request,
+      @RequestHeader(value = "Authorization", required = false) String authorization
+  ) {
+    return ApiResponse.ok(clientWorkspaceAppService.handleTutorWorkflowAction(applicationId, request, authorization));
   }
 
   /** 家长取消尚未安排试课的家教兼职，取消后保留为兼职订单历史。 */

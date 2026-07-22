@@ -69,12 +69,6 @@ export function Tutor({ tutorDemands }: { tutorDemands: TutorDemand[] }) {
                     拒绝
                   </button>
                   <button
-                    className="ghost-button inline-flex min-h-[32px] items-center justify-center gap-[5px] px-[10px] py-[7px] text-[#475466]"
-                    type="button"
-                  >
-                    交换电话
-                  </button>
-                  <button
                     className="primary-button inline-flex min-h-[32px] items-center justify-center gap-[5px] px-[10px] py-[7px] text-white"
                     type="button"
                   >

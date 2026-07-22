@@ -6,6 +6,7 @@ import {
   createDefaultDaySchedule,
   formatTrialScheduleDate,
   getEnabledPeriodSummaries,
+  getTrialScheduleDateKeysFromSummary,
   getTrialScheduleCalendarItems,
   getTrialSchedulePlan,
   trialSchedulePeriods,
@@ -18,9 +19,11 @@ import {
 
 /** 试课排期弹窗属性。 */
 interface TutorTrialScheduleDialogProps {
+  availableScheduleSummary?: string;
   confirmLabel?: string;
   initialValue: TrialScheduleValue | null;
   isConfirming?: boolean;
+  maxSelectedDates?: number | null;
   onClose: () => void;
   onConfirm: (value: TrialScheduleValue) => void;
   subtitle?: string;
@@ -29,9 +32,11 @@ interface TutorTrialScheduleDialogProps {
 
 /** 试课安排弹窗，复用课程日历的月份网格生成逻辑。 */
 export function TutorTrialScheduleDialog({
+  availableScheduleSummary = "",
   confirmLabel = "确认",
   initialValue,
   isConfirming = false,
+  maxSelectedDates = 3,
   onClose,
   onConfirm,
   subtitle = "最多选择 3 天，设置每天可试课时间。",
@@ -39,47 +44,63 @@ export function TutorTrialScheduleDialog({
 }: TutorTrialScheduleDialogProps) {
   const today = useMemo(() => new Date(), []);
   const todayKey = getTutorDateKey(today);
-  const initialSelectedDate = initialValue?.selectedDates[0] ?? todayKey;
+  const selectableDates = useMemo(() => getTrialScheduleDateKeysFromSummary(availableScheduleSummary), [availableScheduleSummary]);
+  const selectableDateSet = useMemo(() => new Set(selectableDates), [selectableDates]);
+  const hasSelectableDateLimit = selectableDateSet.size > 0;
+  const initialSelectedDate = initialValue?.selectedDates[0] ?? selectableDates[0] ?? todayKey;
   const [selectedDate, setSelectedDate] = useState(initialSelectedDate);
   const [selectedDates, setSelectedDates] = useState<string[]>(() => initialValue?.selectedDates ?? []);
   const [scheduleDraft, setScheduleDraft] = useState<TrialScheduleDraft>(() => initialValue?.scheduleDraft ?? {});
   const selectedDaySchedule = scheduleDraft[selectedDate] ?? createDefaultDaySchedule();
   const selectedDateHasSchedule = getEnabledPeriodSummaries(selectedDaySchedule).length > 0;
-  const isScheduleLimitReached = selectedDates.length >= 3 && !selectedDates.includes(selectedDate);
+  const hasSelectedDate = selectedDates.includes(selectedDate);
+  const isScheduleLimitReached =
+    maxSelectedDates !== null && maxSelectedDates !== undefined && selectedDates.length >= maxSelectedDates && !hasSelectedDate;
+  const isOutsideSelectableDates = hasSelectableDateLimit && !selectableDateSet.has(selectedDate) && !hasSelectedDate;
   const schedulePlan = getTrialSchedulePlan(selectedDates, scheduleDraft);
   const scheduleItems = getTrialScheduleCalendarItems(selectedDates, scheduleDraft);
 
-  /** 同步单日排期，并按三天上限维护可提交日期。 */
-  function syncDaySchedule(nextDaySchedule: Record<TrialSchedulePeriodKey, TrialSchedulePeriodState>) {
-    const nextDateHasSchedule = getEnabledPeriodSummaries(nextDaySchedule).length > 0;
-    const isNewScheduleDate = !selectedDates.includes(selectedDate);
+  /** 判断指定日期是否受可选范围或天数上限限制，禁止新增排期。 */
+  function isDateDisabledForNewSchedule(dateKey: string) {
+    const isSelectedDate = selectedDates.includes(dateKey);
+    const isOverMaxSelectedDates =
+      maxSelectedDates !== null && maxSelectedDates !== undefined && selectedDates.length >= maxSelectedDates && !isSelectedDate;
+    const isOutsideSelectableDate = hasSelectableDateLimit && !selectableDateSet.has(dateKey) && !isSelectedDate;
 
-    if (nextDateHasSchedule && isNewScheduleDate && selectedDates.length >= 3) {
+    return isOverMaxSelectedDates || isOutsideSelectableDate;
+  }
+
+  /** 同步单日排期，并按配置的天数上限和可选日期范围维护可提交日期。 */
+  function syncDaySchedule(dateKey: string, nextDaySchedule: Record<TrialSchedulePeriodKey, TrialSchedulePeriodState>) {
+    const nextDateHasSchedule = getEnabledPeriodSummaries(nextDaySchedule).length > 0;
+    const isNewScheduleDate = !selectedDates.includes(dateKey);
+
+    if (nextDateHasSchedule && isNewScheduleDate && isDateDisabledForNewSchedule(dateKey)) {
       return;
     }
 
     setScheduleDraft((currentDraft) => {
       if (!nextDateHasSchedule) {
         const nextDraft = { ...currentDraft };
-        delete nextDraft[selectedDate];
+        delete nextDraft[dateKey];
 
         return nextDraft;
       }
 
-      return { ...currentDraft, [selectedDate]: nextDaySchedule };
+      return { ...currentDraft, [dateKey]: nextDaySchedule };
     });
     setSelectedDates((currentDates) => {
       if (nextDateHasSchedule) {
-        return [...new Set([...currentDates, selectedDate])].sort();
+        return [...new Set([...currentDates, dateKey])].sort();
       }
 
-      return currentDates.filter((dateKey) => dateKey !== selectedDate);
+      return currentDates.filter((currentDateKey) => currentDateKey !== dateKey);
     });
   }
 
   /** 点击时段名称时切换该时段安排，未选中则填入快捷默认时间，已选中则取消安排。 */
   function handleTogglePeriodPreset(period: TrialSchedulePeriodConfig) {
-    if (isScheduleLimitReached) {
+    if (isDateDisabledForNewSchedule(selectedDate)) {
       return;
     }
 
@@ -91,7 +112,7 @@ export function TutorTrialScheduleDialog({
       return;
     }
 
-    syncDaySchedule({
+    syncDaySchedule(selectedDate, {
       ...currentDaySchedule,
       [period.key]: {
         enabled: true,
@@ -99,6 +120,40 @@ export function TutorTrialScheduleDialog({
         start: period.defaultStart
       }
     });
+  }
+
+  /** 双击日历单元格时切换当天上午、下午、晚上三个时间段。 */
+  function handleToggleFullDaySchedule(dateKey: string) {
+    const currentDaySchedule = scheduleDraft[dateKey] ?? createDefaultDaySchedule();
+    const isFullDaySelected = trialSchedulePeriods.every((period) => {
+      const periodState = currentDaySchedule[period.key];
+
+      return Boolean(periodState.enabled && periodState.start && periodState.end);
+    });
+
+    setSelectedDate(dateKey);
+    if (isFullDaySelected) {
+      syncDaySchedule(dateKey, createDefaultDaySchedule());
+      return;
+    }
+    if (isDateDisabledForNewSchedule(dateKey)) {
+      return;
+    }
+
+    const nextDaySchedule = trialSchedulePeriods.reduce((daySchedule, period) => {
+      const currentPeriodState = currentDaySchedule[period.key];
+
+      return {
+        ...daySchedule,
+        [period.key]: {
+          enabled: true,
+          end: currentPeriodState.end || period.defaultEnd,
+          start: currentPeriodState.start || period.defaultStart
+        }
+      };
+    }, {} as Record<TrialSchedulePeriodKey, TrialSchedulePeriodState>);
+
+    syncDaySchedule(dateKey, nextDaySchedule);
   }
 
   /** 移除当前日期下所有试课时段安排。 */
@@ -114,7 +169,7 @@ export function TutorTrialScheduleDialog({
 
   /** 自定义某个时段的开始或结束时间，两个时间均存在时自动计入安排。 */
   function handleChangePeriodTime(periodKey: TrialSchedulePeriodKey, field: "end" | "start", value: string) {
-    if (isScheduleLimitReached) {
+    if (isDateDisabledForNewSchedule(selectedDate)) {
       return;
     }
 
@@ -124,7 +179,7 @@ export function TutorTrialScheduleDialog({
       [field]: value
     };
 
-    syncDaySchedule({
+    syncDaySchedule(selectedDate, {
       ...currentDaySchedule,
       [periodKey]: {
         ...nextPeriodState,
@@ -137,7 +192,7 @@ export function TutorTrialScheduleDialog({
   function handleClearPeriod(periodKey: TrialSchedulePeriodKey) {
     const currentDaySchedule = scheduleDraft[selectedDate] ?? createDefaultDaySchedule();
 
-    syncDaySchedule({
+    syncDaySchedule(selectedDate, {
       ...currentDaySchedule,
       [periodKey]: {
         enabled: false,
@@ -179,9 +234,11 @@ export function TutorTrialScheduleDialog({
           <TrialScheduleCalendar
             activeDate={selectedDate}
             initialDate={initialSelectedDate}
-            maxSelectedDates={3}
+            maxSelectedDates={maxSelectedDates}
             onActiveDateChange={setSelectedDate}
+            onDayDoubleClick={handleToggleFullDaySchedule}
             scheduleItems={scheduleItems}
+            selectableDates={selectableDates}
             selectedDates={selectedDates}
           />
 
@@ -193,7 +250,13 @@ export function TutorTrialScheduleDialog({
                   移除当日安排
                 </button>
               ) : (
-                <span>{isScheduleLimitReached ? "最多安排 3 天" : "可快捷选择或自定义时间"}</span>
+                <span>
+                  {isOutsideSelectableDates
+                    ? "请选择学生可试课日期"
+                    : isScheduleLimitReached
+                      ? `最多安排 ${maxSelectedDates} 天`
+                      : "可快捷选择或自定义时间"}
+                </span>
               )}
             </div>
             {trialSchedulePeriods.map((period) => {
@@ -204,7 +267,7 @@ export function TutorTrialScheduleDialog({
                 <div className={`trial-schedule-row ${isPeriodSelected ? "selected" : ""}`} key={period.key}>
                   <button
                     className="trial-schedule-toggle"
-                    disabled={isScheduleLimitReached && !isPeriodSelected}
+                    disabled={isDateDisabledForNewSchedule(selectedDate) && !isPeriodSelected}
                     onClick={() => handleTogglePeriodPreset(period)}
                     type="button"
                   >
@@ -213,7 +276,7 @@ export function TutorTrialScheduleDialog({
                   <div className="trial-schedule-time-fields">
                     <input
                       aria-label={`${period.label}开始时间`}
-                      disabled={isScheduleLimitReached || isPeriodSelected}
+                      disabled={isDateDisabledForNewSchedule(selectedDate) || isPeriodSelected}
                       onChange={(event) => handleChangePeriodTime(period.key, "start", event.target.value)}
                       type="time"
                       value={periodState.start}
@@ -221,7 +284,7 @@ export function TutorTrialScheduleDialog({
                     <span>至</span>
                     <input
                       aria-label={`${period.label}结束时间`}
-                      disabled={isScheduleLimitReached || isPeriodSelected}
+                      disabled={isDateDisabledForNewSchedule(selectedDate) || isPeriodSelected}
                       onChange={(event) => handleChangePeriodTime(period.key, "end", event.target.value)}
                       type="time"
                       value={periodState.end}

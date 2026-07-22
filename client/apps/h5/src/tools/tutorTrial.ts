@@ -2,13 +2,55 @@
 export const TUTOR_APPLICATION_PENDING_STATUS = "申请试课中";
 
 /** 家长已提交试课安排后，学生端等待确认流程的展示状态。 */
-export const TUTOR_TRIAL_CONFIRMING_STATUS = "试课确认中";
+export const TUTOR_TRIAL_CONFIRMING_STATUS = "试课日程确认中";
+
+/** 家长已提交试课安排后的旧版展示状态。 */
+export const TUTOR_TRIAL_CONFIRMING_LEGACY_STATUS = "试课确认中";
 
 /** 学生已确认家长安排后，试课正在进行的展示状态。 */
 export const TUTOR_TRIALING_STATUS = "试课中";
 
 /** 学生提交结束试课后，等待家长确认的展示状态。 */
 export const TUTOR_TRIAL_END_CONFIRMING_STATUS = "结束试课确认中";
+
+/** 家长处理试课是否正式雇佣时的展示状态。 */
+export const TUTOR_TRIAL_RESULT_PROCESSING_STATUS = "试课结果处理";
+
+/** 家长已发起正式雇佣，等待学生确认的展示状态。 */
+export const TUTOR_SERVICE_CONFIRMING_STATUS = "家教服务确认中";
+
+/** 学生同意正式雇佣后，等待家长提交兼职日程的展示状态。 */
+export const TUTOR_SERVICE_SCHEDULE_PENDING_STATUS = "兼职日程待提交";
+
+/** 家长提交兼职日程后，等待学生确认的展示状态。 */
+export const TUTOR_SERVICE_SCHEDULE_CONFIRMING_STATUS = "兼职日程确认中";
+
+/** 双方确认兼职日程后的正式家教服务状态。 */
+export const TUTOR_FORMAL_SERVICE_STATUS = "正式家教服务";
+
+/** 旧版正式家教服务状态。 */
+export const TUTOR_FORMAL_SERVICE_LEGACY_STATUS = "家教进行中";
+
+/** 家教或试课结算等待学生确认的展示状态。 */
+export const TUTOR_SETTLEMENT_CONFIRMING_STATUS = "结算确认中";
+
+/** 学生要求修改结算金额后的展示状态。 */
+export const TUTOR_SETTLEMENT_REVISING_STATUS = "结算修改中";
+
+/** 家教系统计算结算金额时的展示状态。 */
+export const TUTOR_SYSTEM_SETTLING_STATUS = "系统结算中";
+
+/** 家长不正式雇佣且继续发布后的试课终态。 */
+export const TUTOR_TRIAL_ENDED_STATUS = "试课已结束";
+
+/** 家长拒绝试课后的学生端失效状态。 */
+export const TUTOR_REJECTED_STATUS = "已失效";
+
+/** 旧版拒绝试课状态。 */
+export const TUTOR_REJECTED_LEGACY_STATUS = "已拒绝";
+
+/** 学生拒绝正式雇佣后的终态。 */
+export const TUTOR_SERVICE_INVALID_STATUS = "正式雇佣失效";
 
 /** 判断申请是否处于等待家长处理阶段，并兼容迁移前状态。 */
 export function isTutorApplicationPendingStatus(status?: string) {
@@ -19,7 +61,11 @@ export function isTutorApplicationPendingStatus(status?: string) {
 
 /** 判断家教试课申请是否处于家长已确认日程、等待试课确认的状态。 */
 export function isTutorTrialConfirmingStatus(status?: string) {
-  return Boolean(status?.includes(TUTOR_TRIAL_CONFIRMING_STATUS) || status?.includes("试课已确认"));
+  return Boolean(
+    status?.includes(TUTOR_TRIAL_CONFIRMING_STATUS) ||
+      status?.includes(TUTOR_TRIAL_CONFIRMING_LEGACY_STATUS) ||
+      status?.includes("试课已确认")
+  );
 }
 
 /** 判断家教试课申请是否处于试课中。 */
@@ -54,18 +100,77 @@ export function getTutorTrialStatusLabel(status?: string) {
   return isTutorTrialConfirmingStatus(status) ? TUTOR_TRIAL_CONFIRMING_STATUS : status ?? "";
 }
 
+/** 判断申请是否处于试课结果处理阶段。 */
+export function isTutorTrialResultProcessingStatus(status?: string) {
+  return Boolean(status?.includes(TUTOR_TRIAL_RESULT_PROCESSING_STATUS));
+}
+
+/** 判断申请是否处于正式雇佣确认阶段。 */
+export function isTutorServiceConfirmingStatus(status?: string) {
+  return Boolean(status?.includes(TUTOR_SERVICE_CONFIRMING_STATUS));
+}
+
+/** 判断申请是否处于兼职日程待提交阶段。 */
+export function isTutorServiceSchedulePendingStatus(status?: string) {
+  return Boolean(status?.includes(TUTOR_SERVICE_SCHEDULE_PENDING_STATUS));
+}
+
+/** 判断申请是否处于兼职日程确认阶段。 */
+export function isTutorServiceScheduleConfirmingStatus(status?: string) {
+  return Boolean(status?.includes(TUTOR_SERVICE_SCHEDULE_CONFIRMING_STATUS));
+}
+
+/** 判断申请是否已经进入正式家教服务。 */
+export function isTutorFormalServiceStatus(status?: string) {
+  return Boolean(status?.includes(TUTOR_FORMAL_SERVICE_STATUS) || status?.includes(TUTOR_FORMAL_SERVICE_LEGACY_STATUS));
+}
+
+/** 判断申请是否处于结算确认或修改阶段。 */
+export function isTutorSettlementStatus(status?: string) {
+  return Boolean(
+    status?.includes(TUTOR_SETTLEMENT_CONFIRMING_STATUS) ||
+      status?.includes(TUTOR_SETTLEMENT_REVISING_STATUS) ||
+      status?.includes(TUTOR_SYSTEM_SETTLING_STATUS)
+  );
+}
+
+/** 判断申请是否处于不可继续操作的终态。 */
+export function isTutorTerminalStatus(status?: string) {
+  return [
+    "已取消",
+    "已结束",
+    TUTOR_TRIAL_ENDED_STATUS,
+    TUTOR_REJECTED_STATUS,
+    TUTOR_REJECTED_LEGACY_STATUS,
+    TUTOR_SERVICE_INVALID_STATUS
+  ].some((item) => status?.includes(item));
+}
+
 /** 判断申请是否应进入家长端试课列表。 */
 export function isTutorTrialListStatus(status?: string) {
-  return isTutorTrialingStatus(status) || isTutorTrialEndConfirmingStatus(status);
+  return (
+    isTutorTrialConfirmingStatus(status) ||
+    isTutorTrialingStatus(status) ||
+    isTutorTrialEndConfirmingStatus(status) ||
+    isTutorTrialResultProcessingStatus(status) ||
+    isTutorServiceConfirmingStatus(status) ||
+    isTutorServiceSchedulePendingStatus(status) ||
+    isTutorServiceScheduleConfirmingStatus(status) ||
+    isTutorFormalServiceStatus(status) ||
+    isTutorSettlementStatus(status)
+  );
 }
 
 /** 判断申请是否应保留在家长端试课申请列表。 */
 export function isTutorApplicationListStatus(status?: string) {
-  return !isTutorTrialListStatus(status) && !["已取消", "已结束", "已拒绝", "家教进行中"].some((item) => status?.includes(item));
+  return isTutorApplicationPendingStatus(status) && !isTutorTerminalStatus(status);
 }
 
 /** 试课日程在进行中卡片详情中的分隔标记。 */
 export const tutorTrialScheduleDetailMarker = "试课安排：";
+
+/** 试课申请中学生可试课时间在进行中卡片详情中的分隔标记。 */
+export const tutorTrialAvailabilityDetailMarker = "可试课时间：";
 
 /** 解析后的单日试课日程。 */
 export interface TutorTrialScheduleLine {
@@ -113,6 +218,20 @@ export function getTutorTrialScheduleSummaryFromOrderDetail(detail?: string) {
   }
 
   return detail.slice(markerIndex + tutorTrialScheduleDetailMarker.length).trim();
+}
+
+/** 从进行中卡片详情里提取学生原始可试课时间，供日程冲突时重新提交。 */
+export function getTutorTrialAvailabilitySummaryFromOrderDetail(detail?: string) {
+  const markerIndex = detail?.indexOf(tutorTrialAvailabilityDetailMarker) ?? -1;
+
+  if (!detail || markerIndex < 0) {
+    return "";
+  }
+
+  const availabilityText = detail.slice(markerIndex + tutorTrialAvailabilityDetailMarker.length);
+  const scheduleMarkerIndex = availabilityText.indexOf(` · ${tutorTrialScheduleDetailMarker}`);
+
+  return (scheduleMarkerIndex >= 0 ? availabilityText.slice(0, scheduleMarkerIndex) : availabilityText).trim();
 }
 
 /** 清理学生端进行中家教卡片详情，避免直接展示流程标记和试课安排全文。 */

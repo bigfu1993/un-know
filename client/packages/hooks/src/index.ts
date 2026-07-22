@@ -25,6 +25,7 @@ import {
   getClientWorkspace,
   getProducts,
   handleHuntingTaskFulfillmentAction,
+  handleTutorWorkflowAction,
   loginClient,
   miniappOneTapLogin,
   publishHuntingTask,
@@ -62,7 +63,8 @@ import {
   Role,
   SelectRoleRequest,
   SendChatMessageRequest,
-  SubmitHuntingCertificationRequest
+  SubmitHuntingCertificationRequest,
+  TutorWorkflowActionRequest
 } from "@unknown/domain";
 
 export const clientAddressQueryKey = ["client-addresses"] as const;
@@ -352,6 +354,21 @@ export function useCompleteTutorTrialEnd() {
     mutationFn: (payload: CompleteTutorTrialEndRequest & { applicationId: string; demandId: string }) => {
       const { applicationId, demandId, ...request } = payload;
       return completeTutorTrialEnd(demandId, applicationId, request);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });
+      void queryClient.invalidateQueries({ queryKey: clientTutorDemandsQueryKey });
+    }
+  });
+}
+
+export function useHandleTutorWorkflowAction() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: TutorWorkflowActionRequest & { applicationId: string }) => {
+      const { applicationId, ...request } = payload;
+      return handleTutorWorkflowAction(applicationId, request);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });

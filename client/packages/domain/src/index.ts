@@ -320,6 +320,7 @@ export interface TutorApplicant {
   hiredTimes: number;
   availability: string;
   status: string;
+  trialSchedule: string;
 }
 
 export interface TutorDemand {
@@ -373,6 +374,36 @@ export interface ConfirmTutorTrialRequest {
 /** 家长确认结束试课时的聘用决策。 */
 export interface CompleteTutorTrialEndRequest {
   hireTutor: boolean;
+  tutorSchedule?: string;
+}
+
+/** 家教流程动作，与流程图节点保持一致。 */
+export type TutorWorkflowAction =
+  | "accept_service_offer"
+  | "cancel_trial"
+  | "close_trial_continue_recruiting"
+  | "confirm_service_schedule"
+  | "confirm_settlement"
+  | "confirm_trial_end"
+  | "offer_service"
+  | "reject_service_offer"
+  | "reject_service_offer_salary"
+  | "reject_trial"
+  | "request_service_end"
+  | "request_service_schedule_change"
+  | "request_settlement_revision"
+  | "request_trial_result"
+  | "request_trial_settlement"
+  | "resubmit_settlement"
+  | "submit_service_schedule"
+  | "update_trial_availability";
+
+/** 家教流程动作请求，支持后续按节点补充日程、可用时间和原因。 */
+export interface TutorWorkflowActionRequest {
+  action: TutorWorkflowAction;
+  availability?: string;
+  continueRecruiting?: boolean;
+  reasonType?: string;
   tutorSchedule?: string;
 }
 

@@ -32,4 +32,8 @@ export interface TutorApplicationCandidate {
   name: string;
   school: string;
   status: string;
+  trialSchedule: string;
 }
+
+/** 家教流程动作类型，实际定义来自 domain 包，H5 通过 types 目录自动导入。 */
+export type { TutorWorkflowAction, TutorWorkflowActionRequest } from "@unknown/domain";
