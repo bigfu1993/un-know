@@ -8,7 +8,7 @@ import {
   getDelegationPublisherText,
   getDelegationRequirementTags,
   isDelegationTaskLocked
-} from "@pages/Delegation/model";
+} from "@pages/home/delegation/model";
 
 /** 委托详情弹窗属性。 */
 interface DelegationTaskDetailDialogProps {

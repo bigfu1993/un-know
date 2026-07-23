@@ -9,7 +9,7 @@ import {
   getDelegationPublisherText,
   getDelegationRequirementTags,
   isDelegationTaskLocked
-} from "@pages/Delegation/model";
+} from "@pages/home/delegation/model";
 
 /** 委托列表任务卡片属性。 */
 interface DelegationTaskCardProps {

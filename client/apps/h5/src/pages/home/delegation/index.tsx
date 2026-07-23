@@ -2,13 +2,13 @@ import "./index.less";
 import { ArrowDownUp, Filter, RadioTower, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ScrollingTicker } from "@components/ScrollingTicker";
-import { DelegationAmountDialog } from "@pages/Delegation/components/DelegationAmountDialog";
-import { DelegationTaskCard } from "@pages/Delegation/components/DelegationTaskCard";
-import { DelegationTaskDetailDialog } from "@pages/Delegation/components/DelegationTaskDetailDialog";
-import { HuntingCertificationPromptDialog } from "@pages/Delegation/components/HuntingCertificationPromptDialog";
-import { delegationRuleTickerItems, delegationSortOptions } from "@pages/Delegation/model";
-import { useDelegationList } from "@pages/Delegation/hooks/useDelegationList";
-import { useDelegationTaskFlow } from "@pages/Delegation/hooks/useDelegationTaskFlow";
+import { DelegationAmountDialog } from "@pages/home/delegation/components/DelegationAmountDialog";
+import { DelegationTaskCard } from "@pages/home/delegation/components/DelegationTaskCard";
+import { DelegationTaskDetailDialog } from "@pages/home/delegation/components/DelegationTaskDetailDialog";
+import { HuntingCertificationPromptDialog } from "@pages/home/delegation/components/HuntingCertificationPromptDialog";
+import { delegationRuleTickerItems, delegationSortOptions } from "@pages/home/delegation/model";
+import { useDelegationList } from "@pages/home/delegation/hooks/useDelegationList";
+import { useDelegationTaskFlow } from "@pages/home/delegation/hooks/useDelegationTaskFlow";
 import { showMessage } from "@tools/messageToast";
 
 /** 委托页属性。 */

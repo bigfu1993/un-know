@@ -231,6 +231,7 @@ tail -n 200 "$REPO_ROOT/log/server/server.screen.log"
 - 技术栈：React、TypeScript、Vite。
 - H5 必须配置并使用全局别名引用源码目录：`@h5`、`@components`、`@pages`、`@shared`、`@store`、`@tools`、`@app-types`；业务源码中不得继续新增跨目录相对路径引用，生成文件除外。
 - `pages` 目录按业务模块组织；同一业务域的主页面、子页面和流程页应收敛到同一目录，避免在 `pages` 根部平铺孤立同域页面。
+- H5 首页业务域统一收敛在 `pages/home` 下：委托/狩猎归属 `home/delegation`，兼职归属 `home/job`，家教归属 `home/job/edu`，优选/商品归属 `home/shop`；同域组件、hooks、model 不得散落到其他页面目录。
 - `pages/<Module>/components` 下的页面私有组件使用扁平文件维护；页面私有 hook 维护在 `pages/<Module>/hooks`。
 - 每个 `pages/<Module>` 必须维护 `index.less` 并由 `index.tsx` 引入；该页面及其私有组件样式收敛到对应页面 stylesheet。
 - `components/<Component>` 下的共享组件按文件夹维护，组件专属样式放在同目录并由组件入口导入。

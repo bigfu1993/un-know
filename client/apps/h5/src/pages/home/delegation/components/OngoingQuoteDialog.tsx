@@ -6,7 +6,7 @@ import {
   hasInvalidCounterQuoteAmount,
   hasValidCounterQuoteAmount,
   isQuoteLockedForPublisher
-} from "@pages/Delegation/model";
+} from "@pages/home/delegation/model";
 
 /** 进行中委托报价处理弹窗属性。 */
 interface OngoingQuoteDialogProps {

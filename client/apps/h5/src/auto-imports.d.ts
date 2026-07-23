@@ -26,11 +26,11 @@ declare global {
   const CircleDollarSign: typeof import('lucide-react').CircleDollarSign
   const ClipboardCheck: typeof import('lucide-react').ClipboardCheck
   const Crosshair: typeof import('lucide-react').Crosshair
-  const Delegation: typeof import('./pages/Delegation/index').Delegation
-  const DelegationAmountDialog: typeof import('./pages/Delegation/components/DelegationAmountDialog').DelegationAmountDialog
-  const DelegationTaskCard: typeof import('./pages/Delegation/components/DelegationTaskCard').DelegationTaskCard
-  const DelegationTaskDetailDialog: typeof import('./pages/Delegation/components/DelegationTaskDetailDialog').DelegationTaskDetailDialog
-  const Featured: typeof import('./pages/Featured/index').Featured
+  const Delegation: typeof import('./pages/home/delegation/index').Delegation
+  const DelegationAmountDialog: typeof import('./pages/home/delegation/components/DelegationAmountDialog').DelegationAmountDialog
+  const DelegationTaskCard: typeof import('./pages/home/delegation/components/DelegationTaskCard').DelegationTaskCard
+  const DelegationTaskDetailDialog: typeof import('./pages/home/delegation/components/DelegationTaskDetailDialog').DelegationTaskDetailDialog
+  const Featured: typeof import('./pages/home/shop/index').Featured
   const Filter: typeof import('lucide-react').Filter
   const Fragment: typeof import('react').Fragment
   const GlobalStoreContext: typeof import('./store/global').GlobalStoreContext
@@ -39,11 +39,11 @@ declare global {
   const Header: typeof import('./components/AppShell/index').Header
   const Heart: typeof import('lucide-react').Heart
   const Home: typeof import('lucide-react').Home
-  const HuntingCertification: typeof import('./pages/HuntingCertification/index').HuntingCertification
+  const HuntingCertification: typeof import('./pages/home/delegation/HuntingCertification/index').HuntingCertification
   const HuntingCertificationCard: typeof import('./components/HuntingCertificationCard/index').HuntingCertificationCard
-  const HuntingCertificationPromptDialog: typeof import('./pages/Delegation/components/HuntingCertificationPromptDialog').HuntingCertificationPromptDialog
+  const HuntingCertificationPromptDialog: typeof import('./pages/home/delegation/components/HuntingCertificationPromptDialog').HuntingCertificationPromptDialog
   const HuntingProjectDialog: typeof import('./components/HuntingProjectDialog/index').HuntingProjectDialog
-  const HuntingRecommendationDialog: typeof import('./pages/Delegation/components/HuntingRecommendationDialog').HuntingRecommendationDialog
+  const HuntingRecommendationDialog: typeof import('./pages/home/delegation/components/HuntingRecommendationDialog').HuntingRecommendationDialog
   const KeyRound: typeof import('lucide-react').KeyRound
   const LogOut: typeof import('lucide-react').LogOut
   const Login: typeof import('./pages/Login/index').Login
@@ -61,12 +61,12 @@ declare global {
   const NicknameEditorDialog: typeof import('./pages/Settings/components/SettingsDialogs').NicknameEditorDialog
   const OngoingOrdersDialog: typeof import('./components/WorkflowDialogs/index').OngoingOrdersDialog
   const OngoingOrdersList: typeof import('./components/OngoingOrdersList/index').OngoingOrdersList
-  const OngoingQuoteDialog: typeof import('./pages/Delegation/components/OngoingQuoteDialog').OngoingQuoteDialog
+  const OngoingQuoteDialog: typeof import('./pages/home/delegation/components/OngoingQuoteDialog').OngoingQuoteDialog
   const OrderModuleCard: typeof import('./components/OrderModuleCard/index').OrderModuleCard
   const Orders: typeof import('./pages/Orders/index').Orders
   const PackageCheck: typeof import('lucide-react').PackageCheck
   const PageShell: typeof import('./components/AppShell/index').PageShell
-  const PartTime: typeof import('./pages/PartTime/index').PartTime
+  const PartTime: typeof import('./pages/home/job/index').PartTime
   const PartTimeJobCard: typeof import('./components/PageWidgets/index').PartTimeJobCard
   const PasswordResetCard: typeof import('./pages/Login/components/PasswordResetCard').PasswordResetCard
   const PasswordResetDialog: typeof import('./pages/Settings/components/SettingsDialogs').PasswordResetDialog
@@ -112,15 +112,15 @@ declare global {
   const TUTOR_TRIAL_RESULT_PROCESSING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_RESULT_PROCESSING_STATUS
   const TrialScheduleCalendar: typeof import('./components/TrialScheduleCalendar/index').TrialScheduleCalendar
   const Truck: typeof import('lucide-react').Truck
-  const Tutor: typeof import('./pages/Tutor/index').Tutor
-  const TutorApplicationsDialog: typeof import('./pages/Tutor/components/TutorApplicationsDialog').TutorApplicationsDialog
+  const Tutor: typeof import('./pages/home/job/edu/index').Tutor
+  const TutorApplicationsDialog: typeof import('./pages/home/job/edu/components/TutorApplicationsDialog').TutorApplicationsDialog
   const TutorCalendarDialog: typeof import('./components/TutorCalendar/index').TutorCalendarDialog
   const TutorCard: typeof import('./components/TutorCard/index').TutorCard
-  const TutorCertification: typeof import('./pages/Tutor/TutorCertification').TutorCertification
+  const TutorCertification: typeof import('./pages/home/job/edu/TutorCertification').TutorCertification
   const TutorCertificationInfoDialog: typeof import('./components/TutorCertificationInfoDialog/index').TutorCertificationInfoDialog
   const TutorQualificationInfoDialog: typeof import('./pages/Settings/components/SettingsDialogs').TutorQualificationInfoDialog
   const TutorTrialJobCard: typeof import('./components/PageWidgets/index').TutorTrialJobCard
-  const TutorTrialListDialog: typeof import('./pages/Tutor/components/TutorApplicationsDialog').TutorTrialListDialog
+  const TutorTrialListDialog: typeof import('./pages/home/job/edu/components/TutorApplicationsDialog').TutorTrialListDialog
   const TutorTrialScheduleDialog: typeof import('./components/TutorTrialScheduleDialog/index').TutorTrialScheduleDialog
   const UserRound: typeof import('lucide-react').UserRound
   const Wallet: typeof import('./pages/Wallet/index').Wallet
@@ -138,8 +138,8 @@ declare global {
   const cache: typeof import('react').cache
   const cacheSignal: typeof import('react').cacheSignal
   const campusAreaOptions: typeof import('./shared/clientPageModel').campusAreaOptions
-  const canConfirmHuntingQuote: typeof import('./pages/Delegation/model').canConfirmHuntingQuote
-  const canCounterHuntingQuote: typeof import('./pages/Delegation/model').canCounterHuntingQuote
+  const canConfirmHuntingQuote: typeof import('./pages/home/delegation/model').canConfirmHuntingQuote
+  const canCounterHuntingQuote: typeof import('./pages/home/delegation/model').canCounterHuntingQuote
   const clearStoredClientAuthSession: typeof import('@unknown/api-client').clearStoredClientAuthSession
   const clearStoredPendingRegistration: typeof import('./shared/clientPageModel').clearStoredPendingRegistration
   const clientAddressToAddressBookItem: typeof import('./shared/clientPageModel').clientAddressToAddressBookItem
@@ -154,8 +154,8 @@ declare global {
   const createRoot: typeof import('react-dom/client').createRoot
   const createTutorTaskModel: typeof import('./tools/tutorTaskWorkflow').createTutorTaskModel
   const delegationRequirementTags: typeof import('./tools/publishInfo').delegationRequirementTags
-  const delegationRuleTickerItems: typeof import('./pages/Delegation/model').delegationRuleTickerItems
-  const delegationSortOptions: typeof import('./pages/Delegation/model').delegationSortOptions
+  const delegationRuleTickerItems: typeof import('./pages/home/delegation/model').delegationRuleTickerItems
+  const delegationSortOptions: typeof import('./pages/home/delegation/model').delegationSortOptions
   const deliveryModeLabels: typeof import('@unknown/domain').deliveryModeLabels
   const filterProducts: typeof import('./shared/clientPageModel').filterProducts
   const formatCompactWalletAmount: typeof import('./tools/wallet').formatCompactWalletAmount
@@ -169,16 +169,16 @@ declare global {
   const getDefaultDeliveryMode: typeof import('./shared/clientPageModel').getDefaultDeliveryMode
   const getDefaultPrimaryTab: typeof import('@unknown/domain').getDefaultPrimaryTab
   const getDefaultRouteForRole: typeof import('./shared/clientPageModel').getDefaultRouteForRole
-  const getDelegationAmountText: typeof import('./pages/Delegation/model').getDelegationAmountText
-  const getDelegationArea: typeof import('./pages/Delegation/model').getDelegationArea
-  const getDelegationDestination: typeof import('./pages/Delegation/model').getDelegationDestination
+  const getDelegationAmountText: typeof import('./pages/home/delegation/model').getDelegationAmountText
+  const getDelegationArea: typeof import('./pages/home/delegation/model').getDelegationArea
+  const getDelegationDestination: typeof import('./pages/home/delegation/model').getDelegationDestination
   const getDelegationLatestTimeLabel: typeof import('./tools/publishInfo').getDelegationLatestTimeLabel
-  const getDelegationPrimaryActionLabel: typeof import('./pages/Delegation/model').getDelegationPrimaryActionLabel
-  const getDelegationPublishTime: typeof import('./pages/Delegation/model').getDelegationPublishTime
-  const getDelegationPublisherText: typeof import('./pages/Delegation/model').getDelegationPublisherText
+  const getDelegationPrimaryActionLabel: typeof import('./pages/home/delegation/model').getDelegationPrimaryActionLabel
+  const getDelegationPublishTime: typeof import('./pages/home/delegation/model').getDelegationPublishTime
+  const getDelegationPublisherText: typeof import('./pages/home/delegation/model').getDelegationPublisherText
   const getDelegationRequirementLabel: typeof import('./tools/publishInfo').getDelegationRequirementLabel
-  const getDelegationRequirementTags: typeof import('./pages/Delegation/model').getDelegationRequirementTags
-  const getDelegationTimeWeight: typeof import('./pages/Delegation/model').getDelegationTimeWeight
+  const getDelegationRequirementTags: typeof import('./pages/home/delegation/model').getDelegationRequirementTags
+  const getDelegationTimeWeight: typeof import('./pages/home/delegation/model').getDelegationTimeWeight
   const getDeliveryFee: typeof import('./shared/clientPageModel').getDeliveryFee
   const getEnabledPeriodSummaries: typeof import('./components/TutorTrialScheduleDialog/model').getEnabledPeriodSummaries
   const getErrorMessage: typeof import('./tools/messageToast').getErrorMessage
@@ -186,14 +186,14 @@ declare global {
   const getFilledProfileDraft: typeof import('./shared/clientPageModel').getFilledProfileDraft
   const getHuntingCertificationCardMode: typeof import('./components/HuntingCertificationCard/model').getHuntingCertificationCardMode
   const getHuntingCertificationDataFromDraft: typeof import('./components/HuntingCertificationCard/model').getHuntingCertificationDataFromDraft
-  const getHuntingFulfillmentContact: typeof import('./pages/Delegation/model').getHuntingFulfillmentContact
-  const getHuntingHistoryOrders: typeof import('./pages/Delegation/model').getHuntingHistoryOrders
-  const getHuntingOngoingAmountLabel: typeof import('./pages/Delegation/model').getHuntingOngoingAmountLabel
-  const getHuntingOngoingOrders: typeof import('./pages/Delegation/model').getHuntingOngoingOrders
-  const getHuntingOngoingStatus: typeof import('./pages/Delegation/model').getHuntingOngoingStatus
-  const getHuntingQuoteActionLabel: typeof import('./pages/Delegation/model').getHuntingQuoteActionLabel
-  const getHuntingTaskAmountText: typeof import('./pages/Delegation/model').getHuntingTaskAmountText
-  const getHuntingTaskPublishTimeText: typeof import('./pages/Delegation/model').getHuntingTaskPublishTimeText
+  const getHuntingFulfillmentContact: typeof import('./pages/home/delegation/model').getHuntingFulfillmentContact
+  const getHuntingHistoryOrders: typeof import('./pages/home/delegation/model').getHuntingHistoryOrders
+  const getHuntingOngoingAmountLabel: typeof import('./pages/home/delegation/model').getHuntingOngoingAmountLabel
+  const getHuntingOngoingOrders: typeof import('./pages/home/delegation/model').getHuntingOngoingOrders
+  const getHuntingOngoingStatus: typeof import('./pages/home/delegation/model').getHuntingOngoingStatus
+  const getHuntingQuoteActionLabel: typeof import('./pages/home/delegation/model').getHuntingQuoteActionLabel
+  const getHuntingTaskAmountText: typeof import('./pages/home/delegation/model').getHuntingTaskAmountText
+  const getHuntingTaskPublishTimeText: typeof import('./pages/home/delegation/model').getHuntingTaskPublishTimeText
   const getLatestLocalPublishInfoDraft: typeof import('./tools/publishInfo').getLatestLocalPublishInfoDraft
   const getLocalPublishInfoDrafts: typeof import('./tools/publishInfo').getLocalPublishInfoDrafts
   const getMessageToastSnapshot: typeof import('./tools/messageToast').getMessageToastSnapshot
@@ -202,7 +202,7 @@ declare global {
   const getProfileRequirement: typeof import('./shared/clientPageModel').getProfileRequirement
   const getProfileRequirementTemplate: typeof import('./shared/clientPageModel').getProfileRequirementTemplate
   const getPublishDestinationLabel: typeof import('./tools/publishInfo').getPublishDestinationLabel
-  const getRecommendedHuntingTasks: typeof import('./pages/Delegation/model').getRecommendedHuntingTasks
+  const getRecommendedHuntingTasks: typeof import('./pages/home/delegation/model').getRecommendedHuntingTasks
   const getRoleHint: typeof import('./shared/clientPageModel').getRoleHint
   const getRouteForTab: typeof import('./shared/clientPageModel').getRouteForTab
   const getStoredAddressBook: typeof import('./shared/clientPageModel').getStoredAddressBook
@@ -238,30 +238,30 @@ declare global {
   const getWalletMonthOptions: typeof import('./tools/wallet').getWalletMonthOptions
   const getWalletMonthlySummary: typeof import('./tools/wallet').getWalletMonthlySummary
   const getWalletTotalAmount: typeof import('./tools/wallet').getWalletTotalAmount
-  const hasCounterQuoteAmount: typeof import('./pages/Delegation/model').hasCounterQuoteAmount
-  const hasInvalidCounterQuoteAmount: typeof import('./pages/Delegation/model').hasInvalidCounterQuoteAmount
+  const hasCounterQuoteAmount: typeof import('./pages/home/delegation/model').hasCounterQuoteAmount
+  const hasInvalidCounterQuoteAmount: typeof import('./pages/home/delegation/model').hasInvalidCounterQuoteAmount
   const hasInvalidFields: typeof import('./tools/validation').hasInvalidFields
   const hasInvalidRequiredFields: typeof import('./tools/validation').hasInvalidRequiredFields
   const hasStoredPendingRegistration: typeof import('./shared/clientPageModel').hasStoredPendingRegistration
-  const hasValidCounterQuoteAmount: typeof import('./pages/Delegation/model').hasValidCounterQuoteAmount
+  const hasValidCounterQuoteAmount: typeof import('./pages/home/delegation/model').hasValidCounterQuoteAmount
   const hideMessage: typeof import('./tools/messageToast').hideMessage
   const huntingCertificationStatusLabels: typeof import('./components/HuntingCertificationCard/model').huntingCertificationStatusLabels
-  const isDelegationFulfillingStatus: typeof import('./pages/Delegation/model').isDelegationFulfillingStatus
-  const isDelegationListVisible: typeof import('./pages/Delegation/model').isDelegationListVisible
-  const isDelegationQuoteStatus: typeof import('./pages/Delegation/model').isDelegationQuoteStatus
-  const isDelegationTaskLocked: typeof import('./pages/Delegation/model').isDelegationTaskLocked
-  const isHuntingCancelledStatus: typeof import('./pages/Delegation/model').isHuntingCancelledStatus
-  const isHuntingCompletedStatus: typeof import('./pages/Delegation/model').isHuntingCompletedStatus
-  const isHuntingFulfillingStatus: typeof import('./pages/Delegation/model').isHuntingFulfillingStatus
-  const isHuntingPublishedStatus: typeof import('./pages/Delegation/model').isHuntingPublishedStatus
-  const isHuntingQuoteStatus: typeof import('./pages/Delegation/model').isHuntingQuoteStatus
-  const isHuntingQuoteWaitingHunter: typeof import('./pages/Delegation/model').isHuntingQuoteWaitingHunter
-  const isHuntingQuoteWaitingPublisher: typeof import('./pages/Delegation/model').isHuntingQuoteWaitingPublisher
+  const isDelegationFulfillingStatus: typeof import('./pages/home/delegation/model').isDelegationFulfillingStatus
+  const isDelegationListVisible: typeof import('./pages/home/delegation/model').isDelegationListVisible
+  const isDelegationQuoteStatus: typeof import('./pages/home/delegation/model').isDelegationQuoteStatus
+  const isDelegationTaskLocked: typeof import('./pages/home/delegation/model').isDelegationTaskLocked
+  const isHuntingCancelledStatus: typeof import('./pages/home/delegation/model').isHuntingCancelledStatus
+  const isHuntingCompletedStatus: typeof import('./pages/home/delegation/model').isHuntingCompletedStatus
+  const isHuntingFulfillingStatus: typeof import('./pages/home/delegation/model').isHuntingFulfillingStatus
+  const isHuntingPublishedStatus: typeof import('./pages/home/delegation/model').isHuntingPublishedStatus
+  const isHuntingQuoteStatus: typeof import('./pages/home/delegation/model').isHuntingQuoteStatus
+  const isHuntingQuoteWaitingHunter: typeof import('./pages/home/delegation/model').isHuntingQuoteWaitingHunter
+  const isHuntingQuoteWaitingPublisher: typeof import('./pages/home/delegation/model').isHuntingQuoteWaitingPublisher
   const isHuntingTaskPublishType: typeof import('./tools/publishInfo').isHuntingTaskPublishType
   const isNegotiableAmount: typeof import('./tools/publishInfo').isNegotiableAmount
-  const isNegotiatingHuntingQuote: typeof import('./pages/Delegation/model').isNegotiatingHuntingQuote
+  const isNegotiatingHuntingQuote: typeof import('./pages/home/delegation/model').isNegotiatingHuntingQuote
   const isPositiveAmount: typeof import('./tools/publishInfo').isPositiveAmount
-  const isQuoteLockedForPublisher: typeof import('./pages/Delegation/model').isQuoteLockedForPublisher
+  const isQuoteLockedForPublisher: typeof import('./pages/home/delegation/model').isQuoteLockedForPublisher
   const isTutorApplicationListStatus: typeof import('./tools/tutorTrial').isTutorApplicationListStatus
   const isTutorApplicationPendingStatus: typeof import('./tools/tutorTrial').isTutorApplicationPendingStatus
   const isTutorFormalServiceStatus: typeof import('./tools/tutorTrial').isTutorFormalServiceStatus
@@ -344,14 +344,14 @@ declare global {
   const useCreateHuntingProject: typeof import('@unknown/hooks').useCreateHuntingProject
   const useDebugValue: typeof import('react').useDebugValue
   const useDeferredValue: typeof import('react').useDeferredValue
-  const useDelegationList: typeof import('./pages/Delegation/hooks/useDelegationList').useDelegationList
-  const useDelegationTaskFlow: typeof import('./pages/Delegation/hooks/useDelegationTaskFlow').useDelegationTaskFlow
+  const useDelegationList: typeof import('./pages/home/delegation/hooks/useDelegationList').useDelegationList
+  const useDelegationTaskFlow: typeof import('./pages/home/delegation/hooks/useDelegationTaskFlow').useDelegationTaskFlow
   const useDeleteClientAddress: typeof import('@unknown/hooks').useDeleteClientAddress
   const useEffect: typeof import('react').useEffect
   const useEffectEvent: typeof import('react').useEffectEvent
   const useGlobalStore: typeof import('./store/global').useGlobalStore
   const useGlobalUser: typeof import('./store/global').useGlobalUser
-  const useHuntingTaskActions: typeof import('./pages/Delegation/hooks/useHuntingTaskActions').useHuntingTaskActions
+  const useHuntingTaskActions: typeof import('./pages/home/delegation/hooks/useHuntingTaskActions').useHuntingTaskActions
   const useId: typeof import('react').useId
   const useImperativeHandle: typeof import('react').useImperativeHandle
   const useInsertionEffect: typeof import('react').useInsertionEffect
@@ -359,7 +359,7 @@ declare global {
   const useLocation: typeof import('react-router-dom').useLocation
   const useMemo: typeof import('react').useMemo
   const useNavigate: typeof import('react-router-dom').useNavigate
-  const useOngoingQuoteFlow: typeof import('./pages/Delegation/hooks/useOngoingQuoteFlow').useOngoingQuoteFlow
+  const useOngoingQuoteFlow: typeof import('./pages/home/delegation/hooks/useOngoingQuoteFlow').useOngoingQuoteFlow
   const useOptimistic: typeof import('react').useOptimistic
   const useProducts: typeof import('@unknown/hooks').useProducts
   const usePublishHuntingTask: typeof import('@unknown/hooks').usePublishHuntingTask
@@ -372,7 +372,7 @@ declare global {
   const useState: typeof import('react').useState
   const useSyncExternalStore: typeof import('react').useSyncExternalStore
   const useTransition: typeof import('react').useTransition
-  const useTutorTrialActions: typeof import('./pages/Tutor/hooks/useTutorTrialActions').useTutorTrialActions
+  const useTutorTrialActions: typeof import('./pages/home/job/edu/hooks/useTutorTrialActions').useTutorTrialActions
   const useUpdateClientAddress: typeof import('@unknown/hooks').useUpdateClientAddress
   const useUpdateTutorExposure: typeof import('@unknown/hooks').useUpdateTutorExposure
   const useUseClientAddress: typeof import('@unknown/hooks').useUseClientAddress
@@ -424,14 +424,14 @@ declare global {
   export type { TrialSchedulePeriodKey, TrialSchedulePeriodConfig, TrialSchedulePeriodState, TrialScheduleDraft, TrialSchedulePlan, TrialScheduleValue } from './components/TutorTrialScheduleDialog/model'
   import('./components/TutorTrialScheduleDialog/model')
   // @ts-ignore
-  export type { DelegationProps } from './pages/Delegation/index'
-  import('./pages/Delegation/index')
-  // @ts-ignore
-  export type { DelegationSortMode, DelegationToolbarPanel } from './pages/Delegation/model'
-  import('./pages/Delegation/model')
-  // @ts-ignore
   export type { AddressEditorMode, PhoneChangeDraft, PasswordResetDraft } from './pages/Settings/components/SettingsDialogs'
   import('./pages/Settings/components/SettingsDialogs')
+  // @ts-ignore
+  export type { DelegationProps } from './pages/home/delegation/index'
+  import('./pages/home/delegation/index')
+  // @ts-ignore
+  export type { DelegationSortMode, DelegationToolbarPanel } from './pages/home/delegation/model'
+  import('./pages/home/delegation/model')
   // @ts-ignore
   export type { StoredPasswordCredential, PasswordCredentialStore, PendingRegistrationRecord, PendingRegistrationStore } from './shared/clientPageModel'
   import('./shared/clientPageModel')

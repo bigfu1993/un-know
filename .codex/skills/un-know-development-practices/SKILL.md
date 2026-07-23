@@ -34,8 +34,9 @@ description: Methodology and validation workflow for the un-know project. Use wh
 16. Design form hierarchy intentionally. Put required, frequent, and high-risk fields first; group optional supplements into coherent panels with their own header, action, and content; choose inline text/icon controls when full buttons would change field height.
 17. Keep roots and pages lean: root wires application-level providers, session, routing, global data, and cross-module composition; pages orchestrate feature flow; components own display and local interaction.
 18. Keep styles and types by ownership: page styles in `pages/<Module>/index.less`, shared component styles beside the component, H5 reusable types in `client/apps/h5/src/types`, pure reusable utilities in `client/apps/h5/src/tools`.
-19. Run broad refactors in batches. Each batch declares scope, classifies issues, makes focused edits, validates, then moves to the next batch.
-20. Before deleting or splitting exports, search explicit imports, JSX usage, generated declarations, and auto-import configuration.
+19. Keep business modules under their owning directory. Page modules, local components, hooks, models, backend packages, API contracts, and database ownership notes should follow the same domain boundary; risky package or schema moves require a docs-first migration plan.
+20. Run broad refactors in batches. Each batch declares scope, classifies issues, makes focused edits, validates, then moves to the next batch.
+21. Before deleting or splitting exports, search explicit imports, JSX usage, generated declarations, and auto-import configuration.
 
 ## Choose References
 

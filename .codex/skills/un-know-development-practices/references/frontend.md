@@ -7,6 +7,7 @@ Applies to `client/apps/h5`, `client/packages/domain`, `client/packages/api-clie
 ## React/H5 Rules
 
 - Keep pages in `client/apps/h5/src/pages/<Module>/index.tsx`; each page imports `index.less`. Page-private components live as flat files under `pages/<Module>/components/*.tsx`, and their styles live in the page `index.less`.
+- Keep H5 home-domain pages under `client/apps/h5/src/pages/home/<domain>` and keep each domain's private components, hooks, and model in that same domain folder. Do not scatter a domain's sibling pages at the `pages` root.
 - Shared display units outside `pages` keep the existing `components/<Component>/index.tsx` folder convention with adjacent style file when needed.
 - Keep flow orchestration in pages and generic display in components. Components should not read global state unless that state is explicitly app-wide and provided by the root store/context.
 - Let components own interaction details that do not change external business state: toast-only feedback, button event wrapping, default prop values, and temporary form drafts. Emit final data or item-level callbacks upward.

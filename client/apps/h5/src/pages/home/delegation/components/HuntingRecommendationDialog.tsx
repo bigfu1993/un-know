@@ -1,5 +1,5 @@
 import { Banknote, MapPin, RadioTower } from "lucide-react";
-import { getHuntingTaskAmountText } from "@pages/Delegation/model";
+import { getHuntingTaskAmountText } from "@pages/home/delegation/model";
 
 /** 狩猎快捷推荐弹窗属性。 */
 interface HuntingRecommendationDialogProps {

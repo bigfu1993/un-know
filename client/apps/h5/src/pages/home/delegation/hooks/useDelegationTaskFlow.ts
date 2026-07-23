@@ -1,4 +1,4 @@
-import { isDelegationQuoteStatus, isDelegationTaskLocked } from "@pages/Delegation/model";
+import { isDelegationQuoteStatus, isDelegationTaskLocked } from "@pages/home/delegation/model";
 
 /** 委托页任务交互流程入参。 */
 interface UseDelegationTaskFlowOptions {

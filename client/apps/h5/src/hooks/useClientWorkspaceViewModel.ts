@@ -2,7 +2,7 @@ import {
   getHuntingHistoryOrders,
   getHuntingOngoingOrders,
   getRecommendedHuntingTasks
-} from "@pages/Delegation/model";
+} from "@pages/home/delegation/model";
 import { getTutorDemandBudgetLabel } from "@tools/tutorDemand";
 
 /** 用户端工作台派生数据入参。 */

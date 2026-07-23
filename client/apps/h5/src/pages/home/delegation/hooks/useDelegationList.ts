@@ -6,7 +6,7 @@ import {
   isDelegationListVisible,
   type DelegationSortMode,
   type DelegationToolbarPanel
-} from "@pages/Delegation/model";
+} from "@pages/home/delegation/model";
 
 /** 委托列表筛选、排序和工具面板状态。 */
 export function useDelegationList(tasks: HuntingTask[]) {
