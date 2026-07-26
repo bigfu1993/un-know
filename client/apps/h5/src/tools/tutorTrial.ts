@@ -17,19 +17,31 @@ export const TUTOR_TRIAL_END_CONFIRMING_STATUS = "结束试课确认中";
 export const TUTOR_TRIAL_RESULT_PROCESSING_STATUS = "试课结果处理";
 
 /** 家长已发起正式雇佣，等待学生确认的展示状态。 */
-export const TUTOR_SERVICE_CONFIRMING_STATUS = "家教服务确认中";
+export const TUTOR_SERVICE_CONFIRMING_STATUS = "正式雇佣确认中";
 
-/** 学生同意正式雇佣后，等待家长提交兼职日程的展示状态。 */
-export const TUTOR_SERVICE_SCHEDULE_PENDING_STATUS = "兼职日程待提交";
+/** 旧版正式雇佣确认状态。 */
+export const TUTOR_SERVICE_CONFIRMING_LEGACY_STATUS = "家教服务确认中";
 
-/** 家长提交兼职日程后，等待学生确认的展示状态。 */
+/** 学生同意正式雇佣后，等待家长提交正式雇佣日程的展示状态。 */
+export const TUTOR_SERVICE_SCHEDULE_PENDING_STATUS = "正式雇佣日程确认中";
+
+/** 旧版学生同意正式雇佣后，等待家长提交兼职日程的展示状态。 */
+export const TUTOR_SERVICE_SCHEDULE_PENDING_LEGACY_STATUS = "兼职日程待提交";
+
+/** 旧版家长提交兼职日程后，等待学生确认的展示状态。 */
 export const TUTOR_SERVICE_SCHEDULE_CONFIRMING_STATUS = "兼职日程确认中";
 
-/** 双方确认兼职日程后的正式家教服务状态。 */
-export const TUTOR_FORMAL_SERVICE_STATUS = "正式家教服务";
+/** 家长提交正式雇佣日程后的正式雇佣状态。 */
+export const TUTOR_FORMAL_SERVICE_STATUS = "正式雇佣";
+
+/** 学生同意正式雇佣后，家教需求主任务进入进行中。 */
+export const TUTOR_DEMAND_IN_PROGRESS_STATUS = "进行中";
 
 /** 旧版正式家教服务状态。 */
-export const TUTOR_FORMAL_SERVICE_LEGACY_STATUS = "家教进行中";
+export const TUTOR_FORMAL_SERVICE_LEGACY_STATUS = "正式家教服务";
+
+/** 旧版家教进行中状态。 */
+export const TUTOR_FORMAL_SERVICE_RUNNING_LEGACY_STATUS = "家教进行中";
 
 /** 家教或试课结算等待学生确认的展示状态。 */
 export const TUTOR_SETTLEMENT_CONFIRMING_STATUS = "结算确认中";
@@ -43,8 +55,11 @@ export const TUTOR_SYSTEM_SETTLING_STATUS = "系统结算中";
 /** 家长不正式雇佣且继续发布后的试课终态。 */
 export const TUTOR_TRIAL_ENDED_STATUS = "试课已结束";
 
-/** 学生已确认试课费用，等待家长确认是否正式雇佣的状态。 */
-export const TUTOR_TRIAL_SETTLED_SERVICE_PENDING_STATUS = "试课已结算+雇佣确认中";
+/** 学生已确认试课费用，等待家长决定是否正式雇佣的状态。 */
+export const TUTOR_TRIAL_SETTLED_SERVICE_PENDING_STATUS = "试课已结算";
+
+/** 旧版试课已结算并等待正式雇佣状态。 */
+export const TUTOR_TRIAL_SETTLED_SERVICE_PENDING_LEGACY_STATUS = "试课已结算+雇佣确认中";
 
 /** 家长拒绝试课后的学生端失效状态。 */
 export const TUTOR_REJECTED_STATUS = "已失效";
@@ -99,6 +114,21 @@ export function getTutorTrialStatusLabel(status?: string) {
   if (isTutorTrialingStatus(status)) {
     return TUTOR_TRIALING_STATUS;
   }
+  if (isTutorTrialSettledServicePendingStatus(status)) {
+    return TUTOR_TRIAL_SETTLED_SERVICE_PENDING_STATUS;
+  }
+  if (isTutorServiceConfirmingStatus(status)) {
+    return TUTOR_SERVICE_CONFIRMING_STATUS;
+  }
+  if (isTutorServiceSchedulePendingStatus(status)) {
+    return TUTOR_SERVICE_SCHEDULE_PENDING_STATUS;
+  }
+  if (status?.includes(TUTOR_DEMAND_IN_PROGRESS_STATUS)) {
+    return TUTOR_DEMAND_IN_PROGRESS_STATUS;
+  }
+  if (isTutorServiceScheduleConfirmingStatus(status) || isTutorFormalServiceStatus(status)) {
+    return TUTOR_FORMAL_SERVICE_STATUS;
+  }
 
   return isTutorTrialConfirmingStatus(status) ? TUTOR_TRIAL_CONFIRMING_STATUS : status ?? "";
 }
@@ -110,27 +140,41 @@ export function isTutorTrialResultProcessingStatus(status?: string) {
 
 /** 判断申请是否已完成试课费用确认并等待家长处理雇佣结果。 */
 export function isTutorTrialSettledServicePendingStatus(status?: string) {
-  return Boolean(status?.includes(TUTOR_TRIAL_SETTLED_SERVICE_PENDING_STATUS));
+  return Boolean(
+    status?.includes(TUTOR_TRIAL_SETTLED_SERVICE_PENDING_STATUS) ||
+      status?.includes(TUTOR_TRIAL_SETTLED_SERVICE_PENDING_LEGACY_STATUS)
+  );
 }
 
 /** 判断申请是否处于正式雇佣确认阶段。 */
 export function isTutorServiceConfirmingStatus(status?: string) {
-  return Boolean(status?.includes(TUTOR_SERVICE_CONFIRMING_STATUS));
+  return Boolean(status?.includes(TUTOR_SERVICE_CONFIRMING_STATUS) || status?.includes(TUTOR_SERVICE_CONFIRMING_LEGACY_STATUS));
 }
 
-/** 判断申请是否处于兼职日程待提交阶段。 */
+/** 判断申请是否处于正式雇佣日程待家长提交阶段。 */
 export function isTutorServiceSchedulePendingStatus(status?: string) {
-  return Boolean(status?.includes(TUTOR_SERVICE_SCHEDULE_PENDING_STATUS));
+  return Boolean(
+    status?.includes(TUTOR_SERVICE_SCHEDULE_PENDING_STATUS) ||
+      status?.includes(TUTOR_SERVICE_SCHEDULE_PENDING_LEGACY_STATUS)
+  );
 }
 
-/** 判断申请是否处于兼职日程确认阶段。 */
+/** 判断申请是否处于旧版兼职日程确认阶段。 */
 export function isTutorServiceScheduleConfirmingStatus(status?: string) {
   return Boolean(status?.includes(TUTOR_SERVICE_SCHEDULE_CONFIRMING_STATUS));
 }
 
-/** 判断申请是否已经进入正式家教服务。 */
+/** 判断申请是否已经进入正式雇佣。 */
 export function isTutorFormalServiceStatus(status?: string) {
-  return Boolean(status?.includes(TUTOR_FORMAL_SERVICE_STATUS) || status?.includes(TUTOR_FORMAL_SERVICE_LEGACY_STATUS));
+  const normalizedStatus = status ?? "";
+
+  return Boolean(
+    normalizedStatus === TUTOR_FORMAL_SERVICE_STATUS ||
+      normalizedStatus.includes(TUTOR_DEMAND_IN_PROGRESS_STATUS) ||
+      normalizedStatus.includes(TUTOR_FORMAL_SERVICE_LEGACY_STATUS) ||
+      normalizedStatus.includes(TUTOR_FORMAL_SERVICE_RUNNING_LEGACY_STATUS) ||
+      isTutorServiceScheduleConfirmingStatus(status)
+  );
 }
 
 /** 判断申请是否处于结算确认或修改阶段。 */
@@ -184,6 +228,9 @@ export function isTutorApplicationListStatus(status?: string) {
 /** 试课日程在进行中卡片详情中的分隔标记。 */
 export const tutorTrialScheduleDetailMarker = "试课安排：";
 
+/** 正式雇佣课程安排在进行中卡片详情中的分隔标记。 */
+export const tutorServiceScheduleDetailMarker = "课程安排：";
+
 /** 试课申请中学生可试课时间在进行中卡片详情中的分隔标记。 */
 export const tutorTrialAvailabilityDetailMarker = "可试课时间：";
 
@@ -232,13 +279,16 @@ export function parseTutorTrialSchedule(summary?: string): TutorTrialScheduleLin
 
 /** 从进行中卡片详情里提取试课安排摘要。 */
 export function getTutorTrialScheduleSummaryFromOrderDetail(detail?: string) {
-  const markerIndex = detail?.indexOf(tutorTrialScheduleDetailMarker) ?? -1;
+  const trialMarkerIndex = detail?.indexOf(tutorTrialScheduleDetailMarker) ?? -1;
+  const serviceMarkerIndex = detail?.indexOf(tutorServiceScheduleDetailMarker) ?? -1;
+  const markerIndex = serviceMarkerIndex >= 0 ? serviceMarkerIndex : trialMarkerIndex;
+  const markerLength = serviceMarkerIndex >= 0 ? tutorServiceScheduleDetailMarker.length : tutorTrialScheduleDetailMarker.length;
 
   if (!detail || markerIndex < 0) {
     return "";
   }
 
-  return detail.slice(markerIndex + tutorTrialScheduleDetailMarker.length).trim();
+  return detail.slice(markerIndex + markerLength).trim();
 }
 
 /** 从进行中卡片详情里提取学生可试课或可家教时间，供重新提交日期时回填。 */
@@ -255,7 +305,8 @@ export function getTutorTrialAvailabilitySummaryFromOrderDetail(detail?: string)
   const availabilityText = detail.slice(markerIndex + markerLength);
   const feeMarkerIndex = availabilityText.indexOf(` · ${tutorTrialFeeDetailMarker}`);
   const scheduleMarkerIndex = availabilityText.indexOf(` · ${tutorTrialScheduleDetailMarker}`);
-  const endMarkerIndexes = [feeMarkerIndex, scheduleMarkerIndex].filter((index) => index >= 0);
+  const serviceScheduleMarkerIndex = availabilityText.indexOf(` · ${tutorServiceScheduleDetailMarker}`);
+  const endMarkerIndexes = [feeMarkerIndex, scheduleMarkerIndex, serviceScheduleMarkerIndex].filter((index) => index >= 0);
   const endMarkerIndex = endMarkerIndexes.length > 0 ? Math.min(...endMarkerIndexes) : -1;
 
   return (endMarkerIndex >= 0 ? availabilityText.slice(0, endMarkerIndex) : availabilityText).trim();
@@ -271,18 +322,23 @@ export function getTutorTrialFeeSummaryFromOrderDetail(detail?: string) {
 
   const feeText = detail.slice(markerIndex + tutorTrialFeeDetailMarker.length);
   const scheduleMarkerIndex = feeText.indexOf(` · ${tutorTrialScheduleDetailMarker}`);
+  const serviceScheduleMarkerIndex = feeText.indexOf(` · ${tutorServiceScheduleDetailMarker}`);
+  const endMarkerIndexes = [scheduleMarkerIndex, serviceScheduleMarkerIndex].filter((index) => index >= 0);
+  const endMarkerIndex = endMarkerIndexes.length > 0 ? Math.min(...endMarkerIndexes) : -1;
 
-  return (scheduleMarkerIndex >= 0 ? feeText.slice(0, scheduleMarkerIndex) : feeText).trim();
+  return (endMarkerIndex >= 0 ? feeText.slice(0, endMarkerIndex) : feeText).trim();
 }
 
 /** 清理学生端进行中家教卡片详情，避免直接展示流程标记和长时间范围全文。 */
 export function getTutorTrialOrderDisplayDetail(detail?: string) {
   const scheduleMarkerIndex = detail?.indexOf(tutorTrialScheduleDetailMarker) ?? -1;
+  const serviceScheduleMarkerIndex = detail?.indexOf(tutorServiceScheduleDetailMarker) ?? -1;
   const feeMarkerIndex = detail?.indexOf(tutorTrialFeeDetailMarker) ?? -1;
   const trialAvailabilityMarkerIndex = detail?.indexOf(tutorTrialAvailabilityDetailMarker) ?? -1;
   const serviceAvailabilityMarkerIndex = detail?.indexOf(tutorServiceAvailabilityDetailMarker) ?? -1;
   const markerIndexes = [
     scheduleMarkerIndex,
+    serviceScheduleMarkerIndex,
     feeMarkerIndex,
     trialAvailabilityMarkerIndex,
     serviceAvailabilityMarkerIndex

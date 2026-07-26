@@ -142,18 +142,18 @@ function getTutorTrialCandidateSchedulePreview(candidate: TutorApplicationCandid
       buttonLabel: "可家教时间",
       emptyLabel: "暂无可家教时间",
       showScheduleLabel: false,
-      subtitle: "查看学生同意正式雇佣后提交的可家教日期。",
+      subtitle: "查看学生同意正式雇佣后提交的可家教日期，并据此制定正式雇佣日程。",
       summary: candidate.availability?.trim() ?? "",
       title: "可家教时间"
     };
   }
 
-  if (candidateTask.node === "serviceScheduleConfirming" || candidateTask.node === "formalTutoring") {
+  if (candidateTask.node === "formalTutoring") {
     return {
       buttonLabel: "兼职日程",
       emptyLabel: "暂无兼职日程",
       showScheduleLabel: true,
-      subtitle: "查看家长提交的正式家教日程。",
+      subtitle: "查看家长提交的正式雇佣日程。",
       summary: candidate.trialSchedule?.trim() ?? "",
       title: "兼职日程"
     };
@@ -392,6 +392,16 @@ export function TutorTrialListDialog({
           createTutorTaskModel({ candidate, role: "parent" }).isTrialListVisible && !hiddenTrialCandidateIds.includes(candidate.id)
       ),
     [candidates, hiddenTrialCandidateIds]
+  );
+  /** 正式服务阶段从父端主卡片进入时，弹窗作为课程列表使用。 */
+  const isCourseMode = useMemo(
+    () =>
+      trialCandidates.length > 0 &&
+      trialCandidates.every((candidate) => {
+        const candidateTask = createTutorTaskModel({ candidate, role: "parent" });
+        return candidateTask.node === "serviceSchedulePending" || candidateTask.node === "formalTutoring";
+      }),
+    [trialCandidates]
   );
   const [selectedCandidateId, setSelectedCandidateId] = useState("");
   const [isTutorScheduleOpen, setIsTutorScheduleOpen] = useState(false);
@@ -648,7 +658,7 @@ export function TutorTrialListDialog({
           type="button"
         >
           <CalendarClock size={16} />
-          {selectedCandidateTask.node === "serviceScheduleConfirming" ? "修改兼职日程" : "提交兼职日程"}
+          提交正式雇佣日程
         </button>
       );
     }
@@ -661,7 +671,7 @@ export function TutorTrialListDialog({
           onClick={() => void handleWorkflowAction("request_service_end")}
           type="button"
         >
-          发起结束家教
+          结束兼职
         </button>
       );
     }
@@ -697,8 +707,8 @@ export function TutorTrialListDialog({
         <div className="card-title flex items-center justify-between gap-[10px]">
           <CalendarClock size={18} />
           <div>
-            <strong>试课列表</strong>
-            <span>共 {trialCandidates.length} 位，按流程处理试课、正式雇佣和日程</span>
+            <strong>{isCourseMode ? "课程" : "试课列表"}</strong>
+            <span>{isCourseMode ? `共 ${trialCandidates.length} 位，处理正式雇佣课程和结束兼职` : `共 ${trialCandidates.length} 位，按流程处理试课、正式雇佣和日程`}</span>
           </div>
           <button aria-label="关闭" className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button">
             <XCircle size={20} />
@@ -753,8 +763,8 @@ export function TutorTrialListDialog({
           })}
           {trialCandidates.length === 0 ? (
             <article className="empty-state p-[14px] text-center">
-              <strong>暂无试课或服务中的家教</strong>
-              <span>学生确认试课后会在这里展示。</span>
+              <strong>{isCourseMode ? "暂无课程" : "暂无试课或服务中的家教"}</strong>
+              <span>{isCourseMode ? "正式雇佣课程会在这里展示。" : "学生确认试课后会在这里展示。"}</span>
             </article>
           ) : null}
         </div>
@@ -772,8 +782,8 @@ export function TutorTrialListDialog({
             void handleWorkflowAction("submit_service_schedule", { tutorSchedule: value.plan.summary });
             setIsTutorScheduleOpen(false);
           }}
-          subtitle="请在学生提交的可家教时间内制定兼职日程，提交后需要学生确认。"
-          title="兼职日程"
+          subtitle="请在学生提交的可家教时间内制定正式雇佣日程，提交后直接进入正式雇佣。"
+          title="正式雇佣日程"
         />
       ) : null}
 

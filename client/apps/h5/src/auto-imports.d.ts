@@ -93,13 +93,17 @@ declare global {
   const StrictMode: typeof import('react').StrictMode
   const Suspense: typeof import('react').Suspense
   const TUTOR_APPLICATION_PENDING_STATUS: typeof import('./tools/tutorTrial').TUTOR_APPLICATION_PENDING_STATUS
+  const TUTOR_DEMAND_IN_PROGRESS_STATUS: typeof import('./tools/tutorTrial').TUTOR_DEMAND_IN_PROGRESS_STATUS
   const TUTOR_FORMAL_SERVICE_LEGACY_STATUS: typeof import('./tools/tutorTrial').TUTOR_FORMAL_SERVICE_LEGACY_STATUS
+  const TUTOR_FORMAL_SERVICE_RUNNING_LEGACY_STATUS: typeof import('./tools/tutorTrial').TUTOR_FORMAL_SERVICE_RUNNING_LEGACY_STATUS
   const TUTOR_FORMAL_SERVICE_STATUS: typeof import('./tools/tutorTrial').TUTOR_FORMAL_SERVICE_STATUS
   const TUTOR_REJECTED_LEGACY_STATUS: typeof import('./tools/tutorTrial').TUTOR_REJECTED_LEGACY_STATUS
   const TUTOR_REJECTED_STATUS: typeof import('./tools/tutorTrial').TUTOR_REJECTED_STATUS
+  const TUTOR_SERVICE_CONFIRMING_LEGACY_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_CONFIRMING_LEGACY_STATUS
   const TUTOR_SERVICE_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_CONFIRMING_STATUS
   const TUTOR_SERVICE_INVALID_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_INVALID_STATUS
   const TUTOR_SERVICE_SCHEDULE_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_SCHEDULE_CONFIRMING_STATUS
+  const TUTOR_SERVICE_SCHEDULE_PENDING_LEGACY_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_SCHEDULE_PENDING_LEGACY_STATUS
   const TUTOR_SERVICE_SCHEDULE_PENDING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_SCHEDULE_PENDING_STATUS
   const TUTOR_SETTLEMENT_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SETTLEMENT_CONFIRMING_STATUS
   const TUTOR_SETTLEMENT_REVISING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SETTLEMENT_REVISING_STATUS
@@ -110,6 +114,7 @@ declare global {
   const TUTOR_TRIAL_ENDED_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_ENDED_STATUS
   const TUTOR_TRIAL_END_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_END_CONFIRMING_STATUS
   const TUTOR_TRIAL_RESULT_PROCESSING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_RESULT_PROCESSING_STATUS
+  const TUTOR_TRIAL_SETTLED_SERVICE_PENDING_LEGACY_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_SETTLED_SERVICE_PENDING_LEGACY_STATUS
   const TUTOR_TRIAL_SETTLED_SERVICE_PENDING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_SETTLED_SERVICE_PENDING_STATUS
   const TrialScheduleCalendar: typeof import('./components/TrialScheduleCalendar/index').TrialScheduleCalendar
   const Truck: typeof import('lucide-react').Truck
@@ -327,6 +332,7 @@ declare global {
   const tutorGradeOptions: typeof import('./components/TutorCard/model').tutorGradeOptions
   const tutorLevelOptions: typeof import('./components/TutorCard/model').tutorLevelOptions
   const tutorServiceAvailabilityDetailMarker: typeof import('./tools/tutorTrial').tutorServiceAvailabilityDetailMarker
+  const tutorServiceScheduleDetailMarker: typeof import('./tools/tutorTrial').tutorServiceScheduleDetailMarker
   const tutorSorts: typeof import('./shared/clientPageModel').tutorSorts
   const tutorSubjectOptions: typeof import('./shared/tutorModel').tutorSubjectOptions
   const tutorTrialAvailabilityDetailMarker: typeof import('./tools/tutorTrial').tutorTrialAvailabilityDetailMarker

@@ -35,7 +35,11 @@
 }
 
 .tutor-application-list {
+  align-content: start;
+  align-items: start;
   min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
   overscroll-behavior: contain;
 }
 
@@ -112,6 +116,24 @@
 
 .tutor-application-status-stack.multi {
   flex-direction: column;
+}
+
+.tutor-application-actions {
+  align-items: center;
+}
+
+.tutor-application-actions button,
+.tutor-trial-list-panel > button,
+.tutor-trial-list-panel > .sheet-actions button {
+  min-width: 0;
+  line-height: 1.25;
+  text-align: center;
+  white-space: normal;
+  word-break: normal;
+}
+
+.tutor-trial-list-panel > button {
+  width: 100%;
 }
 
 .tutor-application-card.trialing .tutor-application-status {

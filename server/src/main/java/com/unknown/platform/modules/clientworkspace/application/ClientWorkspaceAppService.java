@@ -54,6 +54,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -78,17 +79,21 @@ public class ClientWorkspaceAppService {
   private static final String TUTOR_APPLICANT_STATUS_APPLICATION_PENDING_LEGACY = "等待家长确认试课";
   private static final String TUTOR_APPLICANT_STATUS_CANCELLED = "已取消";
   private static final String TUTOR_APPLICANT_STATUS_ENDED = "已结束";
-  private static final String TUTOR_APPLICANT_STATUS_FORMAL_SERVICE = "正式家教服务";
+  private static final String TUTOR_APPLICANT_STATUS_FORMAL_SERVICE = "正式雇佣";
+  private static final String TUTOR_APPLICANT_STATUS_FORMAL_SERVICE_LEGACY = "正式家教服务";
   private static final String TUTOR_APPLICANT_STATUS_FORMAL_SERVICE_INVALID = "正式雇佣失效";
   private static final String TUTOR_APPLICANT_STATUS_REJECTED = "已失效";
   private static final String TUTOR_APPLICANT_STATUS_REJECTED_LEGACY = "已拒绝";
-  private static final String TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING = "家教服务确认中";
-  private static final String TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING = "兼职日程确认中";
-  private static final String TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING = "兼职日程待提交";
+  private static final String TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING = "正式雇佣确认中";
+  private static final String TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING_LEGACY = "家教服务确认中";
+  private static final String TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING_LEGACY = "兼职日程确认中";
+  private static final String TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING = "正式雇佣日程确认中";
+  private static final String TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING_LEGACY = "兼职日程待提交";
   private static final String TUTOR_APPLICANT_STATUS_SETTLEMENT_CONFIRMING = "结算确认中";
   private static final String TUTOR_APPLICANT_STATUS_SETTLEMENT_REVISING = "结算修改中";
   private static final String TUTOR_APPLICANT_STATUS_SYSTEM_SETTLING = "系统结算中";
-  private static final String TUTOR_APPLICANT_STATUS_TRIAL_SETTLED_SERVICE_PENDING = "试课已结算+雇佣确认中";
+  private static final String TUTOR_APPLICANT_STATUS_TRIAL_SETTLED_SERVICE_PENDING = "试课已结算";
+  private static final String TUTOR_APPLICANT_STATUS_TRIAL_SETTLED_SERVICE_PENDING_LEGACY = "试课已结算+雇佣确认中";
   private static final String TUTOR_APPLICANT_STATUS_TRIAL_ENDED = "试课已结束";
   private static final String TUTOR_APPLICANT_STATUS_TRIAL_END_CONFIRMING = "结束试课确认中";
   private static final String TUTOR_APPLICANT_STATUS_TRIAL_CONFIRMED = "试课日程确认中";
@@ -98,7 +103,9 @@ public class ClientWorkspaceAppService {
   private static final String TUTOR_APPLICANT_STATUS_TUTORING_LEGACY = "家教进行中";
   private static final String TUTOR_DEMAND_STATUS_CANCELLED = "已取消";
   private static final String TUTOR_DEMAND_STATUS_ENDED = "已结束";
-  private static final String TUTOR_DEMAND_STATUS_FORMAL_SERVICE = "正式家教服务";
+  private static final String TUTOR_DEMAND_STATUS_IN_PROGRESS = "进行中";
+  private static final String TUTOR_DEMAND_STATUS_FORMAL_SERVICE_LEGACY = "正式雇佣";
+  private static final String TUTOR_DEMAND_STATUS_FORMAL_TUTOR_SERVICE_LEGACY = "正式家教服务";
   private static final String TUTOR_DEMAND_STATUS_RECRUITING = "发布中";
   private static final String TUTOR_DEMAND_STATUS_RECRUITING_LEGACY = "家教招募中";
   private static final String TUTOR_DEMAND_STATUS_TUTORING_LEGACY = "家教进行中";
@@ -619,8 +626,8 @@ public class ClientWorkspaceAppService {
     long currentUserId = clientSessionService.requireUserId(authorization);
     ensureUserRole(currentUserId, ClientRole.student, "TUTOR_TRIAL_STUDENT_ONLY", "仅学生账号可以申请家教试课");
     TutorDemandRow demand = requireTutorDemandForUpdate(demandId);
-    if (isClosedTutorDemandStatus(demand.status())) {
-      throw new BusinessException("TUTOR_DEMAND_CLOSED", "该家教兼职已结束或已取消");
+    if (!isRecruitingTutorDemandStatus(demand.status())) {
+      throw new BusinessException("TUTOR_DEMAND_CLOSED", "该家教兼职已不可申请");
     }
     String availability = request == null ? "" : clean(request.availability());
     if (availability.isBlank()) {
@@ -909,10 +916,11 @@ public class ClientWorkspaceAppService {
         requireTutorApplicationStatus(
             application.status(),
             "TUTOR_SERVICE_CONFIRMATION_CANCEL_STATUS_INVALID",
-            "只有正式雇佣确认中的记录可以取消兼职确认",
+            "只有正式雇佣确认中或正式雇佣日程确认中的记录可以取消兼职确认",
             TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING,
             TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING,
-            TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING
+            TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING_LEGACY,
+            TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING_LEGACY
         );
         cancelTutorServiceConfirmation(application, currentUserId);
       }
@@ -921,7 +929,7 @@ public class ClientWorkspaceAppService {
         requireTutorApplicationStatus(
             application.status(),
             "TUTOR_TRIAL_RESULT_STATUS_INVALID",
-            "只有试课已结算且等待雇佣确认的记录可以结束本次试课",
+            "只有试课已结算且等待正式雇佣的记录可以结束本次试课",
             TUTOR_APPLICANT_STATUS_TRIAL_RESULT_PROCESSING,
             TUTOR_APPLICANT_STATUS_TRIAL_SETTLED_SERVICE_PENDING
         );
@@ -961,11 +969,14 @@ public class ClientWorkspaceAppService {
             "TUTOR_SERVICE_SCHEDULE_STATUS_INVALID",
             "当前状态不可提交兼职日程",
             TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING,
-            TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING
+            TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING_LEGACY,
+            TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING_LEGACY
         );
         String tutorSchedule = request == null ? "" : clean(request.tutorSchedule());
         assertTutorServiceScheduleWithinAvailability(tutorSchedule, tutorApplicationAvailability(application.demandId(), application.publicId()));
-        updateTutorApplicationSchedule(application.id(), tutorSchedule, TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING);
+        updateTutorApplicationSchedule(application.id(), tutorSchedule, TUTOR_APPLICANT_STATUS_FORMAL_SERVICE);
+        updateTutorDemandStatus(application.demandId(), TUTOR_DEMAND_STATUS_IN_PROGRESS);
+        endOtherActiveTutorApplicationsAfterFormalHire(application.demandId(), application.publicId());
       }
       case "resubmit_settlement" -> {
         ensureTutorParent(application, currentUserId);
@@ -974,34 +985,43 @@ public class ClientWorkspaceAppService {
       }
       case "request_service_end" -> {
         ensureTutorWorkflowOwner(application, currentUserId);
-        requireTutorApplicationStatus(application.status(), "TUTOR_SERVICE_END_STATUS_INVALID", "只有正式家教服务可以发起结束", TUTOR_APPLICANT_STATUS_FORMAL_SERVICE, TUTOR_APPLICANT_STATUS_TUTORING_LEGACY);
+        requireTutorApplicationStatus(
+            application.status(),
+            "TUTOR_SERVICE_END_STATUS_INVALID",
+            "只有进行中的家教兼职可以发起结束",
+            TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING,
+            TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING_LEGACY,
+            TUTOR_APPLICANT_STATUS_FORMAL_SERVICE,
+            TUTOR_APPLICANT_STATUS_TUTORING_LEGACY
+        );
         updateTutorApplicationStatus(application.id(), TUTOR_APPLICANT_STATUS_SETTLEMENT_CONFIRMING);
       }
       case "accept_service_offer" -> {
         ensureTutorStudent(application, currentUserId);
-        requireTutorApplicationStatus(application.status(), "TUTOR_SERVICE_OFFER_STATUS_INVALID", "只有家教服务确认中的记录可以同意", TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING);
+        requireTutorApplicationStatus(application.status(), "TUTOR_SERVICE_OFFER_STATUS_INVALID", "只有正式雇佣确认中的记录可以同意", TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING);
         updateTutorApplicationAvailabilityAndStatus(application.id(), requireTutorServiceAvailability(request), TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING);
+        updateTutorDemandStatus(application.demandId(), TUTOR_DEMAND_STATUS_IN_PROGRESS);
       }
       case "reject_service_offer_salary" -> {
         ensureTutorStudent(application, currentUserId);
-        requireTutorApplicationStatus(application.status(), "TUTOR_SERVICE_OFFER_STATUS_INVALID", "只有家教服务确认中的记录可以反馈薪资原因", TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING);
+        requireTutorApplicationStatus(application.status(), "TUTOR_SERVICE_OFFER_STATUS_INVALID", "只有正式雇佣确认中的记录可以反馈薪资原因", TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING);
         updateTutorApplicationStatus(application.id(), TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING);
       }
       case "reject_service_offer" -> {
         ensureTutorStudent(application, currentUserId);
-        requireTutorApplicationStatus(application.status(), "TUTOR_SERVICE_OFFER_STATUS_INVALID", "只有家教服务确认中的记录可以拒绝", TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING);
+        requireTutorApplicationStatus(application.status(), "TUTOR_SERVICE_OFFER_STATUS_INVALID", "只有正式雇佣确认中的记录可以拒绝", TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING);
         updateTutorApplicationStatus(application.id(), TUTOR_APPLICANT_STATUS_FORMAL_SERVICE_INVALID);
       }
       case "confirm_service_schedule" -> {
         ensureTutorStudent(application, currentUserId);
-        requireTutorApplicationStatus(application.status(), "TUTOR_SERVICE_SCHEDULE_STATUS_INVALID", "只有兼职日程确认中的记录可以确认", TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING);
+        requireTutorApplicationStatus(application.status(), "TUTOR_SERVICE_SCHEDULE_STATUS_INVALID", "当前正式雇佣日程不需要学生再次确认", TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING_LEGACY);
         updateTutorApplicationStatus(application.id(), TUTOR_APPLICANT_STATUS_FORMAL_SERVICE);
-        updateTutorDemandStatus(application.demandId(), TUTOR_DEMAND_STATUS_FORMAL_SERVICE);
+        updateTutorDemandStatus(application.demandId(), TUTOR_DEMAND_STATUS_IN_PROGRESS);
         endOtherActiveTutorApplicationsAfterFormalHire(application.demandId(), application.publicId());
       }
       case "request_service_schedule_change" -> {
         ensureTutorStudent(application, currentUserId);
-        requireTutorApplicationStatus(application.status(), "TUTOR_SERVICE_SCHEDULE_STATUS_INVALID", "只有兼职日程确认中的记录可以要求修改", TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING);
+        requireTutorApplicationStatus(application.status(), "TUTOR_SERVICE_SCHEDULE_STATUS_INVALID", "只有旧版兼职日程确认中的记录可以要求修改", TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING_LEGACY);
         updateTutorApplicationAvailabilityAndStatus(application.id(), requireTutorServiceAvailability(request), TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING);
       }
       case "confirm_settlement" -> {
@@ -1219,7 +1239,7 @@ public class ClientWorkspaceAppService {
                         AND ta.enabled = TRUE
                         AND ta.status IN (
                            '试课日程确认中', '试课确认中', '试课中', '结束试课确认中', '试课结果处理',
-                           '结算确认中', '结算修改中', '试课已结算+雇佣确认中', '家教服务确认中', '兼职日程待提交', '兼职日程确认中', '正式家教服务', '家教进行中',
+                           '结算确认中', '结算修改中', '试课已结算', '试课已结算+雇佣确认中', '正式雇佣确认中', '家教服务确认中', '正式雇佣日程确认中', '兼职日程待提交', '兼职日程确认中', '正式雇佣', '正式家教服务', '家教进行中',
                            '正式雇佣失效'
                          )
                      ) AS trialing_count,
@@ -1232,7 +1252,31 @@ public class ClientWorkspaceAppService {
                          AND COALESCE(NULLIF(ta.trial_start, ''), '') <> ''
                          AND COALESCE(NULLIF(ta.trial_end, ''), '') <> ''
                          AND COALESCE(NULLIF(ta.trial_half_day, ''), '') <> ''
-                     ) AS has_trial_schedule
+                     ) AS has_trial_schedule,
+                     (
+                       SELECT ta.public_id
+                       FROM tutor_applicant ta
+                       WHERE ta.tutor_demand_id = td.id
+                         AND ta.enabled = TRUE
+                         AND ta.status IN (
+                           '正式雇佣日程确认中', '兼职日程待提交', '兼职日程确认中',
+                           '正式雇佣', '正式家教服务', '家教进行中'
+                         )
+                       ORDER BY ta.updated_at DESC, ta.id DESC
+                       LIMIT 1
+                     ) AS active_application_public_id,
+                     (
+                       SELECT COALESCE(NULLIF(ta.trial_half_day, ''), '')
+                       FROM tutor_applicant ta
+                       WHERE ta.tutor_demand_id = td.id
+                         AND ta.enabled = TRUE
+                         AND ta.status IN (
+                           '正式雇佣日程确认中', '兼职日程待提交', '兼职日程确认中',
+                           '正式雇佣', '正式家教服务', '家教进行中'
+                         )
+                       ORDER BY ta.updated_at DESC, ta.id DESC
+                       LIMIT 1
+                     ) AS active_application_schedule
               FROM tutor_demand td
               WHERE td.parent_user_id = ?
                 AND td.enabled = TRUE
@@ -1244,7 +1288,10 @@ public class ClientWorkspaceAppService {
             boolean hasTrialSchedule = rs.getBoolean("has_trial_schedule");
             int applicantCount = rs.getInt("applicant_count");
             boolean hasTrialingTutor = rs.getInt("trialing_count") > 0;
-            String displayStatus = tutorDemandOrderStatus(status);
+            String activeApplicationPublicId = defaultText(rs.getString("active_application_public_id"), "");
+            String activeApplicationSchedule = defaultText(rs.getString("active_application_schedule"), "");
+            boolean isDemandInProgress = isFormalTutorDemandStatus(status) || !activeApplicationPublicId.isBlank();
+            String displayStatus = isDemandInProgress ? TUTOR_DEMAND_STATUS_IN_PROGRESS : tutorDemandOrderStatus(status);
             return new ClientOrder(
                 rs.getString("public_id"),
                 role,
@@ -1254,7 +1301,8 @@ public class ClientWorkspaceAppService {
                 "孩子：" + rs.getString("child"),
                 "周期：" + defaultText(rs.getString("period_start"), "待定") + " 至 "
                     + defaultText(rs.getString("period_end"), "待定") + " · 地址："
-                    + defaultText(rs.getString("address_label"), "地址待补充") + " · 学科：" + rs.getString("subject"),
+                    + defaultText(rs.getString("address_label"), "地址待补充") + " · 学科：" + rs.getString("subject")
+                    + (activeApplicationSchedule.isBlank() ? "" : " · 课程安排：" + activeApplicationSchedule),
                 null,
                 rs.getString("budget"),
                 "tutor",
@@ -1263,19 +1311,19 @@ public class ClientWorkspaceAppService {
                 rs.getInt("applicant_count"),
                 rs.getInt("trialing_count"),
                 null,
-                null,
-                !isClosed,
-                !isClosed,
-                !isClosed && !hasTrialSchedule,
+                activeApplicationPublicId,
+                !isClosed && !isDemandInProgress,
+                !isClosed && !isDemandInProgress,
+                !isClosed && !hasTrialSchedule && !isDemandInProgress,
+                isDemandInProgress && !activeApplicationPublicId.isBlank(),
                 false,
                 false,
                 false,
                 false,
                 false,
-                false,
-                false,
-                hasTrialingTutor,
-                !isClosed && applicantCount > 0,
+                isDemandInProgress && !activeApplicationPublicId.isBlank(),
+                !isDemandInProgress && hasTrialingTutor,
+                !isDemandInProgress && !isClosed && applicantCount > 0,
                 false,
                 false
             );
@@ -1633,7 +1681,7 @@ public class ClientWorkspaceAppService {
             LEFT JOIN app_user u ON u.id = td.parent_user_id
             WHERE td.parent_user_id = ?
               AND td.enabled = TRUE
-              AND td.status NOT IN (?, ?, ?, ?)
+              AND td.status NOT IN (?, ?)
             ORDER BY td.created_at DESC, td.id DESC
             """,
         (rs, rowNum) -> new TutorDemand(
@@ -1653,9 +1701,7 @@ public class ClientWorkspaceAppService {
         ),
         parentUserId,
         TUTOR_DEMAND_STATUS_CANCELLED,
-        TUTOR_DEMAND_STATUS_ENDED,
-        TUTOR_DEMAND_STATUS_FORMAL_SERVICE,
-        TUTOR_DEMAND_STATUS_TUTORING_LEGACY
+        TUTOR_DEMAND_STATUS_ENDED
     );
   }
 
@@ -1670,7 +1716,7 @@ public class ClientWorkspaceAppService {
             FROM tutor_demand td
             LEFT JOIN app_user u ON u.id = td.parent_user_id
             WHERE td.enabled = TRUE
-              AND td.status NOT IN (?, ?, ?, ?)
+              AND td.status IN (?, ?)
             ORDER BY td.created_at DESC, td.id DESC
             """,
         (rs, rowNum) -> new TutorDemand(
@@ -1688,10 +1734,8 @@ public class ClientWorkspaceAppService {
             "tutorDemand",
             tutorApplicants(rs.getLong("id"))
         ),
-        TUTOR_DEMAND_STATUS_CANCELLED,
-        TUTOR_DEMAND_STATUS_ENDED,
-        TUTOR_DEMAND_STATUS_FORMAL_SERVICE,
-        TUTOR_DEMAND_STATUS_TUTORING_LEGACY
+        TUTOR_DEMAND_STATUS_RECRUITING,
+        TUTOR_DEMAND_STATUS_RECRUITING_LEGACY
     );
   }
 
@@ -2418,15 +2462,24 @@ public class ClientWorkspaceAppService {
     return TUTOR_DEMAND_STATUS_CANCELLED.equals(status) || TUTOR_DEMAND_STATUS_ENDED.equals(status);
   }
 
+  private boolean isRecruitingTutorDemandStatus(String status) {
+    return TUTOR_DEMAND_STATUS_RECRUITING.equals(status) || TUTOR_DEMAND_STATUS_RECRUITING_LEGACY.equals(status);
+  }
+
   private boolean isFormalTutorDemandStatus(String status) {
-    return TUTOR_DEMAND_STATUS_FORMAL_SERVICE.equals(status) || TUTOR_DEMAND_STATUS_TUTORING_LEGACY.equals(status);
+    return TUTOR_DEMAND_STATUS_IN_PROGRESS.equals(status)
+        || TUTOR_DEMAND_STATUS_FORMAL_SERVICE_LEGACY.equals(status)
+        || TUTOR_DEMAND_STATUS_FORMAL_TUTOR_SERVICE_LEGACY.equals(status)
+        || TUTOR_DEMAND_STATUS_TUTORING_LEGACY.equals(status);
   }
 
   /** 判断当前申请是否已经进入正式家教可用时间或正式日程阶段。 */
   private boolean isTutorServiceAvailabilityStatus(String status) {
     return TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING.equals(status)
-        || TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING.equals(status)
+        || TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING_LEGACY.equals(status)
+        || TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING_LEGACY.equals(status)
         || TUTOR_APPLICANT_STATUS_FORMAL_SERVICE.equals(status)
+        || TUTOR_APPLICANT_STATUS_FORMAL_SERVICE_LEGACY.equals(status)
         || TUTOR_APPLICANT_STATUS_TUTORING_LEGACY.equals(status);
   }
 
@@ -2458,7 +2511,10 @@ public class ClientWorkspaceAppService {
   }
 
   private boolean isFormalTutorApplicationStatus(String status) {
-    return TUTOR_APPLICANT_STATUS_FORMAL_SERVICE.equals(status) || TUTOR_APPLICANT_STATUS_TUTORING_LEGACY.equals(status);
+    return TUTOR_APPLICANT_STATUS_FORMAL_SERVICE.equals(status)
+        || TUTOR_APPLICANT_STATUS_FORMAL_SERVICE_LEGACY.equals(status)
+        || TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING_LEGACY.equals(status)
+        || TUTOR_APPLICANT_STATUS_TUTORING_LEGACY.equals(status);
   }
 
   private String tutorDemandStatusLabel(String status) {
@@ -2466,7 +2522,10 @@ public class ClientWorkspaceAppService {
       return TUTOR_DEMAND_STATUS_RECRUITING;
     }
     if (TUTOR_DEMAND_STATUS_TUTORING_LEGACY.equals(status)) {
-      return TUTOR_DEMAND_STATUS_FORMAL_SERVICE;
+      return TUTOR_DEMAND_STATUS_IN_PROGRESS;
+    }
+    if (TUTOR_DEMAND_STATUS_FORMAL_SERVICE_LEGACY.equals(status) || TUTOR_DEMAND_STATUS_FORMAL_TUTOR_SERVICE_LEGACY.equals(status)) {
+      return TUTOR_DEMAND_STATUS_IN_PROGRESS;
     }
     return status;
   }
@@ -2476,9 +2535,27 @@ public class ClientWorkspaceAppService {
   }
 
   private void requireTutorApplicationStatus(String actualStatus, String errorCode, String errorMessage, String... allowedStatuses) {
-    if (!Arrays.asList(allowedStatuses).contains(actualStatus)) {
+    boolean matched = Arrays.stream(allowedStatuses).anyMatch((allowedStatus) -> isSameTutorApplicationStatus(actualStatus, allowedStatus));
+    if (!matched) {
       throw new BusinessException(errorCode, errorMessage);
     }
+  }
+
+  /** 业务状态文案重命名时保留旧值兼容，避免旧数据在流程推进时断链。 */
+  private boolean isSameTutorApplicationStatus(String actualStatus, String allowedStatus) {
+    if (Objects.equals(actualStatus, allowedStatus)) {
+      return true;
+    }
+    return (TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING.equals(allowedStatus)
+        && TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING_LEGACY.equals(actualStatus))
+        || (TUTOR_APPLICANT_STATUS_TRIAL_SETTLED_SERVICE_PENDING.equals(allowedStatus)
+        && TUTOR_APPLICANT_STATUS_TRIAL_SETTLED_SERVICE_PENDING_LEGACY.equals(actualStatus))
+        || (TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING.equals(allowedStatus)
+        && TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING_LEGACY.equals(actualStatus))
+        || (TUTOR_APPLICANT_STATUS_FORMAL_SERVICE.equals(allowedStatus)
+        && (TUTOR_APPLICANT_STATUS_FORMAL_SERVICE_LEGACY.equals(actualStatus)
+        || TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING_LEGACY.equals(actualStatus)
+        || TUTOR_APPLICANT_STATUS_TUTORING_LEGACY.equals(actualStatus)));
   }
 
   private void ensureTutorParent(TutorWorkflowRow application, long currentUserId) {
@@ -2538,6 +2615,7 @@ public class ClientWorkspaceAppService {
         cancelledBy,
         application.id()
     );
+    updateTutorDemandStatus(application.demandId(), TUTOR_DEMAND_STATUS_RECRUITING);
   }
 
   /** 写入试课结算金额和可选雇佣决策，并进入学生费用确认。 */
@@ -2643,7 +2721,7 @@ public class ClientWorkspaceAppService {
             WHERE tutor_demand_id = ?
               AND id <> ?
               AND enabled = TRUE
-              AND status IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              AND status IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
         TUTOR_APPLICANT_STATUS_ENDED,
         application.demandId(),
@@ -2657,9 +2735,12 @@ public class ClientWorkspaceAppService {
         TUTOR_APPLICANT_STATUS_TRIAL_RESULT_PROCESSING,
         TUTOR_APPLICANT_STATUS_SETTLEMENT_CONFIRMING,
         TUTOR_APPLICANT_STATUS_TRIAL_SETTLED_SERVICE_PENDING,
+        TUTOR_APPLICANT_STATUS_TRIAL_SETTLED_SERVICE_PENDING_LEGACY,
         TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING,
+        TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING_LEGACY,
         TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING,
-        TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING
+        TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING_LEGACY,
+        TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING_LEGACY
     );
     updateTutorDemandStatus(application.demandId(), TUTOR_DEMAND_STATUS_ENDED);
   }
@@ -2674,7 +2755,7 @@ public class ClientWorkspaceAppService {
             WHERE tutor_demand_id = ?
               AND public_id <> ?
               AND enabled = TRUE
-              AND status IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              AND status IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
         TUTOR_APPLICANT_STATUS_ENDED,
         demandId,
@@ -2688,9 +2769,12 @@ public class ClientWorkspaceAppService {
         TUTOR_APPLICANT_STATUS_TRIAL_RESULT_PROCESSING,
         TUTOR_APPLICANT_STATUS_SETTLEMENT_CONFIRMING,
         TUTOR_APPLICANT_STATUS_TRIAL_SETTLED_SERVICE_PENDING,
+        TUTOR_APPLICANT_STATUS_TRIAL_SETTLED_SERVICE_PENDING_LEGACY,
         TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING,
+        TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING_LEGACY,
         TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING,
-        TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING
+        TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING_LEGACY,
+        TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING_LEGACY
     );
   }
 

@@ -15,6 +15,7 @@ import {
   isTutorTrialSettledServicePendingStatus,
   isTutorTrialingStatus,
   isTutorTrialResultProcessingStatus,
+  TUTOR_SERVICE_CONFIRMING_STATUS,
   TUTOR_SETTLEMENT_CONFIRMING_STATUS,
   TUTOR_SETTLEMENT_REVISING_STATUS,
   TUTOR_SYSTEM_SETTLING_STATUS
@@ -154,7 +155,7 @@ export function getTutorTaskNode(status?: string): TutorTaskNode {
 
 /** 根据流程节点给出家教任务状态样式。 */
 export function getTutorTaskStatusTone(node: TutorTaskNode): TutorTaskStatusTone {
-  if (node === "trialScheduled" || node === "trialEndRequested" || node === "serviceConfirming" || node === "serviceScheduleConfirming") {
+  if (node === "trialScheduled" || node === "trialEndRequested" || node === "serviceConfirming") {
     return "trialConfirming";
   }
   if (node === "trialing" || node === "formalTutoring") {
@@ -197,6 +198,12 @@ export function getTutorTaskCandidateAvailability(candidate: TutorApplicationCan
 export function getTutorTaskStatusLabels(status?: string) {
   if (isTutorServiceInvalidStatus(status)) {
     return ["试课完成", "拒绝正式委托"];
+  }
+  if (isTutorTrialSettledServicePendingStatus(status)) {
+    return ["试课已结算", "等待正式雇佣"];
+  }
+  if (isTutorServiceConfirmingStatus(status)) {
+    return [TUTOR_SERVICE_CONFIRMING_STATUS];
   }
 
   const statusLabel = getTutorTrialStatusLabel(status);
@@ -256,12 +263,6 @@ export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelO
       if (node === "serviceSchedulePending") {
         actions.add("cancelServiceConfirmation");
       }
-      if (node === "serviceScheduleConfirming") {
-        actions.add("openTrialSchedule");
-        actions.add("confirmServiceSchedule");
-        actions.add("requestServiceScheduleChange");
-        actions.add("cancelServiceConfirmation");
-      }
       if (node === "formalTutoring") {
         actions.add("requestServiceEnd");
       }
@@ -269,6 +270,9 @@ export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelO
         actions.add("confirmSettlement");
         actions.add("requestSettlementRevision");
       }
+    }
+    if (role === "parent" && node === "formalTutoring" && order.canRequestComplete) {
+      actions.add("requestServiceEnd");
     }
   }
 
@@ -293,10 +297,10 @@ export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelO
       actions.add("offerTutorService");
       actions.add("removeRejectedServiceOffer");
     }
-    if (node === "serviceSchedulePending" || node === "serviceScheduleConfirming") {
+    if (node === "serviceSchedulePending") {
       actions.add("submitServiceSchedule");
     }
-    if (node === "serviceConfirming" || node === "serviceSchedulePending" || node === "serviceScheduleConfirming") {
+    if (node === "serviceConfirming" || node === "serviceSchedulePending") {
       actions.add("cancelServiceConfirmation");
     }
     if (node === "formalTutoring") {
