@@ -110,6 +110,7 @@ declare global {
   const TUTOR_TRIAL_ENDED_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_ENDED_STATUS
   const TUTOR_TRIAL_END_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_END_CONFIRMING_STATUS
   const TUTOR_TRIAL_RESULT_PROCESSING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_RESULT_PROCESSING_STATUS
+  const TUTOR_TRIAL_SETTLED_SERVICE_PENDING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_SETTLED_SERVICE_PENDING_STATUS
   const TrialScheduleCalendar: typeof import('./components/TrialScheduleCalendar/index').TrialScheduleCalendar
   const Truck: typeof import('lucide-react').Truck
   const Tutor: typeof import('./pages/home/job/edu/index').Tutor
@@ -225,10 +226,12 @@ declare global {
   const getTutorMonthKey: typeof import('./tools/tutorCalendar').getTutorMonthKey
   const getTutorTaskCandidateAvailability: typeof import('./tools/tutorTaskWorkflow').getTutorTaskCandidateAvailability
   const getTutorTaskNode: typeof import('./tools/tutorTaskWorkflow').getTutorTaskNode
+  const getTutorTaskStatusLabels: typeof import('./tools/tutorTaskWorkflow').getTutorTaskStatusLabels
   const getTutorTaskStatusTone: typeof import('./tools/tutorTaskWorkflow').getTutorTaskStatusTone
   const getTutorTaskStatusToneClassName: typeof import('./tools/tutorTaskWorkflow').getTutorTaskStatusToneClassName
   const getTutorTrialAvailabilitySummaryFromOrderDetail: typeof import('./tools/tutorTrial').getTutorTrialAvailabilitySummaryFromOrderDetail
   const getTutorTrialDateKeyFromLine: typeof import('./tools/tutorTrial').getTutorTrialDateKeyFromLine
+  const getTutorTrialFeeSummaryFromOrderDetail: typeof import('./tools/tutorTrial').getTutorTrialFeeSummaryFromOrderDetail
   const getTutorTrialOrderDisplayDetail: typeof import('./tools/tutorTrial').getTutorTrialOrderDisplayDetail
   const getTutorTrialScheduleLines: typeof import('./tools/tutorTrial').getTutorTrialScheduleLines
   const getTutorTrialScheduleSummaryFromOrderDetail: typeof import('./tools/tutorTrial').getTutorTrialScheduleSummaryFromOrderDetail
@@ -266,6 +269,7 @@ declare global {
   const isTutorApplicationPendingStatus: typeof import('./tools/tutorTrial').isTutorApplicationPendingStatus
   const isTutorFormalServiceStatus: typeof import('./tools/tutorTrial').isTutorFormalServiceStatus
   const isTutorServiceConfirmingStatus: typeof import('./tools/tutorTrial').isTutorServiceConfirmingStatus
+  const isTutorServiceInvalidStatus: typeof import('./tools/tutorTrial').isTutorServiceInvalidStatus
   const isTutorServiceScheduleConfirmingStatus: typeof import('./tools/tutorTrial').isTutorServiceScheduleConfirmingStatus
   const isTutorServiceSchedulePendingStatus: typeof import('./tools/tutorTrial').isTutorServiceSchedulePendingStatus
   const isTutorSettlementStatus: typeof import('./tools/tutorTrial').isTutorSettlementStatus
@@ -274,6 +278,7 @@ declare global {
   const isTutorTrialEndConfirmingStatus: typeof import('./tools/tutorTrial').isTutorTrialEndConfirmingStatus
   const isTutorTrialListStatus: typeof import('./tools/tutorTrial').isTutorTrialListStatus
   const isTutorTrialResultProcessingStatus: typeof import('./tools/tutorTrial').isTutorTrialResultProcessingStatus
+  const isTutorTrialSettledServicePendingStatus: typeof import('./tools/tutorTrial').isTutorTrialSettledServicePendingStatus
   const isTutorTrialingStatus: typeof import('./tools/tutorTrial').isTutorTrialingStatus
   const jobFilters: typeof import('./shared/clientPageModel').jobFilters
   const lazy: typeof import('react').lazy
@@ -321,9 +326,11 @@ declare global {
   const tutorCertificationStatusLabels: typeof import('./components/TutorCard/model').tutorCertificationStatusLabels
   const tutorGradeOptions: typeof import('./components/TutorCard/model').tutorGradeOptions
   const tutorLevelOptions: typeof import('./components/TutorCard/model').tutorLevelOptions
+  const tutorServiceAvailabilityDetailMarker: typeof import('./tools/tutorTrial').tutorServiceAvailabilityDetailMarker
   const tutorSorts: typeof import('./shared/clientPageModel').tutorSorts
   const tutorSubjectOptions: typeof import('./shared/tutorModel').tutorSubjectOptions
   const tutorTrialAvailabilityDetailMarker: typeof import('./tools/tutorTrial').tutorTrialAvailabilityDetailMarker
+  const tutorTrialFeeDetailMarker: typeof import('./tools/tutorTrial').tutorTrialFeeDetailMarker
   const tutorTrialScheduleDetailMarker: typeof import('./tools/tutorTrial').tutorTrialScheduleDetailMarker
   const use: typeof import('react').use
   const useActionState: typeof import('react').useActionState
@@ -374,6 +381,7 @@ declare global {
   const useTransition: typeof import('react').useTransition
   const useTutorTrialActions: typeof import('./pages/home/job/edu/hooks/useTutorTrialActions').useTutorTrialActions
   const useUpdateClientAddress: typeof import('@unknown/hooks').useUpdateClientAddress
+  const useUpdateClientNickname: typeof import('@unknown/hooks').useUpdateClientNickname
   const useUpdateTutorExposure: typeof import('@unknown/hooks').useUpdateTutorExposure
   const useUseClientAddress: typeof import('@unknown/hooks').useUseClientAddress
   const validateByKey: typeof import('./tools/validation').validateByKey
@@ -421,7 +429,7 @@ declare global {
   export type { TutorCertificationInfoSaveMode, TutorCertificationInfoDialogProps } from './components/TutorCertificationInfoDialog/index'
   import('./components/TutorCertificationInfoDialog/index')
   // @ts-ignore
-  export type { TrialSchedulePeriodKey, TrialSchedulePeriodConfig, TrialSchedulePeriodState, TrialScheduleDraft, TrialSchedulePlan, TrialScheduleValue } from './components/TutorTrialScheduleDialog/model'
+  export type { TrialSchedulePeriodKey, TrialSchedulePeriodConfig, TrialSchedulePeriodState, TrialScheduleDraft, TrialSchedulePlan, TrialScheduleValue, TrialScheduleCalendarMarker } from './components/TutorTrialScheduleDialog/model'
   import('./components/TutorTrialScheduleDialog/model')
   // @ts-ignore
   export type { AddressEditorMode, PhoneChangeDraft, PasswordResetDraft } from './pages/Settings/components/SettingsDialogs'

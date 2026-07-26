@@ -70,7 +70,7 @@ export function useHuntingTaskActions({
   async function handleConfirmHuntingQuote(task: HuntingTask, quote: HuntingQuote) {
     try {
       await decideQuote({ action: "confirm", quoteId: quote.id, taskId: task.id });
-      showMessage(`已确认 ${quote.bidderName} 的报价，委托进入履约中。`, { type: "success" });
+      showMessage(`已确认 ${quote.bidder.nickname} 的报价，委托进入履约中。`, { type: "success" });
       refetchWorkspace();
     } catch (error) {
       showMessage(getErrorMessage(error, "确认报价失败，请稍后重试。"), { type: "error" });

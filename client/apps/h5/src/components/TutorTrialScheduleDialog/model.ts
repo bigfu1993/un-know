@@ -36,6 +36,13 @@ export interface TrialScheduleValue {
   selectedDates: string[];
 }
 
+/** 试课日历单元格的时段与文字标记数据。 */
+export interface TrialScheduleCalendarMarker {
+  date: string;
+  labelPeriods?: TrialSchedulePeriodKey[];
+  periods: TrialSchedulePeriodKey[];
+}
+
 /** 试课默认可选时段。 */
 export const trialSchedulePeriods: TrialSchedulePeriodConfig[] = [
   { defaultEnd: "11:00", defaultStart: "09:00", key: "morning", label: "上午" },
@@ -82,9 +89,22 @@ export function getEnabledPeriodSummaries(daySchedule: Record<TrialSchedulePerio
 }
 
 /** 将试课草稿转换为试课日历可消费的日程列表。 */
-export function getTrialScheduleCalendarItems(selectedDates: string[], scheduleDraft: TrialScheduleDraft) {
+export function getTrialScheduleCalendarItems(
+  selectedDates: string[],
+  scheduleDraft: TrialScheduleDraft,
+  options: { showPeriodLabel?: boolean } = {}
+): TrialScheduleCalendarMarker[] {
   return selectedDates.map((dateKey) => ({
     date: dateKey,
+    labelPeriods: options.showPeriodLabel
+      ? trialSchedulePeriods
+          .filter((period) => {
+            const periodState = scheduleDraft[dateKey]?.[period.key];
+
+            return Boolean(periodState?.enabled && periodState.start && periodState.end);
+          })
+          .map((period) => period.key)
+      : undefined,
     periods: trialSchedulePeriods
       .filter((period) => {
         const periodState = scheduleDraft[dateKey]?.[period.key];

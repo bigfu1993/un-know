@@ -36,7 +36,9 @@ import {
   SubmitHuntingCertificationRequest,
   SubmitHuntingCertificationResponse,
   TutorDemand,
-  TutorExposureResponse
+  TutorExposureResponse,
+  UpdateNicknameRequest,
+  UserNickname
 } from "@unknown/domain";
 
 type ApiEnvelope<T> = {
@@ -266,6 +268,13 @@ export async function getTutorDemands(role: Role): Promise<TutorDemand[]> {
 
 export async function getClientAddresses(): Promise<ClientAddress[]> {
   return requestJson<ClientAddress[]>("/api/client/profile/addresses");
+}
+
+export async function updateClientNickname(payload: UpdateNicknameRequest): Promise<UserNickname> {
+  return requestJson<UserNickname>("/api/client/profile/nickname", {
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
 }
 
 export async function createClientAddress(payload: ClientAddressRequest): Promise<ClientAddress> {

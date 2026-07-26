@@ -5,12 +5,14 @@ import {
   isTutorTrialListStatus,
   isTutorFormalServiceStatus,
   isTutorServiceConfirmingStatus,
+  isTutorServiceInvalidStatus,
   isTutorServiceScheduleConfirmingStatus,
   isTutorServiceSchedulePendingStatus,
   isTutorSettlementStatus,
   isTutorTerminalStatus,
   isTutorTrialConfirmingStatus,
   isTutorTrialEndConfirmingStatus,
+  isTutorTrialSettledServicePendingStatus,
   isTutorTrialingStatus,
   isTutorTrialResultProcessingStatus,
   TUTOR_SETTLEMENT_CONFIRMING_STATUS,
@@ -50,6 +52,7 @@ export type TutorTaskAction =
   | "requestTrialEnd"
   | "completeTrialEnd"
   | "cancelApplication"
+  | "cancelServiceConfirmation"
   | "cancelDemand"
   | "rejectTrial"
   | "agreeTrial"
@@ -57,6 +60,7 @@ export type TutorTaskAction =
   | "requestTrialResult"
   | "confirmTrialEnd"
   | "offerTutorService"
+  | "removeRejectedServiceOffer"
   | "closeTrialContinueRecruiting"
   | "acceptServiceOffer"
   | "rejectServiceOffer"
@@ -87,6 +91,7 @@ export interface TutorTaskModel {
   isTrialListVisible: boolean;
   node: TutorTaskNode;
   statusLabel: string;
+  statusLabels: string[];
   statusTone: TutorTaskStatusTone;
   statusToneClassName: string;
 }
@@ -116,7 +121,7 @@ export function getTutorTaskNode(status?: string): TutorTaskNode {
   if (isTutorServiceConfirmingStatus(status)) {
     return "serviceConfirming";
   }
-  if (isTutorTrialResultProcessingStatus(status)) {
+  if (isTutorTrialResultProcessingStatus(status) || isTutorTrialSettledServicePendingStatus(status)) {
     return "trialResultProcessing";
   }
   if (isTutorTrialEndConfirmingStatus(status)) {
@@ -188,6 +193,17 @@ export function getTutorTaskCandidateAvailability(candidate: TutorApplicationCan
   return candidate.availability || "待补充";
 }
 
+/** 获取家长端候选卡片状态展示行。 */
+export function getTutorTaskStatusLabels(status?: string) {
+  if (isTutorServiceInvalidStatus(status)) {
+    return ["试课完成", "拒绝正式委托"];
+  }
+
+  const statusLabel = getTutorTrialStatusLabel(status);
+
+  return statusLabel ? [statusLabel] : [];
+}
+
 /** 创建家教任务纯模型，供订单卡片、申请列表和试课列表统一消费。 */
 export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelOptions): TutorTaskModel {
   const status = order?.status ?? candidate?.status;
@@ -195,6 +211,7 @@ export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelO
   const statusTone = getTutorTaskStatusTone(node);
   const isApplicationListVisible = candidate ? isTutorApplicationListStatus(candidate.status) : false;
   const isTrialListVisible = candidate ? isTutorTrialListStatus(candidate.status) : false;
+  const statusLabel = getTutorTrialStatusLabel(status);
   const actions = new Set<TutorTaskAction>();
 
   if (order) {
@@ -236,10 +253,14 @@ export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelO
         actions.add("acceptServiceOffer");
         actions.add("rejectServiceOffer");
       }
+      if (node === "serviceSchedulePending") {
+        actions.add("cancelServiceConfirmation");
+      }
       if (node === "serviceScheduleConfirming") {
         actions.add("openTrialSchedule");
         actions.add("confirmServiceSchedule");
         actions.add("requestServiceScheduleChange");
+        actions.add("cancelServiceConfirmation");
       }
       if (node === "formalTutoring") {
         actions.add("requestServiceEnd");
@@ -268,8 +289,15 @@ export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelO
       actions.add("offerTutorService");
       actions.add("closeTrialContinueRecruiting");
     }
+    if (isTutorServiceInvalidStatus(candidate.status)) {
+      actions.add("offerTutorService");
+      actions.add("removeRejectedServiceOffer");
+    }
     if (node === "serviceSchedulePending" || node === "serviceScheduleConfirming") {
       actions.add("submitServiceSchedule");
+    }
+    if (node === "serviceConfirming" || node === "serviceSchedulePending" || node === "serviceScheduleConfirming") {
+      actions.add("cancelServiceConfirmation");
     }
     if (node === "formalTutoring") {
       actions.add("requestServiceEnd");
@@ -285,7 +313,8 @@ export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelO
     isApplicationListVisible,
     isTrialListVisible,
     node,
-    statusLabel: getTutorTrialStatusLabel(status),
+    statusLabel,
+    statusLabels: getTutorTaskStatusLabels(status),
     statusTone,
     statusToneClassName: getTutorTaskStatusToneClassName(statusTone)
   };

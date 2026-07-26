@@ -7,6 +7,7 @@ export type TrialScheduleCalendarPeriod = "morning" | "afternoon" | "evening";
 /** 试课日历单日排期。 */
 export interface TrialScheduleCalendarItem {
   date: string;
+  labelPeriods?: TrialScheduleCalendarPeriod[];
   periods: TrialScheduleCalendarPeriod[];
 }
 
@@ -16,11 +17,13 @@ export interface TrialScheduleCalendarProps {
   initialDate?: string;
   maxSelectedDates?: number | null;
   onActiveDateChange?: (dateKey: string) => void;
-  onDayDoubleClick?: (dateKey: string) => void;
+  onDayDoubleClick?: (dateKey: string, selectableDateKeys: string[]) => void;
   onSelectedDatesChange?: (selectedDates: string[]) => void;
+  rangeStartDate?: string | null;
   scheduleItems: TrialScheduleCalendarItem[];
   selectableDates?: string[];
   selectedDates: string[];
+  showScheduleLabel?: boolean;
 }
 
 /** 试课日历时段与样式的映射。 */
@@ -33,22 +36,40 @@ export function TrialScheduleCalendar({
   maxSelectedDates = 3,
   onActiveDateChange,
   onDayDoubleClick,
+  rangeStartDate,
   scheduleItems,
   selectableDates,
-  selectedDates
+  selectedDates,
+  showScheduleLabel = false
 }: TrialScheduleCalendarProps) {
   const today = useMemo(() => new Date(), []);
   const todayKey = getTutorDateKey(today);
   const initialSelectedDate = activeDate ?? initialDate ?? selectedDates[0] ?? todayKey;
   const [viewMonth, setViewMonth] = useState(() => initialSelectedDate.slice(0, 7) || getTutorMonthKey(today));
-  const calendarCells = getTutorCalendarCells(viewMonth);
+  const calendarCells = useMemo(() => getTutorCalendarCells(viewMonth), [viewMonth]);
   const monthTitle = `${viewMonth.split("-")[0]}年${Number(viewMonth.split("-")[1])}月`;
   const scheduleMap = useMemo(() => {
-    return new Map(scheduleItems.map((item) => [item.date, new Set(item.periods)]));
+    return new Map(
+      scheduleItems.map((item) => [
+        item.date,
+        {
+          hasCustomLabelPeriods: item.labelPeriods !== undefined,
+          labelPeriods: new Set(item.labelPeriods ?? []),
+          periods: new Set(item.periods)
+        }
+      ])
+    );
   }, [scheduleItems]);
   const selectedDateSet = useMemo(() => new Set(selectedDates), [selectedDates]);
   const selectableDateSet = useMemo(() => new Set(selectableDates ?? []), [selectableDates]);
   const hasSelectableDateLimit = selectableDateSet.size > 0;
+  const selectableDateKeys = useMemo(() => {
+    return calendarCells
+      .filter((dateKey): dateKey is string => Boolean(dateKey))
+      .filter((dateKey) => !hasSelectableDateLimit || selectableDateSet.has(dateKey));
+  }, [calendarCells, hasSelectableDateLimit, selectableDateSet]);
+  /** 最近一次日期点击记录，用于兼容 H5 触屏双击和桌面双击。 */
+  const lastDateClickRef = useRef<{ dateKey: string; time: number } | null>(null);
 
   /** 切换日历月份并把当前焦点日期移动到新月份第一天。 */
   function handleChangeMonth(offset: number) {
@@ -61,12 +82,21 @@ export function TrialScheduleCalendar({
     onActiveDateChange?.(nextActiveDate);
   }
 
-  /** 点击日期仅切换查看焦点，双击时交给外层切换当天三段排期。 */
-  function handleSelectDate(dateKey: string, clickCount: number) {
+  /** 单击日期切换当前查看日期；仅调用方传入双击回调时才启用批量选择。 */
+  function handleSelectDate(dateKey: string, clickTime: number) {
     onActiveDateChange?.(dateKey);
-    if (clickCount >= 2) {
-      onDayDoubleClick?.(dateKey);
+    if (!onDayDoubleClick) {
+      return;
     }
+
+    const lastDateClick = lastDateClickRef.current;
+    if (lastDateClick?.dateKey === dateKey && clickTime - lastDateClick.time <= 360) {
+      lastDateClickRef.current = null;
+      onDayDoubleClick?.(dateKey, selectableDateKeys);
+      return;
+    }
+
+    lastDateClickRef.current = { dateKey, time: clickTime };
   }
 
   return (
@@ -93,24 +123,29 @@ export function TrialScheduleCalendar({
             return <span className="trial-schedule-calendar__day empty" key={`empty-${index}`} />;
           }
 
-          const periodSet = scheduleMap.get(dateKey);
-          const isSelected = selectedDateSet.has(dateKey) || Boolean(periodSet);
+          const scheduleEntry = scheduleMap.get(dateKey);
+          const periodSet = scheduleEntry?.periods;
+          const isSelected = selectedDateSet.has(dateKey);
           const isOverMaxSelectedDates =
-            maxSelectedDates !== null && maxSelectedDates !== undefined && selectedDates.length >= maxSelectedDates;
+            maxSelectedDates !== null && maxSelectedDates !== undefined && selectedDates.length >= maxSelectedDates && !isSelected;
           const isOutsideSelectableDates = hasSelectableDateLimit && !selectableDateSet.has(dateKey);
-          const isDisabled = !isSelected && (isOverMaxSelectedDates || isOutsideSelectableDates);
           const dayNumber = Number(dateKey.slice(-2));
 
           return (
             <button
-              className={`trial-schedule-calendar__day ${activeDate === dateKey ? "active" : ""} ${dateKey === todayKey ? "today" : ""} ${isSelected ? "selected" : ""} ${periodSet?.has("morning") ? "has-morning" : ""} ${periodSet?.has("afternoon") ? "has-afternoon" : ""} ${periodSet?.has("evening") ? "has-evening" : ""}`}
-              disabled={isDisabled}
+              className={`trial-schedule-calendar__day ${activeDate === dateKey ? "active" : ""} ${rangeStartDate === dateKey ? "range-start" : ""} ${dateKey === todayKey ? "today" : ""} ${isSelected ? "selected" : ""} ${isOverMaxSelectedDates ? "limited" : ""} ${periodSet?.has("morning") ? "has-morning" : ""} ${periodSet?.has("afternoon") ? "has-afternoon" : ""} ${periodSet?.has("evening") ? "has-evening" : ""}`}
+              disabled={isOutsideSelectableDates}
               key={dateKey}
-              onClick={(event) => handleSelectDate(dateKey, event.detail)}
+              onClick={(event) => handleSelectDate(dateKey, event.timeStamp)}
               type="button"
             >
               {trialCalendarPeriods.map((period) => (
-                <span className={`trial-schedule-calendar__period ${period}`} key={period} />
+                <span className={`trial-schedule-calendar__period ${period}`} key={period}>
+                  {scheduleEntry?.labelPeriods.has(period) ||
+                  (!scheduleEntry?.hasCustomLabelPeriods && showScheduleLabel && periodSet?.has(period)) ? (
+                    <span className="trial-schedule-calendar__period-label">课</span>
+                  ) : null}
+                </span>
               ))}
               <strong>{dayNumber}</strong>
             </button>

@@ -14,7 +14,7 @@ export interface TutorTrialJob {
   id: string;
   parentPhone: string;
   period: string;
-  publisher: string;
+  publisher: import("@unknown/domain").UserNickname;
   requirement: string;
   status: string;
   subject: string;
@@ -29,9 +29,11 @@ export interface TutorApplicationCandidate {
   hiredTimes: number;
   id: string;
   major: string;
-  name: string;
+  nickname: string;
   school: string;
+  serviceConfirmationCancelledBy?: string;
   status: string;
+  trialFee?: number;
   trialSchedule: string;
 }
 

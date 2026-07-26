@@ -23,7 +23,7 @@ import {
 } from "@shared/clientPageModel";
 import { formatTutorSubjects, parseTutorSubjects } from "@shared/tutorModel";
 import { localAuthCode, localPasswordMinLength, saveLocalPasswordCredential } from "@tools/localAuth";
-import { showMessage } from "@tools/messageToast";
+import { getErrorMessage, showMessage } from "@tools/messageToast";
 import { getFilledFieldCount, hasInvalidRequiredFields, validateByKey } from "@tools/validation";
 
 /** 设置页手机号安全弹窗模式。 */
@@ -34,8 +34,8 @@ type SecurityDialogMode = "phone" | "password";
 const emptyClientAddresses: ClientAddress[] = [];
 
 export function SettingsView({ onBack }: { onBack: () => void }) {
-  const { phone, profileDraft, profileName, role, session } = useGlobalUser();
-  const setUserDisplayName = useGlobalStore((state) => state.setUserDisplayName);
+  const { phone, profileDraft, nickname, role, session } = useGlobalUser();
+  const setUserNickname = useGlobalStore((state) => state.setUserNickname);
   const setUserProfileDraft = useGlobalStore((state) => state.setUserProfileDraft);
   const setUserPhone = useGlobalStore((state) => state.setUserPhone);
   const addressTemplate = registrationProfileTemplates[role];
@@ -45,12 +45,13 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
   const useAddressMutation = useUseClientAddress();
   const deleteAddressMutation = useDeleteClientAddress();
   const resetPasswordMutation = useResetClientPassword();
+  const updateNicknameMutation = useUpdateClientNickname();
   const addressItems = useMemo(() => clientAddressesToAddressBookItems(clientAddresses), [clientAddresses]);
   const [addressEditorMode, setAddressEditorMode] = useState<AddressEditorMode | null>(null);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [addressDraft, setAddressDraft] = useState<ProfileDraftState>({});
   const [isNicknameEditorOpen, setIsNicknameEditorOpen] = useState(false);
-  const [nicknameDraft, setNicknameDraft] = useState(profileName);
+  const [nicknameDraft, setNicknameDraft] = useState(nickname);
   const [nicknameFeedback, setNicknameFeedback] = useState("");
   const [securityDialogMode, setSecurityDialogMode] = useState<SecurityDialogMode | null>(null);
   const [securityFeedback, setSecurityFeedback] = useState("");
@@ -79,28 +80,33 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
 
   useEffect(() => {
     if (!isNicknameEditorOpen) {
-      setNicknameDraft(profileName);
+      setNicknameDraft(nickname);
     }
-  }, [isNicknameEditorOpen, profileName]);
+  }, [isNicknameEditorOpen, nickname]);
 
   /** 使用最新全局昵称打开昵称编辑弹窗。 */
   function handleOpenNicknameChange() {
     setNicknameFeedback("");
-    setNicknameDraft(profileName);
+    setNicknameDraft(nickname);
     setIsNicknameEditorOpen(true);
   }
 
-  /** 保存 H5 外壳和资料页面使用的本地展示昵称。 */
-  function handleSaveNickname() {
+  /** 保存用户昵称，服务端唯一写入 app_user.nickname。 */
+  async function handleSaveNickname() {
     const nicknameValidation = validateByKey("nickname", nicknameDraft, { label: "昵称", required: true });
 
     if (!nicknameValidation.isValid) {
       return;
     }
 
-    setUserDisplayName(nicknameDraft);
-    setIsNicknameEditorOpen(false);
-    setNicknameFeedback("昵称已更新。");
+    try {
+      const nextUser = await updateNicknameMutation.mutateAsync({ nickname: nicknameDraft.trim() });
+      setUserNickname(nextUser.nickname);
+      setIsNicknameEditorOpen(false);
+      setNicknameFeedback("昵称已更新。");
+    } catch (error) {
+      showMessage(getErrorMessage(error, "昵称更新失败，请稍后重试。"), { type: "error" });
+    }
   }
 
   /** 持久化地址列表，并将当前地址同步回全局资料草稿。 */
@@ -315,7 +321,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
         <div className="card-title flex items-center justify-between gap-[10px] min-w-0">
           <UserRound size={18} />
           <div>
-            <strong>{profileName}</strong>
+            <strong>{nickname}</strong>
             <span>用于头像弹窗、我的页面和登录后展示。</span>
           </div>
         </div>
@@ -477,6 +483,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
           onChange={setNicknameDraft}
           onClose={() => setIsNicknameEditorOpen(false)}
           onSave={handleSaveNickname}
+          isSubmitting={updateNicknameMutation.isPending}
         />
       ) : null}
       {securityDialogMode === "phone" ? (

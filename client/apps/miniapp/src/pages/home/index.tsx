@@ -390,7 +390,7 @@ export default function HomePage() {
           <View className="account-strip">
             <View className="account-main">
               <Text className="muted">当前账户</Text>
-              <Text className="account-name">{homeData.profile.name}</Text>
+              <Text className="account-name">{homeData.profile.nickname}</Text>
               <Text className="muted">{accountStatusLabels[homeData.profile.accountStatus]}</Text>
             </View>
             <View>
@@ -456,7 +456,7 @@ export default function HomePage() {
       {isMineOpen ? (
         <View className="mine-popover">
           <Text className="muted">{mineEntryLabels[role]}</Text>
-          <Text className="mine-name">{homeData?.profile.name ?? roleLabels[role]}</Text>
+          <Text className="mine-name">{homeData?.profile.nickname ?? roleLabels[role]}</Text>
           <View className="mine-actions">
             <Button>设置</Button>
             <Button>账户</Button>

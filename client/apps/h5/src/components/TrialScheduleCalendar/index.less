@@ -52,9 +52,20 @@
   box-shadow: 0 0 0 2px rgba(23, 94, 117, 0.12);
 }
 
+.trial-schedule-calendar__day.range-start {
+  border-color: #16a34a;
+  box-shadow:
+    0 0 0 2px rgba(22, 163, 74, 0.16),
+    inset 0 0 0 1px rgba(22, 163, 74, 0.34);
+}
+
 .trial-schedule-calendar__day.today strong {
   background: #17212b;
   color: #fff;
+}
+
+.trial-schedule-calendar__day.limited:not(.selected) {
+  background: #f7f9fb;
 }
 
 .trial-schedule-calendar__day:disabled {
@@ -78,7 +89,11 @@
   right: 0;
   left: 0;
   z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   height: 33.334%;
+  padding-right: 4px;
   opacity: 0;
 }
 
@@ -101,4 +116,10 @@
 .trial-schedule-calendar__day.has-afternoon .trial-schedule-calendar__period.afternoon,
 .trial-schedule-calendar__day.has-evening .trial-schedule-calendar__period.evening {
   opacity: 1;
+}
+
+.trial-schedule-calendar__period-label {
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
 }

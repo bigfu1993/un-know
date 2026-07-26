@@ -14,7 +14,7 @@ function getPartTimeSearchText(job: PartTimeJob) {
   return [
     job.title,
     job.description,
-    job.publisher,
+    job.publisher.nickname,
     job.location,
     job.period,
     job.requirement,
@@ -63,7 +63,7 @@ export function PartTime({
     const normalizedKeyword = keyword.trim().toLowerCase();
 
     return tutorJobs.filter((job) => {
-      const searchText = [job.title, job.publisher, job.subject, job.address, job.period, job.requirement]
+      const searchText = [job.title, job.publisher.nickname, job.subject, job.address, job.period, job.requirement]
         .join(" ")
         .toLowerCase();
       const keywordMatched = normalizedKeyword ? searchText.includes(normalizedKeyword) : true;

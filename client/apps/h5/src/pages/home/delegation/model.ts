@@ -62,10 +62,10 @@ export function getHuntingOngoingAmountLabel(task: HuntingTask) {
 /** 获取履约中委托的对接方展示文案。 */
 export function getHuntingFulfillmentContact(task: HuntingTask) {
   if (task.isMine) {
-    return task.acceptedUserName ? `履约方：${task.acceptedUserName}` : "履约方待确认";
+    return task.acceptedUser?.nickname ? `履约方：${task.acceptedUser.nickname}` : "履约方待确认";
   }
 
-  return "发布方：" + (task.publisherName || "平台用户");
+  return "发布方：" + (task.publisher.nickname || "平台用户");
 }
 
 /** 判断报价是否等待发布方确认，兼容迁移前旧状态文案。 */
@@ -123,7 +123,7 @@ export function getHuntingOngoingOrders(tasks: HuntingTask[], role: Role): Clien
             : "我履约的委托",
         detail: `${task.mode} · ${task.fulfillmentAction ?? task.latestTime} · ${task.destination ?? task.location}`,
         id: task.id,
-        phoneNumber: isPublisher ? task.acceptedUserPhone ?? undefined : task.publisherPhone,
+        phoneNumber: isPublisher ? task.acceptedUser?.phone : task.publisher.phone,
         quoteAmount: task.pendingAmount,
         quoteActionLabel: getHuntingQuoteActionLabel(task),
         quoteCount: isPublisher ? task.quoteCount : undefined,
@@ -161,7 +161,7 @@ export function getHuntingHistoryOrders(tasks: HuntingTask[], role: Role): Clien
         contact: getHuntingFulfillmentContact(task),
         detail: `发布时间：${task.publishTime ?? "未知"} · 目的地：${destination} · 要求：${requirementText}`,
         id: task.id,
-        phoneNumber: isPublisher ? task.acceptedUserPhone ?? undefined : task.publisherPhone,
+        phoneNumber: isPublisher ? task.acceptedUser?.phone : task.publisher.phone,
         role,
         status: isCancelled ? "已取消委托" : "已完成委托",
         title: task.title
@@ -236,7 +236,7 @@ export function getDelegationAmountText(task: HuntingTask) {
 
 /** 获取委托发布者展示文案，手机号由服务端返回脱敏值。 */
 export function getDelegationPublisherText(task: HuntingTask) {
-  return `${task.publisherName || "平台用户"} · ${task.publisherPhone || "暂无手机号"}`;
+  return `${task.publisher.nickname || "平台用户"} · ${task.publisher.phone || "暂无手机号"}`;
 }
 
 /** 获取委托要求标签。 */

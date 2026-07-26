@@ -10,8 +10,7 @@ export interface GlobalUser {
   isAuthenticated: boolean;
   role: Role;
   phone: string;
-  displayName: string;
-  profileName: string;
+  nickname: string;
   accountStatus: import("@unknown/domain").AccountStatus;
   accountStatusText: string;
   creditScore: number;
@@ -25,7 +24,7 @@ export interface GlobalStoreState {
   };
   setUserSession: (session: LoginResponse) => void;
   syncUserProfile: (profile: import("@unknown/domain").RoleProfile) => void;
-  setUserDisplayName: (displayName: string) => void;
+  setUserNickname: (nickname: string) => void;
   setUserProfileDraft: (profileDraft: ProfileDraftState) => void;
   setUserPhone: (phone: string) => void;
   clearUser: () => void;
@@ -42,8 +41,7 @@ function buildGlobalUser(
 ): GlobalUser {
   const role = session?.role ?? profile?.role ?? fallbackRole;
   const accountStatus = profile?.accountStatus ?? session?.accountStatus ?? "normal";
-  const displayName = session?.displayName ?? "";
-  const profileName = displayName || profile?.name || roleLabels[role];
+  const nickname = session?.nickname || profile?.nickname || roleLabels[role];
   const serverProfileDraft = profile
     ? {
         ...profileDraft,
@@ -58,8 +56,7 @@ function buildGlobalUser(
     isAuthenticated: session !== null,
     role,
     phone: session?.phone ?? "",
-    displayName,
-    profileName,
+    nickname,
     accountStatus,
     accountStatusText: accountStatusLabels[accountStatus],
     creditScore: profile?.creditScore ?? 0,
@@ -86,17 +83,17 @@ export function createGlobalStore(initialSession: LoginResponse | null = getStor
 
       set({ global: { user: buildGlobalUser(user.session, profile, user.profileDraft) } });
     },
-    setUserDisplayName: (displayName) => {
+    setUserNickname: (nickname) => {
       const user = get().global.user;
 
       if (!user.session) {
         return;
       }
 
-      const nextDisplayName = displayName.trim();
+      const nextNickname = nickname.trim();
       const nextSession = {
         ...user.session,
-        displayName: nextDisplayName
+        nickname: nextNickname
       };
 
       setStoredClientAuthSession(nextSession);
@@ -104,8 +101,7 @@ export function createGlobalStore(initialSession: LoginResponse | null = getStor
         global: {
           user: {
             ...user,
-            displayName: nextDisplayName,
-            profileName: nextDisplayName || roleLabels[user.role],
+            nickname: nextNickname || roleLabels[user.role],
             session: nextSession
           }
         }

@@ -1,6 +1,7 @@
 package com.unknown.platform.modules.clientchat.application;
 
 import com.unknown.platform.common.exception.BusinessException;
+import com.unknown.platform.common.api.UserNickname;
 import com.unknown.platform.common.security.ClientSessionService;
 import com.unknown.platform.modules.clientchat.model.ChatConversationResponse;
 import com.unknown.platform.modules.clientchat.model.ChatMessageResponse;
@@ -31,7 +32,8 @@ public class ClientChatAppService {
     return jdbcTemplate.query(
         """
             SELECT c.public_id,
-                   COALESCE(NULLIF(p.nickname, ''), p.phone, '平台用户') AS peer_name,
+                   COALESCE(NULLIF(p.nickname, ''), '未设置昵称') AS peer_nickname,
+                   COALESCE(p.phone, '') AS peer_phone,
                    c.title,
                    c.related_biz_type,
                    c.related_biz_id,
@@ -52,7 +54,7 @@ public class ClientChatAppService {
             """,
         (rs, rowNum) -> new ChatConversationResponse(
             rs.getString("public_id"),
-            rs.getString("peer_name"),
+            new UserNickname(rs.getString("peer_nickname"), rs.getString("peer_phone")),
             rs.getString("title"),
             rs.getString("related_biz_type"),
             rs.getString("related_biz_id"),
@@ -123,7 +125,8 @@ public class ClientChatAppService {
             SELECT m.public_id,
                    c.public_id AS conversation_public_id,
                    m.sender_user_id,
-                   COALESCE(NULLIF(u.nickname, ''), u.phone, '平台用户') AS sender_name,
+                   COALESCE(NULLIF(u.nickname, ''), '未设置昵称') AS sender_nickname,
+                   COALESCE(u.phone, '') AS sender_phone,
                    m.message_type,
                    m.content,
                    m.related_card_type,
@@ -139,7 +142,7 @@ public class ClientChatAppService {
             rs.getString("public_id"),
             rs.getString("conversation_public_id"),
             rs.getLong("sender_user_id") == userId,
-            rs.getString("sender_name"),
+            new UserNickname(rs.getString("sender_nickname"), rs.getString("sender_phone")),
             rs.getString("message_type"),
             rs.getString("content"),
             rs.getString("related_card_type"),
@@ -236,7 +239,8 @@ public class ClientChatAppService {
     return jdbcTemplate.query(
         """
             SELECT c.public_id,
-                   COALESCE(NULLIF(p.nickname, ''), p.phone, '平台用户') AS peer_name,
+                   COALESCE(NULLIF(p.nickname, ''), '未设置昵称') AS peer_nickname,
+                   COALESCE(p.phone, '') AS peer_phone,
                    c.title,
                    c.related_biz_type,
                    c.related_biz_id,
@@ -258,7 +262,7 @@ public class ClientChatAppService {
             """,
         (rs, rowNum) -> new ChatConversationResponse(
             rs.getString("public_id"),
-            rs.getString("peer_name"),
+            new UserNickname(rs.getString("peer_nickname"), rs.getString("peer_phone")),
             rs.getString("title"),
             rs.getString("related_biz_type"),
             rs.getString("related_biz_id"),

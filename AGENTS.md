@@ -201,6 +201,7 @@ tail -n 200 "$REPO_ROOT/log/server/server.screen.log"
 - 先读现状再改代码：开始实现前先定位模块 owner、数据来源、状态归属、复用能力和验证方式。
 - 真实业务闭环优先：凡是影响业务状态、权限、流程推进、数据归属或操作结果的能力，必须由真实数据库状态、后端接口契约和前端消费链路共同闭环，不得只用前端本地状态、缓存、toast、假按钮或 mock 数据替代。
 - 数据链路按源头推进：数据库/迁移、后端模型与服务、共享 domain 类型、api-client、hooks、页面组件和产品文档应保持一致；只改链路一端时必须说明边界。
+- 用户展示名称唯一来源为用户表 `app_user.nickname`；接口、共享类型和前端展示不得新增或维护 `displayName`、`profileName`、`publisherName`、`peerName`、`senderName` 等用户名称别名。涉及多用户关系时使用嵌套用户快照，例如 `publisher.nickname`、`bidder.nickname`、`peer.nickname`、`sender.nickname`。
 - 状态靠近真实消费方：不要为了向子组件或孙组件透传而在父组件提前调用 hook；子组件需要某个状态、数据或动作时，优先在真实消费组件内调用对应 hook。
 - 全局状态通过 Provider/Context/store 提供，后代直接读取全局状态；不要通过页面层重复传递全局对象。
 - 页面负责业务编排和步骤组合；组件负责展示与自身交互闭环。组件内部可维护默认 props、临时表单草稿、纯提示逻辑和按钮事件包装；父级只接收最终数据或业务结果回调。

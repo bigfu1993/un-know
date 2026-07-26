@@ -260,7 +260,7 @@ export function PartTimeJobCard({ job, mode = "student" }: { job: PartTimeJob; m
         <BriefcaseBusiness size={18} />
         <div>
           <strong>{job.title}</strong>
-          <span>{job.publisher}</span>
+          <span>{job.publisher.nickname}</span>
         </div>
         <em>{formatCurrency(job.hourlyPay)}/时</em>
       </div>
@@ -332,7 +332,7 @@ export function TutorTrialJobCard({
           <GraduationCap size={18} />
           <div>
             <strong>{job.title}</strong>
-            <span>{job.publisher}</span>
+            <span>{job.publisher.nickname}</span>
           </div>
           <em>{job.budget}</em>
         </div>

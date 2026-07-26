@@ -20,7 +20,8 @@ interface ConfirmTutorTrialPayload {
 interface CompleteTutorTrialEndPayload {
   applicationId: string;
   demandId: string;
-  hireTutor: boolean;
+  hireTutor?: boolean;
+  trialFee: number;
   tutorSchedule?: string;
 }
 
@@ -44,6 +45,18 @@ interface UseTutorTrialActionsOptions {
   refetchWorkspace: () => void;
   requestTutorTrialEnd: (applicationId: string) => Promise<unknown>;
   showMessage: (content: string, options?: MessageToastOptions) => void;
+}
+
+/** 根据结算时是否已选择正式雇佣，生成家长端流程反馈文案。 */
+function getTrialSettlementSuccessMessage(payload: TutorWorkflowActionPayload) {
+  if (payload.hireTutor === true) {
+    return "试课费用已提交，学生确认后将进入正式雇佣确认。";
+  }
+  if (payload.hireTutor === false) {
+    return "试课费用已提交，学生确认后将结束本次试课。";
+  }
+
+  return "试课费用已提交，等待学生确认。";
 }
 
 /** 学生端家教试课申请动作，集中承接服务端提交和全局反馈。 */
@@ -114,14 +127,12 @@ export function useTutorTrialActions({
     }
   }
 
-  /** 家长同意结束试课，并按选择结果继续招募或进入正式家教。 */
+  /** 兼容旧入口处理结束试课，服务端会先进入学生费用确认。 */
   async function handleCompleteTutorTrialEnd(payload: CompleteTutorTrialEndPayload) {
     try {
       await completeTutorTrialEnd(payload);
       closeTutorTrialList();
-      showMessage(payload.hireTutor ? "已提交正式雇佣确认，等待学生确认。" : "试课已结束，家教兼职继续招募。", {
-        type: "success"
-      });
+      showMessage("试课费用已提交，等待学生确认。", { type: "success" });
       refetchWorkspace();
     } catch (error) {
       showMessage(getErrorMessage(error, "结束试课确认处理失败，请稍后重试。"), { type: "error" });
@@ -132,21 +143,25 @@ export function useTutorTrialActions({
   async function handleTutorWorkflowActionSubmit(payload: TutorWorkflowActionPayload) {
     try {
       await handleTutorWorkflowAction(payload);
+      const trialSettlementMessage = getTrialSettlementSuccessMessage(payload);
       const successMessages: Partial<Record<TutorWorkflowAction, string>> = {
-        accept_service_offer: "已同意正式雇佣，等待家长提交兼职日程。",
+        accept_service_offer: "已同意正式雇佣，可家教日期已提交，等待家长制定兼职日程。",
         cancel_trial: "已取消试课。",
-        close_trial_continue_recruiting: "本次试课已结束，家教兼职继续招募。",
+        cancel_service_confirmation: "已取消兼职确认，流程已回到试课结算阶段。",
+        close_trial_end_demand: "本次试课已结束，家教兼职已结束。",
+        close_trial_continue_recruiting: "已选择不正式雇佣，本次试课已结束。",
         confirm_service_schedule: "已确认兼职日程，正式家教服务开始。",
-        confirm_settlement: "已确认结算，家教流程结束。",
-        confirm_trial_end: "已确认结束试课，请继续处理试课结果。",
+        confirm_settlement: "已确认结算，流程已更新。",
+        confirm_trial_end: trialSettlementMessage,
         offer_service: "已发起正式雇佣确认，等待学生确认。",
         reject_service_offer: "已拒绝正式雇佣。",
         reject_service_offer_salary: "已反馈薪资原因，等待家长重新发起正式雇佣确认。",
         reject_trial: "已拒绝试课申请。",
         request_service_end: "已发起结束家教，等待结算确认。",
-        request_service_schedule_change: "已要求调整兼职日程，等待家长重新提交。",
+        request_service_schedule_change: "可家教日期已重新提交，等待家长重新制定兼职日程。",
+        remove_rejected_service_offer: "已移除拒绝正式委托的记录。",
         request_settlement_revision: "已要求修改结算金额。",
-        request_trial_result: "试课已进入结果处理。",
+        request_trial_result: trialSettlementMessage,
         request_trial_settlement: "已发起结算确认，等待学生确认。",
         resubmit_settlement: "已重新提交结算确认。",
         submit_service_schedule: "兼职日程已提交，等待学生确认。",

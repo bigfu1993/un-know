@@ -140,14 +140,14 @@
 
   <rect class="node negative-target" x="345" y="1877" width="210" height="86" />
   <text class="small negative-target" x="450" y="1912">
-    <tspan x="450" dy="-8">13B 家长发起</tspan>
-    <tspan x="450" dy="27">结算确认</tspan>
+    <tspan x="450" dy="-8">13B 不正式雇佣</tspan>
+    <tspan x="450" dy="27">结束发布</tspan>
   </text>
 
   <polygon class="node" points="450,2025 555,2080 450,2135 345,2080" />
   <text class="small" x="450" y="2073">
-    <tspan x="450" dy="-8">14B 学生</tspan>
-    <tspan x="450" dy="27">结算确认</tspan>
+    <tspan x="450" dy="-8">14B 旧试课</tspan>
+    <tspan x="450" dy="27">结算兼容</tspan>
   </text>
 
   <polygon class="node" points="-435,2015 -310,2080 -435,2145 -560,2080" />

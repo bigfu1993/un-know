@@ -33,17 +33,19 @@ const tutorQualificationInfoFields = [
   { key: "tutorCertificate", label: "证书" }
 ];
 
-/** 修改 H5 本地展示昵称的弹窗。 */
+/** 修改用户昵称的弹窗，保存后由服务端写入 app_user.nickname。 */
 export function NicknameEditorDialog({
+  isSubmitting = false,
   nickname,
   onChange,
   onClose,
   onSave
 }: {
+  isSubmitting?: boolean;
   nickname: string;
   onChange: (nickname: string) => void;
   onClose: () => void;
-  onSave: () => void;
+  onSave: () => void | Promise<void>;
 }) {
   const nicknameValidation = validateByKey("nickname", nickname, { label: "昵称", required: true });
   const isNicknameInvalid = !nicknameValidation.isValid;
@@ -52,8 +54,8 @@ export function NicknameEditorDialog({
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!isNicknameInvalid) {
-      onSave();
+    if (!isNicknameInvalid && !isSubmitting) {
+      void onSave();
     }
   }
 
@@ -104,11 +106,11 @@ export function NicknameEditorDialog({
           </button>
           <button
             className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
-            disabled={isNicknameInvalid}
+            disabled={isNicknameInvalid || isSubmitting}
             type="submit"
           >
             <CheckCircle2 size={16} />
-            保存昵称
+            {isSubmitting ? "保存中" : "保存昵称"}
           </button>
         </div>
       </form>

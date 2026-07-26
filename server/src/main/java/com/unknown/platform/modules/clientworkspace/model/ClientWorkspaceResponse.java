@@ -1,5 +1,6 @@
 package com.unknown.platform.modules.clientworkspace.model;
 
+import com.unknown.platform.common.api.UserNickname;
 import com.unknown.platform.modules.auth.model.ClientRole;
 import java.math.BigDecimal;
 import java.util.List;
@@ -31,6 +32,7 @@ public record ClientWorkspaceResponse(
       String phoneNumber,
       BigDecimal quoteAmount,
       Integer quoteCount,
+      Integer trialCount,
       String quoteActionLabel,
       String quoteId,
       Boolean canCall,
@@ -53,7 +55,7 @@ public record ClientWorkspaceResponse(
   /** 兼职列表卡片摘要，承接学生兼职和商户招聘工作台展示。 */
   public record PartTimeJob(
       String id,
-      String publisher,
+      UserNickname publisher,
       String title,
       String description,
       BigDecimal hourlyPay,
@@ -92,10 +94,8 @@ public record ClientWorkspaceResponse(
       String destination,
       String requirement,
       List<String> requirementTags,
-      String publisherName,
-      String publisherPhone,
-      String acceptedUserName,
-      String acceptedUserPhone,
+      UserNickname publisher,
+      UserNickname acceptedUser,
       Boolean isMine,
       Boolean isAcceptedByMe,
       Boolean isQuotedByMe,
@@ -115,7 +115,7 @@ public record ClientWorkspaceResponse(
   /** 委托报价记录，发布方可看全部，服务方仅看自己的报价协商记录。 */
   public record HuntingQuote(
       String id,
-      String bidderName,
+      UserNickname bidder,
       BigDecimal amount,
       BigDecimal originalAmount,
       String quoteTime,
@@ -127,14 +127,16 @@ public record ClientWorkspaceResponse(
   /** 家教招募报名学生摘要。 */
   public record TutorApplicant(
       String id,
-      String name,
+      String nickname,
       String school,
       String major,
       String gpa,
       int hiredTimes,
       String availability,
       String status,
-      String trialSchedule
+      BigDecimal trialFee,
+      String trialSchedule,
+      String serviceConfirmationCancelledBy
   ) {
   }
 
@@ -150,8 +152,7 @@ public record ClientWorkspaceResponse(
       String description,
       String addressLabel,
       String period,
-      String publisherName,
-      String publisherPhone,
+      UserNickname publisher,
       String sourceType,
       List<TutorApplicant> applicants
   ) {

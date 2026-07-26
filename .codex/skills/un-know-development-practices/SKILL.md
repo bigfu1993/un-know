@@ -26,17 +26,18 @@ description: Methodology and validation workflow for the un-know project. Use wh
 8. For process diagrams, classify the main chain, auxiliary branches, modification loops, and terminal results before drawing. Direct continuation should stay on the main axis; auxiliary loops should branch aside and rejoin the correct semantic target without duplicating equivalent terminal nodes.
 9. When a branch is merged or removed, clean up orphan suffixes such as `A/B`, stale labels, old connectors, process-table rows, and explanatory text in the same change.
 10. Keep state and hooks close to the real consumer. Do not call a hook in a parent only to pass its result through child layers.
-11. Let global data flow through Provider/Context/store. Descendants should read global state through store/context hooks instead of prop drilling global objects.
-12. Keep components narrow. Local feedback, button event wrapping, default props, and temporary drafts belong inside the owning component/page. Emit final data or business result callbacks upward.
-13. Prefer slots for pure containers. Layout, grouping, and tab-switching components should use `children` or named slots for content instead of forwarding child business props; keep their props limited to their own layout, switching, and display configuration.
-14. Collapse no-op shells. If a wrapper only forwards props or children and has no durable semantics, reusable layout role, or local state, move its content to the real owner or turn it into a slot-based container.
-15. Match DOM ownership to layout behavior. Fixed headers, fixed footers, and scrollable bodies should be sibling regions under the same layout owner; use stable `form` ids and submit `form` attributes when a footer button must submit an external form.
-16. Design form hierarchy intentionally. Put required, frequent, and high-risk fields first; group optional supplements into coherent panels with their own header, action, and content; choose inline text/icon controls when full buttons would change field height.
-17. Keep roots and pages lean: root wires application-level providers, session, routing, global data, and cross-module composition; pages orchestrate feature flow; components own display and local interaction.
-18. Keep styles and types by ownership: page styles in `pages/<Module>/index.less`, shared component styles beside the component, H5 reusable types in `client/apps/h5/src/types`, pure reusable utilities in `client/apps/h5/src/tools`.
-19. Keep business modules under their owning directory. Page modules, local components, hooks, models, backend packages, API contracts, and database ownership notes should follow the same domain boundary; risky package or schema moves require a docs-first migration plan.
-20. Run broad refactors in batches. Each batch declares scope, classifies issues, makes focused edits, validates, then moves to the next batch.
-21. Before deleting or splitting exports, search explicit imports, JSX usage, generated declarations, and auto-import configuration.
+11. Keep canonical identity fields single-sourced. Do not introduce local aliases for user display identity across API models, domain types, stores, or views; expose relationship-specific nested objects instead of duplicated flat name fields.
+12. Let global data flow through Provider/Context/store. Descendants should read global state through store/context hooks instead of prop drilling global objects.
+13. Keep components narrow. Local feedback, button event wrapping, default props, and temporary drafts belong inside the owning component/page. Emit final data or business result callbacks upward.
+14. Prefer slots for pure containers. Layout, grouping, and tab-switching components should use `children` or named slots for content instead of forwarding child business props; keep their props limited to their own layout, switching, and display configuration.
+15. Collapse no-op shells. If a wrapper only forwards props or children and has no durable semantics, reusable layout role, or local state, move its content to the real owner or turn it into a slot-based container.
+16. Match DOM ownership to layout behavior. Fixed headers, fixed footers, and scrollable bodies should be sibling regions under the same layout owner; use stable `form` ids and submit `form` attributes when a footer button must submit an external form.
+17. Design form hierarchy intentionally. Put required, frequent, and high-risk fields first; group optional supplements into coherent panels with their own header, action, and content; choose inline text/icon controls when full buttons would change field height.
+18. Keep roots and pages lean: root wires application-level providers, session, routing, global data, and cross-module composition; pages orchestrate feature flow; components own display and local interaction.
+19. Keep styles and types by ownership: page styles in `pages/<Module>/index.less`, shared component styles beside the component, H5 reusable types in `client/apps/h5/src/types`, pure reusable utilities in `client/apps/h5/src/tools`.
+20. Keep business modules under their owning directory. Page modules, local components, hooks, models, backend packages, API contracts, and database ownership notes should follow the same domain boundary; risky package or schema moves require a docs-first migration plan.
+21. Run broad refactors in batches. Each batch declares scope, classifies issues, makes focused edits, validates, then moves to the next batch.
+22. Before deleting or splitting exports, search explicit imports, JSX usage, generated declarations, and auto-import configuration.
 
 ## Choose References
 

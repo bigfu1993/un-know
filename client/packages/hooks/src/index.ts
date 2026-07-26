@@ -39,6 +39,7 @@ import {
   sendChatMessage,
   submitHuntingCertification,
   updateClientAddress,
+  updateClientNickname,
   updateTutorExposure,
   useClientAddress
 } from "@unknown/api-client";
@@ -64,6 +65,7 @@ import {
   SelectRoleRequest,
   SendChatMessageRequest,
   SubmitHuntingCertificationRequest,
+  UpdateNicknameRequest,
   TutorWorkflowActionRequest
 } from "@unknown/domain";
 
@@ -165,6 +167,17 @@ export function useMiniappOneTapLogin() {
 export function useResetClientPassword() {
   return useMutation({
     mutationFn: (payload: ResetClientPasswordRequest) => resetClientPassword(payload)
+  });
+}
+
+export function useUpdateClientNickname() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: UpdateNicknameRequest) => updateClientNickname(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["client-home"] });
+    }
   });
 }
 

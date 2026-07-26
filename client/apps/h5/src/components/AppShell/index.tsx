@@ -126,7 +126,7 @@ export function MinePopover({
   onToggleTutorExposure: () => void;
   onNavigate: (surface: PageSurface) => void;
 }) {
-  const { accountStatusText, creditScore, phone, profileDraft, profileName, role } = useGlobalUser();
+  const { accountStatusText, creditScore, phone, profileDraft, nickname, role } = useGlobalUser();
   const tutorCardData = getTutorCardDataFromDraft(profileDraft);
   const tutorCardMode = getTutorCardMode(tutorCardData.certificationStatus, "simple");
   const huntingCertificationData = getHuntingCertificationDataFromDraft(profileDraft);
@@ -183,7 +183,7 @@ export function MinePopover({
         creditScore={creditScore}
         followerCount={0}
         followingCount={0}
-        nickname={profileName}
+        nickname={nickname}
         phone={phone}
         profileTags={profileTags}
         roleLabel={roleLabels[role]}

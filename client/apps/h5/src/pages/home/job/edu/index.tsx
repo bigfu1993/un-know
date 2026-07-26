@@ -51,7 +51,7 @@ export function Tutor({ tutorDemands }: { tutorDemands: TutorDemand[] }) {
             {demand.applicants.map((applicant) => (
               <article className="applicant-row grid gap-[10px] py-[10px]" key={applicant.id}>
                 <div>
-                  <strong>{applicant.name}</strong>
+                  <strong>{applicant.nickname}</strong>
                   <p>
                     {applicant.school} · {applicant.major} · GPA {applicant.gpa}
                   </p>

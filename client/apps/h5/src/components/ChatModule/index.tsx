@@ -78,7 +78,7 @@ export function ChatModule({
               type="button"
             >
               <span className="flex items-center justify-between gap-[8px]">
-                <strong>{conversation.peerName}</strong>
+                <strong>{conversation.peer.nickname}</strong>
                 {conversation.unreadCount > 0 ? <em>{conversation.unreadCount}</em> : null}
               </span>
               <span>{conversation.title}</span>
@@ -99,7 +99,7 @@ export function ChatModule({
               <MessageCircle size={18} />
               <div>
                 <strong>{activeConversation?.title ?? "聊天窗口"}</strong>
-                <span>{activeConversation?.peerName ?? "请选择会话"}</span>
+                <span>{activeConversation?.peer.nickname ?? "请选择会话"}</span>
               </div>
             </div>
           </header>
@@ -108,7 +108,7 @@ export function ChatModule({
             {messages.map((message) => (
               <article className={`chat-message ${message.mine ? "mine" : "peer"} grid gap-[4px] p-[10px]`} key={message.id}>
                 <span>
-                  {message.senderName} · {message.createdAt}
+                  {message.sender.nickname} · {message.createdAt}
                 </span>
                 <strong>{message.content}</strong>
                 {message.relatedCardType ? <small>{message.relatedCardType} · {message.relatedCardId}</small> : null}

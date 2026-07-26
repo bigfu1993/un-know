@@ -201,7 +201,7 @@ export function RegistrationGuide({ accessToken, ownerPhone, onBack, onCompleted
       const session = await selectClientRoleAfterRegistration(accessToken, selectedRole);
       const sessionWithNickname = {
         ...session,
-        displayName: nickname.trim(),
+        nickname: nickname.trim(),
         profileCompletionRequired: !hasCompleteAddress
       };
 

@@ -1,12 +1,14 @@
 package com.unknown.platform.modules.clientprofile.controller.client;
 
 import com.unknown.platform.common.api.ApiResponse;
+import com.unknown.platform.common.api.UserNickname;
 import com.unknown.platform.modules.clientprofile.application.ClientProfileAppService;
 import com.unknown.platform.modules.clientprofile.model.ClientAddressRequest;
 import com.unknown.platform.modules.clientprofile.model.ClientAddressResponse;
 import com.unknown.platform.modules.clientprofile.model.SubmitHuntingCertificationRequest;
 import com.unknown.platform.modules.clientprofile.model.SubmitHuntingCertificationResponse;
 import com.unknown.platform.modules.clientprofile.model.TutorExposureResponse;
+import com.unknown.platform.modules.clientprofile.model.UpdateNicknameRequest;
 import com.unknown.platform.modules.clientprofile.model.UpdateTutorExposureRequest;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -30,6 +32,21 @@ public class ClientProfileController {
 
   public ClientProfileController(ClientProfileAppService clientProfileAppService) {
     this.clientProfileAppService = clientProfileAppService;
+  }
+
+  /**
+   * 修改当前登录用户昵称。
+   *
+   * @param authorization 登录访问令牌
+   * @param request 昵称请求
+   * @return 最新用户昵称快照
+   */
+  @PutMapping("/nickname")
+  public ApiResponse<UserNickname> updateNickname(
+      @RequestHeader(value = "Authorization", required = false) String authorization,
+      @Valid @RequestBody UpdateNicknameRequest request
+  ) {
+    return ApiResponse.ok(clientProfileAppService.updateNickname(authorization, request));
   }
 
   /**

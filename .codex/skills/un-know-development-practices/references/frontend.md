@@ -42,6 +42,7 @@ Applies to `client/apps/h5`, `client/packages/domain`, `client/packages/api-clie
 - H5 must consume real backend workflow state for business flows. Button visibility, status text, role permissions, current/default records, application/confirmation/cancel/completion steps, and other workflow decisions must come from backend responses or be immediately backed by a real API action.
 - Do not implement business flow progression with H5-only state, local cache, mock data, toast-only actions, or temporary frontend flags. If an existing flow is local-only, convert it to backend API + database first, then adjust components.
 - Security, identity, credential, permission, and workflow-validity checks must be backed by real APIs and server state. Browser-side hashes, caches, and drafts may improve input UX, but they are not the source of truth.
+- User display identity must keep one canonical field from the backend contract. Do not create view-local aliases for the same name; relationship-specific displays should consume nested user snapshots such as `publisher.nickname` rather than duplicated flat name keys.
 - Prefer server state through React Query hooks. Do not create local fake business state for real flows.
 - When a backend state has a UI-only display label, compute it in a small helper and document the boundary.
 - For permission-specific behavior, make permission checks explicit and keep labels consistent with `docs/产品需求文档.md`.

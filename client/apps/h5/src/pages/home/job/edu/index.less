@@ -29,8 +29,14 @@
   border-radius: 18px 18px 0 0;
 }
 
+.tutor-trial-list-panel {
+  height: min(76vh, 620px);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
 .tutor-application-list {
   min-height: 0;
+  overscroll-behavior: contain;
 }
 
 .tutor-application-card {
@@ -67,11 +73,6 @@
   padding: 0;
 }
 
-.tutor-application-select:disabled {
-  color: inherit;
-  opacity: 1;
-}
-
 .tutor-application-name-row {
   min-width: 0;
 }
@@ -102,6 +103,17 @@
   line-height: 1;
 }
 
+.tutor-application-status-stack {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.tutor-application-status-stack.multi {
+  flex-direction: column;
+}
+
 .tutor-application-card.trialing .tutor-application-status {
   background: #e8f7ef;
   color: #168a57;
@@ -111,12 +123,59 @@
   width: 100%;
 }
 
-.tutor-trial-list-card p {
-  margin: 0;
+.tutor-trial-list-card.not-selectable .tutor-application-select:disabled {
+  color: inherit;
+  cursor: default;
+  opacity: 1;
+}
+
+.tutor-time-preview-button {
+  justify-self: start;
+  border: 1px solid rgba(23, 94, 117, 0.18);
+  border-radius: 999px;
+  background: #eef7f3;
+  color: #175e75;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.tutor-time-preview-button.empty {
+  border-color: rgba(112, 128, 148, 0.18);
+  background: #f3f6f9;
+  color: #748092;
+}
+
+.tutor-time-preview-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.tutor-schedule-preview-panel {
+  max-height: min(82vh, 700px);
+  border-radius: 18px 18px 0 0;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.tutor-schedule-preview-body {
+  min-height: 0;
+}
+
+.tutor-schedule-preview-detail {
+  border: 1px solid rgba(112, 128, 148, 0.16);
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 10px;
+}
+
+.tutor-schedule-preview-detail strong {
+  color: #17212b;
+  font-size: 13px;
+}
+
+.tutor-schedule-preview-detail span {
   color: #657181;
   font-size: 12px;
   font-weight: 800;
-  line-height: 1.5;
 }
 
 .tutor-hire-decision-panel {
@@ -192,4 +251,101 @@
   background: #fff7ed;
   color: #9a3412;
   font-weight: 800;
+}
+
+.tutor-trial-settlement-panel {
+  border-radius: 18px 18px 0 0;
+}
+
+.tutor-trial-settlement-summary {
+  border: 1px solid rgba(112, 128, 148, 0.16);
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 10px;
+  color: #475466;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.tutor-trial-settlement-summary strong {
+  color: #17212b;
+  font-size: 14px;
+}
+
+.tutor-trial-settlement-summary p {
+  margin: 0;
+  color: #17212b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.tutor-trial-settlement-field span {
+  color: #475466;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.tutor-trial-settlement-field input {
+  min-height: 42px;
+  width: 100%;
+  border: 1px solid #cfd8e3;
+  border-radius: 10px;
+  background: #fff;
+  color: #17212b;
+  font-size: 16px;
+  font-weight: 900;
+  outline: none;
+  padding: 0 11px;
+}
+
+.tutor-trial-settlement-field input:focus {
+  border-color: #1d6f55;
+  box-shadow: 0 0 0 3px rgba(29, 111, 85, 0.12);
+}
+
+.tutor-trial-settlement-error {
+  color: #d92d20;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.tutor-trial-hire-decision {
+  border: 1px solid rgba(112, 128, 148, 0.16);
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px;
+}
+
+.tutor-trial-hire-decision__header strong {
+  color: #17212b;
+  font-size: 13px;
+}
+
+.tutor-trial-hire-decision__header span {
+  color: #657181;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.tutor-trial-hire-decision__option {
+  min-height: 36px;
+  border: 1px solid #cfd8e3;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #475466;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.tutor-trial-hire-decision__option.active {
+  border-color: rgba(29, 111, 85, 0.32);
+  background: #eef7f3;
+  color: #1d6f55;
+}
+
+.tutor-trial-hire-decision__option.active.danger {
+  border-color: rgba(217, 45, 32, 0.28);
+  background: #fff1f0;
+  color: #d92d20;
 }

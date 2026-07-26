@@ -43,7 +43,7 @@ export interface ClientPrimaryTab {
 
 export interface RoleProfile {
   role: Role;
-  name: string;
+  nickname: string;
   label: string;
   creditScore: number;
   balanceText: string;
@@ -68,7 +68,7 @@ export interface RegisterRequest {
   phone: string;
   code: string;
   role?: Role;
-  displayName?: string;
+  nickname?: string;
 }
 
 export interface SelectRoleRequest {
@@ -141,8 +141,19 @@ export interface LoginResponse {
   role: Role;
   accountStatus: AccountStatus;
   phone: string;
-  displayName: string;
+  nickname: string;
   profileCompletionRequired: boolean;
+}
+
+/** 用户名称展示快照；展示名称唯一读取 nickname。 */
+export interface UserNickname {
+  nickname: string;
+  phone?: string;
+}
+
+/** 修改当前用户昵称请求，服务端写入 app_user.nickname。 */
+export interface UpdateNicknameRequest {
+  nickname: string;
 }
 
 export interface ProductSummary {
@@ -197,6 +208,7 @@ export interface ClientOrder {
   phoneNumber?: string;
   quoteAmount?: number;
   quoteCount?: number;
+  trialCount?: number;
   quoteActionLabel?: string;
   quoteId?: string;
   canCall?: boolean;
@@ -218,7 +230,7 @@ export interface ClientOrder {
 
 export interface PartTimeJob {
   id: string;
-  publisher: string;
+  publisher: UserNickname;
   title: string;
   description: string;
   hourlyPay: number;
@@ -257,12 +269,10 @@ export interface HuntingTask {
   pendingAmount?: number;
   pendingQuoteId?: string;
   pendingQuoteStatus?: string;
-  acceptedUserName?: string | null;
-  acceptedUserPhone?: string | null;
+  acceptedUser?: UserNickname | null;
   fulfillmentAction?: string | null;
   fulfillmentActionByMe?: boolean;
-  publisherName?: string;
-  publisherPhone?: string;
+  publisher: UserNickname;
   publishTime?: string;
   quoteCount?: number;
   quotes?: HuntingQuote[];
@@ -274,7 +284,7 @@ export interface HuntingTask {
 
 export interface HuntingQuote {
   id: string;
-  bidderName: string;
+  bidder: UserNickname;
   amount: number;
   originalAmount?: number;
   quoteTime: string;
@@ -313,13 +323,15 @@ export interface HuntingTaskFulfillmentActionRequest {
 
 export interface TutorApplicant {
   id: string;
-  name: string;
+  nickname: string;
   school: string;
   major: string;
   gpa: string;
   hiredTimes: number;
   availability: string;
+  serviceConfirmationCancelledBy?: string;
   status: string;
+  trialFee?: number;
   trialSchedule: string;
 }
 
@@ -334,8 +346,7 @@ export interface TutorDemand {
   description?: string;
   addressLabel?: string;
   period?: string;
-  publisherName?: string;
-  publisherPhone?: string;
+  publisher?: UserNickname;
   sourceType?: "tutorDemand" | "tutorStudent";
   applicants: TutorApplicant[];
 }
@@ -371,9 +382,10 @@ export interface ConfirmTutorTrialRequest {
   trialHalfDay: string;
 }
 
-/** 家长确认结束试课时的聘用决策。 */
+/** 家长确认结束试课时的试课结算请求，正式雇佣决策可后续单独选择。 */
 export interface CompleteTutorTrialEndRequest {
-  hireTutor: boolean;
+  hireTutor?: boolean;
+  trialFee: number;
   tutorSchedule?: string;
 }
 
@@ -381,7 +393,9 @@ export interface CompleteTutorTrialEndRequest {
 export type TutorWorkflowAction =
   | "accept_service_offer"
   | "cancel_trial"
+  | "close_trial_end_demand"
   | "close_trial_continue_recruiting"
+  | "cancel_service_confirmation"
   | "confirm_service_schedule"
   | "confirm_settlement"
   | "confirm_trial_end"
@@ -392,6 +406,7 @@ export type TutorWorkflowAction =
   | "request_service_end"
   | "request_service_schedule_change"
   | "request_settlement_revision"
+  | "remove_rejected_service_offer"
   | "request_trial_result"
   | "request_trial_settlement"
   | "resubmit_settlement"
@@ -403,7 +418,9 @@ export interface TutorWorkflowActionRequest {
   action: TutorWorkflowAction;
   availability?: string;
   continueRecruiting?: boolean;
+  hireTutor?: boolean;
   reasonType?: string;
+  trialFee?: number;
   tutorSchedule?: string;
 }
 
@@ -439,7 +456,7 @@ export interface HuntingProjectResponse {
 /** 聊天会话摘要。 */
 export interface ChatConversation {
   id: string;
-  peerName: string;
+  peer: UserNickname;
   title: string;
   relatedBizType?: string;
   relatedBizId?: string;
@@ -453,7 +470,7 @@ export interface ChatMessage {
   id: string;
   conversationId: string;
   mine: boolean;
-  senderName: string;
+  sender: UserNickname;
   messageType: "text" | "order" | "ongoing" | string;
   content: string;
   relatedCardType?: string;

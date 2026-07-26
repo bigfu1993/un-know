@@ -55,7 +55,7 @@ public class AuthAppService {
 
     assertCanRegister(request.phone());
     ClientRole role = request.role() == null ? ClientRole.student : request.role();
-    long userId = createUser(request.phone(), role, request.displayName());
+    long userId = createUser(request.phone(), role, request.nickname());
     ensureWalletAccount(userId, role);
     return issueSession(userId, request.phone(), role);
   }
@@ -132,7 +132,7 @@ public class AuthAppService {
         role,
         accountStatus(userId),
         maskPhone(phone),
-        displayName(userId, role),
+        nickname(userId, role),
         profileCompletionRequired(userId)
     );
   }
@@ -266,7 +266,7 @@ public class AuthAppService {
     }
   }
 
-  private long createUser(String phone, ClientRole role, String displayName) {
+  private long createUser(String phone, ClientRole role, String nickname) {
     return jdbcTemplate.queryForObject(
         """
             INSERT INTO app_user (
@@ -279,7 +279,7 @@ public class AuthAppService {
         Long.class,
         phone,
         role.name(),
-        StringUtils.hasText(displayName) ? displayName : defaultDisplayName(role),
+        StringUtils.hasText(nickname) ? nickname : defaultNickname(role),
         role == ClientRole.student ? 10 : 0,
         role != ClientRole.merchant,
         roleLabel(role)
@@ -333,7 +333,7 @@ public class AuthAppService {
             WHERE id = ?
             """,
         role.name(),
-        defaultDisplayName(role),
+        defaultNickname(role),
         role == ClientRole.student ? 10 : 0,
         role != ClientRole.merchant,
         roleLabel(role),
@@ -384,7 +384,7 @@ public class AuthAppService {
     );
   }
 
-  private String defaultDisplayName(ClientRole role) {
+  private String defaultNickname(ClientRole role) {
     return switch (role) {
       case student -> "佚名同学";
       case merchant -> "校园商户";
@@ -424,13 +424,13 @@ public class AuthAppService {
     return Boolean.TRUE.equals(required);
   }
 
-  private String displayName(long userId, ClientRole role) {
+  private String nickname(long userId, ClientRole role) {
     String nickname = jdbcTemplate.queryForObject(
         "SELECT nickname FROM app_user WHERE id = ?",
         String.class,
         userId
     );
-    return StringUtils.hasText(nickname) ? nickname : defaultDisplayName(role);
+    return StringUtils.hasText(nickname) ? nickname : defaultNickname(role);
   }
 
   private String maskPhone(String phone) {

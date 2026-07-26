@@ -128,7 +128,7 @@ export function OngoingQuoteDialog({
                 type="button"
               >
                 <span className="flex items-center justify-between gap-[8px]">
-                  <strong>{quote.bidderName}</strong>
+                  <strong>{quote.bidder.nickname}</strong>
                   <span className="delegation-quote-price inline-flex items-center gap-[6px]">
                     {hasQuoteCounterAmount ? <del>{formatCurrency(quote.originalAmount ?? quote.amount)}</del> : null}
                     <em className={hasQuoteCounterAmount ? "counter" : ""}>{formatCurrency(quote.amount)}</em>

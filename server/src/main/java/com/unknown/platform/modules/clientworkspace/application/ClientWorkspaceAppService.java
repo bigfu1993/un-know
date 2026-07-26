@@ -15,6 +15,7 @@ import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflow
 import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.TASK_PUBLISHED;
 import static com.unknown.platform.modules.clientworkspace.model.HuntingWorkflowStatus.TASK_QUOTE;
 
+import com.unknown.platform.common.api.UserNickname;
 import com.unknown.platform.common.exception.BusinessException;
 import com.unknown.platform.common.security.ClientSessionService;
 import com.unknown.platform.modules.auth.model.ClientRole;
@@ -87,6 +88,7 @@ public class ClientWorkspaceAppService {
   private static final String TUTOR_APPLICANT_STATUS_SETTLEMENT_CONFIRMING = "结算确认中";
   private static final String TUTOR_APPLICANT_STATUS_SETTLEMENT_REVISING = "结算修改中";
   private static final String TUTOR_APPLICANT_STATUS_SYSTEM_SETTLING = "系统结算中";
+  private static final String TUTOR_APPLICANT_STATUS_TRIAL_SETTLED_SERVICE_PENDING = "试课已结算+雇佣确认中";
   private static final String TUTOR_APPLICANT_STATUS_TRIAL_ENDED = "试课已结束";
   private static final String TUTOR_APPLICANT_STATUS_TRIAL_END_CONFIRMING = "结束试课确认中";
   private static final String TUTOR_APPLICANT_STATUS_TRIAL_CONFIRMED = "试课日程确认中";
@@ -100,6 +102,10 @@ public class ClientWorkspaceAppService {
   private static final String TUTOR_DEMAND_STATUS_RECRUITING = "发布中";
   private static final String TUTOR_DEMAND_STATUS_RECRUITING_LEGACY = "家教招募中";
   private static final String TUTOR_DEMAND_STATUS_TUTORING_LEGACY = "家教进行中";
+  private static final String TUTOR_TRIAL_HIRE_DECISION_HIRE = "hire";
+  private static final String TUTOR_TRIAL_HIRE_DECISION_NOT_HIRE = "not_hire";
+  private static final String TUTOR_SERVICE_CONFIRMATION_CANCELLED_BY_PARENT = "parent";
+  private static final String TUTOR_SERVICE_CONFIRMATION_CANCELLED_BY_STUDENT = "student";
 
   private final JdbcTemplate jdbcTemplate;
   private final ClientSessionService clientSessionService;
@@ -223,9 +229,7 @@ public class ClientWorkspaceAppService {
         location,
         requirement,
         normalizedRequirementTags(request.requirementTags()),
-        publisher.name(),
-        maskPhone(publisher.phone()),
-        null,
+        new UserNickname(publisher.nickname(), maskPhone(publisher.phone())),
         null,
         currentUserId != null && currentUserId == publisherUserId,
         false,
@@ -645,20 +649,17 @@ public class ClientWorkspaceAppService {
       return findTutorDemand(demand.publicId());
     }
 
-    UserContact student = userContact(currentUserId);
-
     jdbcTemplate.update(
         """
             INSERT INTO tutor_applicant (
-              public_id, tutor_demand_id, applicant_user_id, name, school, major, gpa,
+              public_id, tutor_demand_id, applicant_user_id, school, major, gpa,
               hired_times, availability, status, message, updated_at
             )
-            VALUES (?, ?, ?, ?, '学校待补充', '专业待补充', '待补充', 0, ?, ?, ?, NOW())
+            VALUES (?, ?, ?, '学校待补充', '专业待补充', '待补充', 0, ?, ?, ?, NOW())
             """,
         nextTutorApplicantPublicId(),
         demand.id(),
         currentUserId,
-        student.name(),
         availability,
         TUTOR_APPLICANT_STATUS_APPLICATION_PENDING,
         request == null ? "" : clean(request.message())
@@ -804,7 +805,7 @@ public class ClientWorkspaceAppService {
     return findTutorDemand(application.demandPublicId());
   }
 
-  /** 家长同意结束试课，并兼容旧入口按流程图先进入试课结果处理。 */
+  /** 家长同意结束试课，旧入口也必须先进入学生费用确认，避免跳过试课结算闭环。 */
   @Transactional
   public TutorDemand completeTutorTrialEnd(
       String demandId,
@@ -824,14 +825,11 @@ public class ClientWorkspaceAppService {
         TUTOR_APPLICANT_STATUS_TRIAL_RESULT_PROCESSING
     );
 
-    if (!TUTOR_APPLICANT_STATUS_TRIAL_RESULT_PROCESSING.equals(application.status())) {
-      updateTutorApplicationStatus(application.id(), TUTOR_APPLICANT_STATUS_TRIAL_RESULT_PROCESSING);
+    if (TUTOR_APPLICANT_STATUS_TRIAL_RESULT_PROCESSING.equals(application.status()) && (request == null || request.trialFee() == null)) {
+      updateTutorTrialSettlementDecision(application.id(), request == null ? null : request.hireTutor());
+    } else {
+      updateTutorTrialResult(application.id(), request == null ? null : request.trialFee(), request == null ? null : request.hireTutor());
     }
-
-    String nextStatus = Boolean.TRUE.equals(request == null ? Boolean.FALSE : request.hireTutor())
-        ? TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING
-        : TUTOR_APPLICANT_STATUS_TRIAL_ENDED;
-    updateTutorApplicationStatus(application.id(), nextStatus);
     return findTutorDemand(application.demandPublicId());
   }
 
@@ -877,22 +875,68 @@ public class ClientWorkspaceAppService {
       case "request_trial_result" -> {
         ensureTutorParent(application, currentUserId);
         requireTutorApplicationStatus(application.status(), "TUTOR_TRIAL_STATUS_INVALID", "只有试课中的家教可以结束试课", TUTOR_APPLICANT_STATUS_TRIALING);
-        updateTutorApplicationStatus(application.id(), TUTOR_APPLICANT_STATUS_TRIAL_RESULT_PROCESSING);
+        updateTutorTrialResult(application.id(), request == null ? null : request.trialFee(), request == null ? null : request.hireTutor());
       }
       case "confirm_trial_end" -> {
         ensureTutorParent(application, currentUserId);
         requireTutorApplicationStatus(application.status(), "TUTOR_TRIAL_END_STATUS_INVALID", "只有结束试课确认中的记录可以确认", TUTOR_APPLICANT_STATUS_TRIAL_END_CONFIRMING);
-        updateTutorApplicationStatus(application.id(), TUTOR_APPLICANT_STATUS_TRIAL_RESULT_PROCESSING);
+        updateTutorTrialResult(application.id(), request == null ? null : request.trialFee(), request == null ? null : request.hireTutor());
       }
       case "offer_service" -> {
         ensureTutorParent(application, currentUserId);
-        requireTutorApplicationStatus(application.status(), "TUTOR_TRIAL_RESULT_STATUS_INVALID", "只有试课结果处理中的记录可以发起正式雇佣", TUTOR_APPLICANT_STATUS_TRIAL_RESULT_PROCESSING);
-        updateTutorApplicationStatus(application.id(), TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING);
+        requireTutorApplicationStatus(
+            application.status(),
+            "TUTOR_TRIAL_RESULT_STATUS_INVALID",
+            "只有试课已结算、旧结果处理或已拒绝正式委托的记录可以发起正式雇佣",
+            TUTOR_APPLICANT_STATUS_TRIAL_RESULT_PROCESSING,
+            TUTOR_APPLICANT_STATUS_TRIAL_SETTLED_SERVICE_PENDING,
+            TUTOR_APPLICANT_STATUS_FORMAL_SERVICE_INVALID
+        );
+        updateTutorApplicationStatusForServiceConfirmation(application.id(), TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING);
+      }
+      case "remove_rejected_service_offer" -> {
+        ensureTutorParent(application, currentUserId);
+        requireTutorApplicationStatus(
+            application.status(),
+            "TUTOR_REJECTED_SERVICE_REMOVE_STATUS_INVALID",
+            "只有已拒绝正式委托的记录可以移除",
+            TUTOR_APPLICANT_STATUS_FORMAL_SERVICE_INVALID
+        );
+        updateTutorApplicationStatus(application.id(), TUTOR_APPLICANT_STATUS_TRIAL_ENDED);
+      }
+      case "cancel_service_confirmation" -> {
+        ensureTutorWorkflowOwner(application, currentUserId);
+        requireTutorApplicationStatus(
+            application.status(),
+            "TUTOR_SERVICE_CONFIRMATION_CANCEL_STATUS_INVALID",
+            "只有正式雇佣确认中的记录可以取消兼职确认",
+            TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING,
+            TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING,
+            TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING
+        );
+        cancelTutorServiceConfirmation(application, currentUserId);
       }
       case "close_trial_continue_recruiting" -> {
         ensureTutorParent(application, currentUserId);
-        requireTutorApplicationStatus(application.status(), "TUTOR_TRIAL_RESULT_STATUS_INVALID", "只有试课结果处理中的记录可以结束本次试课", TUTOR_APPLICANT_STATUS_TRIAL_RESULT_PROCESSING);
+        requireTutorApplicationStatus(
+            application.status(),
+            "TUTOR_TRIAL_RESULT_STATUS_INVALID",
+            "只有试课已结算且等待雇佣确认的记录可以结束本次试课",
+            TUTOR_APPLICANT_STATUS_TRIAL_RESULT_PROCESSING,
+            TUTOR_APPLICANT_STATUS_TRIAL_SETTLED_SERVICE_PENDING
+        );
         updateTutorApplicationStatus(application.id(), TUTOR_APPLICANT_STATUS_TRIAL_ENDED);
+      }
+      case "close_trial_end_demand" -> {
+        ensureTutorParent(application, currentUserId);
+        requireTutorApplicationStatus(
+            application.status(),
+            "TUTOR_TRIAL_RESULT_STATUS_INVALID",
+            "只有试课结果处理或已结束本次试课的记录可以结束家教兼职",
+            TUTOR_APPLICANT_STATUS_TRIAL_RESULT_PROCESSING,
+            TUTOR_APPLICANT_STATUS_TRIAL_ENDED
+        );
+        closeTutorDemandAfterTrialResult(application);
       }
       case "request_trial_settlement" -> {
         ensureTutorParent(application, currentUserId);
@@ -919,7 +963,9 @@ public class ClientWorkspaceAppService {
             TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING,
             TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING
         );
-        updateTutorApplicationSchedule(application.id(), request == null ? "" : clean(request.tutorSchedule()), TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING);
+        String tutorSchedule = request == null ? "" : clean(request.tutorSchedule());
+        assertTutorServiceScheduleWithinAvailability(tutorSchedule, tutorApplicationAvailability(application.demandId(), application.publicId()));
+        updateTutorApplicationSchedule(application.id(), tutorSchedule, TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING);
       }
       case "resubmit_settlement" -> {
         ensureTutorParent(application, currentUserId);
@@ -934,7 +980,7 @@ public class ClientWorkspaceAppService {
       case "accept_service_offer" -> {
         ensureTutorStudent(application, currentUserId);
         requireTutorApplicationStatus(application.status(), "TUTOR_SERVICE_OFFER_STATUS_INVALID", "只有家教服务确认中的记录可以同意", TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING);
-        updateTutorApplicationAvailabilityAndStatus(application.id(), request == null ? "" : clean(request.availability()), TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING);
+        updateTutorApplicationAvailabilityAndStatus(application.id(), requireTutorServiceAvailability(request), TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING);
       }
       case "reject_service_offer_salary" -> {
         ensureTutorStudent(application, currentUserId);
@@ -956,14 +1002,20 @@ public class ClientWorkspaceAppService {
       case "request_service_schedule_change" -> {
         ensureTutorStudent(application, currentUserId);
         requireTutorApplicationStatus(application.status(), "TUTOR_SERVICE_SCHEDULE_STATUS_INVALID", "只有兼职日程确认中的记录可以要求修改", TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING);
-        updateTutorApplicationAvailabilityAndStatus(application.id(), request == null ? "" : clean(request.availability()), TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING);
+        updateTutorApplicationAvailabilityAndStatus(application.id(), requireTutorServiceAvailability(request), TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING);
       }
       case "confirm_settlement" -> {
         ensureTutorStudent(application, currentUserId);
         requireTutorApplicationStatus(application.status(), "TUTOR_SETTLEMENT_STATUS_INVALID", "只有结算确认中的记录可以确认结算", TUTOR_APPLICANT_STATUS_SETTLEMENT_CONFIRMING);
-        updateTutorApplicationStatus(application.id(), TUTOR_APPLICANT_STATUS_ENDED);
         if (isFormalTutorDemandStatus(application.demandStatus())) {
+          updateTutorApplicationStatus(application.id(), TUTOR_APPLICANT_STATUS_ENDED);
           updateTutorDemandStatus(application.demandId(), TUTOR_DEMAND_STATUS_ENDED);
+        } else if (TUTOR_TRIAL_HIRE_DECISION_HIRE.equals(application.trialHireDecision())) {
+          updateTutorApplicationStatus(application.id(), TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING);
+        } else if (TUTOR_TRIAL_HIRE_DECISION_NOT_HIRE.equals(application.trialHireDecision())) {
+          updateTutorApplicationStatus(application.id(), TUTOR_APPLICANT_STATUS_TRIAL_ENDED);
+        } else {
+          updateTutorApplicationStatus(application.id(), TUTOR_APPLICANT_STATUS_TRIAL_SETTLED_SERVICE_PENDING);
         }
       }
       case "request_settlement_revision" -> {
@@ -1137,6 +1189,7 @@ public class ClientWorkspaceAppService {
         null,
         null,
         null,
+        null,
         null
     );
   }
@@ -1163,24 +1216,13 @@ public class ClientWorkspaceAppService {
                        SELECT COUNT(*)
                        FROM tutor_applicant ta
                        WHERE ta.tutor_demand_id = td.id
-                         AND ta.enabled = TRUE
-                         AND ta.status IN (
+                        AND ta.enabled = TRUE
+                        AND ta.status IN (
                            '试课日程确认中', '试课确认中', '试课中', '结束试课确认中', '试课结果处理',
-                           '结算确认中', '结算修改中', '家教服务确认中', '兼职日程待提交', '兼职日程确认中', '正式家教服务', '家教进行中'
+                           '结算确认中', '结算修改中', '试课已结算+雇佣确认中', '家教服务确认中', '兼职日程待提交', '兼职日程确认中', '正式家教服务', '家教进行中',
+                           '正式雇佣失效'
                          )
                      ) AS trialing_count,
-                     (
-                       SELECT ta.status
-                       FROM tutor_applicant ta
-                       WHERE ta.tutor_demand_id = td.id
-                         AND ta.enabled = TRUE
-                         AND ta.status IN (
-                           '试课日程确认中', '试课确认中', '试课中', '结束试课确认中', '试课结果处理',
-                           '结算确认中', '结算修改中', '家教服务确认中', '兼职日程待提交', '兼职日程确认中', '正式家教服务', '家教进行中'
-                         )
-                       ORDER BY ta.updated_at DESC, ta.id DESC
-                       LIMIT 1
-                     ) AS active_applicant_status,
                      EXISTS (
                        SELECT 1
                        FROM tutor_applicant ta
@@ -1202,8 +1244,7 @@ public class ClientWorkspaceAppService {
             boolean hasTrialSchedule = rs.getBoolean("has_trial_schedule");
             int applicantCount = rs.getInt("applicant_count");
             boolean hasTrialingTutor = rs.getInt("trialing_count") > 0;
-            String activeApplicantStatus = defaultText(rs.getString("active_applicant_status"), "");
-            String displayStatus = tutorDemandOrderStatus(status, applicantCount, activeApplicantStatus, hasTrialingTutor);
+            String displayStatus = tutorDemandOrderStatus(status);
             return new ClientOrder(
                 rs.getString("public_id"),
                 role,
@@ -1220,6 +1261,7 @@ public class ClientWorkspaceAppService {
                 null,
                 null,
                 rs.getInt("applicant_count"),
+                rs.getInt("trialing_count"),
                 null,
                 null,
                 !isClosed,
@@ -1244,9 +1286,9 @@ public class ClientWorkspaceAppService {
 
     return jdbcTemplate.query(
         """
-            SELECT ta.public_id, ta.status, ta.availability, ta.trial_start, ta.trial_end, ta.trial_half_day,
+            SELECT ta.public_id, ta.status, ta.availability, ta.trial_fee_cents, ta.trial_start, ta.trial_end, ta.trial_half_day,
                    td.title, td.subject, td.budget, td.address_label, td.period_start, td.period_end,
-                   COALESCE(NULLIF(parent.nickname, ''), parent.phone, '家长用户') AS parent_name,
+                   COALESCE(NULLIF(parent.nickname, ''), '未设置昵称') AS parent_nickname,
                    COALESCE(parent.phone, '') AS parent_phone
             FROM tutor_applicant ta
             JOIN tutor_demand td ON td.id = ta.tutor_demand_id
@@ -1255,7 +1297,7 @@ public class ClientWorkspaceAppService {
               AND ta.enabled = TRUE
               AND td.enabled = TRUE
               AND td.status NOT IN (?, ?)
-              AND ta.status NOT IN (?, ?, ?, ?, ?, ?)
+              AND ta.status NOT IN (?, ?, ?, ?, ?)
             ORDER BY ta.updated_at DESC, ta.id DESC
             """,
         (rs, rowNum) -> {
@@ -1272,11 +1314,13 @@ public class ClientWorkspaceAppService {
           String trialScheduleText = hasTrialSchedule
               ? tutorTrialScheduleText(rs.getString("trial_start"), rs.getString("trial_end"), rs.getString("trial_half_day"))
               : "";
+          String availabilityLabel = isTutorServiceAvailabilityStatus(status) ? "可家教时间：" : "可试课时间：";
           String orderDetail = "试课申请 · " + rs.getString("subject") + " · "
               + defaultText(rs.getString("period_start"), "待定") + " 至 "
               + defaultText(rs.getString("period_end"), "待定") + " · "
               + defaultText(rs.getString("address_label"), "地址待补充")
-              + " · 可试课时间：" + defaultText(rs.getString("availability"), "待补充")
+              + " · " + availabilityLabel + defaultText(rs.getString("availability"), "待补充")
+              + " · 试课结算金额：" + toAmount(rs.getLong("trial_fee_cents"))
               + (trialScheduleText.isBlank() ? "" : " · 试课安排：" + trialScheduleText);
           return new ClientOrder(
               rs.getString("public_id"),
@@ -1284,12 +1328,13 @@ public class ClientWorkspaceAppService {
               rs.getString("title"),
               status,
               BigDecimal.ZERO,
-              rs.getString("parent_name"),
+              rs.getString("parent_nickname"),
               orderDetail,
               null,
               rs.getString("budget"),
               "tutor",
               maskPhone(rs.getString("parent_phone")),
+              null,
               null,
               null,
               null,
@@ -1317,7 +1362,6 @@ public class ClientWorkspaceAppService {
         TUTOR_APPLICANT_STATUS_REJECTED_LEGACY,
         TUTOR_APPLICANT_STATUS_ENDED,
         TUTOR_APPLICANT_STATUS_CANCELLED,
-        TUTOR_APPLICANT_STATUS_TRIAL_ENDED,
         TUTOR_APPLICANT_STATUS_FORMAL_SERVICE_INVALID
     );
   }
@@ -1325,16 +1369,36 @@ public class ClientWorkspaceAppService {
   private List<PartTimeJob> partTimeJobs() {
     return jdbcTemplate.query(
         """
-            SELECT public_id, publisher, title, description, hourly_pay_cents,
+            SELECT public_id, title, description, hourly_pay_cents,
                    period, location, status, requirement, form_fields,
-                   funding_state, sign_rule
+                   funding_state, sign_rule,
+                   COALESCE(
+                     (
+                       SELECT NULLIF(nickname, '')
+                       FROM app_user
+                       WHERE role = 'merchant'
+                       ORDER BY updated_at DESC, id DESC
+                       LIMIT 1
+                     ),
+                     '未设置昵称'
+                   ) AS publisher_nickname,
+                   COALESCE(
+                     (
+                       SELECT phone
+                       FROM app_user
+                       WHERE role = 'merchant'
+                       ORDER BY updated_at DESC, id DESC
+                       LIMIT 1
+                     ),
+                     ''
+                   ) AS publisher_phone
             FROM part_time_job
             WHERE enabled = TRUE
             ORDER BY created_at DESC, id DESC
             """,
         (rs, rowNum) -> new PartTimeJob(
             rs.getString("public_id"),
-            rs.getString("publisher"),
+            new UserNickname(rs.getString("publisher_nickname"), maskPhone(rs.getString("publisher_phone"))),
             rs.getString("title"),
             rs.getString("description"),
             toAmount(rs.getLong("hourly_pay_cents")),
@@ -1468,10 +1532,8 @@ public class ClientWorkspaceAppService {
                   .map(String::strip)
                   .filter((item) -> !item.isBlank())
                   .toList(),
-              publisherName(publisherUserId),
-              maskPhone(publisherPhone(publisherUserId)),
-              acceptedUserName(acceptedUserId),
-              maskPhone(acceptedUserPhone(acceptedUserId)),
+              userNickname(publisherUserIdOrFallback(publisherUserId)),
+              acceptedUserId == null ? null : userNickname(acceptedUserId),
               isMine,
               currentUserId != null && currentUserId.equals(acceptedUserId),
               isQuotedByMe,
@@ -1529,7 +1591,7 @@ public class ClientWorkspaceAppService {
   private List<TutorDemand> tutorExposedStudents() {
     return jdbcTemplate.query(
         """
-            SELECT id, COALESCE(NULLIF(nickname, ''), phone, '学生用户') AS name,
+            SELECT id, COALESCE(NULLIF(nickname, ''), '未设置昵称') AS nickname,
                    phone, credit_score
             FROM app_user
             WHERE role = 'student'
@@ -1539,17 +1601,16 @@ public class ClientWorkspaceAppService {
             """,
         (rs, rowNum) -> new TutorDemand(
             "student-" + rs.getLong("id"),
-            rs.getString("name"),
+            rs.getString("nickname"),
             "已开启家教",
             "认证学生",
             "可沟通",
             "可联系",
-            rs.getString("name") + "的家教资料",
+            rs.getString("nickname") + "的家教资料",
             "该学生已开启家教开关，认证信息可被家长查看。",
             "平台认证",
             "长期可沟通",
-            rs.getString("name"),
-            maskPhone(rs.getString("phone")),
+            new UserNickname(rs.getString("nickname"), maskPhone(rs.getString("phone"))),
             "tutorStudent",
             List.of()
         )
@@ -1566,7 +1627,7 @@ public class ClientWorkspaceAppService {
         """
             SELECT td.id, td.public_id, td.child, td.subject, td.school, td.budget, td.status,
                    td.title, td.description, td.address_label, td.period_start, td.period_end,
-                   COALESCE(NULLIF(u.nickname, ''), u.phone, '家长用户') AS publisher_name,
+                   COALESCE(NULLIF(u.nickname, ''), '未设置昵称') AS publisher_nickname,
                    COALESCE(u.phone, '') AS publisher_phone
             FROM tutor_demand td
             LEFT JOIN app_user u ON u.id = td.parent_user_id
@@ -1586,8 +1647,7 @@ public class ClientWorkspaceAppService {
             defaultText(rs.getString("description"), "暂无描述"),
             defaultText(rs.getString("address_label"), rs.getString("school")),
             tutorPeriod(rs.getString("period_start"), rs.getString("period_end")),
-            rs.getString("publisher_name"),
-            maskPhone(rs.getString("publisher_phone")),
+            new UserNickname(rs.getString("publisher_nickname"), maskPhone(rs.getString("publisher_phone"))),
             "tutorDemand",
             tutorApplicants(rs.getLong("id"))
         ),
@@ -1605,7 +1665,7 @@ public class ClientWorkspaceAppService {
         """
             SELECT td.id, td.public_id, td.child, td.subject, td.school, td.budget, td.status,
                    td.title, td.description, td.address_label, td.period_start, td.period_end,
-                   COALESCE(NULLIF(u.nickname, ''), u.phone, '家长用户') AS publisher_name,
+                   COALESCE(NULLIF(u.nickname, ''), '未设置昵称') AS publisher_nickname,
                    COALESCE(u.phone, '') AS publisher_phone
             FROM tutor_demand td
             LEFT JOIN app_user u ON u.id = td.parent_user_id
@@ -1624,8 +1684,7 @@ public class ClientWorkspaceAppService {
             defaultText(rs.getString("description"), "暂无描述"),
             defaultText(rs.getString("address_label"), rs.getString("school")),
             tutorPeriod(rs.getString("period_start"), rs.getString("period_end")),
-            rs.getString("publisher_name"),
-            maskPhone(rs.getString("publisher_phone")),
+            new UserNickname(rs.getString("publisher_nickname"), maskPhone(rs.getString("publisher_phone"))),
             "tutorDemand",
             tutorApplicants(rs.getLong("id"))
         ),
@@ -1641,7 +1700,7 @@ public class ClientWorkspaceAppService {
         """
             SELECT td.id, td.public_id, td.child, td.subject, td.school, td.budget, td.status,
                    td.title, td.description, td.address_label, td.period_start, td.period_end,
-                   COALESCE(NULLIF(u.nickname, ''), u.phone, '家长用户') AS publisher_name,
+                   COALESCE(NULLIF(u.nickname, ''), '未设置昵称') AS publisher_nickname,
                    COALESCE(u.phone, '') AS publisher_phone
             FROM tutor_demand td
             LEFT JOIN app_user u ON u.id = td.parent_user_id
@@ -1660,8 +1719,7 @@ public class ClientWorkspaceAppService {
             defaultText(rs.getString("description"), "暂无描述"),
             defaultText(rs.getString("address_label"), rs.getString("school")),
             tutorPeriod(rs.getString("period_start"), rs.getString("period_end")),
-            rs.getString("publisher_name"),
-            maskPhone(rs.getString("publisher_phone")),
+            new UserNickname(rs.getString("publisher_nickname"), maskPhone(rs.getString("publisher_phone"))),
             "tutorDemand",
             tutorApplicants(rs.getLong("id"))
         ),
@@ -1676,14 +1734,19 @@ public class ClientWorkspaceAppService {
   private List<TutorApplicant> tutorApplicants(long tutorDemandId) {
     return jdbcTemplate.query(
         """
-            SELECT public_id, name, school, major, gpa, hired_times, availability, status,
-                   COALESCE(trial_start, '') AS trial_start,
-                   COALESCE(trial_end, '') AS trial_end,
-                   COALESCE(trial_half_day, '') AS trial_half_day
-            FROM tutor_applicant
-            WHERE tutor_demand_id = ?
-              AND enabled = TRUE
-            ORDER BY hired_times DESC, id
+            SELECT ta.public_id,
+                   COALESCE(NULLIF(u.nickname, ''), '未设置昵称') AS nickname,
+                   ta.school, ta.major, ta.gpa, ta.hired_times, ta.availability, ta.status,
+                   ta.trial_fee_cents,
+                   COALESCE(ta.trial_start, '') AS trial_start,
+                   COALESCE(ta.trial_end, '') AS trial_end,
+                   COALESCE(ta.trial_half_day, '') AS trial_half_day,
+                   COALESCE(ta.service_confirmation_cancelled_by, '') AS service_confirmation_cancelled_by
+            FROM tutor_applicant ta
+            LEFT JOIN app_user u ON u.id = ta.applicant_user_id
+            WHERE ta.tutor_demand_id = ?
+              AND ta.enabled = TRUE
+            ORDER BY ta.hired_times DESC, ta.id
             """,
         (rs, rowNum) -> {
           String trialSchedule = "";
@@ -1699,14 +1762,16 @@ public class ClientWorkspaceAppService {
 
           return new TutorApplicant(
               rs.getString("public_id"),
-              rs.getString("name"),
+              rs.getString("nickname"),
               rs.getString("school"),
               rs.getString("major"),
               rs.getString("gpa"),
               rs.getInt("hired_times"),
               rs.getString("availability"),
               rs.getString("status"),
-              trialSchedule
+              toAmount(rs.getLong("trial_fee_cents")),
+              trialSchedule,
+              rs.getString("service_confirmation_cancelled_by")
           );
         },
         tutorDemandId
@@ -1853,7 +1918,8 @@ public class ClientWorkspaceAppService {
 
     String sql = """
             SELECT hq.public_id,
-                   COALESCE(NULLIF(u.nickname, ''), u.phone, '平台用户') AS bidder_name,
+                   COALESCE(NULLIF(u.nickname, ''), '未设置昵称') AS bidder_nickname,
+                   COALESCE(u.phone, '') AS bidder_phone,
                    hq.amount_cents,
                    hq.original_amount_cents,
                    TO_CHAR(hq.updated_at AT TIME ZONE 'Asia/Shanghai', 'MM-DD HH24:MI') AS quote_time,
@@ -1873,7 +1939,7 @@ public class ClientWorkspaceAppService {
         sql,
         (rs, rowNum) -> new HuntingQuote(
             rs.getString("public_id"),
-            rs.getString("bidder_name"),
+            new UserNickname(rs.getString("bidder_nickname"), maskPhone(rs.getString("bidder_phone"))),
             toAmount(rs.getLong("amount_cents")),
             toAmount(rs.getLong("original_amount_cents")),
             rs.getString("quote_time"),
@@ -2277,6 +2343,51 @@ public class ClientWorkspaceAppService {
     }
   }
 
+  /** 校验学生提交的正式家教可用时间，避免同意正式雇佣时没有可排期依据。 */
+  private String requireTutorServiceAvailability(TutorWorkflowActionRequest request) {
+    String availability = request == null ? "" : clean(request.availability());
+    if (availability.isBlank()) {
+      throw new BusinessException("TUTOR_SERVICE_AVAILABILITY_REQUIRED", "请先提交可家教日期");
+    }
+
+    Map<LocalDate, List<TutorTrialTimeRange>> availabilityMap = parseTutorTrialScheduleMap(availability);
+    boolean hasTimeRange = availabilityMap.values().stream().anyMatch((timeRanges) -> !timeRanges.isEmpty());
+    if (availabilityMap.isEmpty() || !hasTimeRange) {
+      throw new BusinessException("TUTOR_SERVICE_AVAILABILITY_INVALID", "可家教日期格式不正确");
+    }
+
+    return availability;
+  }
+
+  /** 校验家长提交的正式家教日程必须落在学生提交的可家教时间内。 */
+  private void assertTutorServiceScheduleWithinAvailability(String tutorSchedule, String serviceAvailability) {
+    Map<LocalDate, List<TutorTrialTimeRange>> scheduleMap = parseTutorTrialScheduleMap(tutorSchedule);
+    boolean hasScheduleTimeRange = scheduleMap.values().stream().anyMatch((timeRanges) -> !timeRanges.isEmpty());
+    if (scheduleMap.isEmpty() || !hasScheduleTimeRange) {
+      throw new BusinessException("TUTOR_SERVICE_SCHEDULE_REQUIRED", "请先提交兼职日程");
+    }
+
+    Map<LocalDate, List<TutorTrialTimeRange>> availabilityMap = parseTutorTrialScheduleMap(serviceAvailability);
+    boolean hasAvailabilityTimeRange = availabilityMap.values().stream().anyMatch((timeRanges) -> !timeRanges.isEmpty());
+    if (availabilityMap.isEmpty() || !hasAvailabilityTimeRange) {
+      throw new BusinessException("TUTOR_SERVICE_AVAILABILITY_REQUIRED", "学生尚未提交可家教日期");
+    }
+
+    for (Map.Entry<LocalDate, List<TutorTrialTimeRange>> entry : scheduleMap.entrySet()) {
+      List<TutorTrialTimeRange> availableRanges = availabilityMap.get(entry.getKey());
+      if (availableRanges == null) {
+        throw new BusinessException("TUTOR_SERVICE_SCHEDULE_OUT_OF_AVAILABILITY", "兼职日程必须在学生提交的可家教日期内");
+      }
+
+      for (TutorTrialTimeRange scheduleRange : entry.getValue()) {
+        boolean contained = availableRanges.stream().anyMatch((availableRange) -> availableRange.contains(scheduleRange));
+        if (!contained) {
+          throw new BusinessException("TUTOR_SERVICE_SCHEDULE_OUT_OF_AVAILABILITY", "兼职日程必须在学生提交的可家教时间段内");
+        }
+      }
+    }
+  }
+
   /** 解析“2026年7月16日 9:00-11:00；...”格式的试课日程。 */
   private Map<LocalDate, List<TutorTrialTimeRange>> parseTutorTrialScheduleMap(String scheduleText) {
     Map<LocalDate, List<TutorTrialTimeRange>> scheduleMap = new HashMap<>();
@@ -2309,6 +2420,14 @@ public class ClientWorkspaceAppService {
 
   private boolean isFormalTutorDemandStatus(String status) {
     return TUTOR_DEMAND_STATUS_FORMAL_SERVICE.equals(status) || TUTOR_DEMAND_STATUS_TUTORING_LEGACY.equals(status);
+  }
+
+  /** 判断当前申请是否已经进入正式家教可用时间或正式日程阶段。 */
+  private boolean isTutorServiceAvailabilityStatus(String status) {
+    return TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING.equals(status)
+        || TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING.equals(status)
+        || TUTOR_APPLICANT_STATUS_FORMAL_SERVICE.equals(status)
+        || TUTOR_APPLICANT_STATUS_TUTORING_LEGACY.equals(status);
   }
 
   /** 判断申请是否仍处于家长处理前的申请阶段，并兼容迁移前状态。 */
@@ -2352,20 +2471,8 @@ public class ClientWorkspaceAppService {
     return status;
   }
 
-  private String tutorDemandOrderStatus(String demandStatus, int applicantCount, String activeApplicantStatus, boolean hasTrialingTutor) {
-    if (isClosedTutorDemandStatus(demandStatus) || isFormalTutorDemandStatus(demandStatus)) {
-      return TUTOR_DEMAND_STATUS_TUTORING_LEGACY.equals(demandStatus) ? TUTOR_DEMAND_STATUS_FORMAL_SERVICE : demandStatus;
-    }
-    if (hasTrialingTutor && !activeApplicantStatus.isBlank()) {
-      String normalizedApplicantStatus = TUTOR_APPLICANT_STATUS_TUTORING_LEGACY.equals(activeApplicantStatus)
-          ? TUTOR_APPLICANT_STATUS_FORMAL_SERVICE
-          : activeApplicantStatus;
-      return TUTOR_DEMAND_STATUS_RECRUITING + " + " + normalizedApplicantStatus;
-    }
-    if (applicantCount > 0) {
-      return TUTOR_DEMAND_STATUS_RECRUITING + " + 申请数";
-    }
-    return TUTOR_DEMAND_STATUS_RECRUITING_LEGACY.equals(demandStatus) ? TUTOR_DEMAND_STATUS_RECRUITING : demandStatus;
+  private String tutorDemandOrderStatus(String demandStatus) {
+    return tutorDemandStatusLabel(demandStatus);
   }
 
   private void requireTutorApplicationStatus(String actualStatus, String errorCode, String errorMessage, String... allowedStatuses) {
@@ -2397,6 +2504,87 @@ public class ClientWorkspaceAppService {
     jdbcTemplate.update("UPDATE tutor_applicant SET status = ?, updated_at = NOW() WHERE id = ?", status, applicationId);
   }
 
+  /** 发起正式雇佣确认时清空上一轮取消发起方，避免影响新的确认链路。 */
+  private void updateTutorApplicationStatusForServiceConfirmation(long applicationId, String status) {
+    jdbcTemplate.update(
+        """
+            UPDATE tutor_applicant
+            SET status = ?,
+                service_confirmation_cancelled_by = NULL,
+                updated_at = NOW()
+            WHERE id = ?
+            """,
+        status,
+        applicationId
+    );
+  }
+
+  /** 取消正式兼职确认并回到试课费用已结算后的家长决策阶段。 */
+  private void cancelTutorServiceConfirmation(TutorWorkflowRow application, long currentUserId) {
+    String cancelledBy = application.applicantUserId() != null && application.applicantUserId().equals(currentUserId)
+        ? TUTOR_SERVICE_CONFIRMATION_CANCELLED_BY_STUDENT
+        : TUTOR_SERVICE_CONFIRMATION_CANCELLED_BY_PARENT;
+
+    jdbcTemplate.update(
+        """
+            UPDATE tutor_applicant
+            SET status = ?,
+                trial_hire_decision = NULL,
+                service_confirmation_cancelled_by = ?,
+                updated_at = NOW()
+            WHERE id = ?
+            """,
+        TUTOR_APPLICANT_STATUS_TRIAL_SETTLED_SERVICE_PENDING,
+        cancelledBy,
+        application.id()
+    );
+  }
+
+  /** 写入试课结算金额和可选雇佣决策，并进入学生费用确认。 */
+  private void updateTutorTrialResult(long applicationId, BigDecimal trialFee, Boolean hireTutor) {
+    long trialFeeCents = toTrialFeeCents(trialFee);
+    jdbcTemplate.update(
+        """
+            UPDATE tutor_applicant
+            SET trial_fee_cents = ?,
+                trial_hire_decision = ?,
+                status = ?,
+                updated_at = NOW()
+            WHERE id = ?
+        """,
+        trialFeeCents,
+        tutorTrialHireDecision(hireTutor),
+        TUTOR_APPLICANT_STATUS_SETTLEMENT_CONFIRMING,
+        applicationId
+    );
+  }
+
+  /** 旧链路已存在试课结果处理时，仅补充雇佣决策并进入费用确认。 */
+  private void updateTutorTrialSettlementDecision(long applicationId, Boolean hireTutor) {
+    jdbcTemplate.update(
+        """
+            UPDATE tutor_applicant
+            SET trial_hire_decision = ?,
+                status = ?,
+                updated_at = NOW()
+            WHERE id = ?
+        """,
+        tutorTrialHireDecision(hireTutor),
+        TUTOR_APPLICANT_STATUS_SETTLEMENT_CONFIRMING,
+        applicationId
+    );
+  }
+
+  /** 将家长在结算弹窗中选择的正式雇佣意向转换为稳定入库值，空值表示后续再决策。 */
+  private String tutorTrialHireDecision(Boolean hireTutor) {
+    if (hireTutor == null) {
+      return null;
+    }
+
+    return Boolean.TRUE.equals(hireTutor) ? TUTOR_TRIAL_HIRE_DECISION_HIRE : TUTOR_TRIAL_HIRE_DECISION_NOT_HIRE;
+  }
+
+  /** 更新学生提交的可用时间并推进申请状态；空可用时间仅用于兼容旧流程动作。 */
   private void updateTutorApplicationAvailabilityAndStatus(long applicationId, String availability, String status) {
     jdbcTemplate.update(
         """
@@ -2413,6 +2601,7 @@ public class ClientWorkspaceAppService {
     );
   }
 
+  /** 写入家长提交的正式兼职日程，并同步可供前端展示的起止日期和日程摘要。 */
   private void updateTutorApplicationSchedule(long applicationId, String tutorSchedule, String status) {
     if (tutorSchedule.isBlank()) {
       throw new BusinessException("TUTOR_SERVICE_SCHEDULE_REQUIRED", "请先提交兼职日程");
@@ -2443,6 +2632,38 @@ public class ClientWorkspaceAppService {
     jdbcTemplate.update("UPDATE tutor_demand SET status = ?, updated_at = NOW() WHERE id = ?", status, demandId);
   }
 
+  /** 家长不正式雇佣且结束发布时，关闭当前试课和同需求下仍活跃的其他申请。 */
+  private void closeTutorDemandAfterTrialResult(TutorWorkflowRow application) {
+    updateTutorApplicationStatus(application.id(), TUTOR_APPLICANT_STATUS_TRIAL_ENDED);
+    jdbcTemplate.update(
+        """
+            UPDATE tutor_applicant
+            SET status = ?,
+                updated_at = NOW()
+            WHERE tutor_demand_id = ?
+              AND id <> ?
+              AND enabled = TRUE
+              AND status IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+        TUTOR_APPLICANT_STATUS_ENDED,
+        application.demandId(),
+        application.id(),
+        TUTOR_APPLICANT_STATUS_APPLICATION_PENDING,
+        TUTOR_APPLICANT_STATUS_APPLICATION_PENDING_LEGACY,
+        TUTOR_APPLICANT_STATUS_TRIAL_CONFIRMED,
+        TUTOR_APPLICANT_STATUS_TRIAL_CONFIRMED_LEGACY,
+        TUTOR_APPLICANT_STATUS_TRIALING,
+        TUTOR_APPLICANT_STATUS_TRIAL_END_CONFIRMING,
+        TUTOR_APPLICANT_STATUS_TRIAL_RESULT_PROCESSING,
+        TUTOR_APPLICANT_STATUS_SETTLEMENT_CONFIRMING,
+        TUTOR_APPLICANT_STATUS_TRIAL_SETTLED_SERVICE_PENDING,
+        TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING,
+        TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING,
+        TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING
+    );
+    updateTutorDemandStatus(application.demandId(), TUTOR_DEMAND_STATUS_ENDED);
+  }
+
   /** 正式雇佣成立后，结束同一需求下其他仍在申请、试课或正式确认前的候选。 */
   private void endOtherActiveTutorApplicationsAfterFormalHire(long demandId, String applicationPublicId) {
     jdbcTemplate.update(
@@ -2453,7 +2674,7 @@ public class ClientWorkspaceAppService {
             WHERE tutor_demand_id = ?
               AND public_id <> ?
               AND enabled = TRUE
-              AND status IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              AND status IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
         TUTOR_APPLICANT_STATUS_ENDED,
         demandId,
@@ -2465,6 +2686,8 @@ public class ClientWorkspaceAppService {
         TUTOR_APPLICANT_STATUS_TRIALING,
         TUTOR_APPLICANT_STATUS_TRIAL_END_CONFIRMING,
         TUTOR_APPLICANT_STATUS_TRIAL_RESULT_PROCESSING,
+        TUTOR_APPLICANT_STATUS_SETTLEMENT_CONFIRMING,
+        TUTOR_APPLICANT_STATUS_TRIAL_SETTLED_SERVICE_PENDING,
         TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING,
         TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING,
         TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING
@@ -2478,7 +2701,8 @@ public class ClientWorkspaceAppService {
                    td.parent_user_id, ta.applicant_user_id, ta.status, td.status AS demand_status,
                    COALESCE(ta.trial_start, '') AS trial_start,
                    COALESCE(ta.trial_end, '') AS trial_end,
-                   COALESCE(ta.trial_half_day, '') AS trial_half_day
+                   COALESCE(ta.trial_half_day, '') AS trial_half_day,
+                   COALESCE(ta.trial_hire_decision, '') AS trial_hire_decision
             FROM tutor_applicant ta
             JOIN tutor_demand td ON td.id = ta.tutor_demand_id
             WHERE ta.public_id = ?
@@ -2497,7 +2721,8 @@ public class ClientWorkspaceAppService {
             rs.getString("demand_status"),
             rs.getString("trial_start"),
             rs.getString("trial_end"),
-            rs.getString("trial_half_day")
+            rs.getString("trial_half_day"),
+            rs.getString("trial_hire_decision")
         ),
         applicationId
     );
@@ -2587,40 +2812,29 @@ public class ClientWorkspaceAppService {
     return ids.get(0);
   }
 
-  private String publisherName(Long publisherUserId) {
-    return userContact(publisherUserIdOrFallback(publisherUserId)).name();
-  }
-
-  private String publisherPhone(Long publisherUserId) {
-    return userContact(publisherUserIdOrFallback(publisherUserId)).phone();
-  }
-
-  private String acceptedUserName(Long acceptedUserId) {
-    return acceptedUserId == null ? null : userContact(acceptedUserId).name();
-  }
-
-  private String acceptedUserPhone(Long acceptedUserId) {
-    return acceptedUserId == null ? null : userContact(acceptedUserId).phone();
-  }
-
   private long publisherUserIdOrFallback(Long publisherUserId) {
     return publisherUserId == null ? roleUserId(ClientRole.student) : publisherUserId;
+  }
+
+  private UserNickname userNickname(long userId) {
+    UserContact contact = userContact(userId);
+    return new UserNickname(contact.nickname(), maskPhone(contact.phone()));
   }
 
   private UserContact userContact(long userId) {
     List<UserContact> rows = jdbcTemplate.query(
         """
-            SELECT COALESCE(NULLIF(nickname, ''), phone, '平台用户') AS name,
+            SELECT COALESCE(NULLIF(nickname, ''), '未设置昵称') AS nickname,
                    COALESCE(phone, '') AS phone
             FROM app_user
             WHERE id = ?
             LIMIT 1
             """,
-        (rs, rowNum) -> new UserContact(rs.getString("name"), rs.getString("phone")),
+        (rs, rowNum) -> new UserContact(rs.getString("nickname"), rs.getString("phone")),
         userId
     );
 
-    return rows.isEmpty() ? new UserContact("平台用户", "") : rows.get(0);
+    return rows.isEmpty() ? new UserContact("未设置昵称", "") : rows.get(0);
   }
 
   private String maskPhone(String phone) {
@@ -2645,7 +2859,7 @@ public class ClientWorkspaceAppService {
         .toList();
   }
 
-  private record UserContact(String name, String phone) {
+  private record UserContact(String nickname, String phone) {
   }
 
   private BigDecimal toAmount(long cents) {
@@ -2664,6 +2878,18 @@ public class ClientWorkspaceAppService {
     }
 
     return amount.setScale(2, RoundingMode.HALF_UP).movePointRight(2).longValueExact();
+  }
+
+  /** 将试课结算金额转换为分，允许 0 元但不允许空值或负数。 */
+  private long toTrialFeeCents(BigDecimal trialFee) {
+    if (trialFee == null) {
+      throw new BusinessException("TUTOR_TRIAL_FEE_REQUIRED", "请先确认试课结算金额");
+    }
+    if (trialFee.compareTo(BigDecimal.ZERO) < 0) {
+      throw new BusinessException("TUTOR_TRIAL_FEE_INVALID", "试课结算金额不能小于 0");
+    }
+
+    return trialFee.setScale(2, RoundingMode.HALF_UP).movePointRight(2).longValueExact();
   }
 
   /** 生成家教需求对外编号。 */
@@ -2790,7 +3016,8 @@ public class ClientWorkspaceAppService {
       String demandStatus,
       String trialStart,
       String trialEnd,
-      String trialHalfDay
+      String trialHalfDay,
+      String trialHireDecision
   ) {
   }
 

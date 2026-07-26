@@ -1,5 +1,6 @@
 package com.unknown.platform.modules.clientprofile.application;
 
+import com.unknown.platform.common.api.UserNickname;
 import com.unknown.platform.common.exception.BusinessException;
 import com.unknown.platform.common.security.ClientSessionService;
 import com.unknown.platform.modules.auth.model.ClientRole;
@@ -8,6 +9,7 @@ import com.unknown.platform.modules.clientprofile.model.ClientAddressResponse;
 import com.unknown.platform.modules.clientprofile.model.SubmitHuntingCertificationRequest;
 import com.unknown.platform.modules.clientprofile.model.SubmitHuntingCertificationResponse;
 import com.unknown.platform.modules.clientprofile.model.TutorExposureResponse;
+import com.unknown.platform.modules.clientprofile.model.UpdateNicknameRequest;
 import com.unknown.platform.modules.clientprofile.model.UpdateTutorExposureRequest;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -29,6 +31,33 @@ public class ClientProfileAppService {
   public ClientProfileAppService(JdbcTemplate jdbcTemplate, ClientSessionService clientSessionService) {
     this.jdbcTemplate = jdbcTemplate;
     this.clientSessionService = clientSessionService;
+  }
+
+  /**
+   * 修改当前登录账号昵称，所有用户名称展示均以 app_user.nickname 为唯一来源。
+   *
+   * @param authorization 客户端登录访问令牌
+   * @param request 昵称请求
+   * @return 更新后的用户昵称快照
+   */
+  @Transactional
+  public UserNickname updateNickname(String authorization, UpdateNicknameRequest request) {
+    long userId = clientSessionService.requireUserId(authorization);
+    String nickname = clean(request.nickname());
+    if (nickname.isBlank()) {
+      throw new BusinessException("NICKNAME_REQUIRED", "昵称不能为空");
+    }
+    jdbcTemplate.update(
+        """
+            UPDATE app_user
+            SET nickname = ?,
+                updated_at = NOW()
+            WHERE id = ?
+            """,
+        nickname,
+        userId
+    );
+    return new UserNickname(nickname, maskPhone(userPhone(userId)));
   }
 
   /**
@@ -246,6 +275,15 @@ public class ClientProfileAppService {
     return !rows.isEmpty() && rows.get(0);
   }
 
+  private String userPhone(long userId) {
+    List<String> rows = jdbcTemplate.query(
+        "SELECT COALESCE(phone, '') FROM app_user WHERE id = ? LIMIT 1",
+        (rs, rowNum) -> rs.getString(1),
+        userId
+    );
+    return rows.isEmpty() ? "" : rows.get(0);
+  }
+
   private List<ClientAddressResponse> addresses(long userId) {
     return jdbcTemplate.query(
         """
@@ -388,6 +426,19 @@ public class ClientProfileAppService {
 
   private String clean(String value) {
     return value == null ? "" : value.strip();
+  }
+
+  /** 将手机号脱敏后返回给前端展示。 */
+  private String maskPhone(String phone) {
+    String normalizedPhone = clean(phone);
+    if (normalizedPhone.isBlank()) {
+      return "暂无手机号";
+    }
+    if (normalizedPhone.length() < 7) {
+      return normalizedPhone;
+    }
+
+    return normalizedPhone.substring(0, 3) + "****" + normalizedPhone.substring(7);
   }
 
   private String dateTime(ResultSet rs, String column) throws SQLException {

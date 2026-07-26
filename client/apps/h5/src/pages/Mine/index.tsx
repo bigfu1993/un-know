@@ -21,7 +21,7 @@ export function Mine({
   orders: ClientOrder[];
   walletSummary: WalletSummary;
 }) {
-  const { accountStatusText, creditScore, phone, profileDraft, profileName, role } = useGlobalUser();
+  const { accountStatusText, creditScore, phone, profileDraft, nickname, role } = useGlobalUser();
   const tutorCardData = getTutorCardDataFromDraft(profileDraft);
   const tutorCardMode = getTutorCardMode(tutorCardData.certificationStatus, "default");
   const isMerchant = role === "merchant";
@@ -54,7 +54,7 @@ export function Mine({
           creditScore={creditScore}
           followerCount={0}
           followingCount={0}
-          nickname={profileName}
+          nickname={nickname}
           phone={phone}
           roleLabel={roleLabels[role]}
           trailingAction={

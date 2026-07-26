@@ -7,7 +7,7 @@ public record LoginResponse(
     ClientRole role,
     String accountStatus,
     String phone,
-    String displayName,
+    String nickname,
     boolean profileCompletionRequired
 ) {
 }

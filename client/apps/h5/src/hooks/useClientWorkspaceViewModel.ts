@@ -4,6 +4,7 @@ import {
   getRecommendedHuntingTasks
 } from "@pages/home/delegation/model";
 import { getTutorDemandBudgetLabel } from "@tools/tutorDemand";
+import { isTutorTrialSettledServicePendingStatus } from "@tools/tutorTrial";
 
 /** 用户端工作台派生数据入参。 */
 interface UseClientWorkspaceViewModelOptions {
@@ -19,6 +20,10 @@ interface UseClientWorkspaceViewModelOptions {
 
 /** 判断接口订单是否应保留在订单历史而不再展示到进行中列表。 */
 function isArchivedClientOrder(order: ClientOrder) {
+  if (order.category === "tutor" && isTutorTrialSettledServicePendingStatus(order.status)) {
+    return false;
+  }
+
   return ["已取消", "已完成", "已结束", "已结算"].some((status) => order.status.includes(status));
 }
 
@@ -53,9 +58,9 @@ export function useClientWorkspaceViewModel({
           budget: getTutorDemandBudgetLabel(demand.budget),
           description: demand.description ?? `${demand.child} 需要 ${demand.subject} 家教，学校：${demand.school}`,
           id: demand.id,
-          parentPhone: demand.publisherPhone ?? "家长电话待平台授权",
+          parentPhone: demand.publisher?.phone ?? "家长电话待平台授权",
           period: demand.period ?? demand.status,
-          publisher: demand.publisherName ?? "家长用户",
+          publisher: demand.publisher ?? { nickname: "家长用户" },
           requirement: `${demand.subject} · ${demand.school}`,
           status: demand.status,
           subject: demand.subject,
@@ -73,9 +78,11 @@ export function useClientWorkspaceViewModel({
           hiredTimes: applicant.hiredTimes,
           id: applicant.id,
           major: applicant.major,
-          name: applicant.name,
+          nickname: applicant.nickname,
           school: applicant.school,
+          serviceConfirmationCancelledBy: applicant.serviceConfirmationCancelledBy,
           status: applicant.status,
+          trialFee: applicant.trialFee,
           trialSchedule: applicant.trialSchedule
         }))
       ),

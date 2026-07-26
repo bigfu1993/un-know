@@ -51,6 +51,7 @@ export default defineConfig({
             "useResetClientPassword",
             "useSendChatMessage",
             "useUpdateClientAddress",
+            "useUpdateClientNickname",
             "useUpdateTutorExposure",
             "useUseClientAddress"
           ],
