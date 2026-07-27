@@ -1,6 +1,7 @@
 package com.unknown.platform.modules.product.controller.client;
 
 import com.unknown.platform.common.api.ApiResponse;
+import com.unknown.platform.common.realtime.ClientRealtimeService;
 import com.unknown.platform.common.security.ClientSessionService;
 import com.unknown.platform.modules.auth.model.ClientRole;
 import com.unknown.platform.modules.product.application.ProductAppService;
@@ -22,10 +23,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductClientController {
   private final ProductAppService productAppService;
   private final ClientSessionService clientSessionService;
+  private final ClientRealtimeService clientRealtimeService;
 
-  public ProductClientController(ProductAppService productAppService, ClientSessionService clientSessionService) {
+  public ProductClientController(
+      ProductAppService productAppService,
+      ClientSessionService clientSessionService,
+      ClientRealtimeService clientRealtimeService
+  ) {
     this.productAppService = productAppService;
     this.clientSessionService = clientSessionService;
+    this.clientRealtimeService = clientRealtimeService;
   }
 
   /**
@@ -59,6 +66,8 @@ public class ProductClientController {
       @Valid @RequestBody PurchaseRequest request
   ) {
     ClientRole role = clientSessionService.resolveClientRole(authorization, clientRoleHeader);
-    return ApiResponse.ok(productAppService.purchase(request, role, authorization));
+    PurchaseResponse response = productAppService.purchase(request, role, authorization);
+    clientRealtimeService.publishOngoingOrdersChanged("purchase", response.orderId(), "product_purchased");
+    return ApiResponse.ok(response);
   }
 }

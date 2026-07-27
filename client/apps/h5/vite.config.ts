@@ -103,8 +103,10 @@ export default defineConfig({
       "@store": path.resolve(__dirname, "src/store"),
       "@tools": path.resolve(__dirname, "src/tools"),
       "@app-types": path.resolve(__dirname, "src/types"),
+      "@unknown/api-client/": path.resolve(__dirname, "../../packages/api-client/src/"),
       "@unknown/api-client": path.resolve(__dirname, "../../packages/api-client/src"),
       "@unknown/domain": path.resolve(__dirname, "../../packages/domain/src"),
+      "@unknown/hooks/": path.resolve(__dirname, "../../packages/hooks/src/"),
       "@unknown/hooks": path.resolve(__dirname, "../../packages/hooks/src"),
       "@unknown/ui-tokens": path.resolve(__dirname, "../../packages/ui-tokens/src")
     }

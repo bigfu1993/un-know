@@ -13,6 +13,7 @@ import {
   useHandleHuntingTaskFulfillmentAction,
   useHuntingTasks,
   useHandleTutorWorkflowAction,
+  useOngoingOrdersRealtime,
   usePartTimeJobs,
   usePublishHuntingTask,
   usePublishTutorDemand,
@@ -74,6 +75,10 @@ export function App() {
   const clearUser = useGlobalStore((state) => state.clearUser);
   const role = user.role;
   const isAuthenticated = user.isAuthenticated;
+  useOngoingOrdersRealtime({
+    enabled: isAuthenticated,
+    sessionKey: user.session?.accessToken
+  });
   const {
     activePage,
     activeTab,

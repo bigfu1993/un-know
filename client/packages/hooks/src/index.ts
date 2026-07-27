@@ -68,19 +68,27 @@ import {
   UpdateNicknameRequest,
   TutorWorkflowActionRequest
 } from "@unknown/domain";
+import {
+  clientAddressQueryKey,
+  clientHuntingTasksQueryKey,
+  clientPartTimeJobsQueryKey,
+  clientTutorDemandsQueryKey,
+  clientWorkspaceQueryKey,
+  getRoleQueryKey
+} from "./queryKeys";
 
-export const clientAddressQueryKey = ["client-addresses"] as const;
-export const clientWorkspaceQueryKey = ["client-workspace"] as const;
-export const clientPartTimeJobsQueryKey = ["client-part-time-jobs"] as const;
-export const clientHuntingTasksQueryKey = ["client-hunting-tasks"] as const;
-export const clientTutorDemandsQueryKey = ["client-tutor-demands"] as const;
+export {
+  clientAddressQueryKey,
+  clientHuntingTasksQueryKey,
+  clientPartTimeJobsQueryKey,
+  clientTutorDemandsQueryKey,
+  clientWorkspaceQueryKey
+} from "./queryKeys";
+export { useOngoingOrdersRealtime } from "./realtime";
 
+/** 根据可选拥有者标识生成地址列表查询键。 */
 function getClientAddressQueryKey(ownerKey?: string) {
   return ownerKey ? [...clientAddressQueryKey, ownerKey] : clientAddressQueryKey;
-}
-
-function getRoleQueryKey(baseKey: readonly string[], role: Role) {
-  return [...baseKey, role] as const;
 }
 
 export function useClientHome(role: Role, enabled = true) {
