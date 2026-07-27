@@ -667,7 +667,7 @@ export function App() {
     setIsTutorTrialListOpen(true);
   }
 
-  /** 进行中取消动作按业务类型分流，家教兼职走真实家教取消接口。 */
+  /** 进行中取消动作按业务类型分流，家教发布中主任务走真实撤回接口。 */
   function handleRequestOngoingCancel(order: ClientOrder) {
     if (order.category === "tutor") {
       void handleCancelTutorDemand(order);

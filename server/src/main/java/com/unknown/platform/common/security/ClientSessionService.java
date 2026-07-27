@@ -1,6 +1,7 @@
 package com.unknown.platform.common.security;
 
 import com.unknown.platform.common.exception.BusinessException;
+import com.unknown.platform.modules.auth.model.ClientRole;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,9 @@ import org.springframework.util.StringUtils;
  */
 @Service
 public class ClientSessionService {
+  /** 前端统一写入的当前登录用户角色请求头。 */
+  public static final String CLIENT_USER_ROLE_HEADER = "X-Client-User-Role";
+
   private final JdbcTemplate jdbcTemplate;
 
   public ClientSessionService(JdbcTemplate jdbcTemplate) {
@@ -61,6 +65,27 @@ public class ClientSessionService {
     }
   }
 
+  /**
+   * 解析当前请求角色；已登录时以 token 对应用户角色为准，并校验前端上下文头未串号。
+   *
+   * @param authorization HTTP Authorization 头
+   * @param clientRoleHeader 前端请求拦截器写入的角色头
+   * @return 当前请求角色
+   */
+  public ClientRole resolveClientRole(String authorization, String clientRoleHeader) {
+    ClientRole headerRole = parseClientRoleOrDefault(clientRoleHeader);
+    Long userId = userIdOrNull(authorization);
+    if (userId == null) {
+      return headerRole;
+    }
+
+    ClientRole sessionRole = userRole(userId);
+    if (StringUtils.hasText(clientRoleHeader) && sessionRole != headerRole) {
+      throw new BusinessException("CLIENT_ROLE_MISMATCH", "登录用户角色与请求上下文不一致，请重新登录");
+    }
+    return sessionRole;
+  }
+
   private String bearerToken(String authorization) {
     if (!StringUtils.hasText(authorization)) {
       return "";
@@ -69,5 +94,32 @@ public class ClientSessionService {
       return authorization.substring("Bearer ".length()).trim();
     }
     return authorization.trim();
+  }
+
+  private ClientRole parseClientRoleOrDefault(String clientRoleHeader) {
+    if (!StringUtils.hasText(clientRoleHeader)) {
+      return ClientRole.student;
+    }
+
+    try {
+      return ClientRole.valueOf(clientRoleHeader.trim());
+    } catch (IllegalArgumentException exception) {
+      throw new BusinessException("INVALID_CLIENT_ROLE", "客户端角色无效，请重新登录");
+    }
+  }
+
+  private ClientRole userRole(long userId) {
+    try {
+      String role = jdbcTemplate.queryForObject(
+          "SELECT role FROM app_user WHERE id = ? LIMIT 1",
+          String.class,
+          userId
+      );
+      return ClientRole.valueOf(role);
+    } catch (EmptyResultDataAccessException exception) {
+      throw new BusinessException("AUTH_USER_NOT_FOUND", "登录用户不存在，请重新登录");
+    } catch (IllegalArgumentException exception) {
+      throw new BusinessException("INVALID_CLIENT_ROLE", "用户角色数据异常，请联系平台处理");
+    }
   }
 }

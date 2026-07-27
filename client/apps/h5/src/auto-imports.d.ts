@@ -101,6 +101,7 @@ declare global {
   const TUTOR_REJECTED_STATUS: typeof import('./tools/tutorTrial').TUTOR_REJECTED_STATUS
   const TUTOR_SERVICE_CONFIRMING_LEGACY_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_CONFIRMING_LEGACY_STATUS
   const TUTOR_SERVICE_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_CONFIRMING_STATUS
+  const TUTOR_SERVICE_END_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_END_CONFIRMING_STATUS
   const TUTOR_SERVICE_INVALID_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_INVALID_STATUS
   const TUTOR_SERVICE_SCHEDULE_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_SCHEDULE_CONFIRMING_STATUS
   const TUTOR_SERVICE_SCHEDULE_PENDING_LEGACY_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_SCHEDULE_PENDING_LEGACY_STATUS
@@ -274,6 +275,7 @@ declare global {
   const isTutorApplicationPendingStatus: typeof import('./tools/tutorTrial').isTutorApplicationPendingStatus
   const isTutorFormalServiceStatus: typeof import('./tools/tutorTrial').isTutorFormalServiceStatus
   const isTutorServiceConfirmingStatus: typeof import('./tools/tutorTrial').isTutorServiceConfirmingStatus
+  const isTutorServiceEndConfirmingStatus: typeof import('./tools/tutorTrial').isTutorServiceEndConfirmingStatus
   const isTutorServiceInvalidStatus: typeof import('./tools/tutorTrial').isTutorServiceInvalidStatus
   const isTutorServiceScheduleConfirmingStatus: typeof import('./tools/tutorTrial').isTutorServiceScheduleConfirmingStatus
   const isTutorServiceSchedulePendingStatus: typeof import('./tools/tutorTrial').isTutorServiceSchedulePendingStatus
@@ -332,6 +334,7 @@ declare global {
   const tutorGradeOptions: typeof import('./components/TutorCard/model').tutorGradeOptions
   const tutorLevelOptions: typeof import('./components/TutorCard/model').tutorLevelOptions
   const tutorServiceAvailabilityDetailMarker: typeof import('./tools/tutorTrial').tutorServiceAvailabilityDetailMarker
+  const tutorServiceFeeDetailMarker: typeof import('./tools/tutorTrial').tutorServiceFeeDetailMarker
   const tutorServiceScheduleDetailMarker: typeof import('./tools/tutorTrial').tutorServiceScheduleDetailMarker
   const tutorSorts: typeof import('./shared/clientPageModel').tutorSorts
   const tutorSubjectOptions: typeof import('./shared/tutorModel').tutorSubjectOptions

@@ -33,11 +33,13 @@ mvn spring-boot:run
 
 ```text
 GET  http://127.0.0.1:9988/actuator/health
-GET  http://127.0.0.1:9988/api/client/home?role=student
-GET  http://127.0.0.1:9988/api/client/products?role=student
-GET  http://127.0.0.1:9988/api/client/workspace?role=student
+GET  http://127.0.0.1:9988/api/client/home
+GET  http://127.0.0.1:9988/api/client/products
+GET  http://127.0.0.1:9988/api/client/workspace
 POST http://127.0.0.1:9988/api/client/auth/login
 POST http://127.0.0.1:9988/api/client/auth/register
 POST http://127.0.0.1:9988/api/client/auth/miniapp/one-tap-login
 POST http://127.0.0.1:9988/api/client/products/purchase
 ```
+
+登录后的业务接口需要携带 `Authorization: Bearer {accessToken}` 和 `X-Client-User-Role: {role}`，不再使用 `?role=` 查询参数。

@@ -116,14 +116,14 @@ export function useTutorTrialActions({
     }
   }
 
-  /** 学生提交结束试课确认，等待家长同意。 */
+  /** 学生发起结束试课，等待家长确认结算。 */
   async function handleRequestTutorTrialEnd(order: ClientOrder) {
     try {
       await requestTutorTrialEnd(order.id);
       showMessage("结束试课确认已提交，等待家长确认。", { type: "success" });
       refetchWorkspace();
     } catch (error) {
-      showMessage(getErrorMessage(error, "提交结束试课确认失败，请稍后重试。"), { type: "error" });
+      showMessage(getErrorMessage(error, "结束试课失败，请稍后重试。"), { type: "error" });
     }
   }
 
@@ -157,7 +157,7 @@ export function useTutorTrialActions({
         reject_service_offer: "已拒绝正式雇佣。",
         reject_service_offer_salary: "已反馈薪资原因，等待家长重新发起正式雇佣确认。",
         reject_trial: "已拒绝试课申请。",
-        request_service_end: "已发起结束兼职，等待结算确认。",
+        request_service_end: payload.trialFee === undefined ? "已提交结束申请，等待家长确认结算。" : "结算金额已提交，家教主任务已结束。",
         request_service_schedule_change: "可家教日期已重新提交，等待家长重新制定正式雇佣日程。",
         remove_rejected_service_offer: "已移除拒绝正式委托的记录。",
         request_settlement_revision: "已要求修改结算金额。",
@@ -176,14 +176,14 @@ export function useTutorTrialActions({
     }
   }
 
-  /** 家长端取消尚未安排试课的家教兼职，后端会将记录保留到兼职订单历史。 */
+  /** 家长端撤回尚未安排试课的家教兼职，后端会让主任务回到待发布状态。 */
   async function handleCancelTutorDemand(order: ClientOrder) {
     try {
       await cancelTutorDemand(order.id);
-      showMessage("家教兼职已取消，已移入我的订单。", { type: "success" });
+      showMessage("家教兼职已撤回，状态已变为待发布。", { type: "success" });
       refetchWorkspace();
     } catch (error) {
-      showMessage(getErrorMessage(error, "家教兼职取消失败，请稍后重试。"), { type: "error" });
+      showMessage(getErrorMessage(error, "家教兼职撤回失败，请稍后重试。"), { type: "error" });
     }
   }
 

@@ -5,6 +5,7 @@ import {
   isTutorTrialListStatus,
   isTutorFormalServiceStatus,
   isTutorServiceConfirmingStatus,
+  isTutorServiceEndConfirmingStatus,
   isTutorServiceInvalidStatus,
   isTutorServiceScheduleConfirmingStatus,
   isTutorServiceSchedulePendingStatus,
@@ -15,11 +16,15 @@ import {
   isTutorTrialSettledServicePendingStatus,
   isTutorTrialingStatus,
   isTutorTrialResultProcessingStatus,
+  TUTOR_DEMAND_IN_PROGRESS_STATUS,
   TUTOR_SERVICE_CONFIRMING_STATUS,
   TUTOR_SETTLEMENT_CONFIRMING_STATUS,
   TUTOR_SETTLEMENT_REVISING_STATUS,
   TUTOR_SYSTEM_SETTLING_STATUS
 } from "@tools/tutorTrial";
+
+/** 家长端主任务在学生申请结束正式服务后的第二状态展示。 */
+const TUTOR_PARENT_SERVICE_END_REQUESTED_STATUS = "申请结束中";
 
 /** 家教任务流程节点，前端只做展示和动作编排，真实迁移以服务端状态为准。 */
 export type TutorTaskNode =
@@ -32,6 +37,7 @@ export type TutorTaskNode =
   | "serviceSchedulePending"
   | "serviceScheduleConfirming"
   | "formalTutoring"
+  | "serviceEndRequested"
   | "settlementConfirming"
   | "settlementRevising"
   | "systemSettling"
@@ -70,7 +76,6 @@ export type TutorTaskAction =
   | "requestServiceScheduleChange"
   | "requestServiceEnd"
   | "confirmSettlement"
-  | "requestSettlementRevision"
   | "resubmitSettlement"
   | "updateTrialAvailability";
 
@@ -122,6 +127,9 @@ export function getTutorTaskNode(status?: string): TutorTaskNode {
   if (isTutorServiceConfirmingStatus(status)) {
     return "serviceConfirming";
   }
+  if (isTutorServiceEndConfirmingStatus(status)) {
+    return "serviceEndRequested";
+  }
   if (isTutorTrialResultProcessingStatus(status) || isTutorTrialSettledServicePendingStatus(status)) {
     return "trialResultProcessing";
   }
@@ -155,7 +163,7 @@ export function getTutorTaskNode(status?: string): TutorTaskNode {
 
 /** 根据流程节点给出家教任务状态样式。 */
 export function getTutorTaskStatusTone(node: TutorTaskNode): TutorTaskStatusTone {
-  if (node === "trialScheduled" || node === "trialEndRequested" || node === "serviceConfirming") {
+  if (node === "trialScheduled" || node === "trialEndRequested" || node === "serviceConfirming" || node === "serviceEndRequested") {
     return "trialConfirming";
   }
   if (node === "trialing" || node === "formalTutoring") {
@@ -194,8 +202,15 @@ export function getTutorTaskCandidateAvailability(candidate: TutorApplicationCan
   return candidate.availability || "待补充";
 }
 
-/** 获取家长端候选卡片状态展示行。 */
-export function getTutorTaskStatusLabels(status?: string) {
+/** 获取家教任务卡片状态展示行，家长主卡支持展示需求状态和申请状态两行。 */
+export function getTutorTaskStatusLabels(status?: string, role?: Role) {
+  if (
+    role === "parent" &&
+    status?.includes(TUTOR_DEMAND_IN_PROGRESS_STATUS) &&
+    status.includes(TUTOR_PARENT_SERVICE_END_REQUESTED_STATUS)
+  ) {
+    return [TUTOR_DEMAND_IN_PROGRESS_STATUS, TUTOR_PARENT_SERVICE_END_REQUESTED_STATUS];
+  }
   if (isTutorServiceInvalidStatus(status)) {
     return ["试课完成", "拒绝正式委托"];
   }
@@ -268,7 +283,6 @@ export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelO
       }
       if (node === "settlementConfirming") {
         actions.add("confirmSettlement");
-        actions.add("requestSettlementRevision");
       }
     }
     if (role === "parent" && node === "formalTutoring" && order.canRequestComplete) {
@@ -306,6 +320,9 @@ export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelO
     if (node === "formalTutoring") {
       actions.add("requestServiceEnd");
     }
+    if (node === "serviceEndRequested") {
+      actions.add("requestServiceEnd");
+    }
     if (node === "settlementRevising") {
       actions.add("resubmitSettlement");
     }
@@ -318,7 +335,7 @@ export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelO
     isTrialListVisible,
     node,
     statusLabel,
-    statusLabels: getTutorTaskStatusLabels(status),
+    statusLabels: getTutorTaskStatusLabels(status, role),
     statusTone,
     statusToneClassName: getTutorTaskStatusToneClassName(statusTone)
   };

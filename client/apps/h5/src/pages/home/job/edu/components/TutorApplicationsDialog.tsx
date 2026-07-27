@@ -61,12 +61,16 @@ interface TutorApplicantDetailDialogProps {
 interface TutorTrialSettlementDialogProps {
   candidate: TutorApplicationCandidate;
   isSubmitting?: boolean;
+  mode?: "service" | "trial";
   onClose: () => void;
   onConfirm: (payload: TutorTrialSettlementPayload) => Promise<void> | void;
 }
 
 /** 家长端试课结算时可选的正式雇佣决策。 */
 type TutorTrialHireDecision = "" | "hire" | "notHire";
+
+/** 家长端提交结算金额时支持的流程动作。 */
+type TutorSettlementAction = Extract<TutorWorkflowAction, "confirm_trial_end" | "request_service_end" | "request_trial_result">;
 
 /** 家长端试课结算提交载荷。 */
 interface TutorTrialSettlementPayload {
@@ -150,12 +154,12 @@ function getTutorTrialCandidateSchedulePreview(candidate: TutorApplicationCandid
 
   if (candidateTask.node === "formalTutoring") {
     return {
-      buttonLabel: "兼职日程",
-      emptyLabel: "暂无兼职日程",
+      buttonLabel: "课程",
+      emptyLabel: "暂无课程安排",
       showScheduleLabel: true,
       subtitle: "查看家长提交的正式雇佣日程。",
       summary: candidate.trialSchedule?.trim() ?? "",
-      title: "兼职日程"
+      title: "课程安排"
     };
   }
 
@@ -406,8 +410,9 @@ export function TutorTrialListDialog({
   const [selectedCandidateId, setSelectedCandidateId] = useState("");
   const [isTutorScheduleOpen, setIsTutorScheduleOpen] = useState(false);
   const [settlementDialogState, setSettlementDialogState] = useState<{
-    action: Extract<TutorWorkflowAction, "confirm_trial_end" | "request_trial_result">;
+    action: TutorSettlementAction;
     candidate: TutorApplicationCandidate;
+    mode: "service" | "trial";
   } | null>(null);
   const selectedCandidate = trialCandidates.find((candidate) => candidate.id === selectedCandidateId);
   const selectedCandidateTask = selectedCandidate
@@ -451,8 +456,8 @@ export function TutorTrialListDialog({
   }
 
   /** 打开试课结算弹窗，确认金额后进入学生费用确认。 */
-  function openTrialSettlementDialog(candidate: TutorApplicationCandidate, action: Extract<TutorWorkflowAction, "confirm_trial_end" | "request_trial_result">) {
-    setSettlementDialogState({ action, candidate });
+  function openSettlementDialog(candidate: TutorApplicationCandidate, action: TutorSettlementAction, mode: "service" | "trial" = "trial") {
+    setSettlementDialogState({ action, candidate, mode });
   }
 
   /** 提交结算金额，可同时提交家长的正式雇佣意向。 */
@@ -603,7 +608,7 @@ export function TutorTrialListDialog({
         <button
           className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
           disabled={isSubmitting}
-          onClick={() => openTrialSettlementDialog(selectedCandidate, "request_trial_result")}
+          onClick={() => openSettlementDialog(selectedCandidate, "request_trial_result")}
           type="button"
         >
           <CheckCircle2 size={16} />
@@ -617,7 +622,7 @@ export function TutorTrialListDialog({
         <button
           className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
           disabled={isSubmitting}
-          onClick={() => openTrialSettlementDialog(selectedCandidate, "confirm_trial_end")}
+          onClick={() => openSettlementDialog(selectedCandidate, "confirm_trial_end")}
           type="button"
         >
           <CheckCircle2 size={16} />
@@ -668,10 +673,10 @@ export function TutorTrialListDialog({
         <button
           className="danger-outline-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
           disabled={isSubmitting}
-          onClick={() => void handleWorkflowAction("request_service_end")}
+          onClick={() => openSettlementDialog(selectedCandidate, "request_service_end", "service")}
           type="button"
         >
-          结束兼职
+          结束
         </button>
       );
     }
@@ -708,7 +713,7 @@ export function TutorTrialListDialog({
           <CalendarClock size={18} />
           <div>
             <strong>{isCourseMode ? "课程" : "试课列表"}</strong>
-            <span>{isCourseMode ? `共 ${trialCandidates.length} 位，处理正式雇佣课程和结束兼职` : `共 ${trialCandidates.length} 位，按流程处理试课、正式雇佣和日程`}</span>
+            <span>{isCourseMode ? `共 ${trialCandidates.length} 位，处理正式雇佣课程和结束` : `共 ${trialCandidates.length} 位，按流程处理试课、正式雇佣和日程`}</span>
           </div>
           <button aria-label="关闭" className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button">
             <XCircle size={20} />
@@ -791,6 +796,7 @@ export function TutorTrialListDialog({
         <TutorTrialSettlementDialog
           candidate={settlementDialogState.candidate}
           isSubmitting={isSubmitting}
+          mode={settlementDialogState.mode}
           onClose={() => setSettlementDialogState(null)}
           onConfirm={handleConfirmTrialSettlement}
         />
@@ -879,10 +885,11 @@ function TutorSchedulePreviewDialog({
   );
 }
 
-/** 试课结算弹窗，支持家长在结算时预先选择是否正式雇佣。 */
-function TutorTrialSettlementDialog({ candidate, isSubmitting = false, onClose, onConfirm }: TutorTrialSettlementDialogProps) {
+/** 结算弹窗，试课结算可预选雇佣意向，正式服务结算只提交金额。 */
+function TutorTrialSettlementDialog({ candidate, isSubmitting = false, mode = "trial", onClose, onConfirm }: TutorTrialSettlementDialogProps) {
   const [trialFee, setTrialFee] = useState(candidate.trialFee === undefined ? "" : String(candidate.trialFee));
   const [hireDecision, setHireDecision] = useState<TutorTrialHireDecision>("");
+  const isServiceMode = mode === "service";
   const feeValue = trialFee.trim() === "" ? Number.NaN : Number(trialFee);
   const isTrialFeeValid = Number.isFinite(feeValue) && feeValue >= 0;
 
@@ -898,20 +905,20 @@ function TutorTrialSettlementDialog({ candidate, isSubmitting = false, onClose, 
     }
 
     void onConfirm({
-      hireTutor: hireDecision === "" ? undefined : hireDecision === "hire",
+      hireTutor: isServiceMode || hireDecision === "" ? undefined : hireDecision === "hire",
       trialFee: Number(feeValue.toFixed(2))
     });
   }
 
   return (
-    <section className="checkout-sheet" aria-label="试课结算">
+    <section className="checkout-sheet" aria-label={isServiceMode ? "正式服务结算" : "试课结算"}>
       <div className="sheet-backdrop" onClick={onClose} />
       <article className="sheet-panel tutor-trial-settlement-panel mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]">
         <div className="card-title flex items-center justify-between gap-[10px]">
           <ReceiptText size={18} />
           <div>
-            <strong>试课结算</strong>
-            <span>确认金额后等待学生确认费用</span>
+            <strong>{isServiceMode ? "正式服务结算" : "试课结算"}</strong>
+            <span>{isServiceMode ? "确认金额后结束家教主任务" : "确认金额后等待学生确认费用"}</span>
           </div>
           <button aria-label="关闭" className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button">
             <XCircle size={20} />
@@ -920,17 +927,17 @@ function TutorTrialSettlementDialog({ candidate, isSubmitting = false, onClose, 
 
         <div className="tutor-trial-settlement-summary grid gap-[8px]">
           <div className="flex items-center justify-between gap-[10px]">
-            <span>试课学生</span>
+            <span>{isServiceMode ? "家教学生" : "试课学生"}</span>
             <strong>{candidate.nickname}</strong>
           </div>
           <div className="grid gap-[5px]">
-            <span>试课安排</span>
-            <p>{candidate.trialSchedule || "暂无试课安排"}</p>
+            <span>{isServiceMode ? "课程安排" : "试课安排"}</span>
+            <p>{candidate.trialSchedule || (isServiceMode ? "暂无课程安排" : "暂无试课安排")}</p>
           </div>
         </div>
 
         <label className="tutor-trial-settlement-field grid gap-[6px]">
-          <span>试课结算金额</span>
+          <span>{isServiceMode ? "结算金额" : "试课结算金额"}</span>
           <input
             inputMode="decimal"
             min="0"
@@ -943,30 +950,32 @@ function TutorTrialSettlementDialog({ candidate, isSubmitting = false, onClose, 
         </label>
         {!isTrialFeeValid && trialFee.trim() !== "" ? <span className="tutor-trial-settlement-error">请输入不小于 0 的金额</span> : null}
 
-        <div className="tutor-trial-hire-decision grid gap-[8px]">
-          <div className="tutor-trial-hire-decision__header grid gap-[3px]">
-            <strong>是否正式雇佣</strong>
-            <span>可不选择，仅提交结算；学生确认费用后再单独处理。</span>
+        {!isServiceMode ? (
+          <div className="tutor-trial-hire-decision grid gap-[8px]">
+            <div className="tutor-trial-hire-decision__header grid gap-[3px]">
+              <strong>是否正式雇佣</strong>
+              <span>可不选择，仅提交结算；学生确认费用后再单独处理。</span>
+            </div>
+            <div className="tutor-trial-hire-decision__options grid grid-cols-2 gap-[8px]">
+              <button
+                className={`tutor-trial-hire-decision__option ${hireDecision === "hire" ? "active" : ""}`}
+                disabled={isSubmitting}
+                onClick={() => handleToggleHireDecision("hire")}
+                type="button"
+              >
+                正式雇佣
+              </button>
+              <button
+                className={`tutor-trial-hire-decision__option ${hireDecision === "notHire" ? "active danger" : ""}`}
+                disabled={isSubmitting}
+                onClick={() => handleToggleHireDecision("notHire")}
+                type="button"
+              >
+                不正式雇佣
+              </button>
+            </div>
           </div>
-          <div className="tutor-trial-hire-decision__options grid grid-cols-2 gap-[8px]">
-            <button
-              className={`tutor-trial-hire-decision__option ${hireDecision === "hire" ? "active" : ""}`}
-              disabled={isSubmitting}
-              onClick={() => handleToggleHireDecision("hire")}
-              type="button"
-            >
-              正式雇佣
-            </button>
-            <button
-              className={`tutor-trial-hire-decision__option ${hireDecision === "notHire" ? "active danger" : ""}`}
-              disabled={isSubmitting}
-              onClick={() => handleToggleHireDecision("notHire")}
-              type="button"
-            >
-              不正式雇佣
-            </button>
-          </div>
-        </div>
+        ) : null}
 
         <div className="sheet-actions grid grid-cols-2 gap-[8px]">
           <button className="ghost-button min-h-[38px] px-[10px] py-[8px]" disabled={isSubmitting} onClick={onClose} type="button">

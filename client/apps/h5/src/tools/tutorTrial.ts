@@ -34,6 +34,9 @@ export const TUTOR_SERVICE_SCHEDULE_CONFIRMING_STATUS = "兼职日程确认中";
 /** 家长提交正式雇佣日程后的正式雇佣状态。 */
 export const TUTOR_FORMAL_SERVICE_STATUS = "正式雇佣";
 
+/** 学生发起正式服务结束后，等待家长提交结算金额的状态。 */
+export const TUTOR_SERVICE_END_CONFIRMING_STATUS = "结束兼职确认中";
+
 /** 学生同意正式雇佣后，家教需求主任务进入进行中。 */
 export const TUTOR_DEMAND_IN_PROGRESS_STATUS = "进行中";
 
@@ -103,6 +106,11 @@ export function isTutorTrialEndConfirmingStatus(status?: string) {
   return Boolean(status?.includes(TUTOR_TRIAL_END_CONFIRMING_STATUS));
 }
 
+/** 判断正式雇佣是否处于学生发起结束、等待家长结算的状态。 */
+export function isTutorServiceEndConfirmingStatus(status?: string) {
+  return Boolean(status?.includes(TUTOR_SERVICE_END_CONFIRMING_STATUS));
+}
+
 /** 兼容旧数据状态值，统一返回当前产品文案。 */
 export function getTutorTrialStatusLabel(status?: string) {
   if (isTutorApplicationPendingStatus(status)) {
@@ -122,6 +130,9 @@ export function getTutorTrialStatusLabel(status?: string) {
   }
   if (isTutorServiceSchedulePendingStatus(status)) {
     return TUTOR_SERVICE_SCHEDULE_PENDING_STATUS;
+  }
+  if (isTutorServiceEndConfirmingStatus(status)) {
+    return TUTOR_SERVICE_END_CONFIRMING_STATUS;
   }
   if (status?.includes(TUTOR_DEMAND_IN_PROGRESS_STATUS)) {
     return TUTOR_DEMAND_IN_PROGRESS_STATUS;
@@ -215,6 +226,7 @@ export function isTutorTrialListStatus(status?: string) {
     isTutorServiceSchedulePendingStatus(status) ||
     isTutorServiceScheduleConfirmingStatus(status) ||
     isTutorFormalServiceStatus(status) ||
+    isTutorServiceEndConfirmingStatus(status) ||
     isTutorSettlementStatus(status) ||
     isTutorServiceInvalidStatus(status)
   );
@@ -239,6 +251,9 @@ export const tutorServiceAvailabilityDetailMarker = "可家教时间：";
 
 /** 试课结算金额在进行中卡片详情中的分隔标记。 */
 export const tutorTrialFeeDetailMarker = "试课结算金额：";
+
+/** 正式雇佣结算金额在进行中卡片详情中的分隔标记。 */
+export const tutorServiceFeeDetailMarker = "结算金额：";
 
 /** 解析后的单日试课日程。 */
 export interface TutorTrialScheduleLine {
@@ -304,9 +319,10 @@ export function getTutorTrialAvailabilitySummaryFromOrderDetail(detail?: string)
 
   const availabilityText = detail.slice(markerIndex + markerLength);
   const feeMarkerIndex = availabilityText.indexOf(` · ${tutorTrialFeeDetailMarker}`);
+  const serviceFeeMarkerIndex = availabilityText.indexOf(` · ${tutorServiceFeeDetailMarker}`);
   const scheduleMarkerIndex = availabilityText.indexOf(` · ${tutorTrialScheduleDetailMarker}`);
   const serviceScheduleMarkerIndex = availabilityText.indexOf(` · ${tutorServiceScheduleDetailMarker}`);
-  const endMarkerIndexes = [feeMarkerIndex, scheduleMarkerIndex, serviceScheduleMarkerIndex].filter((index) => index >= 0);
+  const endMarkerIndexes = [feeMarkerIndex, serviceFeeMarkerIndex, scheduleMarkerIndex, serviceScheduleMarkerIndex].filter((index) => index >= 0);
   const endMarkerIndex = endMarkerIndexes.length > 0 ? Math.min(...endMarkerIndexes) : -1;
 
   return (endMarkerIndex >= 0 ? availabilityText.slice(0, endMarkerIndex) : availabilityText).trim();
@@ -314,13 +330,16 @@ export function getTutorTrialAvailabilitySummaryFromOrderDetail(detail?: string)
 
 /** 从进行中卡片详情里提取学生需要确认的试课费用。 */
 export function getTutorTrialFeeSummaryFromOrderDetail(detail?: string) {
-  const markerIndex = detail?.indexOf(tutorTrialFeeDetailMarker) ?? -1;
+  const trialMarkerIndex = detail?.indexOf(tutorTrialFeeDetailMarker) ?? -1;
+  const serviceMarkerIndex = detail?.indexOf(tutorServiceFeeDetailMarker) ?? -1;
+  const markerIndex = serviceMarkerIndex >= 0 ? serviceMarkerIndex : trialMarkerIndex;
+  const markerLength = serviceMarkerIndex >= 0 ? tutorServiceFeeDetailMarker.length : tutorTrialFeeDetailMarker.length;
 
   if (!detail || markerIndex < 0) {
     return "";
   }
 
-  const feeText = detail.slice(markerIndex + tutorTrialFeeDetailMarker.length);
+  const feeText = detail.slice(markerIndex + markerLength);
   const scheduleMarkerIndex = feeText.indexOf(` · ${tutorTrialScheduleDetailMarker}`);
   const serviceScheduleMarkerIndex = feeText.indexOf(` · ${tutorServiceScheduleDetailMarker}`);
   const endMarkerIndexes = [scheduleMarkerIndex, serviceScheduleMarkerIndex].filter((index) => index >= 0);
@@ -334,17 +353,19 @@ export function getTutorTrialOrderDisplayDetail(detail?: string) {
   const scheduleMarkerIndex = detail?.indexOf(tutorTrialScheduleDetailMarker) ?? -1;
   const serviceScheduleMarkerIndex = detail?.indexOf(tutorServiceScheduleDetailMarker) ?? -1;
   const feeMarkerIndex = detail?.indexOf(tutorTrialFeeDetailMarker) ?? -1;
+  const serviceFeeMarkerIndex = detail?.indexOf(tutorServiceFeeDetailMarker) ?? -1;
   const trialAvailabilityMarkerIndex = detail?.indexOf(tutorTrialAvailabilityDetailMarker) ?? -1;
   const serviceAvailabilityMarkerIndex = detail?.indexOf(tutorServiceAvailabilityDetailMarker) ?? -1;
   const markerIndexes = [
     scheduleMarkerIndex,
     serviceScheduleMarkerIndex,
     feeMarkerIndex,
+    serviceFeeMarkerIndex,
     trialAvailabilityMarkerIndex,
     serviceAvailabilityMarkerIndex
   ].filter((index) => index >= 0);
   const visibleEndIndex = markerIndexes.length > 0 ? Math.min(...markerIndexes) : -1;
   const visibleDetail = visibleEndIndex >= 0 ? detail?.slice(0, visibleEndIndex).replace(/\s*·\s*$/, "") : detail;
 
-  return (visibleDetail ?? "").replace(/^试课申请\s*·\s*/, "");
+  return (visibleDetail ?? "").replace(/^试课申请\s*·\s*/, "").replace(/^正式雇佣\s*·\s*/, "");
 }

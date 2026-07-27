@@ -30,7 +30,6 @@ import {
   RegisterRequest,
   ResetClientPasswordRequest,
   ResetClientPasswordResponse,
-  Role,
   SelectRoleRequest,
   SendChatMessageRequest,
   SubmitHuntingCertificationRequest,
@@ -49,6 +48,10 @@ type ApiEnvelope<T> = {
 };
 
 const AUTH_STORAGE_KEY = "unknown.client.auth.session";
+const CLIENT_USER_ROLE_HEADER = "X-Client-User-Role";
+const CLIENT_USER_PHONE_HEADER = "X-Client-User-Phone";
+const CLIENT_USER_NICKNAME_HEADER = "X-Client-User-Nickname";
+const CLIENT_USER_ACCOUNT_STATUS_HEADER = "X-Client-User-Account-Status";
 
 type RuntimeGlobals = typeof globalThis & {
   __UNKNOWN_API_BASE_URL__?: string;
@@ -114,9 +117,21 @@ export function clearStoredClientAuthSession() {
   getLocalStorage()?.removeItem(AUTH_STORAGE_KEY);
 }
 
-function getAuthHeaders(): Record<string, string> {
-  const token = getStoredClientAuthSession()?.accessToken;
-  return token ? { Authorization: `Bearer ${token}` } : {};
+/** 统一补充登录用户上下文请求头，服务端据此解析当前用户角色。 */
+function getClientUserHeaders(): Record<string, string> {
+  const session = getStoredClientAuthSession();
+
+  if (!session) {
+    return {};
+  }
+
+  return {
+    Authorization: `Bearer ${session.accessToken}`,
+    [CLIENT_USER_ROLE_HEADER]: session.role,
+    [CLIENT_USER_PHONE_HEADER]: session.phone,
+    [CLIENT_USER_NICKNAME_HEADER]: encodeURIComponent(session.nickname),
+    [CLIENT_USER_ACCOUNT_STATUS_HEADER]: session.accountStatus
+  };
 }
 
 function normalizeHeaders(headers?: HeadersInit): Record<string, string> {
@@ -148,12 +163,12 @@ function parseRequestBody(body: RequestInit["body"] | undefined) {
 
 async function requestWithFetch<T>(url: string, init?: RequestInit): Promise<ApiEnvelope<T>> {
   const response = await fetch(url, {
+    ...init,
     headers: {
       "Content-Type": "application/json",
-      ...getAuthHeaders(),
+      ...getClientUserHeaders(),
       ...normalizeHeaders(init?.headers)
-    },
-    ...init
+    }
   });
   const result = (await response.json()) as ApiEnvelope<T>;
   if (!response.ok) {
@@ -180,7 +195,7 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
           method: init?.method ?? "GET",
           header: {
             "Content-Type": "application/json",
-            ...getAuthHeaders(),
+            ...getClientUserHeaders(),
             ...normalizeHeaders(init?.headers)
           },
           data: parseRequestBody(init?.body),
@@ -242,28 +257,28 @@ export async function resetClientPassword(
   });
 }
 
-export async function getClientHome(role: Role): Promise<ClientHomePayload> {
-  return requestJson<ClientHomePayload>(`/api/client/home?role=${role}`);
+export async function getClientHome(): Promise<ClientHomePayload> {
+  return requestJson<ClientHomePayload>("/api/client/home");
 }
 
-export async function getProducts(role: Role): Promise<ProductSummary[]> {
-  return requestJson<ProductSummary[]>(`/api/client/products?role=${role}`);
+export async function getProducts(): Promise<ProductSummary[]> {
+  return requestJson<ProductSummary[]>("/api/client/products");
 }
 
-export async function getClientWorkspace(role: Role): Promise<ClientWorkspacePayload> {
-  return requestJson<ClientWorkspacePayload>(`/api/client/workspace?role=${role}`);
+export async function getClientWorkspace(): Promise<ClientWorkspacePayload> {
+  return requestJson<ClientWorkspacePayload>("/api/client/workspace");
 }
 
-export async function getPartTimeJobs(role: Role): Promise<PartTimeJob[]> {
-  return requestJson<PartTimeJob[]>(`/api/client/workspace/part-time-jobs?role=${role}`);
+export async function getPartTimeJobs(): Promise<PartTimeJob[]> {
+  return requestJson<PartTimeJob[]>("/api/client/workspace/part-time-jobs");
 }
 
-export async function getHuntingTasks(role: Role): Promise<HuntingTask[]> {
-  return requestJson<HuntingTask[]>(`/api/client/workspace/hunting-tasks?role=${role}`);
+export async function getHuntingTasks(): Promise<HuntingTask[]> {
+  return requestJson<HuntingTask[]>("/api/client/workspace/hunting-tasks");
 }
 
-export async function getTutorDemands(role: Role): Promise<TutorDemand[]> {
-  return requestJson<TutorDemand[]>(`/api/client/workspace/tutor-demands?role=${role}`);
+export async function getTutorDemands(): Promise<TutorDemand[]> {
+  return requestJson<TutorDemand[]>("/api/client/workspace/tutor-demands");
 }
 
 export async function getClientAddresses(): Promise<ClientAddress[]> {

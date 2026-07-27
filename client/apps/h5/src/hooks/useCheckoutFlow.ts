@@ -17,7 +17,6 @@ interface UseCheckoutFlowOptions {
       paymentMethod: PaymentMethod;
       productId: string;
       quantity: number;
-      role: Role;
     },
     callbacks: PurchaseMutationCallbacks
   ) => void;
@@ -66,7 +65,6 @@ export function useCheckoutFlow({
     purchaseProduct(
       {
         productId: checkout.product.id,
-        role,
         deliveryMode: checkout.deliveryMode,
         paymentMethod: checkout.paymentMethod,
         quantity: 1

@@ -55,6 +55,8 @@ interface OngoingOrderLocalActionHandlers {
   onAgreeTrial: (order: ClientOrder) => void;
   onCancelTutorApplication: (order: ClientOrder) => void;
   onMessageOrder: (order: ClientOrder) => void;
+  onOpenServiceSchedule: (order: ClientOrder) => void;
+  onOpenServiceSettlement: (order: ClientOrder) => void;
   onOpenServiceAvailability: (order: ClientOrder, action: TutorServiceAvailabilityAction) => void;
   onOpenTrialResult: (order: ClientOrder) => void;
   onOpenTrialSchedule: (order: ClientOrder) => void;
@@ -87,6 +89,17 @@ function getTutorWorkflowTargetOrder(order: ClientOrder) {
   return order.role === "parent" && order.quoteId ? { ...order, id: order.quoteId } : order;
 }
 
+/** 判断家长端主卡是否处于等待提交正式雇佣日程的状态。 */
+function isParentTutorServiceSchedulePending(order: ClientOrder) {
+  return (
+    order.role === "parent" &&
+    getOngoingOrderCategory(order) === "tutor" &&
+    Boolean(order.quoteId) &&
+    Boolean(getTutorTrialAvailabilitySummaryFromOrderDetail(order.detail)) &&
+    !getTutorTrialScheduleSummaryFromOrderDetail(order.detail)
+  );
+}
+
 /** 获取学生端家教卡片的时间预览入口配置，正文只保留业务摘要。 */
 function getTutorOrderSchedulePreviewConfig(
   order: ClientOrder,
@@ -112,7 +125,7 @@ function getTutorOrderSchedulePreviewConfig(
   if (tutorTask.node === "formalTutoring") {
     return {
       allowConflictAction: false,
-      buttonLabel: order.role === "parent" ? "课程" : "正式雇佣日程",
+      buttonLabel: "课程",
       emptyLabel: "暂无课程安排",
       showScheduleLabel: true,
       subtitle: order.role === "parent" ? "查看当前正式雇佣的课程安排。" : "查看家长提交的正式雇佣日程。",
@@ -326,6 +339,7 @@ function TrialSettlementConfirmDialog({
   order: ClientOrder;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isServiceSettlement = order.detail.includes("正式雇佣");
   const feeSummary = getTutorTrialFeeSummaryFromOrderDetail(order.detail) || order.amountLabel || formatCurrency(order.amount);
   const scheduleSummary = getTutorTrialScheduleSummaryFromOrderDetail(order.detail);
 
@@ -349,13 +363,13 @@ function TrialSettlementConfirmDialog({
   }
 
   return (
-    <section className="checkout-sheet" aria-label="费用结算确认">
+    <section className="checkout-sheet" aria-label="结算确认">
       <div className="sheet-backdrop" onClick={onClose} />
       <article className="sheet-panel trial-settlement-confirm-sheet mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]">
         <div className="card-title flex items-center justify-between gap-[10px]">
           <CircleDollarSign size={18} />
           <div>
-            <strong>费用结算确认</strong>
+            <strong>结算确认</strong>
             <span>{order.title}</span>
           </div>
           <button aria-label="关闭" className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button">
@@ -365,14 +379,16 @@ function TrialSettlementConfirmDialog({
 
         <div className="trial-settlement-confirm-content grid gap-[8px]">
           <div className="trial-settlement-confirm-item flex items-center justify-between gap-[12px]">
-            <span>试课费用</span>
+            <span>{isServiceSettlement ? "结算金额" : "试课费用"}</span>
             <strong>{feeSummary}</strong>
           </div>
           <div className="trial-settlement-confirm-item grid gap-[5px]">
-            <span>试课安排</span>
-            <p>{scheduleSummary || "暂无试课安排"}</p>
+            <span>{isServiceSettlement ? "课程安排" : "试课安排"}</span>
+            <p>{scheduleSummary || (isServiceSettlement ? "暂无课程安排" : "暂无试课安排")}</p>
           </div>
-          <p className="notice p-[10px] text-[#61420d]">确认后开始试课费用结算，并等待家长确认是否正式雇佣。</p>
+          <p className="notice p-[10px] text-[#61420d]">
+            {isServiceSettlement ? "确认后正式服务结算完成，当前家教进入历史订单。" : "确认后开始试课费用结算，并等待家长确认是否正式雇佣。"}
+          </p>
         </div>
 
         <div className="sheet-actions grid grid-cols-2 gap-[8px]">
@@ -386,6 +402,94 @@ function TrialSettlementConfirmDialog({
             type="button"
           >
             {isSubmitting ? "确认中" : "结算"}
+          </button>
+        </div>
+      </article>
+    </section>
+  );
+}
+
+/** 家长端结束正式雇佣前提交结算金额，提交后主任务进入已结束并等待学生确认结算。 */
+function ServiceSettlementDialog({
+  onClose,
+  onConfirm,
+  order
+}: {
+  onClose: () => void;
+  onConfirm: (order: ClientOrder, trialFee: number) => Promise<boolean | void> | boolean | void;
+  order: ClientOrder;
+}) {
+  const [serviceFee, setServiceFee] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const feeValue = serviceFee.trim() === "" ? Number.NaN : Number(serviceFee);
+  const isServiceFeeValid = Number.isFinite(feeValue) && feeValue >= 0;
+  const scheduleSummary = getTutorTrialScheduleSummaryFromOrderDetail(order.detail);
+
+  /** 校验结算金额并提交正式服务结束动作。 */
+  async function handleConfirm() {
+    if (!isServiceFeeValid || isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const result = await onConfirm(order, Number(feeValue.toFixed(2)));
+
+      if (result !== false) {
+        onClose();
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <section className="checkout-sheet" aria-label="正式服务结算">
+      <div className="sheet-backdrop" onClick={onClose} />
+      <article className="sheet-panel trial-settlement-confirm-sheet mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]">
+        <div className="card-title flex items-center justify-between gap-[10px]">
+          <CircleDollarSign size={18} />
+          <div>
+            <strong>正式服务结算</strong>
+            <span>{order.title}</span>
+          </div>
+          <button aria-label="关闭" className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button">
+            <XCircle size={20} />
+          </button>
+        </div>
+
+        <div className="trial-settlement-confirm-content grid gap-[8px]">
+          <label className="tutor-trial-settlement-field grid gap-[6px]">
+            <span>结算金额</span>
+            <input
+              inputMode="decimal"
+              min="0"
+              onChange={(event) => setServiceFee(event.target.value)}
+              placeholder="请输入金额"
+              step="0.01"
+              type="number"
+              value={serviceFee}
+            />
+          </label>
+          {!isServiceFeeValid && serviceFee.trim() !== "" ? <span className="tutor-trial-settlement-error">请输入不小于 0 的金额</span> : null}
+          <div className="trial-settlement-confirm-item grid gap-[5px]">
+            <span>课程安排</span>
+            <p>{scheduleSummary || "暂无课程安排"}</p>
+          </div>
+          <p className="notice p-[10px] text-[#61420d]">提交后家教主任务结束，学生端确认结算金额后进入历史订单。</p>
+        </div>
+
+        <div className="sheet-actions grid grid-cols-2 gap-[8px]">
+          <button className="ghost-button min-h-[38px] px-[10px] py-[8px]" disabled={isSubmitting} onClick={onClose} type="button">
+            取消
+          </button>
+          <button
+            className="primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+            disabled={!isServiceFeeValid || isSubmitting}
+            onClick={() => void handleConfirm()}
+            type="button"
+          >
+            {isSubmitting ? "提交中" : "结算"}
           </button>
         </div>
       </article>
@@ -432,8 +536,15 @@ function OngoingOrderActions({
   const tutorTask = category === "tutor" ? createTutorTaskModel({ order, role: order.role }) : null;
   /** 家教时间按钮统一承接试课安排、可家教时间和兼职日程。 */
   const tutorSchedulePreviewConfig = tutorTask ? getTutorOrderSchedulePreviewConfig(order, tutorTask) : null;
+  /** 家长端学生已提交可家教时间后，需要先制定正式雇佣日程。 */
+  const showParentTutorServiceScheduleAction = isParentTutorServiceSchedulePending(order);
   /** 家长端主任务进入正式服务后，课程入口直接打开日历预览。 */
-  const showParentTutorCourseAction = category === "tutor" && order.role === "parent" && tutorTask?.node === "formalTutoring" && order.canOpenTrialSchedule;
+  const showParentTutorCourseAction =
+    category === "tutor" &&
+    order.role === "parent" &&
+    tutorTask?.node === "formalTutoring" &&
+    order.canOpenTrialSchedule &&
+    !showParentTutorServiceScheduleAction;
   /** 发布方委托卡片是否展示报价列表入口。 */
   const showDelegationQuote = category === "delegation" && Boolean(order.quoteCount && order.quoteCount > 0);
   /** 履约方狩猎卡片是否展示报价处理入口。 */
@@ -494,7 +605,17 @@ function OngoingOrderActions({
               ) : null}
             </button>
           ) : null}
-          {tutorSchedulePreviewConfig || showParentTutorCourseAction || (!tutorTask && order.canOpenTrialSchedule) ? (
+          {showParentTutorServiceScheduleAction ? (
+            <button
+              className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+              onClick={() => handlers.onOpenServiceSchedule(getTutorWorkflowTargetOrder(order))}
+              type="button"
+            >
+              <CalendarClock size={15} />
+              提交日程
+            </button>
+          ) : null}
+          {!showParentTutorServiceScheduleAction && (tutorSchedulePreviewConfig || showParentTutorCourseAction || (!tutorTask && order.canOpenTrialSchedule)) ? (
             <button
               className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
               onClick={() => handlers.onOpenTrialSchedule?.(order)}
@@ -541,7 +662,7 @@ function OngoingOrderActions({
               onClick={() => handlers.onOpenTrialResult?.(order)}
               type="button"
             >
-              {tutorTask?.node === "settlementConfirming" ? "费用结算确认" : "试课结果"}
+              {tutorTask?.node === "settlementConfirming" ? "结算确认" : "试课结果"}
             </button>
           ) : null}
           {tutorTask?.can("cancelServiceConfirmation") ? (
@@ -583,10 +704,18 @@ function OngoingOrderActions({
           {tutorTask?.can("requestServiceEnd") ? (
             <button
               className="danger-outline-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
-              onClick={() => handlers.onTutorWorkflowAction?.(getTutorWorkflowTargetOrder(order), "request_service_end")}
+              onClick={() => {
+                const targetOrder = getTutorWorkflowTargetOrder(order);
+                if (order.role === "parent") {
+                  handlers.onOpenServiceSettlement(targetOrder);
+                  return;
+                }
+
+                handlers.onTutorWorkflowAction?.(targetOrder, "request_service_end");
+              }}
               type="button"
             >
-              结束兼职
+              结束
             </button>
           ) : null}
           {tutorTask?.can("confirmSettlement") && !tutorTask.can("openTrialResult") ? (
@@ -595,16 +724,7 @@ function OngoingOrderActions({
               onClick={() => handlers.onTutorWorkflowAction?.(order, "confirm_settlement")}
               type="button"
             >
-              确认结算
-            </button>
-          ) : null}
-          {tutorTask?.can("requestSettlementRevision") ? (
-            <button
-              className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
-              onClick={() => handlers.onTutorWorkflowAction?.(order, "request_settlement_revision")}
-              type="button"
-            >
-              要求修改
+              结算确认
             </button>
           ) : null}
           {tutorTask?.can("cancelApplication") ? (
@@ -623,7 +743,7 @@ function OngoingOrderActions({
               onClick={() => handlers.onRequestCancel?.(order)}
               type="button"
             >
-              取消
+              {category === "tutor" ? "撤回" : "取消"}
             </button>
           ) : null}
           {(tutorTask ? tutorTask.can("requestTrialEnd") : order.canRequestComplete) ? (
@@ -632,7 +752,7 @@ function OngoingOrderActions({
               onClick={() => handlers.onRequestComplete?.(order)}
               type="button"
             >
-              {tutorTask?.can("requestTrialEnd") ? "提交结束试课确认" : "完成"}
+              {tutorTask?.can("requestTrialEnd") ? "结束试课" : "完成"}
             </button>
           ) : null}
           {order.canConfirmCancel ? (
@@ -675,7 +795,10 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
   const [activeFilter, setActiveFilter] = useState<OngoingOrderFilter>("all");
   const [cancellingTutorApplicationId, setCancellingTutorApplicationId] = useState<string | null>(null);
   const [isSubmittingServiceAvailability, setIsSubmittingServiceAvailability] = useState(false);
+  const [isSubmittingServiceSchedule, setIsSubmittingServiceSchedule] = useState(false);
   const [serviceAvailabilityState, setServiceAvailabilityState] = useState<TutorServiceAvailabilityState | null>(null);
+  const [serviceScheduleOrder, setServiceScheduleOrder] = useState<ClientOrder | null>(null);
+  const [serviceSettlementOrder, setServiceSettlementOrder] = useState<ClientOrder | null>(null);
   const [trialSettlementOrder, setTrialSettlementOrder] = useState<ClientOrder | null>(null);
   const [trialScheduleOrder, setTrialScheduleOrder] = useState<ClientOrder | null>(null);
   /** 按当前标签过滤后的进行中事项列表。 */
@@ -688,6 +811,8 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
     () => getTrialScheduleValueFromSummary(getTutorTrialAvailabilitySummaryFromOrderDetail(serviceAvailabilityState?.order.detail)),
     [serviceAvailabilityState?.order.detail]
   );
+  /** 父端正式雇佣日程必须落在学生提交的可家教时间内。 */
+  const serviceScheduleAvailabilitySummary = getTutorTrialAvailabilitySummaryFromOrderDetail(serviceScheduleOrder?.detail);
 
   /** 消息入口当前仅展示后续沟通能力提示，真实聊天接口接入后再替换为业务回调。 */
   function handleMessageOrder(order: ClientOrder) {
@@ -726,6 +851,16 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
     setServiceAvailabilityState({ action, order });
   }
 
+  /** 打开家长端正式雇佣日程弹窗，提交目标为当前正式雇佣申请子任务。 */
+  function handleOpenServiceSchedule(order: ClientOrder) {
+    if (!handlers.onTutorWorkflowAction) {
+      showMessage("家教流程接口暂不可用，请稍后重试。", { type: "warning" });
+      return;
+    }
+
+    setServiceScheduleOrder(order);
+  }
+
   /** 学生提交可家教日期后，调用真实流程接口推进正式雇佣日程节点。 */
   async function handleConfirmServiceAvailability(value: TrialScheduleValue) {
     if (!serviceAvailabilityState || !handlers.onTutorWorkflowAction || isSubmittingServiceAvailability) {
@@ -744,6 +879,36 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
     } finally {
       setIsSubmittingServiceAvailability(false);
     }
+  }
+
+  /** 家长提交正式雇佣日程后，当前申请进入正式雇佣。 */
+  async function handleConfirmServiceSchedule(value: TrialScheduleValue) {
+    if (!serviceScheduleOrder || !handlers.onTutorWorkflowAction || isSubmittingServiceSchedule) {
+      return;
+    }
+
+    setIsSubmittingServiceSchedule(true);
+    try {
+      const result = await handlers.onTutorWorkflowAction(serviceScheduleOrder, "submit_service_schedule", {
+        tutorSchedule: value.plan.summary
+      });
+
+      if (result !== false) {
+        setServiceScheduleOrder(null);
+      }
+    } finally {
+      setIsSubmittingServiceSchedule(false);
+    }
+  }
+
+  /** 家长端提交正式服务结算金额，服务端负责结束主任务并等待学生确认结算。 */
+  async function handleConfirmServiceSettlement(order: ClientOrder, trialFee: number) {
+    if (!handlers.onTutorWorkflowAction) {
+      showMessage("家教流程接口暂不可用，请稍后重试。", { type: "warning" });
+      return false;
+    }
+
+    return await handlers.onTutorWorkflowAction(order, "request_service_end", { trialFee });
   }
 
   return (
@@ -787,6 +952,8 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
                 onCancelTutorApplication={handleCancelTutorApplication}
                 onMessageOrder={handleMessageOrder}
                 onOpenServiceAvailability={handleOpenServiceAvailability}
+                onOpenServiceSchedule={handleOpenServiceSchedule}
+                onOpenServiceSettlement={setServiceSettlementOrder}
                 onOpenTrialResult={(order) => setTrialSettlementOrder(order)}
                 onOpenTrialSchedule={(order) => setTrialScheduleOrder(order)}
                 onRejectTrial={() => showTutorWorkflowMessage("已拒绝试课申请。")}
@@ -815,6 +982,26 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
           onClose={() => setTrialSettlementOrder(null)}
           onTutorWorkflowAction={handlers.onTutorWorkflowAction}
           order={trialSettlementOrder}
+        />
+      ) : null}
+      {serviceSettlementOrder ? (
+        <ServiceSettlementDialog
+          onClose={() => setServiceSettlementOrder(null)}
+          onConfirm={handleConfirmServiceSettlement}
+          order={serviceSettlementOrder}
+        />
+      ) : null}
+      {serviceScheduleOrder ? (
+        <TutorTrialScheduleDialog
+          availableScheduleSummary={serviceScheduleAvailabilitySummary}
+          confirmLabel={isSubmittingServiceSchedule ? "提交中" : "提交日程"}
+          initialValue={null}
+          isConfirming={isSubmittingServiceSchedule}
+          maxSelectedDates={null}
+          onClose={() => setServiceScheduleOrder(null)}
+          onConfirm={handleConfirmServiceSchedule}
+          subtitle="请在学生提交的可家教时间内制定正式雇佣日程，提交后直接进入正式雇佣。"
+          title="正式雇佣日程"
         />
       ) : null}
       {serviceAvailabilityState ? (

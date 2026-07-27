@@ -1,6 +1,7 @@
 package com.unknown.platform.modules.clientworkspace.controller.client;
 
 import com.unknown.platform.common.api.ApiResponse;
+import com.unknown.platform.common.security.ClientSessionService;
 import com.unknown.platform.modules.auth.model.ClientRole;
 import com.unknown.platform.modules.clientworkspace.application.ClientWorkspaceAppService;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse;
@@ -26,7 +27,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** 客户端工作台接口，聚合订单、兼职、委托/狩猎、家教、商户商品和钱包数据。 */
@@ -34,23 +34,29 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/client")
 public class ClientWorkspaceController {
   private final ClientWorkspaceAppService clientWorkspaceAppService;
+  private final ClientSessionService clientSessionService;
 
-  public ClientWorkspaceController(ClientWorkspaceAppService clientWorkspaceAppService) {
+  public ClientWorkspaceController(
+      ClientWorkspaceAppService clientWorkspaceAppService,
+      ClientSessionService clientSessionService
+  ) {
     this.clientWorkspaceAppService = clientWorkspaceAppService;
+    this.clientSessionService = clientSessionService;
   }
 
   /**
    * 获取客户端工作台聚合数据。
    *
-   * @param role 当前角色
    * @param authorization 登录访问令牌，可为空
+   * @param clientRoleHeader 登录用户角色请求头
    * @return 工作台聚合数据
    */
   @GetMapping("/workspace")
   public ApiResponse<ClientWorkspaceResponse> workspace(
-      @RequestParam(defaultValue = "student") ClientRole role,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      @RequestHeader(value = "Authorization", required = false) String authorization,
+      @RequestHeader(value = ClientSessionService.CLIENT_USER_ROLE_HEADER, required = false) String clientRoleHeader
   ) {
+    ClientRole role = clientSessionService.resolveClientRole(authorization, clientRoleHeader);
     return ApiResponse.ok(clientWorkspaceAppService.getWorkspace(role, authorization));
   }
 
@@ -71,9 +77,10 @@ public class ClientWorkspaceController {
   /** 获取家教列表独立接口，按当前角色返回家长或学生视角数据。 */
   @GetMapping("/workspace/tutor-demands")
   public ApiResponse<List<TutorDemand>> tutorDemands(
-      @RequestParam(defaultValue = "student") ClientRole role,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      @RequestHeader(value = "Authorization", required = false) String authorization,
+      @RequestHeader(value = ClientSessionService.CLIENT_USER_ROLE_HEADER, required = false) String clientRoleHeader
   ) {
+    ClientRole role = clientSessionService.resolveClientRole(authorization, clientRoleHeader);
     return ApiResponse.ok(clientWorkspaceAppService.listTutorDemands(role, authorization));
   }
 
@@ -173,7 +180,7 @@ public class ClientWorkspaceController {
     return ApiResponse.ok(clientWorkspaceAppService.handleTutorWorkflowAction(applicationId, request, authorization));
   }
 
-  /** 家长取消尚未安排试课的家教兼职，取消后保留为兼职订单历史。 */
+  /** 家长撤回尚未安排试课的家教兼职，主任务回到待发布状态。 */
   @PostMapping("/workspace/tutor-demands/{demandId}/cancel")
   public ApiResponse<TutorDemand> cancelTutorDemand(
       @PathVariable String demandId,

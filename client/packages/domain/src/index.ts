@@ -174,7 +174,6 @@ export interface ProductSummary {
 
 export interface PurchaseRequest {
   productId: string;
-  role: Role;
   deliveryMode: DeliveryMode;
   paymentMethod: PaymentMethod;
   quantity: number;

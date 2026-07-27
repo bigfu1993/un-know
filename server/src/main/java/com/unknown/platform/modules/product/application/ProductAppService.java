@@ -1,6 +1,7 @@
 package com.unknown.platform.modules.product.application;
 
 import com.unknown.platform.common.exception.BusinessException;
+import com.unknown.platform.common.security.ClientSessionService;
 import com.unknown.platform.modules.auth.model.ClientRole;
 import com.unknown.platform.modules.product.model.DeliveryMode;
 import com.unknown.platform.modules.product.model.ProductSummary;
@@ -18,9 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ProductAppService {
   private final JdbcTemplate jdbcTemplate;
+  private final ClientSessionService clientSessionService;
 
-  public ProductAppService(JdbcTemplate jdbcTemplate) {
+  public ProductAppService(JdbcTemplate jdbcTemplate, ClientSessionService clientSessionService) {
     this.jdbcTemplate = jdbcTemplate;
+    this.clientSessionService = clientSessionService;
   }
 
   /** 查询当前角色可购买的商品；家长端配送方式强制收敛为快递。 */
@@ -58,23 +61,23 @@ public class ProductAppService {
     );
   }
 
-  /** 创建购买订单并扣减库存，第一版支付结果由前端选择付款方式后同步写入订单快照。 */
+  /** 创建购买订单并扣减库存，订单归属以登录 token 对应用户为准。 */
   @Transactional
-  public PurchaseResponse purchase(PurchaseRequest request) {
+  public PurchaseResponse purchase(PurchaseRequest request, ClientRole role, String authorization) {
     ProductRow product = findProductForUpdate(request.productId());
     int quantity = request.quantity() <= 0 ? 1 : request.quantity();
     if (quantity > product.stock()) {
       throw new BusinessException("STOCK_NOT_ENOUGH", "库存不足");
     }
 
-    List<DeliveryMode> deliveryModes = request.role() == ClientRole.parent
+    List<DeliveryMode> deliveryModes = role == ClientRole.parent
         ? List.of(DeliveryMode.express)
         : parseDeliveryModes(product.deliveryModes());
     if (!deliveryModes.contains(request.deliveryMode())) {
       throw new BusinessException("DELIVERY_NOT_ALLOWED", "当前商品不支持该配送方式");
     }
 
-    long buyerUserId = resolveRoleUser(request.role());
+    long buyerUserId = clientSessionService.requireUserId(authorization);
     long productAmountCents = product.priceCents() * quantity;
     long serviceFeeCents = product.serviceFeeCents();
     long deliveryFeeCents = deliveryFeeCents(request.deliveryMode());
@@ -167,33 +170,6 @@ public class ProductAppService {
       throw new BusinessException("PRODUCT_NOT_FOUND", "商品不存在或不可购买");
     }
     return rows.get(0);
-  }
-
-  private long resolveRoleUser(ClientRole role) {
-    List<Long> ids = jdbcTemplate.query(
-        "SELECT id FROM app_user WHERE role = ? ORDER BY updated_at DESC, id DESC LIMIT 1",
-        (rs, rowNum) -> rs.getLong("id"),
-        role.name()
-    );
-    if (!ids.isEmpty()) {
-      return ids.get(0);
-    }
-
-    return jdbcTemplate.queryForObject(
-        """
-            INSERT INTO app_user (phone, role, status, nickname, credit_score, profile_completion_required, account_label)
-            VALUES (?, ?, 'ACTIVE', ?, ?, ?, ?)
-            ON CONFLICT (phone, role) DO UPDATE SET updated_at = NOW()
-            RETURNING id
-            """,
-        Long.class,
-        role.name() + "_local",
-        role.name(),
-        role.name(),
-        role == ClientRole.student ? 10 : 0,
-        role != ClientRole.merchant,
-        role.name()
-    );
   }
 
   private List<DeliveryMode> parseDeliveryModes(String raw) {

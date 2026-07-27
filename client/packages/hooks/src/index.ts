@@ -86,7 +86,7 @@ function getRoleQueryKey(baseKey: readonly string[], role: Role) {
 export function useClientHome(role: Role, enabled = true) {
   return useQuery({
     queryKey: ["client-home", role],
-    queryFn: () => getClientHome(role),
+    queryFn: getClientHome,
     enabled
   });
 }
@@ -94,7 +94,7 @@ export function useClientHome(role: Role, enabled = true) {
 export function useProducts(role: Role, enabled = true) {
   return useQuery({
     queryKey: ["products", role],
-    queryFn: () => getProducts(role),
+    queryFn: getProducts,
     enabled
   });
 }
@@ -102,7 +102,7 @@ export function useProducts(role: Role, enabled = true) {
 export function useClientWorkspace(role: Role, enabled = true) {
   return useQuery({
     queryKey: getRoleQueryKey(clientWorkspaceQueryKey, role),
-    queryFn: () => getClientWorkspace(role),
+    queryFn: getClientWorkspace,
     enabled
   });
 }
@@ -110,7 +110,7 @@ export function useClientWorkspace(role: Role, enabled = true) {
 export function usePartTimeJobs(role: Role, enabled = true) {
   return useQuery({
     queryKey: getRoleQueryKey(clientPartTimeJobsQueryKey, role),
-    queryFn: () => getPartTimeJobs(role),
+    queryFn: getPartTimeJobs,
     enabled
   });
 }
@@ -118,7 +118,7 @@ export function usePartTimeJobs(role: Role, enabled = true) {
 export function useHuntingTasks(role: Role, enabled = true) {
   return useQuery({
     queryKey: getRoleQueryKey(clientHuntingTasksQueryKey, role),
-    queryFn: () => getHuntingTasks(role),
+    queryFn: getHuntingTasks,
     enabled
   });
 }
@@ -126,7 +126,7 @@ export function useHuntingTasks(role: Role, enabled = true) {
 export function useTutorDemands(role: Role, enabled = true) {
   return useQuery({
     queryKey: getRoleQueryKey(clientTutorDemandsQueryKey, role),
-    queryFn: () => getTutorDemands(role),
+    queryFn: getTutorDemands,
     enabled
   });
 }
