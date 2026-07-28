@@ -1,33 +1,12 @@
 import { useGlobalStore, useGlobalUser } from "@h5/store/global";
-import {
-  useAcceptHuntingTask,
-  useApplyTutorTrial,
-  useCancelTutorDemand,
-  useClientAddresses,
-  useCompleteTutorTrialEnd,
-  useConfirmTutorTrialStart,
-  useConfirmTutorTrial,
-  useCreateClientAddress,
-  useCreateHuntingProject,
-  useDecideHuntingTaskQuote,
-  useHandleHuntingTaskFulfillmentAction,
-  useHuntingTasks,
-  useHandleTutorWorkflowAction,
-  useOngoingOrdersRealtime,
-  usePartTimeJobs,
-  usePublishHuntingTask,
-  usePublishTutorDemand,
-  useQuoteHuntingTask,
-  useRequestTutorTrialEnd,
-  useTutorDemands,
-  useUpdateClientAddress,
-  useUpdateTutorExposure
-} from "@unknown/hooks";
+import { useOngoingOrdersRealtime } from "@unknown/hooks";
 import { getHuntingCertificationDataFromDraft } from "@components/HuntingCertificationCard/model";
 import { HuntingProjectDialog } from "@components/HuntingProjectDialog";
-import { PublishInfoDialog } from "@components/PublishInfoDialog";
+import { PublishDraftConfirmDialog, PublishInfoDialog } from "@components/PublishInfoDialog";
 import { TutorCalendarDialog } from "@components/TutorCalendar";
 import { TutorCertificationInfoDialog } from "@components/TutorCertificationInfoDialog";
+import { useClientBusinessMutations } from "@h5/hooks/useClientBusinessMutations";
+import { useClientDataQueries } from "@h5/hooks/useClientDataQueries";
 import { useCheckoutFlow } from "@h5/hooks/useCheckoutFlow";
 import { useClientWorkspaceViewModel } from "@h5/hooks/useClientWorkspaceViewModel";
 import { useOverlayController } from "@h5/hooks/useOverlayController";
@@ -46,18 +25,6 @@ import { useTutorTrialActions } from "@pages/home/job/edu/hooks/useTutorTrialAct
 import { campusAreaOptions, clientAddressesToAddressBookItems } from "@shared/clientPageModel";
 import { hideMessage, showMessage } from "@tools/messageToast";
 import { getTutorCalendarTasks, getTutorDateKey } from "@tools/tutorCalendar";
-
-/** React Query 首次返回数据前使用的稳定空地址，避免 effect 因默认数组反复触发。 */
-const emptyClientAddresses: ClientAddress[] = [];
-
-/** React Query 首次返回兼职列表前使用的稳定空数组。 */
-const emptyPartTimeJobs: PartTimeJob[] = [];
-
-/** React Query 首次返回委托/狩猎列表前使用的稳定空数组。 */
-const emptyHuntingTasks: HuntingTask[] = [];
-
-/** React Query 首次返回家教列表前使用的稳定空数组。 */
-const emptyTutorDemands: TutorDemand[] = [];
 
 /** React Query 首次返回工作台数据前使用的稳定空工作台数据。 */
 const emptyWorkspaceData = {
@@ -128,62 +95,58 @@ export function App() {
   } = useOverlayController();
   // 角色级数据在路由间共享，页面局部筛选保留在各页面模块内。
   const {
-    data: homeData,
-    error: homeError,
-    isLoading: isHomeLoading,
-    refetch: refetchHome
-  } = useClientHome(role, isAuthenticated);
+    addressError,
+    clientAddresses,
+    homeData,
+    homeError,
+    huntingTasksError,
+    huntingTasksResponse,
+    isAddressLoading,
+    isHomeLoading,
+    isHuntingTasksFetching,
+    isHuntingTasksLoading,
+    isPartTimeJobsFetching,
+    isPartTimeJobsLoading,
+    isTutorDemandsFetching,
+    isTutorDemandsLoading,
+    isWorkspaceFetching,
+    isWorkspaceLoading,
+    partTimeJobsError,
+    partTimeJobsResponse,
+    refetchHome,
+    refetchHuntingTasks,
+    refetchPartTimeJobs,
+    refetchTutorDemands,
+    refetchWorkspace,
+    tutorDemandsError,
+    tutorDemandsResponse,
+    workspaceError,
+    workspaceResponse
+  } = useClientDataQueries({
+    isAuthenticated,
+    role,
+    sessionKey: user.session?.accessToken
+  });
   const {
-    data: workspaceResponse,
-    error: workspaceError,
-    isFetching: isWorkspaceFetching,
-    isLoading: isWorkspaceLoading,
-    refetch: refetchWorkspace
-  } = useClientWorkspace(role, isAuthenticated);
-  const {
-    data: partTimeJobsResponse = emptyPartTimeJobs,
-    error: partTimeJobsError,
-    isFetching: isPartTimeJobsFetching,
-    isLoading: isPartTimeJobsLoading,
-    refetch: refetchPartTimeJobs
-  } = usePartTimeJobs(role, isAuthenticated);
-  const {
-    data: huntingTasksResponse = emptyHuntingTasks,
-    error: huntingTasksError,
-    isFetching: isHuntingTasksFetching,
-    isLoading: isHuntingTasksLoading,
-    refetch: refetchHuntingTasks
-  } = useHuntingTasks(role, isAuthenticated);
-  const {
-    data: tutorDemandsResponse = emptyTutorDemands,
-    error: tutorDemandsError,
-    isFetching: isTutorDemandsFetching,
-    isLoading: isTutorDemandsLoading,
-    refetch: refetchTutorDemands
-  } = useTutorDemands(role, isAuthenticated);
-  const {
-    data: clientAddresses = emptyClientAddresses,
-    error: addressError,
-    isLoading: isAddressLoading
-  } = useClientAddresses(isAuthenticated, user.session?.accessToken);
-  const purchaseMutation = usePurchaseProduct();
-  const publishHuntingTaskMutation = usePublishHuntingTask();
-  const publishTutorDemandMutation = usePublishTutorDemand();
-  const createHuntingProjectMutation = useCreateHuntingProject();
-  const applyTutorTrialMutation = useApplyTutorTrial();
-  const confirmTutorTrialMutation = useConfirmTutorTrial();
-  const confirmTutorTrialStartMutation = useConfirmTutorTrialStart();
-  const requestTutorTrialEndMutation = useRequestTutorTrialEnd();
-  const completeTutorTrialEndMutation = useCompleteTutorTrialEnd();
-  const tutorWorkflowActionMutation = useHandleTutorWorkflowAction();
-  const cancelTutorDemandMutation = useCancelTutorDemand();
-  const updateTutorExposureMutation = useUpdateTutorExposure();
-  const acceptHuntingTaskMutation = useAcceptHuntingTask();
-  const quoteHuntingTaskMutation = useQuoteHuntingTask();
-  const decideHuntingTaskQuoteMutation = useDecideHuntingTaskQuote();
-  const huntingTaskFulfillmentActionMutation = useHandleHuntingTaskFulfillmentAction();
-  const createAddressMutation = useCreateClientAddress();
-  const updateAddressMutation = useUpdateClientAddress();
+    acceptHuntingTaskMutation,
+    applyTutorTrialMutation,
+    cancelTutorDemandMutation,
+    completeTutorTrialEndMutation,
+    confirmTutorTrialMutation,
+    confirmTutorTrialStartMutation,
+    createAddressMutation,
+    createHuntingProjectMutation,
+    decideHuntingTaskQuoteMutation,
+    huntingTaskFulfillmentActionMutation,
+    publishHuntingTaskMutation,
+    publishTutorDemandMutation,
+    purchaseMutation,
+    quoteHuntingTaskMutation,
+    requestTutorTrialEndMutation,
+    tutorWorkflowActionMutation,
+    updateAddressMutation,
+    updateTutorExposureMutation
+  } = useClientBusinessMutations();
   const addressItems = useMemo(() => clientAddressesToAddressBookItems(clientAddresses), [clientAddresses]);
   /** 刷新工作台聚合数据和已拆分的三类业务列表。 */
   const refetchWorkspaceData = useCallback(() => {
@@ -1023,45 +986,12 @@ export function App() {
 
 
       {pendingPublishDraft ? (
-        <section className="checkout-sheet" aria-label="使用发布草稿">
-          <div className="sheet-backdrop" onClick={() => setPendingPublishDraft(null)} />
-          <article className="sheet-panel mx-auto grid max-w-[420px] gap-[12px] p-[14px]">
-            <div className="card-title flex items-center justify-between gap-[10px]">
-              <ClipboardCheck size={18} />
-              <div>
-                <strong>检测到本地草稿</strong>
-                <span>是否使用上次保存的{pendingPublishDraft.type === "tutor" ? "家教" : pendingPublishDraft.type === "recycle" ? "回收" : "委托"}草稿？</span>
-              </div>
-              <button
-                aria-label="关闭"
-                className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
-                onClick={() => setPendingPublishDraft(null)}
-                type="button"
-              >
-                <XCircle size={20} />
-              </button>
-            </div>
-            <p className="text-[13px] leading-[1.6] text-[#657181]">
-              草稿标题：{pendingPublishDraft.title || "未填写标题"}，保存时间：{new Date(pendingPublishDraft.createdAt).toLocaleString()}
-            </p>
-            <div className="sheet-actions grid gap-[8px]">
-              <button
-                className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
-                onClick={() => openPublishInfo(pendingPublishType, null)}
-                type="button"
-              >
-                不使用
-              </button>
-              <button
-                className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-                onClick={() => openPublishInfo(pendingPublishType, pendingPublishDraft)}
-                type="button"
-              >
-                使用草稿
-              </button>
-            </div>
-          </article>
-        </section>
+        <PublishDraftConfirmDialog
+          draft={pendingPublishDraft}
+          onClose={() => setPendingPublishDraft(null)}
+          onDiscardDraft={() => openPublishInfo(pendingPublishType, null)}
+          onUseDraft={() => openPublishInfo(pendingPublishType, pendingPublishDraft)}
+        />
       ) : null}
 
       {isPublishInfoOpen ? (

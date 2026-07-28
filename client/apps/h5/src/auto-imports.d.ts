@@ -75,6 +75,7 @@ declare global {
   const ProductListCard: typeof import('./components/PageWidgets/index').ProductListCard
   const ProfileCompletionDialog: typeof import('./components/WorkflowDialogs/index').ProfileCompletionDialog
   const ProfileContextCard: typeof import('./components/AppShell/index').ProfileContextCard
+  const PublishDraftConfirmDialog: typeof import('./components/PublishInfoDialog/index').PublishDraftConfirmDialog
   const PublishInfoDialog: typeof import('./components/PublishInfoDialog/index').PublishInfoDialog
   const QueryClient: typeof import('@tanstack/react-query').QueryClient
   const QueryClientProvider: typeof import('@tanstack/react-query').QueryClientProvider
@@ -413,6 +414,9 @@ declare global {
   // @ts-ignore
   export type { OrderModuleCounts } from './components/OrderModuleCard/model'
   import('./components/OrderModuleCard/model')
+  // @ts-ignore
+  export type { PublishDraftConfirmDialogProps } from './components/PublishInfoDialog/PublishDraftConfirmDialog'
+  import('./components/PublishInfoDialog/PublishDraftConfirmDialog')
   // @ts-ignore
   export type { PublishInfoDialogProps } from './components/PublishInfoDialog/index'
   import('./components/PublishInfoDialog/index')

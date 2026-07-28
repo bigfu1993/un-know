@@ -7,6 +7,8 @@ import {
   isPositiveAmount
 } from "@tools/publishInfo";
 
+export { PublishDraftConfirmDialog } from "./PublishDraftConfirmDialog";
+
 /** 发布信息弹窗属性。 */
 export interface PublishInfoDialogProps {
   addressItems: AddressBookItem[];
