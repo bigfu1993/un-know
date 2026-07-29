@@ -136,6 +136,7 @@ public record ClientWorkspaceResponse(
       String status,
       BigDecimal trialFee,
       String trialSchedule,
+      String serviceSchedule,
       String serviceConfirmationCancelledBy
   ) {
   }

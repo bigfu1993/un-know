@@ -116,6 +116,8 @@ public class ClientWorkspaceAppService {
   private static final String TUTOR_TRIAL_HIRE_DECISION_NOT_HIRE = "not_hire";
   private static final String TUTOR_SERVICE_CONFIRMATION_CANCELLED_BY_PARENT = "parent";
   private static final String TUTOR_SERVICE_CONFIRMATION_CANCELLED_BY_STUDENT = "student";
+  private static final String TUTOR_APPLICATION_SCHEDULE_STAGE_SERVICE = "service";
+  private static final String TUTOR_APPLICATION_SCHEDULE_STAGE_TRIAL = "trial";
 
   private final JdbcTemplate jdbcTemplate;
   private final ClientSessionService clientSessionService;
@@ -757,6 +759,13 @@ public class ClientWorkspaceAppService {
     if (updatedRows == 0) {
       throw new BusinessException("TUTOR_APPLICATION_NOT_FOUND", "试课申请不存在或无权操作");
     }
+    upsertTutorApplicationScheduleByPublicId(
+        demand.id(),
+        applicationId,
+        TUTOR_APPLICATION_SCHEDULE_STAGE_TRIAL,
+        trialScheduleText,
+        "parent"
+    );
     return findTutorDemand(demand.publicId());
   }
 
@@ -977,7 +986,7 @@ public class ClientWorkspaceAppService {
         );
         String tutorSchedule = request == null ? "" : clean(request.tutorSchedule());
         assertTutorServiceScheduleWithinAvailability(tutorSchedule, tutorApplicationAvailability(application.demandId(), application.publicId()));
-        updateTutorApplicationSchedule(application.id(), tutorSchedule, TUTOR_APPLICANT_STATUS_FORMAL_SERVICE);
+        updateTutorApplicationServiceSchedule(application.id(), tutorSchedule, TUTOR_APPLICANT_STATUS_FORMAL_SERVICE);
         updateTutorDemandStatus(application.demandId(), TUTOR_DEMAND_STATUS_IN_PROGRESS);
         endOtherActiveTutorApplicationsAfterFormalHire(application.demandId(), application.publicId());
       }
@@ -1014,7 +1023,12 @@ public class ClientWorkspaceAppService {
       case "accept_service_offer" -> {
         ensureTutorStudent(application, currentUserId);
         requireTutorApplicationStatus(application.status(), "TUTOR_SERVICE_OFFER_STATUS_INVALID", "只有正式雇佣确认中的记录可以同意", TUTOR_APPLICANT_STATUS_SERVICE_CONFIRMING);
-        updateTutorServiceAvailabilityAndClearSchedule(application.id(), requireTutorServiceAvailability(request), TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING);
+        String serviceAvailability = requireTutorServiceAvailability(request);
+        assertTutorServiceAvailabilityNotOverlappingTrialSchedule(
+            serviceAvailability,
+            tutorApplicationSchedule(application.id(), TUTOR_APPLICATION_SCHEDULE_STAGE_TRIAL)
+        );
+        updateTutorServiceAvailabilityAndResetServiceSchedule(application.id(), serviceAvailability, TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING);
         updateTutorDemandStatus(application.demandId(), TUTOR_DEMAND_STATUS_IN_PROGRESS);
       }
       case "reject_service_offer_salary" -> {
@@ -1037,7 +1051,7 @@ public class ClientWorkspaceAppService {
       case "request_service_schedule_change" -> {
         ensureTutorStudent(application, currentUserId);
         requireTutorApplicationStatus(application.status(), "TUTOR_SERVICE_SCHEDULE_STATUS_INVALID", "只有旧版兼职日程确认中的记录可以要求修改", TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_CONFIRMING_LEGACY);
-        updateTutorServiceAvailabilityAndClearSchedule(application.id(), requireTutorServiceAvailability(request), TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING);
+        updateTutorServiceAvailabilityAndResetServiceSchedule(application.id(), requireTutorServiceAvailability(request), TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING);
       }
       case "confirm_settlement" -> {
         ensureTutorStudent(application, currentUserId);
@@ -1261,12 +1275,13 @@ public class ClientWorkspaceAppService {
                      EXISTS (
                        SELECT 1
                        FROM tutor_applicant ta
+                       JOIN tutor_application_schedule tas ON tas.tutor_applicant_id = ta.id
                        WHERE ta.tutor_demand_id = td.id
                          AND ta.enabled = TRUE
                          AND ta.status NOT IN ('已取消', '已结束', '已拒绝')
-                         AND COALESCE(NULLIF(ta.trial_start, ''), '') <> ''
-                         AND COALESCE(NULLIF(ta.trial_end, ''), '') <> ''
-                         AND COALESCE(NULLIF(ta.trial_half_day, ''), '') <> ''
+                         AND tas.stage = 'trial'
+                         AND tas.enabled = TRUE
+                         AND COALESCE(NULLIF(tas.schedule_summary, ''), '') <> ''
                      ) AS has_trial_schedule,
                      (
                        SELECT ta.public_id
@@ -1305,10 +1320,28 @@ public class ClientWorkspaceAppService {
                        LIMIT 1
                      ) AS active_application_availability,
                      (
-                       SELECT COALESCE(NULLIF(ta.trial_half_day, ''), '')
+                       SELECT COALESCE(NULLIF(tas.schedule_summary, ''), '')
                        FROM tutor_applicant ta
+                       JOIN tutor_application_schedule tas ON tas.tutor_applicant_id = ta.id
                        WHERE ta.tutor_demand_id = td.id
                          AND ta.enabled = TRUE
+                         AND tas.stage = 'trial'
+                         AND tas.enabled = TRUE
+                         AND ta.status IN (
+                           '正式雇佣日程确认中', '兼职日程待提交', '兼职日程确认中',
+                           '正式雇佣', '正式家教服务', '家教进行中', '结束兼职确认中'
+                         )
+                       ORDER BY ta.updated_at DESC, ta.id DESC
+                       LIMIT 1
+                     ) AS active_application_trial_schedule,
+                     (
+                       SELECT COALESCE(NULLIF(tas.schedule_summary, ''), '')
+                       FROM tutor_applicant ta
+                       JOIN tutor_application_schedule tas ON tas.tutor_applicant_id = ta.id
+                       WHERE ta.tutor_demand_id = td.id
+                         AND ta.enabled = TRUE
+                         AND tas.stage = 'service'
+                         AND tas.enabled = TRUE
                          AND ta.status IN (
                            '正式雇佣日程确认中', '兼职日程待提交', '兼职日程确认中',
                            '正式雇佣', '正式家教服务', '家教进行中', '结束兼职确认中'
@@ -1330,6 +1363,7 @@ public class ClientWorkspaceAppService {
             String activeApplicationPublicId = defaultText(rs.getString("active_application_public_id"), "");
             String activeApplicationStatus = defaultText(rs.getString("active_application_status"), "");
             String activeApplicationAvailability = defaultText(rs.getString("active_application_availability"), "");
+            String activeApplicationTrialSchedule = defaultText(rs.getString("active_application_trial_schedule"), "");
             String activeApplicationSchedule = defaultText(rs.getString("active_application_schedule"), "");
             boolean isServiceSchedulePending = isSameTutorApplicationStatus(activeApplicationStatus, TUTOR_APPLICANT_STATUS_SERVICE_SCHEDULE_PENDING);
             boolean isRecruiting = isRecruitingTutorDemandStatus(status);
@@ -1343,6 +1377,9 @@ public class ClientWorkspaceAppService {
             String scheduleDetail = isServiceSchedulePending || activeApplicationSchedule.isBlank()
                 ? ""
                 : " · 课程安排：" + activeApplicationSchedule;
+            String trialScheduleDetail = activeApplicationTrialSchedule.isBlank()
+                ? ""
+                : " · 试课安排：" + activeApplicationTrialSchedule;
             String availabilityDetail = isServiceSchedulePending && !activeApplicationAvailability.isBlank()
                 ? " · 可家教时间：" + activeApplicationAvailability
                 : "";
@@ -1357,6 +1394,7 @@ public class ClientWorkspaceAppService {
                     + defaultText(rs.getString("period_end"), "待定") + " · 地址："
                     + defaultText(rs.getString("address_label"), "地址待补充") + " · 学科：" + rs.getString("subject")
                     + availabilityDetail
+                    + trialScheduleDetail
                     + scheduleDetail,
                 null,
                 rs.getString("budget"),
@@ -1389,13 +1427,23 @@ public class ClientWorkspaceAppService {
 
     return jdbcTemplate.query(
         """
-            SELECT ta.public_id, ta.status, ta.availability, ta.trial_fee_cents, ta.trial_start, ta.trial_end, ta.trial_half_day,
+            SELECT ta.public_id, ta.status, ta.availability, ta.trial_fee_cents,
+                   COALESCE(NULLIF(trial_schedule.schedule_summary, ''), '') AS trial_schedule,
+                   COALESCE(NULLIF(service_schedule.schedule_summary, ''), '') AS service_schedule,
                    td.title, td.subject, td.budget, td.status AS demand_status, td.address_label, td.period_start, td.period_end,
                    COALESCE(NULLIF(parent.nickname, ''), '未设置昵称') AS parent_nickname,
                    COALESCE(parent.phone, '') AS parent_phone
             FROM tutor_applicant ta
             JOIN tutor_demand td ON td.id = ta.tutor_demand_id
             LEFT JOIN app_user parent ON parent.id = td.parent_user_id
+            LEFT JOIN tutor_application_schedule trial_schedule
+              ON trial_schedule.tutor_applicant_id = ta.id
+             AND trial_schedule.stage = 'trial'
+             AND trial_schedule.enabled = TRUE
+            LEFT JOIN tutor_application_schedule service_schedule
+              ON service_schedule.tutor_applicant_id = ta.id
+             AND service_schedule.stage = 'service'
+             AND service_schedule.enabled = TRUE
             WHERE ta.applicant_user_id = ?
               AND ta.enabled = TRUE
               AND td.enabled = TRUE
@@ -1405,9 +1453,6 @@ public class ClientWorkspaceAppService {
             """,
         (rs, rowNum) -> {
           String status = rs.getString("status");
-          boolean hasTrialSchedule = !defaultText(rs.getString("trial_start"), "").isBlank()
-              && !defaultText(rs.getString("trial_end"), "").isBlank()
-              && !defaultText(rs.getString("trial_half_day"), "").isBlank();
           boolean isTrialConfirmed = isTutorTrialScheduleConfirmingStatus(status);
           boolean isTrialing = TUTOR_APPLICANT_STATUS_TRIALING.equals(status);
           boolean isFormalService = isFormalTutorApplicationStatus(status);
@@ -1415,19 +1460,18 @@ public class ClientWorkspaceAppService {
           boolean isFormalSettlement = isSettlementConfirming && TUTOR_DEMAND_STATUS_ENDED.equals(rs.getString("demand_status"));
           boolean isApplicationPending = isTutorApplicationPendingStatus(status);
           boolean canCancelTutorApplication = isApplicationPending || isTrialConfirmed;
-          String trialScheduleText = hasTrialSchedule
-              ? tutorTrialScheduleText(rs.getString("trial_start"), rs.getString("trial_end"), rs.getString("trial_half_day"))
-              : "";
+          String trialScheduleText = defaultText(rs.getString("trial_schedule"), "");
+          String serviceScheduleText = defaultText(rs.getString("service_schedule"), "");
           String availabilityLabel = isTutorServiceAvailabilityStatus(status) ? "可家教时间：" : "可试课时间：";
           String feeLabel = isFormalService || isFormalSettlement ? "结算金额：" : "试课结算金额：";
-          String scheduleLabel = isFormalService || isFormalSettlement ? "课程安排：" : "试课安排：";
           String orderDetail = (isFormalService || isFormalSettlement ? "正式雇佣 · " : "试课申请 · ") + rs.getString("subject") + " · "
               + defaultText(rs.getString("period_start"), "待定") + " 至 "
               + defaultText(rs.getString("period_end"), "待定") + " · "
               + defaultText(rs.getString("address_label"), "地址待补充")
               + " · " + availabilityLabel + defaultText(rs.getString("availability"), "待补充")
               + " · " + feeLabel + toAmount(rs.getLong("trial_fee_cents"))
-              + (trialScheduleText.isBlank() ? "" : " · " + scheduleLabel + trialScheduleText);
+              + (trialScheduleText.isBlank() ? "" : " · 试课安排：" + trialScheduleText)
+              + (serviceScheduleText.isBlank() ? "" : " · 课程安排：" + serviceScheduleText);
           return new ClientOrder(
               rs.getString("public_id"),
               role,
@@ -1840,28 +1884,24 @@ public class ClientWorkspaceAppService {
                    COALESCE(NULLIF(u.nickname, ''), '未设置昵称') AS nickname,
                    ta.school, ta.major, ta.gpa, ta.hired_times, ta.availability, ta.status,
                    ta.trial_fee_cents,
-                   COALESCE(ta.trial_start, '') AS trial_start,
-                   COALESCE(ta.trial_end, '') AS trial_end,
-                   COALESCE(ta.trial_half_day, '') AS trial_half_day,
+                   COALESCE(NULLIF(trial_schedule.schedule_summary, ''), '') AS trial_schedule,
+                   COALESCE(NULLIF(service_schedule.schedule_summary, ''), '') AS service_schedule,
                    COALESCE(ta.service_confirmation_cancelled_by, '') AS service_confirmation_cancelled_by
             FROM tutor_applicant ta
             LEFT JOIN app_user u ON u.id = ta.applicant_user_id
+            LEFT JOIN tutor_application_schedule trial_schedule
+              ON trial_schedule.tutor_applicant_id = ta.id
+             AND trial_schedule.stage = 'trial'
+             AND trial_schedule.enabled = TRUE
+            LEFT JOIN tutor_application_schedule service_schedule
+              ON service_schedule.tutor_applicant_id = ta.id
+             AND service_schedule.stage = 'service'
+             AND service_schedule.enabled = TRUE
             WHERE ta.tutor_demand_id = ?
               AND ta.enabled = TRUE
             ORDER BY ta.hired_times DESC, ta.id
             """,
         (rs, rowNum) -> {
-          String trialSchedule = "";
-          if (!defaultText(rs.getString("trial_start"), "").isBlank()
-              && !defaultText(rs.getString("trial_end"), "").isBlank()
-              && !defaultText(rs.getString("trial_half_day"), "").isBlank()) {
-            trialSchedule = tutorTrialScheduleText(
-                rs.getString("trial_start"),
-                rs.getString("trial_end"),
-                rs.getString("trial_half_day")
-            );
-          }
-
           return new TutorApplicant(
               rs.getString("public_id"),
               rs.getString("nickname"),
@@ -1872,7 +1912,8 @@ public class ClientWorkspaceAppService {
               rs.getString("availability"),
               rs.getString("status"),
               toAmount(rs.getLong("trial_fee_cents")),
-              trialSchedule,
+              defaultText(rs.getString("trial_schedule"), ""),
+              defaultText(rs.getString("service_schedule"), ""),
               rs.getString("service_confirmation_cancelled_by")
           );
         },
@@ -2366,19 +2407,21 @@ public class ClientWorkspaceAppService {
     Integer count = jdbcTemplate.queryForObject(
         """
             SELECT COUNT(*)
-            FROM tutor_applicant
-            WHERE tutor_demand_id = ?
-              AND enabled = TRUE
-              AND status NOT IN (?, ?, ?)
-              AND COALESCE(NULLIF(trial_start, ''), '') <> ''
-              AND COALESCE(NULLIF(trial_end, ''), '') <> ''
-              AND COALESCE(NULLIF(trial_half_day, ''), '') <> ''
+            FROM tutor_applicant ta
+            JOIN tutor_application_schedule tas ON tas.tutor_applicant_id = ta.id
+            WHERE ta.tutor_demand_id = ?
+              AND ta.enabled = TRUE
+              AND ta.status NOT IN (?, ?, ?)
+              AND tas.stage = ?
+              AND tas.enabled = TRUE
+              AND COALESCE(NULLIF(tas.schedule_summary, ''), '') <> ''
             """,
         Integer.class,
         tutorDemandId,
         TUTOR_APPLICANT_STATUS_CANCELLED,
         TUTOR_APPLICANT_STATUS_ENDED,
-        TUTOR_APPLICANT_STATUS_REJECTED
+        TUTOR_APPLICANT_STATUS_REJECTED,
+        TUTOR_APPLICATION_SCHEDULE_STAGE_TRIAL
     );
     return count != null && count > 0;
   }
@@ -2459,6 +2502,29 @@ public class ClientWorkspaceAppService {
     }
 
     return availability;
+  }
+
+  /** 校验学生提交的正式家教可用时间不能重复占用已经完成的试课时段。 */
+  private void assertTutorServiceAvailabilityNotOverlappingTrialSchedule(String serviceAvailability, String trialSchedule) {
+    Map<LocalDate, List<TutorTrialTimeRange>> trialScheduleMap = parseTutorTrialScheduleMap(trialSchedule);
+    if (trialScheduleMap.isEmpty()) {
+      return;
+    }
+
+    Map<LocalDate, List<TutorTrialTimeRange>> availabilityMap = parseTutorTrialScheduleMap(serviceAvailability);
+    for (Map.Entry<LocalDate, List<TutorTrialTimeRange>> entry : availabilityMap.entrySet()) {
+      List<TutorTrialTimeRange> trialRanges = trialScheduleMap.get(entry.getKey());
+      if (trialRanges == null) {
+        continue;
+      }
+
+      for (TutorTrialTimeRange availabilityRange : entry.getValue()) {
+        boolean overlapsTrialRange = trialRanges.stream().anyMatch((trialRange) -> trialRange.overlaps(availabilityRange));
+        if (overlapsTrialRange) {
+          throw new BusinessException("TUTOR_SERVICE_AVAILABILITY_OVERLAPS_TRIAL", "可家教时间不能包含已经试课的时间段");
+        }
+      }
+    }
   }
 
   /** 校验家长提交的正式家教日程必须落在学生提交的可家教时间内。 */
@@ -2737,51 +2803,167 @@ public class ClientWorkspaceAppService {
     );
   }
 
-  /** 学生同意正式雇佣或重提可家教时间时，清空旧试课安排，等待家长重新制定正式雇佣日程。 */
-  private void updateTutorServiceAvailabilityAndClearSchedule(long applicationId, String availability, String status) {
+  /** 学生同意正式雇佣或重提可家教时间时，只重置正式阶段日程，保留同一申请子任务的试课历史。 */
+  private void updateTutorServiceAvailabilityAndResetServiceSchedule(long applicationId, String availability, String status) {
     jdbcTemplate.update(
         """
             UPDATE tutor_applicant
             SET availability = CASE WHEN ? <> '' THEN ? ELSE availability END,
-                trial_start = '',
-                trial_end = '',
-                trial_half_day = '',
                 status = ?,
                 updated_at = NOW()
             WHERE id = ?
             """,
         availability,
         availability,
+        status,
+        applicationId
+    );
+    clearTutorApplicationSchedule(applicationId, TUTOR_APPLICATION_SCHEDULE_STAGE_SERVICE);
+  }
+
+  /** 写入家长提交的正式兼职日程，日程本身统一归属到申请子任务日程表。 */
+  private void updateTutorApplicationServiceSchedule(long applicationId, String tutorSchedule, String status) {
+    upsertTutorApplicationSchedule(applicationId, TUTOR_APPLICATION_SCHEDULE_STAGE_SERVICE, tutorSchedule, "parent");
+    jdbcTemplate.update(
+        """
+            UPDATE tutor_applicant
+            SET status = ?,
+                updated_at = NOW()
+            WHERE id = ?
+            """,
         status,
         applicationId
     );
   }
 
-  /** 写入家长提交的正式兼职日程，并同步可供前端展示的起止日期和日程摘要。 */
-  private void updateTutorApplicationSchedule(long applicationId, String tutorSchedule, String status) {
-    if (tutorSchedule.isBlank()) {
+  /** 按申请子任务和阶段查询唯一日程摘要，所有展示入口都应以该表为来源。 */
+  private String tutorApplicationSchedule(long applicationId, String stage) {
+    List<String> rows = jdbcTemplate.query(
+        """
+            SELECT COALESCE(NULLIF(schedule_summary, ''), '')
+            FROM tutor_application_schedule
+            WHERE tutor_applicant_id = ?
+              AND stage = ?
+              AND enabled = TRUE
+            LIMIT 1
+            """,
+        (rs, rowNum) -> defaultText(rs.getString(1), ""),
+        applicationId,
+        stage
+    );
+
+    return rows.isEmpty() ? "" : rows.get(0);
+  }
+
+  /** 使用外部申请 ID 写入阶段日程，用于家长确认试课等仅持有 public_id 的流程。 */
+  private void upsertTutorApplicationScheduleByPublicId(
+      long demandId,
+      String applicationPublicId,
+      String stage,
+      String schedule,
+      String createdByRole
+  ) {
+    int updatedRows = jdbcTemplate.update(
+        """
+            INSERT INTO tutor_application_schedule (
+              tutor_applicant_id,
+              stage,
+              schedule_start,
+              schedule_end,
+              schedule_summary,
+              created_by_role,
+              enabled
+            )
+            SELECT id, ?, ?, ?, ?, ?, TRUE
+            FROM tutor_applicant
+            WHERE tutor_demand_id = ?
+              AND public_id = ?
+              AND enabled = TRUE
+            ON CONFLICT (tutor_applicant_id, stage) DO UPDATE
+            SET schedule_start = EXCLUDED.schedule_start,
+                schedule_end = EXCLUDED.schedule_end,
+                schedule_summary = EXCLUDED.schedule_summary,
+                created_by_role = EXCLUDED.created_by_role,
+                enabled = TRUE,
+                updated_at = NOW()
+            """,
+        stage,
+        tutorScheduleStart(schedule),
+        tutorScheduleEnd(schedule),
+        schedule,
+        createdByRole,
+        demandId,
+        applicationPublicId
+    );
+    if (updatedRows == 0) {
+      throw new BusinessException("TUTOR_APPLICATION_NOT_FOUND", "试课申请不存在或无权操作");
+    }
+  }
+
+  /** 写入申请子任务阶段日程，并同步该阶段日程的起止日期。 */
+  private void upsertTutorApplicationSchedule(long applicationId, String stage, String schedule, String createdByRole) {
+    if (schedule.isBlank()) {
       throw new BusinessException("TUTOR_SERVICE_SCHEDULE_REQUIRED", "请先提交兼职日程");
     }
-    List<LocalDate> dates = parseTutorTrialScheduleMap(tutorSchedule).keySet().stream().sorted().toList();
-    if (dates.isEmpty()) {
+    if (parseTutorTrialScheduleMap(schedule).isEmpty()) {
       throw new BusinessException("TUTOR_SERVICE_SCHEDULE_REQUIRED", "兼职日程格式不正确");
     }
+
     jdbcTemplate.update(
         """
-            UPDATE tutor_applicant
-            SET trial_start = ?,
-                trial_end = ?,
-                trial_half_day = ?,
-                status = ?,
+            INSERT INTO tutor_application_schedule (
+              tutor_applicant_id,
+              stage,
+              schedule_start,
+              schedule_end,
+              schedule_summary,
+              created_by_role,
+              enabled
+            )
+            VALUES (?, ?, ?, ?, ?, ?, TRUE)
+            ON CONFLICT (tutor_applicant_id, stage) DO UPDATE
+            SET schedule_start = EXCLUDED.schedule_start,
+                schedule_end = EXCLUDED.schedule_end,
+                schedule_summary = EXCLUDED.schedule_summary,
+                created_by_role = EXCLUDED.created_by_role,
+                enabled = TRUE,
                 updated_at = NOW()
-            WHERE id = ?
             """,
-        dates.get(0).toString(),
-        dates.get(dates.size() - 1).toString(),
-        tutorSchedule,
-        status,
-        applicationId
+        applicationId,
+        stage,
+        tutorScheduleStart(schedule),
+        tutorScheduleEnd(schedule),
+        schedule,
+        createdByRole
     );
+  }
+
+  /** 清空指定阶段日程，保留记录用于审计时间戳和后续覆盖。 */
+  private void clearTutorApplicationSchedule(long applicationId, String stage) {
+    jdbcTemplate.update(
+        """
+            UPDATE tutor_application_schedule
+            SET schedule_start = '',
+                schedule_end = '',
+                schedule_summary = '',
+                enabled = FALSE,
+                updated_at = NOW()
+            WHERE tutor_applicant_id = ?
+              AND stage = ?
+            """,
+        applicationId,
+        stage
+    );
+  }
+
+  private String tutorScheduleStart(String schedule) {
+    List<LocalDate> dates = parseTutorTrialScheduleMap(schedule).keySet().stream().sorted().toList();
+    return dates.isEmpty() ? "" : dates.get(0).toString();
+  }
+
+  private String tutorScheduleEnd(String schedule) {
+    List<LocalDate> dates = parseTutorTrialScheduleMap(schedule).keySet().stream().sorted().toList();
+    return dates.isEmpty() ? "" : dates.get(dates.size() - 1).toString();
   }
 
   private void updateTutorDemandStatus(long demandId, String status) {
@@ -3187,6 +3369,10 @@ public class ClientWorkspaceAppService {
   private record TutorTrialTimeRange(LocalTime start, LocalTime end) {
     private boolean contains(TutorTrialTimeRange target) {
       return !target.start().isBefore(start) && !target.end().isAfter(end);
+    }
+
+    private boolean overlaps(TutorTrialTimeRange target) {
+      return start.isBefore(target.end()) && end.isAfter(target.start());
     }
   }
 

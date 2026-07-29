@@ -1,4 +1,5 @@
 import { useGlobalStore, useGlobalUser } from "@h5/store/global";
+import { isAuthSessionExpiredError } from "@unknown/api-client";
 import { useOngoingOrdersRealtime } from "@unknown/hooks";
 import { getHuntingCertificationDataFromDraft } from "@components/HuntingCertificationCard/model";
 import { HuntingProjectDialog } from "@components/HuntingProjectDialog";
@@ -494,23 +495,50 @@ export function App() {
     navigate(getDefaultRouteForRole(session.role), { replace: true });
   }
 
+  /** 清理应用级登录会话，并按场景回到登录页。 */
+  const resetAuthenticatedSession = useCallback(
+    (reason?: "expired") => {
+      clearUser();
+      resetForRole("student");
+      setIsOngoingOpen(false);
+      setIsMineOpen(false);
+      setIsQuickDockExpanded(true);
+      setIsProfileCompletionOpen(false);
+      setIsPublishInfoOpen(false);
+      resetPublishedHuntingTasks();
+      setIsTutorApplicationOpen(false);
+      setIsHuntingShortcutEnabled(false);
+      setHuntingShortcutProject(null);
+      closeTutorDialogs();
+      closeHuntingShortcutDialogs();
+      if (reason === "expired") {
+        showMessage("登录状态已过期，请重新登录。", { type: "warning" });
+      } else {
+        hideMessage();
+      }
+      setCheckout(null);
+      navigate("/login", { replace: true });
+    },
+    [
+      clearUser,
+      closeHuntingShortcutDialogs,
+      closeTutorDialogs,
+      navigate,
+      resetForRole,
+      resetPublishedHuntingTasks,
+      setCheckout,
+      setIsHuntingShortcutEnabled,
+      setIsMineOpen,
+      setIsOngoingOpen,
+      setIsProfileCompletionOpen,
+      setIsPublishInfoOpen,
+      setIsQuickDockExpanded,
+      setIsTutorApplicationOpen
+    ]
+  );
+
   function handleLogout() {
-    clearUser();
-    resetForRole("student");
-    setIsOngoingOpen(false);
-    setIsMineOpen(false);
-    setIsQuickDockExpanded(true);
-    setIsProfileCompletionOpen(false);
-    setIsPublishInfoOpen(false);
-    resetPublishedHuntingTasks();
-    setIsTutorApplicationOpen(false);
-    setIsHuntingShortcutEnabled(false);
-    setHuntingShortcutProject(null);
-    closeTutorDialogs();
-    closeHuntingShortcutDialogs();
-    hideMessage();
-    setCheckout(null);
-    navigate("/login", { replace: true });
+    resetAuthenticatedSession();
   }
 
   function handleOpenTab(tab: ClientModuleKey) {
@@ -654,6 +682,14 @@ export function App() {
 
     void handleHuntingTaskFulfillmentAction(order, "request_complete");
   }
+
+  useEffect(() => {
+    if (!isAuthenticated || !isAuthSessionExpiredError(dataError)) {
+      return;
+    }
+
+    resetAuthenticatedSession("expired");
+  }, [dataError, isAuthenticated, resetAuthenticatedSession]);
 
   useEffect(() => {
     if (isAuthenticated && homeData?.profile) {

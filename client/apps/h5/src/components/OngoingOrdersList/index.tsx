@@ -1,6 +1,7 @@
 import "./index.less";
+import { ConfirmActionDialog } from "@components/ConfirmActionDialog";
 import { useCancelTutorApplication } from "@unknown/hooks";
-import { TrialScheduleCalendar, type TrialScheduleCalendarPeriod } from "@components/TrialScheduleCalendar";
+import { TrialScheduleCalendar, type TrialScheduleCalendarItem, type TrialScheduleCalendarPeriod } from "@components/TrialScheduleCalendar";
 import { TutorTrialScheduleDialog } from "@components/TutorTrialScheduleDialog";
 import { getTrialScheduleValueFromSummary, type TrialScheduleValue } from "@components/TutorTrialScheduleDialog/model";
 import { getErrorMessage, showMessage } from "@tools/messageToast";
@@ -8,10 +9,12 @@ import {
   getTutorTrialAvailabilitySummaryFromOrderDetail,
   getTutorTrialFeeSummaryFromOrderDetail,
   getTutorTrialOrderDisplayDetail,
+  getTutorServiceScheduleSummaryFromOrderDetail,
   getTutorTrialScheduleSummaryFromOrderDetail,
   parseTutorTrialSchedule
 } from "@tools/tutorTrial";
 import { createTutorTaskModel } from "@tools/tutorTaskWorkflow";
+import { useConfirmAction, type ConfirmActionConfig } from "@h5/hooks/useConfirmAction";
 
 /** 进行中列表筛选类型。 */
 type OngoingOrderFilter = "all" | "delegation" | "featured" | "hunting" | "tutor";
@@ -30,8 +33,16 @@ interface TutorOrderSchedulePreviewConfig {
   allowConflictAction: boolean;
   buttonLabel: string;
   emptyLabel: string;
-  showScheduleLabel: boolean;
+  sections: TutorSchedulePreviewSection[];
   subtitle: string;
+  summary: string;
+  title: string;
+}
+
+/** 家教日程预览中的一个阶段片段。 */
+interface TutorSchedulePreviewSection {
+  label?: string;
+  showScheduleLabel?: boolean;
   summary: string;
   title: string;
 }
@@ -58,6 +69,7 @@ interface OngoingOrderLocalActionHandlers {
   onOpenServiceSchedule: (order: ClientOrder) => void;
   onOpenServiceSettlement: (order: ClientOrder) => void;
   onOpenServiceAvailability: (order: ClientOrder, action: TutorServiceAvailabilityAction) => void;
+  onOpenCancelConfirmation: (config: ConfirmActionConfig) => void;
   onOpenTrialResult: (order: ClientOrder) => void;
   onOpenTrialSchedule: (order: ClientOrder) => void;
   onRejectTrial: (order: ClientOrder) => void;
@@ -96,7 +108,7 @@ function isParentTutorServiceSchedulePending(order: ClientOrder) {
     getOngoingOrderCategory(order) === "tutor" &&
     Boolean(order.quoteId) &&
     Boolean(getTutorTrialAvailabilitySummaryFromOrderDetail(order.detail)) &&
-    !getTutorTrialScheduleSummaryFromOrderDetail(order.detail)
+    !getTutorServiceScheduleSummaryFromOrderDetail(order.detail)
   );
 }
 
@@ -105,16 +117,36 @@ function getTutorOrderSchedulePreviewConfig(
   order: ClientOrder,
   tutorTask: ReturnType<typeof createTutorTaskModel>
 ): TutorOrderSchedulePreviewConfig | null {
-  const scheduleSummary = getTutorTrialScheduleSummaryFromOrderDetail(order.detail);
+  const trialScheduleSummary = getTutorTrialScheduleSummaryFromOrderDetail(order.detail);
+  const serviceScheduleSummary = getTutorServiceScheduleSummaryFromOrderDetail(order.detail);
   const availabilitySummary = getTutorTrialAvailabilitySummaryFromOrderDetail(order.detail);
 
   if (tutorTask.node === "serviceSchedulePending") {
+    const rawSections: Array<TutorSchedulePreviewSection | null> = [
+      availabilitySummary
+        ? {
+            showScheduleLabel: false,
+            summary: availabilitySummary,
+            title: "可家教时间"
+          }
+        : null,
+      trialScheduleSummary
+        ? {
+            label: "试",
+            showScheduleLabel: true,
+            summary: trialScheduleSummary,
+            title: "试课安排"
+          }
+        : null
+    ];
+    const sections = rawSections.filter((section): section is TutorSchedulePreviewSection => Boolean(section));
+
     return availabilitySummary
       ? {
           allowConflictAction: false,
           buttonLabel: "可家教时间",
           emptyLabel: "暂无可家教时间",
-          showScheduleLabel: false,
+          sections,
           subtitle: "查看已提交给家长用于制定正式雇佣日程的可家教时间。",
           summary: availabilitySummary,
           title: "可家教时间"
@@ -123,25 +155,52 @@ function getTutorOrderSchedulePreviewConfig(
   }
 
   if (tutorTask.node === "formalTutoring") {
+    const rawSections: Array<TutorSchedulePreviewSection | null> = [
+      trialScheduleSummary
+        ? {
+            label: "试",
+            showScheduleLabel: true,
+            summary: trialScheduleSummary,
+            title: "试课安排"
+          }
+        : null,
+      serviceScheduleSummary
+        ? {
+            label: "课",
+            showScheduleLabel: true,
+            summary: serviceScheduleSummary,
+            title: "课程安排"
+          }
+        : null
+    ];
+    const sections = rawSections.filter((section): section is TutorSchedulePreviewSection => Boolean(section));
+
     return {
       allowConflictAction: false,
       buttonLabel: "课程",
       emptyLabel: "暂无课程安排",
-      showScheduleLabel: true,
+      sections,
       subtitle: order.role === "parent" ? "查看当前正式雇佣的课程安排。" : "查看家长提交的正式雇佣日程。",
-      summary: scheduleSummary,
+      summary: serviceScheduleSummary || trialScheduleSummary,
       title: order.role === "parent" ? "课程安排" : "正式雇佣日程"
     };
   }
 
-  return scheduleSummary
+  return trialScheduleSummary
     ? {
         allowConflictAction: tutorTask.can("updateTrialAvailability"),
-        buttonLabel: "试课安排",
+        buttonLabel: "日程",
         emptyLabel: "暂无试课安排",
-        showScheduleLabel: true,
+        sections: [
+          {
+            label: "试",
+            showScheduleLabel: true,
+            summary: trialScheduleSummary,
+            title: "试课安排"
+          }
+        ],
         subtitle: "查看家长提交的试课安排。",
-        summary: scheduleSummary,
+        summary: trialScheduleSummary,
         title: "试课安排"
       }
     : null;
@@ -182,14 +241,56 @@ function getTrialSchedulePreviewPeriod(timeRange: string): TrialScheduleCalendar
   return startHour < 18 ? "afternoon" : "evening";
 }
 
-/** 生成试课预览日历需要的日期标记。 */
-function getTrialSchedulePreviewItems(scheduleSummary: string) {
-  return parseTutorTrialSchedule(scheduleSummary)
-    .filter((scheduleLine) => scheduleLine.date)
-    .map((scheduleLine) => ({
-      date: scheduleLine.date,
-      periods: [...new Set(scheduleLine.times.map(getTrialSchedulePreviewPeriod))]
-    }));
+/** 合并同一申请子任务下的多阶段日程，日历按阶段显示角标。 */
+function getTrialSchedulePreviewItems(sections: TutorSchedulePreviewSection[]): TrialScheduleCalendarItem[] {
+  const itemMap = new Map<
+    string,
+    {
+      date: string;
+      periodLabels: Partial<Record<TrialScheduleCalendarPeriod, string>>;
+      periods: Set<TrialScheduleCalendarPeriod>;
+    }
+  >();
+
+  sections.forEach((section) => {
+    parseTutorTrialSchedule(section.summary)
+      .filter((scheduleLine) => scheduleLine.date)
+      .forEach((scheduleLine) => {
+        const item = itemMap.get(scheduleLine.date) ?? {
+          date: scheduleLine.date,
+          periodLabels: {},
+          periods: new Set<TrialScheduleCalendarPeriod>()
+        };
+
+        scheduleLine.times.forEach((timeRange) => {
+          const period = getTrialSchedulePreviewPeriod(timeRange);
+
+          item.periods.add(period);
+          if (section.showScheduleLabel && section.label) {
+            item.periodLabels[period] = section.label;
+          }
+        });
+        itemMap.set(scheduleLine.date, item);
+      });
+  });
+
+  return [...itemMap.values()]
+    .map((item) => ({
+      date: item.date,
+      periodLabels: item.periodLabels,
+      periods: [...item.periods]
+    }))
+    .sort((left, right) => left.date.localeCompare(right.date));
+}
+
+/** 获取当前日期在各阶段下的日程明细。 */
+function getActiveScheduleSections(sections: TutorSchedulePreviewSection[], activeDate: string) {
+  return sections
+    .map((section) => ({
+      ...section,
+      lines: parseTutorTrialSchedule(section.summary).filter((scheduleLine) => scheduleLine.date === activeDate)
+    }))
+    .filter((section) => section.lines.length > 0);
 }
 
 /** 学生端查看家长提交的试课日程弹窗。 */
@@ -208,24 +309,18 @@ function TrialSchedulePreviewDialog({
   const [isConflictScheduleOpen, setIsConflictScheduleOpen] = useState(false);
   const [isSubmittingConflictSchedule, setIsSubmittingConflictSchedule] = useState(false);
   const previewConfig = getTutorOrderSchedulePreviewConfig(order, tutorTask);
-  const scheduleSummary = previewConfig?.summary ?? "";
+  const scheduleSections = previewConfig?.sections ?? [];
   const availabilitySummary = getTutorTrialAvailabilitySummaryFromOrderDetail(order.detail);
-  const scheduleLines = parseTutorTrialSchedule(scheduleSummary);
-  const scheduleItems = getTrialSchedulePreviewItems(scheduleSummary);
+  const scheduleItems = getTrialSchedulePreviewItems(scheduleSections);
   const selectedDates = scheduleItems.map((item) => item.date);
   const initialConflictScheduleValue = useMemo(() => getTrialScheduleValueFromSummary(availabilitySummary), [availabilitySummary]);
   const [selectedDate, setSelectedDate] = useState(selectedDates[0] ?? "");
-  const selectedScheduleLine = scheduleLines.find((line) => line.date === selectedDate);
   const previewPeriods: Array<{ key: TrialScheduleCalendarPeriod; label: string }> = [
     { key: "morning", label: "上午" },
     { key: "afternoon", label: "下午" },
     { key: "evening", label: "晚上" }
   ];
-  const periodRows: Array<{ key: TrialScheduleCalendarPeriod; label: string; times: string[] }> = previewPeriods.map((period) => ({
-    ...period,
-    times:
-      selectedScheduleLine?.times.filter((timeRange) => getTrialSchedulePreviewPeriod(timeRange) === period.key) ?? []
-  }));
+  const activeScheduleSections = getActiveScheduleSections(scheduleSections, selectedDate);
   const canUpdateTrialAvailability = Boolean(previewConfig?.allowConflictAction && onTutorWorkflowAction);
 
   /** 学生日程冲突时重新提交可试课时间，并回到家长重新排期流程。 */
@@ -271,13 +366,23 @@ function TrialSchedulePreviewDialog({
               onActiveDateChange={setSelectedDate}
               scheduleItems={scheduleItems}
               selectedDates={selectedDates}
-              showScheduleLabel={previewConfig?.showScheduleLabel}
             />
             <div className="trial-schedule-preview-list grid gap-[8px]">
-              {periodRows.map((period) => (
-                <article className={`trial-schedule-preview-period ${period.times.length > 0 ? "selected" : ""}`} key={period.key}>
-                  <strong>{period.label}</strong>
-                  <span>{period.times.join("、") || "暂无安排"}</span>
+              {activeScheduleSections.map((section) => (
+                <article className="trial-schedule-preview-period selected" key={section.title}>
+                  <strong>{section.title}</strong>
+                  <span>
+                    {previewPeriods
+                      .map((period) => {
+                        const times = section.lines.flatMap((line) =>
+                          line.times.filter((timeRange) => getTrialSchedulePreviewPeriod(timeRange) === period.key)
+                        );
+
+                        return times.length > 0 ? `${period.label} ${times.join("、")}` : "";
+                      })
+                      .filter(Boolean)
+                      .join(" · ") || "暂无安排"}
+                  </span>
                 </article>
               ))}
             </div>
@@ -341,7 +446,9 @@ function TrialSettlementConfirmDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isServiceSettlement = order.detail.includes("正式雇佣");
   const feeSummary = getTutorTrialFeeSummaryFromOrderDetail(order.detail) || order.amountLabel || formatCurrency(order.amount);
-  const scheduleSummary = getTutorTrialScheduleSummaryFromOrderDetail(order.detail);
+  const scheduleSummary = isServiceSettlement
+    ? getTutorServiceScheduleSummaryFromOrderDetail(order.detail)
+    : getTutorTrialScheduleSummaryFromOrderDetail(order.detail);
 
   /** 学生确认家长提交的试课费用，后续由家长选择是否正式雇佣。 */
   async function handleConfirmSettlement() {
@@ -423,7 +530,7 @@ function ServiceSettlementDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const feeValue = serviceFee.trim() === "" ? Number.NaN : Number(serviceFee);
   const isServiceFeeValid = Number.isFinite(feeValue) && feeValue >= 0;
-  const scheduleSummary = getTutorTrialScheduleSummaryFromOrderDetail(order.detail);
+  const scheduleSummary = getTutorServiceScheduleSummaryFromOrderDetail(order.detail);
 
   /** 校验结算金额并提交正式服务结束动作。 */
   async function handleConfirm() {
@@ -622,7 +729,7 @@ function OngoingOrderActions({
               type="button"
             >
               <CalendarClock size={15} />
-              {showParentTutorCourseAction ? "课程" : tutorSchedulePreviewConfig?.buttonLabel ?? "试课安排"}
+              {showParentTutorCourseAction ? "课程" : tutorSchedulePreviewConfig?.buttonLabel ?? "日程"}
             </button>
           ) : null}
           {!showParentTutorCourseAction && (tutorTask ? tutorTask.can("openTrialList") : order.canOpenTutorTrialList) ? (
@@ -632,7 +739,7 @@ function OngoingOrderActions({
               type="button"
             >
               <CalendarClock size={15} />
-              试课列表
+              试课申请
               {typeof order.trialCount === "number" ? (
                 <span className="ongoing-action-badge">{order.trialCount}</span>
               ) : null}
@@ -667,8 +774,15 @@ function OngoingOrderActions({
           ) : null}
           {tutorTask?.can("cancelServiceConfirmation") ? (
             <button
-              className="danger-outline-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
-              onClick={() => handlers.onTutorWorkflowAction?.(order, "cancel_service_confirmation")}
+              className="text-button danger inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+              onClick={() =>
+                handlers.onOpenCancelConfirmation({
+                  confirmLabel: "确认取消",
+                  description: "取消后流程将回到试课结算阶段，需要重新处理正式雇佣确认。",
+                  onConfirm: () => void handlers.onTutorWorkflowAction?.(order, "cancel_service_confirmation"),
+                  title: "取消兼职确认"
+                })
+              }
               type="button"
             >
               取消兼职确认
@@ -729,18 +843,35 @@ function OngoingOrderActions({
           ) : null}
           {tutorTask?.can("cancelApplication") ? (
             <button
-              className="danger-outline-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+              className="text-button danger inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
               disabled={isCancellingTutorApplication}
-              onClick={() => handlers.onCancelTutorApplication(order)}
+              onClick={() =>
+                handlers.onOpenCancelConfirmation({
+                  confirmLabel: "确认取消",
+                  description: "取消后本次试课申请结束，家长端会按真实状态刷新。",
+                  onConfirm: () => void handlers.onCancelTutorApplication(order),
+                  title: "取消申请"
+                })
+              }
               type="button"
             >
-              取消试课申请
+              取消申请
             </button>
           ) : null}
           {(tutorTask ? tutorTask.can("cancelDemand") : order.canRequestCancel) ? (
             <button
-              className="danger-outline-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
-              onClick={() => handlers.onRequestCancel?.(order)}
+              className="text-button danger inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+              onClick={() =>
+                handlers.onOpenCancelConfirmation({
+                  confirmLabel: category === "tutor" ? "确认撤回" : "确认取消",
+                  description:
+                    category === "tutor"
+                      ? "撤回后家教兼职回到待发布状态，学生端不可继续申请。"
+                      : "取消后当前事项将进入取消流程，请确认后继续。",
+                  onConfirm: () => void handlers.onRequestCancel?.(order),
+                  title: category === "tutor" ? "撤回家教兼职" : "取消事项"
+                })
+              }
               type="button"
             >
               {category === "tutor" ? "撤回" : "取消"}
@@ -757,8 +888,15 @@ function OngoingOrderActions({
           ) : null}
           {order.canConfirmCancel ? (
             <button
-              className="danger-outline-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
-              onClick={() => handlers.onConfirmCancel?.(order)}
+              className="text-button danger inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+              onClick={() =>
+                handlers.onOpenCancelConfirmation({
+                  confirmLabel: "确认取消",
+                  description: "确认后当前取消流程会提交到真实接口并刷新进行中列表。",
+                  onConfirm: () => void handlers.onConfirmCancel?.(order),
+                  title: "确认取消"
+                })
+              }
               type="button"
             >
               确认取消
@@ -801,25 +939,41 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
   const [serviceSettlementOrder, setServiceSettlementOrder] = useState<ClientOrder | null>(null);
   const [trialSettlementOrder, setTrialSettlementOrder] = useState<ClientOrder | null>(null);
   const [trialScheduleOrder, setTrialScheduleOrder] = useState<ClientOrder | null>(null);
+  const {
+    closeConfirmation: closeCancelConfirmation,
+    confirmCurrentAction: confirmCancelAction,
+    confirmation: cancelConfirmation,
+    openConfirmation: openCancelConfirmation
+  } = useConfirmAction();
   /** 按当前标签过滤后的进行中事项列表。 */
   const filteredOrders = useMemo(
     () => orders.filter((order) => activeFilter === "all" || getOngoingOrderCategory(order) === activeFilter),
     [activeFilter, orders]
   );
-  /** 正式家教可用时间弹窗的初始值，优先回填当前申请已保存的可用时间。 */
+  /** 正式家教可用时间弹窗的初始值；首次同意正式雇佣时不回填试课申请阶段的可试课时间。 */
   const serviceAvailabilityInitialValue = useMemo(
-    () => getTrialScheduleValueFromSummary(getTutorTrialAvailabilitySummaryFromOrderDetail(serviceAvailabilityState?.order.detail)),
-    [serviceAvailabilityState?.order.detail]
+    () =>
+      serviceAvailabilityState?.action === "request_service_schedule_change"
+        ? getTrialScheduleValueFromSummary(getTutorTrialAvailabilitySummaryFromOrderDetail(serviceAvailabilityState.order.detail))
+        : null,
+    [serviceAvailabilityState]
   );
+  /** 学生同意正式雇佣时以真实试课日程作为只读标记，已试课时段不可再次选择。 */
+  const serviceAvailabilityBlockedSummary =
+    serviceAvailabilityState?.action === "accept_service_offer"
+      ? getTutorTrialScheduleSummaryFromOrderDetail(serviceAvailabilityState.order.detail)
+      : "";
   /** 父端正式雇佣日程必须落在学生提交的可家教时间内。 */
   const serviceScheduleAvailabilitySummary = getTutorTrialAvailabilitySummaryFromOrderDetail(serviceScheduleOrder?.detail);
+  /** 父端制定正式日程时，试课历史以只读日程展示并禁止重复选择。 */
+  const serviceScheduleBlockedSummary = getTutorTrialScheduleSummaryFromOrderDetail(serviceScheduleOrder?.detail);
 
   /** 消息入口当前仅展示后续沟通能力提示，真实聊天接口接入后再替换为业务回调。 */
   function handleMessageOrder(order: ClientOrder) {
     showMessage(`${order.title} 的消息能力后续接入。`, { type: "warning" });
   }
 
-  /** 学生取消试课申请，成功后由查询缓存失效刷新服务端状态。 */
+  /** 学生取消申请，成功后由查询缓存失效刷新服务端状态。 */
   async function handleCancelTutorApplication(order: ClientOrder) {
     if (cancelTutorApplicationMutation.isPending) {
       return;
@@ -830,7 +984,7 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
       await cancelTutorApplicationMutation.mutateAsync(order.id);
       showMessage("试课申请已取消。", { type: "success" });
     } catch (error) {
-      showMessage(getErrorMessage(error, "取消试课申请失败，请稍后重试。"), { type: "error" });
+      showMessage(getErrorMessage(error, "取消申请失败，请稍后重试。"), { type: "error" });
     } finally {
       setCancellingTutorApplicationId(null);
     }
@@ -951,6 +1105,7 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
                 onAgreeTrial={() => showTutorWorkflowMessage("已同意试课，家教兼职进入试课流程。")}
                 onCancelTutorApplication={handleCancelTutorApplication}
                 onMessageOrder={handleMessageOrder}
+                onOpenCancelConfirmation={openCancelConfirmation}
                 onOpenServiceAvailability={handleOpenServiceAvailability}
                 onOpenServiceSchedule={handleOpenServiceSchedule}
                 onOpenServiceSettlement={setServiceSettlementOrder}
@@ -994,18 +1149,23 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
       {serviceScheduleOrder ? (
         <TutorTrialScheduleDialog
           availableScheduleSummary={serviceScheduleAvailabilitySummary}
+          blockedScheduleLabel="试"
+          blockedScheduleSummary={serviceScheduleBlockedSummary}
           confirmLabel={isSubmittingServiceSchedule ? "提交中" : "提交日程"}
           initialValue={null}
           isConfirming={isSubmittingServiceSchedule}
           maxSelectedDates={null}
           onClose={() => setServiceScheduleOrder(null)}
           onConfirm={handleConfirmServiceSchedule}
+          scheduleLabel="课"
           subtitle="请在学生提交的可家教时间内制定正式雇佣日程，提交后直接进入正式雇佣。"
           title="正式雇佣日程"
         />
       ) : null}
       {serviceAvailabilityState ? (
         <TutorTrialScheduleDialog
+          blockedScheduleLabel="试"
+          blockedScheduleSummary={serviceAvailabilityBlockedSummary}
           confirmLabel={
             isSubmittingServiceAvailability
               ? "提交中"
@@ -1020,10 +1180,20 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
           onConfirm={handleConfirmServiceAvailability}
           subtitle={
             serviceAvailabilityState.action === "accept_service_offer"
-              ? "请选择可进行正式家教的日期和时间，提交后等待家长制定正式雇佣日程。"
+              ? "请基于已完成的试课日程选择可正式家教的日期和时间，标记为“试”的时段不可再次选择。"
               : "请重新选择可进行正式家教的日期和时间，提交后等待家长重新制定正式雇佣日程。"
           }
           title={serviceAvailabilityState.action === "accept_service_offer" ? "可家教日期" : "修改可家教日期"}
+        />
+      ) : null}
+      {cancelConfirmation ? (
+        <ConfirmActionDialog
+          confirmLabel={cancelConfirmation.confirmLabel}
+          description={cancelConfirmation.description}
+          onClose={closeCancelConfirmation}
+          onConfirm={confirmCancelAction}
+          title={cancelConfirmation.title}
+          tone="danger"
         />
       ) : null}
     </>

@@ -48,10 +48,37 @@ type ApiEnvelope<T> = {
 };
 
 const AUTH_STORAGE_KEY = "unknown.client.auth.session";
+const AUTH_SESSION_EXPIRED_CODE = "AUTH_SESSION_EXPIRED";
 const CLIENT_USER_ROLE_HEADER = "X-Client-User-Role";
 const CLIENT_USER_PHONE_HEADER = "X-Client-User-Phone";
 const CLIENT_USER_NICKNAME_HEADER = "X-Client-User-Nickname";
 const CLIENT_USER_ACCOUNT_STATUS_HEADER = "X-Client-User-Account-Status";
+
+type ApiClientErrorOptions = {
+  code?: string | undefined;
+  requestId?: string | undefined;
+  status?: number | undefined;
+};
+
+/** API 客户端错误，保留服务端错误码、请求编号和 HTTP 状态，供业务层判断恢复方式。 */
+export class ApiClientError extends Error {
+  code?: string;
+  requestId?: string;
+  status?: number;
+
+  constructor(message: string, options: ApiClientErrorOptions = {}) {
+    super(message);
+    this.name = "ApiClientError";
+    this.code = options.code;
+    this.requestId = options.requestId;
+    this.status = options.status;
+  }
+}
+
+/** 判断接口错误是否为本地登录态过期。 */
+export function isAuthSessionExpiredError(error: unknown) {
+  return error instanceof ApiClientError && error.code === AUTH_SESSION_EXPIRED_CODE;
+}
 
 type RuntimeGlobals = typeof globalThis & {
   __UNKNOWN_API_BASE_URL__?: string;
@@ -117,6 +144,18 @@ export function clearStoredClientAuthSession() {
   getLocalStorage()?.removeItem(AUTH_STORAGE_KEY);
 }
 
+function throwApiError(envelope: ApiEnvelope<unknown>, status?: number): never {
+  if (envelope.code === AUTH_SESSION_EXPIRED_CODE) {
+    clearStoredClientAuthSession();
+  }
+
+  throw new ApiClientError(envelope.message || "请求失败", {
+    code: envelope.code,
+    requestId: envelope.requestId,
+    status
+  });
+}
+
 /** 统一补充登录用户上下文请求头，服务端据此解析当前用户角色。 */
 function getClientUserHeaders(): Record<string, string> {
   const session = getStoredClientAuthSession();
@@ -172,7 +211,7 @@ async function requestWithFetch<T>(url: string, init?: RequestInit): Promise<Api
   });
   const result = (await response.json()) as ApiEnvelope<T>;
   if (!response.ok) {
-    throw new Error(result.message || `HTTP ${response.status}`);
+    throwApiError(result, response.status);
   }
   return result;
 }
@@ -200,18 +239,23 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
           },
           data: parseRequestBody(init?.body),
           success: (response) => {
+            const result = response.data as ApiEnvelope<T>;
             if (response.statusCode < 200 || response.statusCode >= 300) {
-              reject(new Error(`HTTP ${response.statusCode}`));
+              try {
+                throwApiError(result, response.statusCode);
+              } catch (error) {
+                reject(error);
+              }
               return;
             }
-            resolve(response.data as ApiEnvelope<T>);
+            resolve(result);
           },
           fail: reject
         });
       });
 
   if (result.code !== "OK" || result.data === undefined) {
-    throw new Error(result.message || "请求失败");
+    throwApiError(result);
   }
 
   return result.data;

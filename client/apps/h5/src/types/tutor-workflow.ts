@@ -32,6 +32,7 @@ export interface TutorApplicationCandidate {
   nickname: string;
   school: string;
   serviceConfirmationCancelledBy?: string;
+  serviceSchedule?: string;
   status: string;
   trialFee?: number;
   trialSchedule: string;

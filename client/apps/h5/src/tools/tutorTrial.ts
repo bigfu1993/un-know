@@ -292,18 +292,31 @@ export function parseTutorTrialSchedule(summary?: string): TutorTrialScheduleLin
   }));
 }
 
-/** 从进行中卡片详情里提取试课安排摘要。 */
-export function getTutorTrialScheduleSummaryFromOrderDetail(detail?: string) {
-  const trialMarkerIndex = detail?.indexOf(tutorTrialScheduleDetailMarker) ?? -1;
-  const serviceMarkerIndex = detail?.indexOf(tutorServiceScheduleDetailMarker) ?? -1;
-  const markerIndex = serviceMarkerIndex >= 0 ? serviceMarkerIndex : trialMarkerIndex;
-  const markerLength = serviceMarkerIndex >= 0 ? tutorServiceScheduleDetailMarker.length : tutorTrialScheduleDetailMarker.length;
+/** 从进行中卡片详情里按指定标记提取片段，避免不同阶段日程互相吞并。 */
+function getTutorDetailSegment(detail: string | undefined, marker: string, endMarkers: string[]) {
+  const markerIndex = detail?.indexOf(marker) ?? -1;
 
   if (!detail || markerIndex < 0) {
     return "";
   }
 
-  return detail.slice(markerIndex + markerLength).trim();
+  const segmentText = detail.slice(markerIndex + marker.length);
+  const endMarkerIndexes = endMarkers
+    .map((endMarker) => segmentText.indexOf(` · ${endMarker}`))
+    .filter((index) => index >= 0);
+  const endMarkerIndex = endMarkerIndexes.length > 0 ? Math.min(...endMarkerIndexes) : -1;
+
+  return (endMarkerIndex >= 0 ? segmentText.slice(0, endMarkerIndex) : segmentText).trim();
+}
+
+/** 从进行中卡片详情里提取试课安排摘要。 */
+export function getTutorTrialScheduleSummaryFromOrderDetail(detail?: string) {
+  return getTutorDetailSegment(detail, tutorTrialScheduleDetailMarker, [tutorServiceScheduleDetailMarker]);
+}
+
+/** 从进行中卡片详情里提取正式课程安排摘要。 */
+export function getTutorServiceScheduleSummaryFromOrderDetail(detail?: string) {
+  return getTutorDetailSegment(detail, tutorServiceScheduleDetailMarker, [tutorTrialScheduleDetailMarker]);
 }
 
 /** 从进行中卡片详情里提取学生可试课或可家教时间，供重新提交日期时回填。 */

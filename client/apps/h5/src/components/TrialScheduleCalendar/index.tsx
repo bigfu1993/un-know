@@ -8,6 +8,7 @@ export type TrialScheduleCalendarPeriod = "morning" | "afternoon" | "evening";
 export interface TrialScheduleCalendarItem {
   date: string;
   labelPeriods?: TrialScheduleCalendarPeriod[];
+  periodLabels?: Partial<Record<TrialScheduleCalendarPeriod, string>>;
   periods: TrialScheduleCalendarPeriod[];
 }
 
@@ -21,6 +22,7 @@ export interface TrialScheduleCalendarProps {
   onSelectedDatesChange?: (selectedDates: string[]) => void;
   rangeStartDate?: string | null;
   scheduleItems: TrialScheduleCalendarItem[];
+  scheduleLabel?: string;
   selectableDates?: string[];
   selectedDates: string[];
   showScheduleLabel?: boolean;
@@ -38,6 +40,7 @@ export function TrialScheduleCalendar({
   onDayDoubleClick,
   rangeStartDate,
   scheduleItems,
+  scheduleLabel = "课",
   selectableDates,
   selectedDates,
   showScheduleLabel = false
@@ -55,6 +58,9 @@ export function TrialScheduleCalendar({
         {
           hasCustomLabelPeriods: item.labelPeriods !== undefined,
           labelPeriods: new Set(item.labelPeriods ?? []),
+          periodLabels: new Map(
+            Object.entries(item.periodLabels ?? {}) as Array<[TrialScheduleCalendarPeriod, string]>
+          ),
           periods: new Set(item.periods)
         }
       ])
@@ -141,9 +147,11 @@ export function TrialScheduleCalendar({
             >
               {trialCalendarPeriods.map((period) => (
                 <span className={`trial-schedule-calendar__period ${period}`} key={period}>
-                  {scheduleEntry?.labelPeriods.has(period) ||
+                  {scheduleEntry?.periodLabels.get(period) ? (
+                    <span className="trial-schedule-calendar__period-label">{scheduleEntry.periodLabels.get(period)}</span>
+                  ) : scheduleEntry?.labelPeriods.has(period) ||
                   (!scheduleEntry?.hasCustomLabelPeriods && showScheduleLabel && periodSet?.has(period)) ? (
-                    <span className="trial-schedule-calendar__period-label">课</span>
+                    <span className="trial-schedule-calendar__period-label">{scheduleLabel}</span>
                   ) : null}
                 </span>
               ))}

@@ -166,12 +166,19 @@ screen -dmS unknow-server bash -lc "cd '$REPO_ROOT/server' && set -a && source .
 
 ### 启动验证
 
+启动验证必须区分端口监听、健康检查、登录接口和登录后的真实业务接口。`/actuator/health` 正常、登录接口返回 200，只能说明服务和登录入口可用；还必须使用新登录返回的 `accessToken` 请求至少一个需要鉴权的真实业务接口，才能判断接口链路真的可用。
+
 Windows PowerShell：
 
 ```powershell
 Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8899/
 Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:9988/actuator/health
-Invoke-WebRequest -UseBasicParsing -Method Post -Uri http://127.0.0.1:9988/api/client/auth/login -ContentType "application/json" -Body '{"phone":"18000000009","code":"000000"}'
+$LoginResponse = Invoke-RestMethod -Method Post -Uri http://127.0.0.1:9988/api/client/auth/login -ContentType "application/json" -Body '{"phone":"18000000009","code":"000000"}'
+$Token = $LoginResponse.data.accessToken
+$AuthHeaders = @{ Authorization = "Bearer $Token" }
+Invoke-RestMethod -Uri http://127.0.0.1:9988/api/client/home -Headers $AuthHeaders
+Invoke-RestMethod -Uri http://127.0.0.1:9988/api/client/workspace -Headers $AuthHeaders
+Invoke-RestMethod -Uri http://127.0.0.1:9988/api/client/workspace/tutor-demands -Headers $AuthHeaders
 ```
 
 macOS/Linux：
@@ -179,8 +186,15 @@ macOS/Linux：
 ```bash
 curl -I http://127.0.0.1:8899/
 curl http://127.0.0.1:9988/actuator/health
-curl -sS -i -X POST http://127.0.0.1:9988/api/client/auth/login -H 'Content-Type: application/json' --data '{"phone":"18000000009","code":"000000"}'
+TOKEN="$(curl -sS -X POST http://127.0.0.1:9988/api/client/auth/login -H 'Content-Type: application/json' --data '{"phone":"18000000009","code":"000000"}' | node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>process.stdout.write(JSON.parse(s).data.accessToken))")"
+curl -sS -H "Authorization: Bearer $TOKEN" http://127.0.0.1:9988/api/client/home
+curl -sS -H "Authorization: Bearer $TOKEN" http://127.0.0.1:9988/api/client/workspace
+curl -sS -H "Authorization: Bearer $TOKEN" http://127.0.0.1:9988/api/client/workspace/tutor-demands
 ```
+
+如果命令行使用新 token 请求业务接口成功，但浏览器页面仍提示接口失败，优先检查浏览器本地登录态是否过期。后端日志或响应出现 `AUTH_SESSION_EXPIRED` 时，含义是当前请求携带了过期 token，不代表后端、数据库或 SSH 隧道不通；应清理浏览器 `localStorage` 中的 `unknown.client.auth.session`，或在页面执行退出后重新登录，再复测业务接口。
+
+如果使用手机、模拟器或局域网其他设备访问 H5，不能直接沿用前端默认 `http://127.0.0.1:9988` 作为接口地址，因为该地址会指向访问设备自身；必须改为宿主机可访问的 API 地址，或通过环境变量/运行配置覆盖 API Base URL 后再验证。
 
 只有上述固定流程失败时，才查看日志并深入排查：
 

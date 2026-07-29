@@ -57,7 +57,8 @@ description: Methodology and validation workflow for the un-know project. Use wh
    - H5: `cd client && npm run typecheck:h5 && npm run lint:h5`
    - Backend: `cd server && mvn -q -DskipTests compile`
    - Runtime when APIs or data changed: health check and at least one targeted real-interface flow.
-8. If backend behavior changed and a running server needs refresh, restart it unless the user explicitly asks not to.
+8. For runtime API debugging, distinguish service availability from expired local sessions. Verify protected APIs with a freshly obtained session token; if fresh-token requests pass while the browser fails, clear the browser's persisted session before diagnosing backend or database availability.
+9. If backend behavior changed and a running server needs refresh, restart it unless the user explicitly asks not to.
 
 ## Completion Standard
 

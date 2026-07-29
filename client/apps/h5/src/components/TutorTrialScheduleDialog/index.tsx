@@ -22,20 +22,22 @@ import {
 /** 试课排期弹窗属性。 */
 interface TutorTrialScheduleDialogProps {
   availableScheduleSummary?: string;
+  blockedScheduleLabel?: string;
+  blockedScheduleSummary?: string;
   confirmLabel?: string;
   initialValue: TrialScheduleValue | null;
   isConfirming?: boolean;
   maxSelectedDates?: number | null;
   onClose: () => void;
   onConfirm: (value: TrialScheduleValue) => void;
+  scheduleLabel?: string;
   subtitle?: string;
   title?: string;
 }
 
 /** 合并学生可选时间背景和家长已安排课程文字标记。 */
 function mergeTrialScheduleCalendarMarkers(
-  availableItems: TrialScheduleCalendarMarker[],
-  arrangedItems: TrialScheduleCalendarMarker[]
+  ...markerGroups: TrialScheduleCalendarMarker[][]
 ): TrialScheduleCalendarMarker[] {
   const markerMap = new Map<
     string,
@@ -45,15 +47,17 @@ function mergeTrialScheduleCalendarMarkers(
     }
   >();
 
-  [...availableItems, ...arrangedItems].forEach((item) => {
-    const marker = markerMap.get(item.date) ?? {
-      labelPeriods: new Set<TrialSchedulePeriodKey>(),
-      periods: new Set<TrialSchedulePeriodKey>()
-    };
+  markerGroups.forEach((items) => {
+    items.forEach((item) => {
+      const marker = markerMap.get(item.date) ?? {
+        labelPeriods: new Set<TrialSchedulePeriodKey>(),
+        periods: new Set<TrialSchedulePeriodKey>()
+      };
 
-    item.periods.forEach((period) => marker.periods.add(period));
-    item.labelPeriods?.forEach((period) => marker.labelPeriods.add(period));
-    markerMap.set(item.date, marker);
+      item.periods.forEach((period) => marker.periods.add(period));
+      item.labelPeriods?.forEach((period) => marker.labelPeriods.add(period));
+      markerMap.set(item.date, marker);
+    });
   });
 
   return [...markerMap.entries()].map(([date, marker]) => ({
@@ -66,12 +70,15 @@ function mergeTrialScheduleCalendarMarkers(
 /** 试课安排弹窗，复用课程日历的月份网格生成逻辑。 */
 export function TutorTrialScheduleDialog({
   availableScheduleSummary = "",
+  blockedScheduleLabel = "试",
+  blockedScheduleSummary = "",
   confirmLabel = "确认",
   initialValue,
   isConfirming = false,
   maxSelectedDates = 3,
   onClose,
   onConfirm,
+  scheduleLabel = "试",
   subtitle = "最多选择 3 天，设置每天可试课时间。",
   title = "试课安排"
 }: TutorTrialScheduleDialogProps) {
@@ -81,9 +88,11 @@ export function TutorTrialScheduleDialog({
   const selectableDateSet = useMemo(() => new Set(selectableDates), [selectableDates]);
   const availableScheduleValue = useMemo(() => getTrialScheduleValueFromSummary(availableScheduleSummary), [availableScheduleSummary]);
   const availableScheduleDraft = availableScheduleValue?.scheduleDraft ?? {};
+  const blockedScheduleValue = useMemo(() => getTrialScheduleValueFromSummary(blockedScheduleSummary), [blockedScheduleSummary]);
+  const blockedScheduleDraft = blockedScheduleValue?.scheduleDraft ?? {};
   const hasSelectableDateLimit = selectableDateSet.size > 0;
   const hasAvailableScheduleLimit = Boolean(availableScheduleSummary.trim() && availableScheduleValue);
-  const initialSelectedDate = initialValue?.selectedDates[0] ?? selectableDates[0] ?? todayKey;
+  const initialSelectedDate = initialValue?.selectedDates[0] ?? selectableDates[0] ?? blockedScheduleValue?.selectedDates[0] ?? todayKey;
   const [selectedDate, setSelectedDate] = useState(initialSelectedDate);
   const [selectedDates, setSelectedDates] = useState<string[]>(() => initialValue?.selectedDates ?? []);
   const [scheduleDraft, setScheduleDraft] = useState<TrialScheduleDraft>(() => initialValue?.scheduleDraft ?? {});
@@ -107,10 +116,20 @@ export function TutorTrialScheduleDialog({
     () => getTrialScheduleCalendarItems(selectedDates, scheduleDraft, { showPeriodLabel: hasAvailableScheduleLimit }),
     [hasAvailableScheduleLimit, scheduleDraft, selectedDates]
   );
-  const scheduleItems = useMemo(
-    () => mergeTrialScheduleCalendarMarkers(availableScheduleItems, arrangedScheduleItems),
-    [arrangedScheduleItems, availableScheduleItems]
+  const blockedScheduleItems = useMemo(
+    () =>
+      blockedScheduleValue
+        ? getTrialScheduleCalendarItems(blockedScheduleValue.selectedDates, blockedScheduleValue.scheduleDraft, {
+            showPeriodLabel: true
+          })
+        : [],
+    [blockedScheduleValue]
   );
+  const scheduleItems = useMemo(
+    () => mergeTrialScheduleCalendarMarkers(availableScheduleItems, blockedScheduleItems, arrangedScheduleItems),
+    [arrangedScheduleItems, availableScheduleItems, blockedScheduleItems]
+  );
+  const calendarScheduleLabel = blockedScheduleItems.length > 0 ? blockedScheduleLabel : scheduleLabel;
 
   /** 判断指定日期是否受可选范围或天数上限限制，禁止新增排期。 */
   function isDateDisabledForNewSchedule(dateKey: string) {
@@ -133,9 +152,18 @@ export function TutorTrialScheduleDialog({
     return !availablePeriodState?.enabled || !availablePeriodState.start || !availablePeriodState.end;
   }
 
+  /** 判断指定时段是否已被试课日程占用，正式雇佣可用时间不能重复选择。 */
+  function isPeriodBlockedBySchedule(dateKey: string, periodKey: TrialSchedulePeriodKey) {
+    const blockedPeriodState = blockedScheduleDraft[dateKey]?.[periodKey];
+
+    return Boolean(blockedPeriodState?.enabled && blockedPeriodState.start && blockedPeriodState.end);
+  }
+
   /** 获取指定日期内允许选择的试课时段。 */
   function getSelectablePeriodsForDate(dateKey: string) {
-    return trialSchedulePeriods.filter((period) => !isPeriodOutsideAvailableSchedule(dateKey, period.key));
+    return trialSchedulePeriods.filter(
+      (period) => !isPeriodOutsideAvailableSchedule(dateKey, period.key) && !isPeriodBlockedBySchedule(dateKey, period.key)
+    );
   }
 
   /** 生成双击批量选择日期时使用的默认排期。 */
@@ -289,7 +317,7 @@ export function TutorTrialScheduleDialog({
       handleClearPeriod(period.key);
       return;
     }
-    if (isPeriodOutsideAvailableSchedule(selectedDate, period.key)) {
+    if (isPeriodOutsideAvailableSchedule(selectedDate, period.key) || isPeriodBlockedBySchedule(selectedDate, period.key)) {
       return;
     }
 
@@ -327,7 +355,7 @@ export function TutorTrialScheduleDialog({
 
   /** 自定义某个时段的开始或结束时间，两个时间均存在时自动计入安排。 */
   function handleChangePeriodTime(periodKey: TrialSchedulePeriodKey, field: "end" | "start", value: string) {
-    if (hasAvailableScheduleLimit || isDateDisabledForNewSchedule(selectedDate)) {
+    if (hasAvailableScheduleLimit || isDateDisabledForNewSchedule(selectedDate) || isPeriodBlockedBySchedule(selectedDate, periodKey)) {
       return;
     }
 
@@ -397,6 +425,7 @@ export function TutorTrialScheduleDialog({
             onDayDoubleClick={hasAvailableScheduleLimit ? undefined : handleDoubleClickDateRange}
             rangeStartDate={rangeStartDate}
             scheduleItems={scheduleItems}
+            scheduleLabel={calendarScheduleLabel}
             selectableDates={selectableDates}
             selectedDates={selectedDates}
             showScheduleLabel={false}
@@ -417,6 +446,8 @@ export function TutorTrialScheduleDialog({
                       ? `最多安排 ${maxSelectedDates} 天`
                       : ""}
                 </span>
+              ) : getSelectablePeriodsForDate(selectedDate).length === 0 ? (
+                <span>已试课时段不可选</span>
               ) : (
                 <button className="text-button" onClick={handleSelectFullDaySchedule} type="button">
                   全选
@@ -426,7 +457,8 @@ export function TutorTrialScheduleDialog({
             {trialSchedulePeriods.map((period) => {
               const periodState = selectedDaySchedule[period.key];
               const isPeriodSelected = periodState.enabled;
-              const isPeriodUnavailable = isPeriodOutsideAvailableSchedule(selectedDate, period.key);
+              const isPeriodUnavailable =
+                isPeriodOutsideAvailableSchedule(selectedDate, period.key) || isPeriodBlockedBySchedule(selectedDate, period.key);
 
               return (
                 <div className={`trial-schedule-row ${isPeriodSelected ? "selected" : ""} ${isPeriodUnavailable ? "unavailable" : ""}`} key={period.key}>
@@ -441,7 +473,12 @@ export function TutorTrialScheduleDialog({
                   <div className="trial-schedule-time-fields">
                     <input
                       aria-label={`${period.label}开始时间`}
-                      disabled={hasAvailableScheduleLimit || isDateDisabledForNewSchedule(selectedDate) || isPeriodSelected}
+                      disabled={
+                        hasAvailableScheduleLimit ||
+                        isDateDisabledForNewSchedule(selectedDate) ||
+                        isPeriodSelected ||
+                        isPeriodUnavailable
+                      }
                       onChange={(event) => handleChangePeriodTime(period.key, "start", event.target.value)}
                       type="time"
                       value={periodState.start}
@@ -449,7 +486,12 @@ export function TutorTrialScheduleDialog({
                     <span>至</span>
                     <input
                       aria-label={`${period.label}结束时间`}
-                      disabled={hasAvailableScheduleLimit || isDateDisabledForNewSchedule(selectedDate) || isPeriodSelected}
+                      disabled={
+                        hasAvailableScheduleLimit ||
+                        isDateDisabledForNewSchedule(selectedDate) ||
+                        isPeriodSelected ||
+                        isPeriodUnavailable
+                      }
                       onChange={(event) => handleChangePeriodTime(period.key, "end", event.target.value)}
                       type="time"
                       value={periodState.end}

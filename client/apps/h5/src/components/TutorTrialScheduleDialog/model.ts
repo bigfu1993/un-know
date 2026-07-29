@@ -40,6 +40,7 @@ export interface TrialScheduleValue {
 export interface TrialScheduleCalendarMarker {
   date: string;
   labelPeriods?: TrialSchedulePeriodKey[];
+  periodLabels?: Partial<Record<TrialSchedulePeriodKey, string>>;
   periods: TrialSchedulePeriodKey[];
 }
 
@@ -92,7 +93,7 @@ export function getEnabledPeriodSummaries(daySchedule: Record<TrialSchedulePerio
 export function getTrialScheduleCalendarItems(
   selectedDates: string[],
   scheduleDraft: TrialScheduleDraft,
-  options: { showPeriodLabel?: boolean } = {}
+  options: { scheduleLabel?: string; showPeriodLabel?: boolean } = {}
 ): TrialScheduleCalendarMarker[] {
   return selectedDates.map((dateKey) => ({
     date: dateKey,
@@ -105,6 +106,16 @@ export function getTrialScheduleCalendarItems(
           })
           .map((period) => period.key)
       : undefined,
+    periodLabels:
+      options.showPeriodLabel && options.scheduleLabel
+        ? trialSchedulePeriods.reduce((labels, period) => {
+            const periodState = scheduleDraft[dateKey]?.[period.key];
+
+            return periodState?.enabled && periodState.start && periodState.end
+              ? { ...labels, [period.key]: options.scheduleLabel }
+              : labels;
+          }, {} as Partial<Record<TrialSchedulePeriodKey, string>>)
+        : undefined,
     periods: trialSchedulePeriods
       .filter((period) => {
         const periodState = scheduleDraft[dateKey]?.[period.key];

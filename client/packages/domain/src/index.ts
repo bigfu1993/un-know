@@ -331,6 +331,7 @@ export interface TutorApplicant {
   serviceConfirmationCancelledBy?: string;
   status: string;
   trialFee?: number;
+  serviceSchedule?: string;
   trialSchedule: string;
 }
 

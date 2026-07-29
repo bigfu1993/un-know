@@ -25,6 +25,7 @@ declare global {
   const ChevronRight: typeof import('lucide-react').ChevronRight
   const CircleDollarSign: typeof import('lucide-react').CircleDollarSign
   const ClipboardCheck: typeof import('lucide-react').ClipboardCheck
+  const ConfirmActionDialog: typeof import('./components/ConfirmActionDialog/index').ConfirmActionDialog
   const Crosshair: typeof import('lucide-react').Crosshair
   const Delegation: typeof import('./pages/home/delegation/index').Delegation
   const DelegationAmountDialog: typeof import('./pages/home/delegation/components/DelegationAmountDialog').DelegationAmountDialog
@@ -231,6 +232,7 @@ declare global {
   const getTutorDateKey: typeof import('./tools/tutorCalendar').getTutorDateKey
   const getTutorDemandBudgetLabel: typeof import('./tools/tutorDemand').getTutorDemandBudgetLabel
   const getTutorMonthKey: typeof import('./tools/tutorCalendar').getTutorMonthKey
+  const getTutorServiceScheduleSummaryFromOrderDetail: typeof import('./tools/tutorTrial').getTutorServiceScheduleSummaryFromOrderDetail
   const getTutorTaskCandidateAvailability: typeof import('./tools/tutorTaskWorkflow').getTutorTaskCandidateAvailability
   const getTutorTaskNode: typeof import('./tools/tutorTaskWorkflow').getTutorTaskNode
   const getTutorTaskStatusLabels: typeof import('./tools/tutorTaskWorkflow').getTutorTaskStatusLabels
@@ -402,6 +404,9 @@ declare global {
   // @ts-ignore
   export type { ChatModuleProps } from './components/ChatModule/index'
   import('./components/ChatModule/index')
+  // @ts-ignore
+  export type { ConfirmActionDialogProps } from './components/ConfirmActionDialog/index'
+  import('./components/ConfirmActionDialog/index')
   // @ts-ignore
   export type { HuntingCertificationCardProps } from './components/HuntingCertificationCard/index'
   import('./components/HuntingCertificationCard/index')

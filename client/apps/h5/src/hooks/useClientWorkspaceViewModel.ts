@@ -81,6 +81,7 @@ export function useClientWorkspaceViewModel({
           nickname: applicant.nickname,
           school: applicant.school,
           serviceConfirmationCancelledBy: applicant.serviceConfirmationCancelledBy,
+          serviceSchedule: applicant.serviceSchedule,
           status: applicant.status,
           trialFee: applicant.trialFee,
           trialSchedule: applicant.trialSchedule
