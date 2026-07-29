@@ -1,11 +1,12 @@
 import "./index.less";
-import { BriefcaseBusiness, CheckCircle2, GraduationCap, PackageCheck, Plus, XCircle } from "lucide-react";
+import { BriefcaseBusiness, CalendarDays, CheckCircle2, GraduationCap, PackageCheck, Plus, XCircle } from "lucide-react";
 import { tutorSubjectOptions } from "@shared/tutorModel";
 import {
   delegationRequirementTags,
   isNegotiableAmount,
   isPositiveAmount
 } from "@tools/publishInfo";
+import { getTutorCalendarCells, getTutorDateKey, getTutorMonthKey } from "@tools/tutorCalendar";
 
 export { PublishDraftConfirmDialog } from "./PublishDraftConfirmDialog";
 
@@ -29,6 +30,9 @@ type PublishInfoStringField = {
 
 /** 发布草稿字段更新回调。 */
 type PublishInfoFieldChange = (key: keyof PublishInfoDraft, value: string) => void;
+
+/** 家教发布周期日期字段。 */
+type TutorPeriodDateFieldKey = "tutorDateStart" | "tutorDateEnd";
 
 /** 发布类型按钮配置。 */
 interface PublishTypeOption {
@@ -88,6 +92,22 @@ const delegationTimeQuickOptions = ["5min", "10min", "15min", "20min"];
 /** 判断字符串是否为原生时间选择器可展示的 HH:mm。 */
 function getNativeTimeValue(value: string) {
   return /^\d{2}:\d{2}$/.test(value) ? value : "";
+}
+
+/** 将发布周期日期格式化为表单按钮展示文案。 */
+function formatPublishPeriodDate(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return "请选择日期";
+  }
+
+  const [, month, day] = value.split("-");
+
+  return `${Number(month)}月${Number(day)}日`;
+}
+
+/** 根据日期字段选择器当前状态生成初始月份。 */
+function getPublishPeriodMonthKey(value: string, fallbackDateKey: string) {
+  return (value || fallbackDateKey).slice(0, 7);
 }
 
 /** 获取地址下拉展示文案。 */
@@ -532,16 +552,7 @@ function TutorPublishFields({
           ))}
         </select>
       </label>
-      <div className="tutor-period-fields grid grid-cols-2 gap-[8px]">
-        <label className={`profile-field publish-field grid gap-[7px] ${draft.tutorDateStart ? "" : "missing"}`}>
-          <span>周期开始</span>
-          <input onChange={(event) => onChange("tutorDateStart", event.target.value)} type="date" value={draft.tutorDateStart} />
-        </label>
-        <label className={`profile-field publish-field grid gap-[7px] ${draft.tutorDateEnd ? "" : "missing"}`}>
-          <span>周期结束</span>
-          <input onChange={(event) => onChange("tutorDateEnd", event.target.value)} type="date" value={draft.tutorDateEnd} />
-        </label>
-      </div>
+      <TutorPeriodDateField draft={draft} onChange={onChange} />
       <SegmentedField
         draft={draft}
         field="trialEnabled"
@@ -563,6 +574,139 @@ function TutorPublishFields({
         onChange={onChange}
         placeholder="请输入授课要求"
       />
+    </div>
+  );
+}
+
+/** 家教发布周期日期选择器，只选择日期，不展示试课/课程时段。 */
+function TutorPeriodDateField({
+  draft,
+  onChange
+}: {
+  draft: PublishInfoDraft;
+  onChange: PublishInfoFieldChange;
+}) {
+  const todayKey = useMemo(() => getTutorDateKey(new Date()), []);
+  const [activeField, setActiveField] = useState<TutorPeriodDateFieldKey | null>(null);
+  const [viewMonth, setViewMonth] = useState(() =>
+    getPublishPeriodMonthKey(draft.tutorDateStart || draft.tutorDateEnd, todayKey)
+  );
+  const calendarCells = useMemo(() => getTutorCalendarCells(viewMonth), [viewMonth]);
+  const monthTitle = `${viewMonth.split("-")[0]}年${Number(viewMonth.split("-")[1])}月`;
+  const activeDateValue = activeField ? draft[activeField] : "";
+  const hasInvalidDateRange = Boolean(draft.tutorDateStart && draft.tutorDateEnd && draft.tutorDateEnd < draft.tutorDateStart);
+
+  /** 打开对应字段的日期面板，并同步月份到当前已选日期。 */
+  function handleOpenDatePicker(field: TutorPeriodDateFieldKey) {
+    const currentDate = draft[field] || (field === "tutorDateEnd" ? draft.tutorDateStart : draft.tutorDateEnd) || todayKey;
+
+    setActiveField(field);
+    setViewMonth(getPublishPeriodMonthKey(currentDate, todayKey));
+  }
+
+  /** 切换当前日期面板月份。 */
+  function handleChangeMonth(offset: number) {
+    const [year, month] = viewMonth.split("-").map(Number);
+    const nextDate = new Date(year, month - 1 + offset, 1);
+
+    setViewMonth(getTutorMonthKey(nextDate));
+  }
+
+  /** 选中日期后更新对应周期字段；开始日期晚于结束日期时清空结束日期。 */
+  function handleSelectDate(dateKey: string) {
+    if (!activeField) {
+      return;
+    }
+
+    if (activeField === "tutorDateStart") {
+      onChange("tutorDateStart", dateKey);
+      if (draft.tutorDateEnd && dateKey > draft.tutorDateEnd) {
+        onChange("tutorDateEnd", "");
+      }
+      setActiveField("tutorDateEnd");
+      return;
+    }
+
+    if (draft.tutorDateStart && dateKey < draft.tutorDateStart) {
+      return;
+    }
+
+    onChange("tutorDateEnd", dateKey);
+    setActiveField(null);
+  }
+
+  return (
+    <div className={`profile-field publish-field tutor-period-date-field grid gap-[8px] ${draft.tutorDateStart && draft.tutorDateEnd && !hasInvalidDateRange ? "" : "missing"}`}>
+      <span>周期</span>
+      <div className="tutor-period-date-field__triggers grid grid-cols-2 gap-[8px]">
+        <button
+          className={`tutor-period-date-field__trigger ${activeField === "tutorDateStart" ? "active" : ""} ${draft.tutorDateStart ? "filled" : ""}`}
+          onClick={() => handleOpenDatePicker("tutorDateStart")}
+          type="button"
+        >
+          <span>
+            <CalendarDays size={14} />
+            周期开始
+          </span>
+          <strong>{formatPublishPeriodDate(draft.tutorDateStart)}</strong>
+        </button>
+        <button
+          className={`tutor-period-date-field__trigger ${activeField === "tutorDateEnd" ? "active" : ""} ${draft.tutorDateEnd ? "filled" : ""}`}
+          onClick={() => handleOpenDatePicker("tutorDateEnd")}
+          type="button"
+        >
+          <span>
+            <CalendarDays size={14} />
+            周期结束
+          </span>
+          <strong>{formatPublishPeriodDate(draft.tutorDateEnd)}</strong>
+        </button>
+      </div>
+
+      {activeField ? (
+        <div className="tutor-period-calendar grid gap-[9px]">
+          <div className="tutor-period-calendar__toolbar flex items-center justify-between gap-[10px]">
+            <button className="ghost-button px-[10px] py-[8px]" onClick={() => handleChangeMonth(-1)} type="button">
+              上月
+            </button>
+            <strong>{monthTitle}</strong>
+            <button className="ghost-button px-[10px] py-[8px]" onClick={() => handleChangeMonth(1)} type="button">
+              下月
+            </button>
+          </div>
+          <div className="tutor-period-calendar__weekdays grid">
+            {["日", "一", "二", "三", "四", "五", "六"].map((weekday) => (
+              <span key={weekday}>{weekday}</span>
+            ))}
+          </div>
+          <div className="tutor-period-calendar__grid grid">
+            {calendarCells.map((dateKey, index) => {
+              if (!dateKey) {
+                return <span className="tutor-period-calendar__day empty" key={`empty-${index}`} />;
+              }
+
+              const isRangeStart = draft.tutorDateStart === dateKey;
+              const isRangeEnd = draft.tutorDateEnd === dateKey;
+              const isInsideRange = Boolean(draft.tutorDateStart && draft.tutorDateEnd && dateKey > draft.tutorDateStart && dateKey < draft.tutorDateEnd);
+              const isBeforeStart = activeField === "tutorDateEnd" && Boolean(draft.tutorDateStart && dateKey < draft.tutorDateStart);
+              const dayNumber = Number(dateKey.slice(-2));
+
+              return (
+                <button
+                  className={`tutor-period-calendar__day ${activeDateValue === dateKey ? "active" : ""} ${dateKey === todayKey ? "today" : ""} ${isRangeStart ? "range-start" : ""} ${isRangeEnd ? "range-end" : ""} ${isInsideRange ? "in-range" : ""}`}
+                  disabled={isBeforeStart}
+                  key={dateKey}
+                  onClick={() => handleSelectDate(dateKey)}
+                  type="button"
+                >
+                  <strong>{dayNumber}</strong>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+      {hasInvalidDateRange ? <em>周期结束日期不能早于开始日期</em> : null}
     </div>
   );
 }
