@@ -210,7 +210,6 @@ function MerchantPartTime({ dashboard, jobs }: { dashboard: MerchantDashboard; j
           { icon: WalletCards, label: "结算配置", text: "岗位保证金、签到保证金、结束后结算时间" }
         ]}
         icon={Plus}
-        title="快捷入口"
       />
       <div className="card-list grid gap-[10px]">
         {jobs.map((job) => (

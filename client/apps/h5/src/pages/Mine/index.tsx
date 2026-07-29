@@ -52,8 +52,6 @@ export function Mine({
           birthday={profileDraft.birthday}
           className="mine-account p-[14px]"
           creditScore={creditScore}
-          followerCount={0}
-          followingCount={0}
           nickname={nickname}
           phone={phone}
           roleLabel={roleLabels[role]}
@@ -84,7 +82,6 @@ export function Mine({
           className="mine-order-card p-[14px]"
           onOpen={() => onNavigate("orders")}
           orders={orders}
-          variant="default"
         />
         <div className="mine-grid grid gap-[10px]">
           <MineCard title="我的记录" items={recordItems} />

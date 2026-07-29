@@ -22,7 +22,7 @@ export function ConfirmActionDialog({
   onClose,
   onConfirm,
   title,
-  tone = "default"
+  tone = "danger"
 }: ConfirmActionDialogProps) {
   return (
     <section className="checkout-sheet" aria-label={title}>

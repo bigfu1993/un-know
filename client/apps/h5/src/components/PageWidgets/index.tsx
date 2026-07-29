@@ -35,7 +35,7 @@ interface WorkbenchQuickEntryCardProps {
   description: string;
   entries?: WorkbenchQuickEntryItem[];
   icon: LucideIcon;
-  title: string;
+  title?: string;
 }
 
 /** 默认空指标列表，避免组件默认值创建新数组。 */
@@ -98,7 +98,7 @@ export function WorkbenchInfoCard({
 /** 快捷入口卡片仅描述可用动作，具体行为由调用方决定。 */
 export function WorkbenchQuickEntryCard({
   icon: Icon,
-  title,
+  title = "快捷入口",
   description,
   entries = emptyWorkbenchQuickEntries
 }: WorkbenchQuickEntryCardProps) {

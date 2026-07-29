@@ -128,7 +128,7 @@ export function ProfileCompletionDialog({
           areaOptions={campusAreaOptions}
           draft={profileDraft}
           fields={template.fields}
-          onChange={(nextDraft, changedKey) => onChange(changedKey, nextDraft[changedKey] ?? "")}
+          onChange={onChange}
         />
 
         <div className="sheet-actions grid gap-[8px]">

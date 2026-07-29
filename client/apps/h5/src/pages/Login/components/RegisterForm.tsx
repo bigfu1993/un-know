@@ -26,14 +26,13 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
       return;
     }
 
-    const submittedPhone = phone;
     const trimmedInvitationCode = invitationCode.trim();
     const registerPayload = trimmedInvitationCode
-      ? { phone: submittedPhone, code, invitationCode: trimmedInvitationCode }
-      : { phone: submittedPhone, code };
+      ? { phone, code, invitationCode: trimmedInvitationCode }
+      : { phone, code };
 
     registerMutation.mutate(registerPayload, {
-      onSuccess: (session) => onRegistered(session, submittedPhone),
+      onSuccess: (session) => onRegistered(session, phone),
       onError: (error) => showMessage(getErrorMessage(error, "注册失败，请稍后重试。"), { type: "error" })
     });
   }

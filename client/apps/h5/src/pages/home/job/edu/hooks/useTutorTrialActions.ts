@@ -176,14 +176,14 @@ export function useTutorTrialActions({
     }
   }
 
-  /** 家长端撤回尚未安排试课的家教兼职，后端会让主任务回到待发布状态。 */
+  /** 家长端取消发布尚未安排试课的家教兼职，后端会让主任务回到待发布状态。 */
   async function handleCancelTutorDemand(order: ClientOrder) {
     try {
       await cancelTutorDemand(order.id);
-      showMessage("家教兼职已撤回，状态已变为待发布。", { type: "success" });
+      showMessage("家教兼职已取消发布，已回到待发布状态。", { type: "success" });
       refetchWorkspace();
     } catch (error) {
-      showMessage(getErrorMessage(error, "家教兼职撤回失败，请稍后重试。"), { type: "error" });
+      showMessage(getErrorMessage(error, "家教兼职取消发布失败，请稍后重试。"), { type: "error" });
     }
   }
 

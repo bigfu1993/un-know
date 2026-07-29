@@ -202,7 +202,7 @@ public class ClientWorkspaceController {
     return ApiResponse.ok(response);
   }
 
-  /** 家长撤回尚未安排试课的家教兼职，主任务回到待发布状态。 */
+  /** 家长取消发布尚未安排试课的家教兼职，主任务回到待发布状态。 */
   @PostMapping("/workspace/tutor-demands/{demandId}/cancel")
   public ApiResponse<TutorDemand> cancelTutorDemand(
       @PathVariable String demandId,

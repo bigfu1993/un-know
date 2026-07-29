@@ -240,6 +240,11 @@ export function AddressEditorDialog({
     }
   }
 
+  /** 地址表单内部按字段维护输入，这里只接收完整草稿交给设置页状态。 */
+  function handleAddressChange(_changedKey: string, _value: string, nextDraft: ProfileDraftState) {
+    onChange(nextDraft);
+  }
+
   return (
     <section className="checkout-sheet" aria-label={mode === "create" ? "新增地址" : "编辑地址"}>
       <div className="sheet-backdrop" onClick={onClose} />
@@ -263,7 +268,7 @@ export function AddressEditorDialog({
           </button>
         </div>
 
-        <AddressInfoForm areaOptions={areaOptions} draft={draft} fields={fields} onChange={onChange} />
+        <AddressInfoForm areaOptions={areaOptions} draft={draft} fields={fields} onChange={handleAddressChange} />
 
         <div className="sheet-actions grid gap-[8px]">
           <button
@@ -295,7 +300,7 @@ export function PhoneChangeDialog({
   onSave
 }: {
   draft: PhoneChangeDraft;
-  onChange: (draft: Partial<PhoneChangeDraft>) => void;
+  onChange: (draft: PhoneChangeDraft) => void;
   onClose: () => void;
   onSave: () => void;
 }) {
@@ -310,6 +315,11 @@ export function PhoneChangeDialog({
     if (!isSaveDisabled) {
       onSave();
     }
+  }
+
+  /** 合并手机号表单局部字段，调用方只接收完整草稿。 */
+  function handleChange(nextDraft: Partial<PhoneChangeDraft>) {
+    onChange({ ...draft, ...nextDraft });
   }
 
   return (
@@ -342,7 +352,7 @@ export function PhoneChangeDialog({
             <input
               inputMode="numeric"
               maxLength={11}
-              onChange={(event) => onChange({ phone: normalizeByKey("phone", event.target.value) })}
+              onChange={(event) => handleChange({ phone: normalizeByKey("phone", event.target.value) })}
               placeholder="请输入新手机号"
               value={draft.phone}
             />
@@ -357,11 +367,11 @@ export function PhoneChangeDialog({
             <input
               inputMode="numeric"
               maxLength={6}
-              onChange={(event) => onChange({ code: event.target.value.replace(/\D/g, "") })}
+              onChange={(event) => handleChange({ code: event.target.value.replace(/\D/g, "") })}
               placeholder={`本地验证码 ${localAuthCode}`}
               value={draft.code}
             />
-            <button onClick={() => onChange({ code: localAuthCode })} type="button">
+            <button onClick={() => handleChange({ code: localAuthCode })} type="button">
               填入
             </button>
           </div>
@@ -397,7 +407,7 @@ export function PasswordResetDialog({
   onSave
 }: {
   draft: PasswordResetDraft;
-  onChange: (draft: Partial<PasswordResetDraft>) => void;
+  onChange: (draft: PasswordResetDraft) => void;
   onClose: () => void;
   onSave: () => void;
 }) {
@@ -415,6 +425,11 @@ export function PasswordResetDialog({
     if (!isSaveDisabled) {
       onSave();
     }
+  }
+
+  /** 合并密码重置表单局部字段，调用方只接收完整草稿。 */
+  function handleChange(nextDraft: Partial<PasswordResetDraft>) {
+    onChange({ ...draft, ...nextDraft });
   }
 
   return (
@@ -447,7 +462,7 @@ export function PasswordResetDialog({
             <input
               inputMode="numeric"
               maxLength={11}
-              onChange={(event) => onChange({ phone: normalizeByKey("phone", event.target.value) })}
+              onChange={(event) => handleChange({ phone: normalizeByKey("phone", event.target.value) })}
               placeholder="请输入手机号"
               value={draft.phone}
             />
@@ -462,11 +477,11 @@ export function PasswordResetDialog({
             <input
               inputMode="numeric"
               maxLength={6}
-              onChange={(event) => onChange({ code: event.target.value.replace(/\D/g, "") })}
+              onChange={(event) => handleChange({ code: event.target.value.replace(/\D/g, "") })}
               placeholder={`本地验证码 ${localAuthCode}`}
               value={draft.code}
             />
-            <button onClick={() => onChange({ code: localAuthCode })} type="button">
+            <button onClick={() => handleChange({ code: localAuthCode })} type="button">
               填入
             </button>
           </div>
@@ -478,7 +493,7 @@ export function PasswordResetDialog({
             <ShieldCheck size={18} />
             <input
               autoComplete="new-password"
-              onChange={(event) => onChange({ password: event.target.value })}
+              onChange={(event) => handleChange({ password: event.target.value })}
               placeholder={`至少 ${localPasswordMinLength} 位`}
               type="password"
               value={draft.password}
@@ -492,7 +507,7 @@ export function PasswordResetDialog({
             <ShieldCheck size={18} />
             <input
               autoComplete="new-password"
-              onChange={(event) => onChange({ passwordConfirm: event.target.value })}
+              onChange={(event) => handleChange({ passwordConfirm: event.target.value })}
               placeholder="再次输入新密码"
               type="password"
               value={draft.passwordConfirm}

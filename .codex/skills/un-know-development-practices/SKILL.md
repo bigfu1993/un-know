@@ -53,12 +53,13 @@ description: Methodology and validation workflow for the un-know project. Use wh
 4. H5 reusable types live in `client/apps/h5/src/types` and are exposed through auto-import/global declarations; remove explicit type imports when a type is globally provided.
 5. When starting local services, check existing ports first, reuse healthy project services, and stop only processes confirmed to belong to the current repo. Do not apply macOS/Linux commands to Windows or Windows PowerShell commands to macOS/Linux.
 6. Do not enumerate a user's `.ssh` directory to find credentials. Use the documented default key path, ask for an explicit path when missing, or let the user establish the tunnel manually.
-7. Validate after changes:
+7. For frontend cleanup requests about redundant aliases, low-value intermediate variables, unnecessary Boolean wrappers, derived state, or small behavior-preserving refactors, also read `.codex/skills/frontend-refactor-optimization/SKILL.md`.
+8. Validate after changes:
    - H5: `cd client && npm run typecheck:h5 && npm run lint:h5`
    - Backend: `cd server && mvn -q -DskipTests compile`
    - Runtime when APIs or data changed: health check and at least one targeted real-interface flow.
-8. For runtime API debugging, distinguish service availability from expired local sessions. Verify protected APIs with a freshly obtained session token; if fresh-token requests pass while the browser fails, clear the browser's persisted session before diagnosing backend or database availability.
-9. If backend behavior changed and a running server needs refresh, restart it unless the user explicitly asks not to.
+9. For runtime API debugging, distinguish service availability from expired local sessions. Verify protected APIs with a freshly obtained session token; if fresh-token requests pass while the browser fails, clear the browser's persisted session before diagnosing backend or database availability.
+10. If backend behavior changed and a running server needs refresh, restart it unless the user explicitly asks not to.
 
 ## Completion Standard
 

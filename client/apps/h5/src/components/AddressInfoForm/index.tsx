@@ -34,7 +34,7 @@ export function AddressInfoForm({
     setFormDraft((currentDraft) => {
       const nextDraft = { ...currentDraft, [key]: value };
 
-      onChange?.(nextDraft, key);
+      onChange?.(key, value, nextDraft);
       return nextDraft;
     });
   }
@@ -117,14 +117,13 @@ export function AddressInfoForm({
     <div className="address-info-fields grid gap-[10px]">
       {fields.map((field) => {
         const value = formDraft[field.key] ?? "";
-        const isMissing = !value.trim();
         const validationResult = validateByKey(field.key, value, { label: field.label });
         const isInvalid = Boolean(value.trim()) && !validationResult.isValid;
         const areaListId = `address-area-${field.key}`;
 
         return (
           <label
-            className={`profile-field address-info-field grid gap-[7px] ${isMissing || isInvalid ? "missing" : ""}`}
+            className={`profile-field address-info-field grid gap-[7px] ${!value.trim() || isInvalid ? "missing" : ""}`}
             key={field.key}
           >
             <span>{field.label}</span>

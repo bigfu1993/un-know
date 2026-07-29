@@ -25,8 +25,6 @@ export function LoginForm({ onAuthenticated, onForgotPassword }: LoginFormProps)
       return;
     }
 
-    const submittedPhone = phone;
-
     if (credentialMode === "password") {
       if (password.trim().length < localPasswordMinLength) {
         showMessage(`登录密码至少需要 ${localPasswordMinLength} 位。`, { type: "warning" });
@@ -34,16 +32,14 @@ export function LoginForm({ onAuthenticated, onForgotPassword }: LoginFormProps)
       }
 
       try {
-        const credential = getStoredPasswordCredential(submittedPhone);
+        const credential = getStoredPasswordCredential(phone);
 
         if (!credential) {
           showMessage("该手机号还未设置密码，请先使用验证码登录或注册后设置密码。", { type: "warning" });
           return;
         }
 
-        const isPasswordValid = await verifyLocalPasswordCredential(submittedPhone, password);
-
-        if (!isPasswordValid) {
+        if (!(await verifyLocalPasswordCredential(phone, password))) {
           showMessage("登录密码不正确。", { type: "warning" });
           return;
         }
@@ -53,9 +49,9 @@ export function LoginForm({ onAuthenticated, onForgotPassword }: LoginFormProps)
       }
 
       loginMutation.mutate(
-        { phone: submittedPhone, code: localAuthCode },
+        { phone, code: localAuthCode },
         {
-          onSuccess: (session) => onAuthenticated(session, submittedPhone),
+          onSuccess: (session) => onAuthenticated(session, phone),
           onError: (error) => showMessage(getErrorMessage(error, "登录失败，请稍后重试。"), { type: "error" })
         }
       );
@@ -68,9 +64,9 @@ export function LoginForm({ onAuthenticated, onForgotPassword }: LoginFormProps)
     }
 
     loginMutation.mutate(
-      { phone: submittedPhone, code },
+      { phone, code },
       {
-        onSuccess: (session) => onAuthenticated(session, submittedPhone),
+        onSuccess: (session) => onAuthenticated(session, phone),
         onError: (error) => showMessage(getErrorMessage(error, "登录失败，请稍后重试。"), { type: "error" })
       }
     );

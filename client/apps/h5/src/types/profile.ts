@@ -44,7 +44,7 @@ export interface AddressInfoFormProps {
   item?: AddressBookItem;
   isCurrent?: boolean;
   mode?: AddressInfoFormMode;
-  onChange?: (draft: ProfileDraftState, changedKey: string) => void;
+  onChange?: (changedKey: string, value: string, draft: ProfileDraftState) => void;
   onDelete?: (item: AddressBookItem) => void;
   onEdit?: (item: AddressBookItem) => void;
   onUse?: (item: AddressBookItem) => void;

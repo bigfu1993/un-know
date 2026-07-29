@@ -489,7 +489,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
       {securityDialogMode === "phone" ? (
         <PhoneChangeDialog
           draft={phoneChangeDraft}
-          onChange={(nextDraft) => setPhoneChangeDraft((draft) => ({ ...draft, ...nextDraft }))}
+          onChange={setPhoneChangeDraft}
           onClose={() => setSecurityDialogMode(null)}
           onSave={handleSavePhoneChange}
         />
@@ -497,7 +497,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
       {securityDialogMode === "password" ? (
         <PasswordResetDialog
           draft={passwordResetDraft}
-          onChange={(nextDraft) => setPasswordResetDraft((draft) => ({ ...draft, ...nextDraft }))}
+          onChange={setPasswordResetDraft}
           onClose={() => setSecurityDialogMode(null)}
           onSave={handleSavePasswordReset}
         />

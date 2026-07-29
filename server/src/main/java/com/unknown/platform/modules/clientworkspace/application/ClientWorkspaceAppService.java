@@ -1079,24 +1079,24 @@ public class ClientWorkspaceAppService {
   }
 
   /**
-   * 家长撤回尚未进入试课安排的家教兼职，撤回后主任务回到待发布状态。
+   * 家长取消发布尚未进入试课安排的家教兼职，取消发布后主任务回到待发布状态。
    *
    * @param demandId 家教需求对外 ID
    * @param authorization 客户端登录访问令牌
-   * @return 已撤回到待发布状态的家教需求
+   * @return 已取消发布并回到待发布状态的家教需求
    */
   @Transactional
   public TutorDemand cancelTutorDemand(String demandId, String authorization) {
     long currentUserId = clientSessionService.requireUserId(authorization);
     TutorDemandRow demand = requireTutorDemandForUpdate(demandId);
     if (demand.parentUserId() == null || !demand.parentUserId().equals(currentUserId)) {
-      throw new BusinessException("TUTOR_DEMAND_CANCEL_PARENT_FORBIDDEN", "仅发布该家教兼职的家长可以撤回");
+      throw new BusinessException("TUTOR_DEMAND_CANCEL_PARENT_FORBIDDEN", "仅发布该家教兼职的家长可以取消发布");
     }
     if (isClosedTutorDemandStatus(demand.status())) {
       throw new BusinessException("TUTOR_DEMAND_ALREADY_CLOSED", "该家教兼职已结束或已取消");
     }
     if (hasTutorTrialSchedule(demand.id())) {
-      throw new BusinessException("TUTOR_DEMAND_TRIAL_SCHEDULED", "已有试课安排的家教兼职不能直接撤回");
+      throw new BusinessException("TUTOR_DEMAND_TRIAL_SCHEDULED", "已有试课安排的家教兼职不能直接取消发布");
     }
 
     jdbcTemplate.update(
@@ -1369,6 +1369,7 @@ public class ClientWorkspaceAppService {
             boolean isRecruiting = isRecruitingTutorDemandStatus(status);
             boolean isDemandInProgress = !isClosed && (isFormalTutorDemandStatus(status) || !activeApplicationPublicId.isBlank());
             boolean canManageRecruitingDemand = isRecruiting && !isDemandInProgress;
+            boolean canCancelPublishedDemand = canManageRecruitingDemand && !hasTrialSchedule;
             boolean isServiceEndRequested = isSameTutorApplicationStatus(activeApplicationStatus, TUTOR_APPLICANT_STATUS_SERVICE_END_CONFIRMING);
             String displayStatus = isDemandInProgress
                 ? TUTOR_DEMAND_STATUS_IN_PROGRESS
@@ -1407,7 +1408,7 @@ public class ClientWorkspaceAppService {
                 activeApplicationPublicId,
                 canManageRecruitingDemand,
                 canManageRecruitingDemand,
-                canManageRecruitingDemand && !hasTrialSchedule,
+                canCancelPublishedDemand,
                 isDemandInProgress && !activeApplicationPublicId.isBlank(),
                 false,
                 false,

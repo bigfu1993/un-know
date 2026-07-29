@@ -35,7 +35,6 @@ export function MerchantSales({
           { icon: Plus, label: "添加产品", text: "名称、型号、售价、库存、图片" }
         ]}
         icon={ClipboardCheck}
-        title="快捷入口"
       />
 
       <div className="card-list grid gap-[10px]">

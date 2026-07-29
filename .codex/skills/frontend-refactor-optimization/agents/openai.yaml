@@ -1,0 +1,4 @@
+interface:
+  display_name: "Frontend Refactor Optimization"
+  short_description: "Inspect redundant frontend variables, props, and callbacks."
+  default_prompt: "Use $frontend-refactor-optimization to check frontend code for redundant intermediate variables, props, callback wrappers, and behavior-preserving cleanup opportunities."

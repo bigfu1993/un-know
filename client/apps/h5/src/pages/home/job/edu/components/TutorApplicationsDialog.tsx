@@ -98,6 +98,13 @@ interface TutorSchedulePreviewSection {
   title: string;
 }
 
+/** 过滤空日程片段，避免调用处为类型收窄创建 raw 中转变量。 */
+function compactTutorSchedulePreviewSections(
+  sections: Array<TutorSchedulePreviewSection | null | undefined>
+): TutorSchedulePreviewSection[] {
+  return sections.filter((section): section is TutorSchedulePreviewSection => Boolean(section));
+}
+
 /** 家教时间只读预览弹窗属性。 */
 interface TutorSchedulePreviewDialogProps extends TutorSchedulePreviewState {
   onClose: () => void;
@@ -161,7 +168,7 @@ function getTutorTrialCandidateSchedulePreview(candidate: TutorApplicationCandid
     : null;
 
   if (candidateTask.node === "serviceSchedulePending") {
-    const rawSections: Array<TutorSchedulePreviewSection | null> = [
+    const sections = compactTutorSchedulePreviewSections([
       candidate.availability?.trim()
         ? {
             showScheduleLabel: false,
@@ -170,8 +177,7 @@ function getTutorTrialCandidateSchedulePreview(candidate: TutorApplicationCandid
           }
         : null,
       trialScheduleSection
-    ];
-    const sections = rawSections.filter((section): section is TutorSchedulePreviewSection => Boolean(section));
+    ]);
 
     return {
       buttonLabel: "可家教时间",
@@ -184,7 +190,7 @@ function getTutorTrialCandidateSchedulePreview(candidate: TutorApplicationCandid
   }
 
   if (candidateTask.node === "formalTutoring") {
-    const rawSections: Array<TutorSchedulePreviewSection | null> = [
+    const sections = compactTutorSchedulePreviewSections([
       trialScheduleSection,
       candidate.serviceSchedule?.trim()
         ? {
@@ -194,8 +200,7 @@ function getTutorTrialCandidateSchedulePreview(candidate: TutorApplicationCandid
             title: "课程安排"
           }
         : null
-    ];
-    const sections = rawSections.filter((section): section is TutorSchedulePreviewSection => Boolean(section));
+    ]);
 
     return {
       buttonLabel: "课程",
@@ -444,7 +449,6 @@ export function TutorApplicationsDialog({ candidates, isConfirming = false, onCa
           onClose={closeCancelConfirmation}
           onConfirm={confirmCancelAction}
           title={cancelConfirmation.title}
-          tone="danger"
         />
       ) : null}
     </section>
@@ -494,15 +498,14 @@ export function TutorTrialListDialog({
   const selectedCandidateTask = selectedCandidate
     ? createTutorTaskModel({ candidate: selectedCandidate, role: "parent" })
     : null;
-  const hasSelectedCandidate = Boolean(selectedCandidate);
   const canKeepSelectedCandidate = selectedCandidateTask ? canSelectTrialCandidateCard(selectedCandidateTask) : true;
 
   /** 不可通过底部主操作处理的试课卡片不允许保持选中。 */
   useEffect(() => {
-    if (selectedCandidateId && (!hasSelectedCandidate || !canKeepSelectedCandidate)) {
+    if (selectedCandidateId && (!selectedCandidate || !canKeepSelectedCandidate)) {
       setSelectedCandidateId("");
     }
-  }, [canKeepSelectedCandidate, hasSelectedCandidate, selectedCandidateId]);
+  }, [canKeepSelectedCandidate, selectedCandidate, selectedCandidateId]);
 
   /** 向服务端提交指定试课候选人的流程动作，保证多名学生试课时每张卡片独立推进。 */
   async function submitCandidateWorkflowAction(
@@ -892,7 +895,6 @@ export function TutorTrialListDialog({
           onClose={closeCancelConfirmation}
           onConfirm={confirmCancelAction}
           title={cancelConfirmation.title}
-          tone="danger"
         />
       ) : null}
     </section>

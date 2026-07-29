@@ -47,6 +47,13 @@ interface TutorSchedulePreviewSection {
   title: string;
 }
 
+/** 过滤空日程片段，避免调用处为类型收窄创建 raw 中转变量。 */
+function compactTutorSchedulePreviewSections(
+  sections: Array<TutorSchedulePreviewSection | null | undefined>
+): TutorSchedulePreviewSection[] {
+  return sections.filter((section): section is TutorSchedulePreviewSection => Boolean(section));
+}
+
 /** 进行中事项动作回调集合，由弹窗或页面注入业务处理。 */
 interface OngoingOrderActionHandlers {
   onConfirmCancel?: (order: ClientOrder) => void;
@@ -63,7 +70,6 @@ interface OngoingOrderActionHandlers {
 
 /** 进行中列表内部即可闭环的提示类动作。 */
 interface OngoingOrderLocalActionHandlers {
-  onAgreeTrial: (order: ClientOrder) => void;
   onCancelTutorApplication: (order: ClientOrder) => void;
   onMessageOrder: (order: ClientOrder) => void;
   onOpenServiceSchedule: (order: ClientOrder) => void;
@@ -72,7 +78,6 @@ interface OngoingOrderLocalActionHandlers {
   onOpenCancelConfirmation: (config: ConfirmActionConfig) => void;
   onOpenTrialResult: (order: ClientOrder) => void;
   onOpenTrialSchedule: (order: ClientOrder) => void;
-  onRejectTrial: (order: ClientOrder) => void;
 }
 
 /** 进行中事项列表组件入参。 */
@@ -122,7 +127,7 @@ function getTutorOrderSchedulePreviewConfig(
   const availabilitySummary = getTutorTrialAvailabilitySummaryFromOrderDetail(order.detail);
 
   if (tutorTask.node === "serviceSchedulePending") {
-    const rawSections: Array<TutorSchedulePreviewSection | null> = [
+    const sections = compactTutorSchedulePreviewSections([
       availabilitySummary
         ? {
             showScheduleLabel: false,
@@ -138,8 +143,7 @@ function getTutorOrderSchedulePreviewConfig(
             title: "试课安排"
           }
         : null
-    ];
-    const sections = rawSections.filter((section): section is TutorSchedulePreviewSection => Boolean(section));
+    ]);
 
     return availabilitySummary
       ? {
@@ -155,7 +159,7 @@ function getTutorOrderSchedulePreviewConfig(
   }
 
   if (tutorTask.node === "formalTutoring") {
-    const rawSections: Array<TutorSchedulePreviewSection | null> = [
+    const sections = compactTutorSchedulePreviewSections([
       trialScheduleSummary
         ? {
             label: "试",
@@ -172,8 +176,7 @@ function getTutorOrderSchedulePreviewConfig(
             title: "课程安排"
           }
         : null
-    ];
-    const sections = rawSections.filter((section): section is TutorSchedulePreviewSection => Boolean(section));
+    ]);
 
     return {
       allowConflictAction: false,
@@ -663,6 +666,11 @@ function OngoingOrderActions({
     return null;
   }
 
+  /** 旧版非接口动作只给出本地反馈，不向父组件透传提示方法。 */
+  function showLocalTutorWorkflowMessage(message: string) {
+    showMessage(message, { type: "success" });
+  }
+
   return (
     <>
       {showDelegationQuote ? (
@@ -748,7 +756,7 @@ function OngoingOrderActions({
           {(tutorTask ? tutorTask.can("rejectTrial") : order.canRejectTrial) ? (
             <button
               className="danger-outline-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
-              onClick={() => handlers.onRejectTrial?.(order)}
+              onClick={() => showLocalTutorWorkflowMessage("已拒绝试课申请。")}
               type="button"
             >
               拒绝
@@ -757,7 +765,7 @@ function OngoingOrderActions({
           {order.canAgreeTrial && category !== "tutor" ? (
             <button
               className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-              onClick={() => handlers.onAgreeTrial?.(order)}
+              onClick={() => showLocalTutorWorkflowMessage("已同意试课，家教兼职进入试课流程。")}
               type="button"
             >
               同意试课
@@ -863,18 +871,18 @@ function OngoingOrderActions({
               className="text-button danger inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
               onClick={() =>
                 handlers.onOpenCancelConfirmation({
-                  confirmLabel: category === "tutor" ? "确认撤回" : "确认取消",
+                  confirmLabel: category === "tutor" ? "确认取消发布" : "确认取消",
                   description:
                     category === "tutor"
-                      ? "撤回后家教兼职回到待发布状态，学生端不可继续申请。"
+                      ? "取消发布后家教兼职回到待发布状态，学生端不可继续申请。"
                       : "取消后当前事项将进入取消流程，请确认后继续。",
                   onConfirm: () => void handlers.onRequestCancel?.(order),
-                  title: category === "tutor" ? "撤回家教兼职" : "取消事项"
+                  title: category === "tutor" ? "取消发布家教兼职" : "取消事项"
                 })
               }
               type="button"
             >
-              {category === "tutor" ? "撤回" : "取消"}
+              {category === "tutor" ? "取消发布" : "取消"}
             </button>
           ) : null}
           {(tutorTask ? tutorTask.can("requestTrialEnd") : order.canRequestComplete) ? (
@@ -990,11 +998,6 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
     }
   }
 
-  /** 试课动作第一版不改变后端状态，只在列表内部反馈操作结果。 */
-  function showTutorWorkflowMessage(message: string) {
-    showMessage(message, { type: "success" });
-  }
-
   /** 打开学生端可家教日期弹窗，确认后再推进正式雇佣或日程修改流程。 */
   function handleOpenServiceAvailability(order: ClientOrder, action: TutorServiceAvailabilityAction) {
     if (!handlers.onTutorWorkflowAction) {
@@ -1102,7 +1105,6 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
                 isCancellingTutorApplication={cancellingTutorApplicationId === order.id}
                 order={order}
                 {...handlers}
-                onAgreeTrial={() => showTutorWorkflowMessage("已同意试课，家教兼职进入试课流程。")}
                 onCancelTutorApplication={handleCancelTutorApplication}
                 onMessageOrder={handleMessageOrder}
                 onOpenCancelConfirmation={openCancelConfirmation}
@@ -1111,7 +1113,6 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
                 onOpenServiceSettlement={setServiceSettlementOrder}
                 onOpenTrialResult={(order) => setTrialSettlementOrder(order)}
                 onOpenTrialSchedule={(order) => setTrialScheduleOrder(order)}
-                onRejectTrial={() => showTutorWorkflowMessage("已拒绝试课申请。")}
                 onTutorWorkflowAction={handlers.onTutorWorkflowAction}
               />
             </article>
@@ -1193,7 +1194,6 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
           onClose={closeCancelConfirmation}
           onConfirm={confirmCancelAction}
           title={cancelConfirmation.title}
-          tone="danger"
         />
       ) : null}
     </>

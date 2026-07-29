@@ -39,7 +39,6 @@ export function useClientWorkspaceViewModel({
     [workspaceData.orders, role]
   );
   const ongoingRoleOrders = useMemo(() => roleOrders.filter((order) => !isArchivedClientOrder(order)), [roleOrders]);
-  const hasPaymentRisk = roleOrders.some((order) => order.risk === "payment");
   const mergedHuntingTasks = useMemo(
     () => [
       ...publishedHuntingTasks,
@@ -103,7 +102,7 @@ export function useClientWorkspaceViewModel({
   );
 
   return {
-    hasPaymentRisk,
+    hasPaymentRisk: roleOrders.some((order) => order.risk === "payment"),
     mergedHuntingTasks,
     ongoingOrders,
     orderDetailOrders,

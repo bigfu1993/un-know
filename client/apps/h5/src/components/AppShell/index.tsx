@@ -181,8 +181,6 @@ export function MinePopover({
         birthday={profileDraft.birthday}
         className="popover-account p-[10px]"
         creditScore={creditScore}
-        followerCount={0}
-        followingCount={0}
         nickname={nickname}
         phone={phone}
         profileTags={profileTags}

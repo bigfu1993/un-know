@@ -388,7 +388,7 @@ export function RegistrationGuide({ accessToken, ownerPhone, onBack, onCompleted
                     areaOptions={campusAreaOptions}
                     draft={draft}
                     fields={addressInfoFields}
-                    onChange={(nextDraft, changedKey) => handleDraftChange(changedKey, nextDraft[changedKey] ?? "")}
+                    onChange={handleDraftChange}
                   />
                 )
               })}
@@ -405,9 +405,7 @@ export function RegistrationGuide({ accessToken, ownerPhone, onBack, onCompleted
                         areaOptions={campusAreaOptions}
                         draft={draft}
                         fields={parentChildInfoFields}
-                        onChange={(nextDraft, changedKey) =>
-                          handleDraftChange(changedKey, nextDraft[changedKey] ?? "")
-                        }
+                        onChange={handleDraftChange}
                       />
                     )
                   })
@@ -425,9 +423,7 @@ export function RegistrationGuide({ accessToken, ownerPhone, onBack, onCompleted
                         areaOptions={campusAreaOptions}
                         draft={draft}
                         fields={merchantRegistrationBusinessFields}
-                        onChange={(nextDraft, changedKey) =>
-                          handleDraftChange(changedKey, nextDraft[changedKey] ?? "")
-                        }
+                        onChange={handleDraftChange}
                       />
                     )
                   })

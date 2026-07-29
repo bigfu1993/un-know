@@ -22,6 +22,14 @@ export interface PublishInfoDialogProps {
   role: Role;
 }
 
+/** 发布草稿中的字符串字段 key，用于表单字段组件内部绑定字段更新事件。 */
+type PublishInfoStringField = {
+  [Key in keyof PublishInfoDraft]: PublishInfoDraft[Key] extends string ? Key : never;
+}[keyof PublishInfoDraft];
+
+/** 发布草稿字段更新回调。 */
+type PublishInfoFieldChange = (key: keyof PublishInfoDraft, value: string) => void;
+
 /** 发布类型按钮配置。 */
 interface PublishTypeOption {
   icon: typeof Plus;
@@ -279,11 +287,12 @@ function DelegationPublishFields({
   return (
     <div className="publish-form-fields grid gap-[10px]">
       <TextField
+        draft={draft}
+        field="title"
         label="标题"
-        onChange={(value) => onChange("title", value)}
+        onChange={onChange}
         placeholder="请输入发布标题"
         required
-        value={draft.title}
       />
       <label className={`profile-field publish-field grid gap-[7px] ${amountInputDisabled || draft.amount.trim() ? "" : "missing"}`}>
         <span>{amountLabel}</span>
@@ -349,12 +358,13 @@ function DelegationPublishFields({
           </>
         ) : null}
       </label>
-      <DelegationTimeField onChange={(value) => onChange("delegationTime", value)} value={draft.delegationTime} />
+      <DelegationTimeField draft={draft} onChange={onChange} />
       <TextAreaField
+        draft={draft}
+        field="description"
         label="描述"
-        onChange={(value) => onChange("description", value)}
+        onChange={onChange}
         placeholder="请输入服务或物品描述"
-        value={draft.description}
       />
       <label className="profile-field publish-field grid gap-[7px]">
         <span>要求</span>
@@ -372,10 +382,11 @@ function DelegationPublishFields({
         </div>
       </label>
       <TextField
+        draft={draft}
+        field="requirement"
         label="自定义要求"
-        onChange={(value) => onChange("requirement", value)}
+        onChange={onChange}
         placeholder="可补充其他要求"
-        value={draft.requirement}
       />
       <label className={`profile-field publish-field grid gap-[7px] ${draft.addressId ? "" : "missing"}`}>
         <span>目的地</span>
@@ -410,41 +421,47 @@ function PartTimePublishFields({
   return (
     <div className="publish-form-fields grid gap-[10px]">
       <TextField
+        draft={draft}
+        field="title"
         label="标题"
-        onChange={(value) => onChange("title", value)}
+        onChange={onChange}
         placeholder="请输入兼职标题"
         required
-        value={draft.title}
       />
       <TextAreaField
+        draft={draft}
+        field="description"
         label="描述"
-        onChange={(value) => onChange("description", value)}
+        onChange={onChange}
         placeholder="请输入兼职内容"
-        value={draft.description}
       />
       <TextAreaField
+        draft={draft}
+        field="requirement"
         label="要求"
-        onChange={(value) => onChange("requirement", value)}
+        onChange={onChange}
         placeholder="请输入报名要求"
-        value={draft.requirement}
       />
       <TextField
+        draft={draft}
+        field="checkInMode"
         label="签到方式"
-        onChange={(value) => onChange("checkInMode", value)}
+        onChange={onChange}
         placeholder="例如二维码签到、定位签到"
-        value={draft.checkInMode}
       />
       <SegmentedField
+        draft={draft}
+        field="partTimeWageMode"
         label="计薪方式"
-        onChange={(value) => onChange("partTimeWageMode", value)}
+        onChange={onChange}
         options={partTimeWageModeOptions}
-        value={draft.partTimeWageMode}
       />
       <TextAreaField
+        draft={draft}
+        field="signupFields"
         label="报名表单"
-        onChange={(value) => onChange("signupFields", value)}
+        onChange={onChange}
         placeholder="请输入需要报名人填写的信息"
-        value={draft.signupFields}
       />
     </div>
   );
@@ -465,23 +482,26 @@ function TutorPublishFields({
   return (
     <div className="publish-form-fields grid gap-[10px]">
       <TextField
+        draft={draft}
+        field="title"
         label="标题"
-        onChange={(value) => onChange("title", value)}
+        onChange={onChange}
         placeholder="请输入家教标题"
         required
-        value={draft.title}
       />
       <TextAreaField
+        draft={draft}
+        field="description"
         label="描述"
-        onChange={(value) => onChange("description", value)}
+        onChange={onChange}
         placeholder="请输入家教需求描述"
-        value={draft.description}
       />
       <SegmentedField
+        draft={draft}
+        field="tutorSubject"
         label="要求学科"
-        onChange={(value) => onChange("tutorSubject", value)}
+        onChange={onChange}
         options={tutorSubjectOptions}
-        value={draft.tutorSubject}
       />
       <label className={`profile-field publish-field grid gap-[7px] ${draft.addressId ? "" : "missing"}`}>
         <span>授课地址（必填）</span>
@@ -523,29 +543,45 @@ function TutorPublishFields({
         </label>
       </div>
       <SegmentedField
+        draft={draft}
+        field="trialEnabled"
         label="是否试课"
-        onChange={(value) => onChange("trialEnabled", value)}
+        onChange={onChange}
         options={["否", "是"]}
-        value={draft.trialEnabled}
       />
       <SegmentedField
+        draft={draft}
+        field="tutorWageMode"
         label="计薪方式"
-        onChange={(value) => onChange("tutorWageMode", value)}
+        onChange={onChange}
         options={tutorWageModeOptions}
-        value={draft.tutorWageMode}
       />
       <TextAreaField
+        draft={draft}
+        field="requirement"
         label="要求"
-        onChange={(value) => onChange("requirement", value)}
+        onChange={onChange}
         placeholder="请输入授课要求"
-        value={draft.requirement}
       />
     </div>
   );
 }
 
 /** 委托时间字段，支持快捷时效和手动截止时间。 */
-function DelegationTimeField({ onChange, value }: { onChange: (value: string) => void; value: string }) {
+function DelegationTimeField({
+  draft,
+  onChange
+}: {
+  draft: PublishInfoDraft;
+  onChange: PublishInfoFieldChange;
+}) {
+  const value = draft.delegationTime;
+
+  /** 更新当前绑定的委托时间字段。 */
+  function handleChange(value: string) {
+    onChange("delegationTime", value);
+  }
+
   return (
     <label className={`profile-field publish-field grid gap-[7px] ${value.trim() ? "" : "missing"}`}>
       <span>完成截止时间</span>
@@ -554,7 +590,7 @@ function DelegationTimeField({ onChange, value }: { onChange: (value: string) =>
           <button
             className={value === timeOption ? "active" : ""}
             key={timeOption}
-            onClick={() => onChange(timeOption)}
+            onClick={() => handleChange(timeOption)}
             type="button"
           >
             {timeOption.replace("min", " 分钟内")}
@@ -563,7 +599,7 @@ function DelegationTimeField({ onChange, value }: { onChange: (value: string) =>
       </div>
       <input
         aria-label="委托完成截止时间"
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => handleChange(event.target.value)}
         type="time"
         value={getNativeTimeValue(value)}
       />
@@ -573,28 +609,32 @@ function DelegationTimeField({ onChange, value }: { onChange: (value: string) =>
 
 /** 单行文本发布字段。 */
 function TextField({
+  draft,
   errorText,
+  field,
   inputMode = "text",
   label,
   onChange,
   placeholder,
-  required = false,
-  value
+  required = false
 }: {
+  draft: PublishInfoDraft;
   errorText?: string;
+  field: PublishInfoStringField;
   inputMode?: "decimal" | "text";
   label: string;
-  onChange: (value: string) => void;
+  onChange: PublishInfoFieldChange;
   placeholder: string;
   required?: boolean;
-  value: string;
 }) {
+  const value = String(draft[field] ?? "");
+
   return (
     <label className={`profile-field publish-field grid gap-[7px] ${required && !value.trim() ? "missing" : ""}`}>
       <span>{label}</span>
       <input
         inputMode={inputMode}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => onChange(field, event.target.value)}
         placeholder={placeholder}
         type="text"
         value={value}
@@ -606,44 +646,52 @@ function TextField({
 
 /** 多行文本发布字段。 */
 function TextAreaField({
+  draft,
+  field,
   label,
   onChange,
   placeholder,
-  required = false,
-  value
+  required = false
 }: {
+  draft: PublishInfoDraft;
+  field: PublishInfoStringField;
   label: string;
-  onChange: (value: string) => void;
+  onChange: PublishInfoFieldChange;
   placeholder: string;
   required?: boolean;
-  value: string;
 }) {
+  const value = String(draft[field] ?? "");
+
   return (
     <label className={`profile-field publish-field grid gap-[7px] ${required && !value.trim() ? "missing" : ""}`}>
       <span>{label}</span>
-      <textarea onChange={(event) => onChange(event.target.value)} placeholder={placeholder} value={value} />
+      <textarea onChange={(event) => onChange(field, event.target.value)} placeholder={placeholder} value={value} />
     </label>
   );
 }
 
 /** 标签式单选发布字段。 */
 function SegmentedField({
+  draft,
+  field,
   label,
   onChange,
-  options,
-  value
+  options
 }: {
+  draft: PublishInfoDraft;
+  field: PublishInfoStringField;
   label: string;
-  onChange: (value: string) => void;
+  onChange: PublishInfoFieldChange;
   options: string[];
-  value: string;
 }) {
+  const value = String(draft[field] ?? "");
+
   return (
     <label className={`profile-field publish-field grid gap-[7px] ${value ? "" : "missing"}`}>
       <span>{label}</span>
       <div className="segmented-control publish-segmented-field wrap flex gap-[8px]">
         {options.map((option) => (
-          <button className={value === option ? "active" : ""} key={option} onClick={() => onChange(option)} type="button">
+          <button className={value === option ? "active" : ""} key={option} onClick={() => onChange(field, option)} type="button">
             {option}
           </button>
         ))}
