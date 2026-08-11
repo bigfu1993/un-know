@@ -50,6 +50,214 @@ public record ClientWorkspaceResponse(
       Boolean canRejectTrial,
       Boolean canCancelTutorApplication
   ) {
+    /**
+     * 创建 {@link ClientOrder} 构造器。
+     *
+     * <p>该记录字段较多（含 15 个 {@code can*} 权限位），直接使用位置参数构造极易在
+     * 维护时错位传参；调用方应通过具名方法逐个赋值，未显式设置的字段保持 {@code null}，
+     * 与原先直接传 {@code null} 的语义一致。</p>
+     */
+    public static Builder builder() {
+      return new Builder();
+    }
+
+    /** {@link ClientOrder} 的可变构造器，见 {@link ClientOrder#builder()}。 */
+    public static final class Builder {
+      private String id;
+      private ClientRole role;
+      private String title;
+      private String status;
+      private BigDecimal amount;
+      private String contact;
+      private String detail;
+      private String risk;
+      private String amountLabel;
+      private String category;
+      private String phoneNumber;
+      private BigDecimal quoteAmount;
+      private Integer quoteCount;
+      private Integer trialCount;
+      private String quoteActionLabel;
+      private String quoteId;
+      private Boolean canCall;
+      private Boolean canMessage;
+      private Boolean canRequestCancel;
+      private Boolean canRequestComplete;
+      private Boolean canConfirmCancel;
+      private Boolean canConfirmComplete;
+      private Boolean canRepublish;
+      private Boolean canAgreeTrial;
+      private Boolean canOpenTrialResult;
+      private Boolean canOpenTrialSchedule;
+      private Boolean canOpenTutorTrialList;
+      private Boolean canOpenTutorApplications;
+      private Boolean canRejectTrial;
+      private Boolean canCancelTutorApplication;
+
+      private Builder() {
+      }
+
+      public Builder id(String id) {
+        this.id = id;
+        return this;
+      }
+
+      public Builder role(ClientRole role) {
+        this.role = role;
+        return this;
+      }
+
+      public Builder title(String title) {
+        this.title = title;
+        return this;
+      }
+
+      public Builder status(String status) {
+        this.status = status;
+        return this;
+      }
+
+      public Builder amount(BigDecimal amount) {
+        this.amount = amount;
+        return this;
+      }
+
+      public Builder contact(String contact) {
+        this.contact = contact;
+        return this;
+      }
+
+      public Builder detail(String detail) {
+        this.detail = detail;
+        return this;
+      }
+
+      public Builder risk(String risk) {
+        this.risk = risk;
+        return this;
+      }
+
+      public Builder amountLabel(String amountLabel) {
+        this.amountLabel = amountLabel;
+        return this;
+      }
+
+      public Builder category(String category) {
+        this.category = category;
+        return this;
+      }
+
+      public Builder phoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+        return this;
+      }
+
+      public Builder quoteAmount(BigDecimal quoteAmount) {
+        this.quoteAmount = quoteAmount;
+        return this;
+      }
+
+      public Builder quoteCount(Integer quoteCount) {
+        this.quoteCount = quoteCount;
+        return this;
+      }
+
+      public Builder trialCount(Integer trialCount) {
+        this.trialCount = trialCount;
+        return this;
+      }
+
+      public Builder quoteActionLabel(String quoteActionLabel) {
+        this.quoteActionLabel = quoteActionLabel;
+        return this;
+      }
+
+      public Builder quoteId(String quoteId) {
+        this.quoteId = quoteId;
+        return this;
+      }
+
+      public Builder canCall(Boolean canCall) {
+        this.canCall = canCall;
+        return this;
+      }
+
+      public Builder canMessage(Boolean canMessage) {
+        this.canMessage = canMessage;
+        return this;
+      }
+
+      public Builder canRequestCancel(Boolean canRequestCancel) {
+        this.canRequestCancel = canRequestCancel;
+        return this;
+      }
+
+      public Builder canRequestComplete(Boolean canRequestComplete) {
+        this.canRequestComplete = canRequestComplete;
+        return this;
+      }
+
+      public Builder canConfirmCancel(Boolean canConfirmCancel) {
+        this.canConfirmCancel = canConfirmCancel;
+        return this;
+      }
+
+      public Builder canConfirmComplete(Boolean canConfirmComplete) {
+        this.canConfirmComplete = canConfirmComplete;
+        return this;
+      }
+
+      public Builder canRepublish(Boolean canRepublish) {
+        this.canRepublish = canRepublish;
+        return this;
+      }
+
+      public Builder canAgreeTrial(Boolean canAgreeTrial) {
+        this.canAgreeTrial = canAgreeTrial;
+        return this;
+      }
+
+      public Builder canOpenTrialResult(Boolean canOpenTrialResult) {
+        this.canOpenTrialResult = canOpenTrialResult;
+        return this;
+      }
+
+      public Builder canOpenTrialSchedule(Boolean canOpenTrialSchedule) {
+        this.canOpenTrialSchedule = canOpenTrialSchedule;
+        return this;
+      }
+
+      public Builder canOpenTutorTrialList(Boolean canOpenTutorTrialList) {
+        this.canOpenTutorTrialList = canOpenTutorTrialList;
+        return this;
+      }
+
+      public Builder canOpenTutorApplications(Boolean canOpenTutorApplications) {
+        this.canOpenTutorApplications = canOpenTutorApplications;
+        return this;
+      }
+
+      public Builder canRejectTrial(Boolean canRejectTrial) {
+        this.canRejectTrial = canRejectTrial;
+        return this;
+      }
+
+      public Builder canCancelTutorApplication(Boolean canCancelTutorApplication) {
+        this.canCancelTutorApplication = canCancelTutorApplication;
+        return this;
+      }
+
+      /** 按当前已赋值的字段构造 {@link ClientOrder}，未设置字段保持 {@code null}。 */
+      public ClientOrder build() {
+        return new ClientOrder(
+            id, role, title, status, amount, contact, detail, risk, amountLabel, category,
+            phoneNumber, quoteAmount, quoteCount, trialCount, quoteActionLabel, quoteId,
+            canCall, canMessage, canRequestCancel, canRequestComplete, canConfirmCancel,
+            canConfirmComplete, canRepublish, canAgreeTrial, canOpenTrialResult, canOpenTrialSchedule,
+            canOpenTutorTrialList, canOpenTutorApplications, canRejectTrial, canCancelTutorApplication
+        );
+      }
+    }
   }
 
   /** 兼职列表卡片摘要，承接学生兼职和商户招聘工作台展示。 */
