@@ -47,10 +47,10 @@ Use this skill for frontend cleanup requests that ask to find or optimize redund
 Use `rg` first, then inspect candidates:
 
 ```powershell
-rg -n "const (raw[A-Z]|has[A-Z]|is[A-Z]|can[A-Z]|show[A-Z]|should[A-Z]|current[A-Z]|selected[A-Z]|submitted[A-Z]|.+Summary|.+Config|.+Value)\s*=" client\apps\h5\src
-rg -n "const .* = Boolean\(|const .* = !!|const .* = [A-Za-z0-9_?.]+;" client\apps\h5\src
-rg -n "interface [A-Za-z0-9]+Props|type [A-Za-z0-9]+Props|function [A-Z][A-Za-z0-9]+\(" client\apps\h5\src\components client\apps\h5\src\pages
-rg -n "on[A-Z][A-Za-z0-9]+=\{\(.*\) =>|[A-Za-z0-9]+=\"[^\"]+\"|[A-Za-z0-9]+=\{(true|false|0)\}" client\apps\h5\src
+rg -n "const (raw[A-Z]|has[A-Z]|is[A-Z]|can[A-Z]|show[A-Z]|should[A-Z]|current[A-Z]|selected[A-Z]|submitted[A-Z]|.+Summary|.+Config|.+Value)\s*=" frontend\apps\h5\src
+rg -n "const .* = Boolean\(|const .* = !!|const .* = [A-Za-z0-9_?.]+;" frontend\apps\h5\src
+rg -n "interface [A-Za-z0-9]+Props|type [A-Za-z0-9]+Props|function [A-Z][A-Za-z0-9]+\(" frontend\apps\h5\src\components frontend\apps\h5\src\pages
+rg -n "on[A-Z][A-Za-z0-9]+=\{\(.*\) =>|[A-Za-z0-9]+=\"[^\"]+\"|[A-Za-z0-9]+=\{(true|false|0)\}" frontend\apps\h5\src
 ```
 
 For wider audits, an AST pass may count references, JSX attributes, fixed literals, and arrow callback wrappers, but treat it as a candidate finder only. Single-use variables and single-use props often still encode useful domain meaning.
@@ -71,7 +71,7 @@ For wider audits, an AST pass may count references, JSX attributes, fixed litera
 After H5 changes, run:
 
 ```powershell
-cd client
+cd frontend/apps
 npm.cmd run typecheck:h5
 npm.cmd run lint:h5
 ```

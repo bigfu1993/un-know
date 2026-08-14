@@ -1,0 +1,124 @@
+.h5-shell.list-shell {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.product-list-page {
+  grid-template-rows: auto auto minmax(0, 1fr);
+  height: calc(100dvh - 102px - env(safe-area-inset-bottom));
+  min-height: 0;
+}
+
+.h5-shell.list-shell.has-context-card .product-list-page {
+  height: calc(100dvh - 184px - env(safe-area-inset-bottom));
+}
+
+.product-list-scroll {
+  min-height: 0;
+  align-content: start;
+  margin-inline: -2px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 4px 8px;
+  scrollbar-gutter: stable;
+}
+
+.delegation-toolbar {
+  padding: 0 0 3px;
+}
+
+.delegation-toolbar-row {
+  min-width: 0;
+}
+
+.delegation-search,
+.delegation-filter {
+  span {
+    color: #657181;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  input,
+  select {
+    width: 100%;
+    min-height: 36px;
+    padding: 7px 9px;
+    background: #fff;
+    color: #17212b;
+    font-size: 13px;
+  }
+}
+
+.delegation-search input,
+.delegation-filter select {
+  box-sizing: border-box;
+  border: 1px solid #d9e1e8;
+  border-radius: 8px;
+  font: inherit;
+  outline: 0;
+}
+
+.delegation-search input:focus,
+.delegation-filter select:focus {
+  border-color: #175e75;
+  box-shadow: 0 0 0 3px rgba(23, 94, 117, 0.12);
+}
+
+.delegation-icon-button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  place-items: center;
+  border: 1px solid #d9e1e8;
+  border-radius: 8px;
+  background: #fff;
+  color: #475466;
+}
+
+.delegation-icon-button.active {
+  border-color: #b8dbe4;
+  background: #dceef3;
+  color: #175e75;
+}
+
+.delegation-option-panel {
+  padding: 6px;
+  border: 1px solid #d9e1e8;
+  border-radius: 8px;
+  background: #fff;
+
+  button {
+    min-height: 28px;
+    border-radius: 999px;
+    padding: 4px 8px;
+    background: #f3f6f9;
+    color: #475466;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  button.active {
+    background: #dceef3;
+    color: #175e75;
+  }
+}
+
+.delegation-live-status {
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  border-radius: 8px;
+  padding: 5px 8px;
+  background: #f7fafc;
+  color: #657181;
+  font-size: 12px;
+  font-weight: 800;
+
+  span {
+    min-width: 0;
+  }
+}

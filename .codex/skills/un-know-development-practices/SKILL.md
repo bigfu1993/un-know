@@ -34,7 +34,7 @@ description: Methodology and validation workflow for the un-know project. Use wh
 16. Match DOM ownership to layout behavior. Fixed headers, fixed footers, and scrollable bodies should be sibling regions under the same layout owner; use stable `form` ids and submit `form` attributes when a footer button must submit an external form.
 17. Design form hierarchy intentionally. Put required, frequent, and high-risk fields first; group optional supplements into coherent panels with their own header, action, and content; choose inline text/icon controls when full buttons would change field height.
 18. Keep roots and pages lean: root wires application-level providers, session, routing, global data, and cross-module composition; pages orchestrate feature flow; components own display and local interaction.
-19. Keep styles and types by ownership: page styles in `pages/<Module>/index.less`, shared component styles beside the component, H5 reusable types in `client/apps/h5/src/types`, pure reusable utilities in `client/apps/h5/src/tools`.
+19. Keep styles and types by ownership: page styles in `pages/<Module>/index.less`, shared component styles beside the component, H5 reusable types in `frontend/apps/h5/src/types`, pure reusable utilities in `frontend/apps/h5/src/tools`.
 20. Keep business modules under their owning directory. Page modules, local components, hooks, models, backend packages, API contracts, and database ownership notes should follow the same domain boundary; risky package or schema moves require a docs-first migration plan.
 21. Run broad refactors in batches. Each batch declares scope, classifies issues, makes focused edits, validates, then moves to the next batch.
 22. Before deleting or splitting exports, search explicit imports, JSX usage, generated declarations, and auto-import configuration.
@@ -43,20 +43,20 @@ description: Methodology and validation workflow for the un-know project. Use wh
 
 - For H5 React, shared client packages, UI states, routing, hooks, or styling, read `references/frontend.md`.
 - For Java Spring Boot, API design, JDBC/Flyway, comments, service boundaries, or backend validation, read `references/backend.md`.
-- For full-stack changes, read both references and verify the API contract from backend response model through `client/packages/domain`, `api-client`, hooks, and H5 usage.
+- For full-stack changes, read both references and verify the API contract from backend response model through `frontend/apps/packages/domain`, `api-client`, hooks, and H5 usage.
 
 ## Required Workflow
 
 1. Apply the Core Method before editing.
 2. Update code and comments together. Java uses JavaDoc; TypeScript/React uses TSDoc/JSDoc for exported or behavior-heavy units.
 3. Keep stable domain states centralized. Avoid scattering display strings or backend states across frontend and backend.
-4. H5 reusable types live in `client/apps/h5/src/types` and are exposed through auto-import/global declarations; remove explicit type imports when a type is globally provided.
+4. H5 reusable types live in `frontend/apps/h5/src/types` and are exposed through auto-import/global declarations; remove explicit type imports when a type is globally provided.
 5. When starting local services, check existing ports first, reuse healthy project services, and stop only processes confirmed to belong to the current repo. Do not apply macOS/Linux commands to Windows or Windows PowerShell commands to macOS/Linux.
 6. Do not enumerate a user's `.ssh` directory to find credentials. Use the documented default key path, ask for an explicit path when missing, or let the user establish the tunnel manually.
 7. For frontend cleanup requests about redundant aliases, low-value intermediate variables, unnecessary Boolean wrappers, derived state, or small behavior-preserving refactors, also read `.codex/skills/frontend-refactor-optimization/SKILL.md`.
 8. Validate after changes:
-   - H5: `cd client && npm run typecheck:h5 && npm run lint:h5`
-   - Backend: `cd server && mvn -q -DskipTests compile`
+   - H5: `cd frontend/apps && npm run typecheck:h5 && npm run lint:h5`
+   - Backend: `cd server/apps && mvn -q -DskipTests compile`
    - Runtime when APIs or data changed: health check and at least one targeted real-interface flow.
 9. For runtime API debugging, distinguish service availability from expired local sessions. Verify protected APIs with a freshly obtained session token; if fresh-token requests pass while the browser fails, clear the browser's persisted session before diagnosing backend or database availability.
 10. If backend behavior changed and a running server needs refresh, restart it unless the user explicitly asks not to.

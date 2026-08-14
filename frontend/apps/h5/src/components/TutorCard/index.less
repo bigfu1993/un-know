@@ -1,0 +1,174 @@
+.tutor-card {
+  box-sizing: border-box;
+  display: grid;
+  width: 100%;
+  gap: 9px;
+  border: 1px solid #e3e8ee;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #17212b;
+  text-align: left;
+  box-shadow: 0 8px 24px rgba(23, 33, 43, 0.06);
+}
+
+.tutor-card:is(button) {
+  appearance: none;
+}
+
+.tutor-card--entry {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  appearance: none;
+  background: #f8fafc;
+}
+
+.tutor-card--simple {
+  background: #f8fafc;
+}
+
+.tutor-card--status {
+  background: #fffaf0;
+}
+
+.tutor-card-icon {
+  border-radius: 8px;
+  background: #dceef3;
+  color: #175e75;
+  width: 36px;
+  height: 36px;
+}
+
+.tutor-card-head {
+  align-items: center;
+  min-width: 0;
+}
+
+.tutor-card-main {
+  display: flex;
+  height: 36px;
+  min-height: 36px;
+  flex-direction: column;
+  justify-content: center;
+
+  strong,
+  em {
+    display: block;
+  }
+
+  strong {
+    overflow: hidden;
+    color: #17212b;
+    font-size: 15px;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  em {
+    margin-top: 2px;
+    overflow: hidden;
+    color: #8b96a5;
+    font-size: 12px;
+    font-style: normal;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.tutor-status {
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #eef6f4;
+  color: #175e75;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.tutor-status--pending,
+.tutor-status--reviewing {
+  background: #fff7e8;
+  color: #9a5b10;
+}
+
+.tutor-status--frozen {
+  background: #fff0f2;
+  color: #8a2534;
+}
+
+.tutor-card-meta {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tutor-card--simple .tutor-card-meta {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.tutor-card-meta span,
+.tutor-card-meta .tutor-subject-edit {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  padding: 7px;
+  border: 0;
+  border-radius: 8px;
+  appearance: none;
+  background: #f3f6f9;
+  text-align: left;
+}
+
+.tutor-card-meta .tutor-subject-edit {
+  cursor: pointer;
+}
+
+.tutor-card-meta .tutor-subject-edit:disabled {
+  cursor: default;
+}
+
+.tutor-card-meta em,
+.tutor-card-meta .tutor-subject-edit em {
+  overflow: hidden;
+  color: #657181;
+  font-size: 12px;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tutor-card-meta strong,
+.tutor-card-meta .tutor-subject-edit strong {
+  overflow-wrap: anywhere;
+  color: #17212b;
+  font-size: 13px;
+}
+
+.tutor-card-actions {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.tutor-card-actions button {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 8px;
+  color: #475466;
+  font-size: 12px;
+}
+
+.tutor-card-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.tutor-card-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  color: #8a2534;
+  font-size: 12px;
+  font-weight: 700;
+}

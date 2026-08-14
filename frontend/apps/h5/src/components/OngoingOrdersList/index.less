@@ -1,0 +1,171 @@
+.ongoing-list {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+}
+
+.ongoing-filter-tags button {
+  min-height: 28px;
+  border-radius: 999px;
+  padding: 5px 8px;
+  background: #f3f6f9;
+  color: #475466;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ongoing-filter-tags button.active {
+  background: #dceef3;
+  color: #175e75;
+}
+
+.ongoing-action-badge {
+  display: inline-grid;
+  min-width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 999px;
+  background: #fff;
+  color: #d92d20;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.ongoing-status-badge {
+  color: #475466;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.ongoing-status-stack {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 4px;
+  text-align: right;
+}
+
+.ongoing-status-stack.multi {
+  flex-direction: column;
+}
+
+.ongoing-status-badge.trial-confirming {
+  color: #d92d20;
+}
+
+.ongoing-status-badge.trialing {
+  color: #168a57;
+}
+
+.trial-schedule-preview-sheet {
+  border-radius: 8px 8px 0 0;
+}
+
+.trial-schedule-preview-sheet .ongoing-status-badge {
+  justify-self: start;
+  border-radius: 999px;
+  background: #fff1f0;
+  padding: 5px 9px;
+  font-size: 12px;
+}
+
+.trial-schedule-preview-content {
+  min-height: 0;
+}
+
+.trial-schedule-preview-list {
+  border: 1px solid rgba(23, 33, 43, 0.08);
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px;
+}
+
+.trial-schedule-preview-period {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d9e1e8;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #17212b;
+  padding: 7px 8px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.trial-schedule-preview-period.selected {
+  border-color: rgba(29, 111, 85, 0.24);
+  background: #eef7f3;
+}
+
+.trial-schedule-preview-period strong {
+  color: #17212b;
+  font-weight: 900;
+}
+
+.trial-schedule-preview-period span {
+  color: #475466;
+  font-weight: 800;
+}
+
+.trial-settlement-confirm-sheet {
+  border-radius: 8px 8px 0 0;
+}
+
+.trial-settlement-confirm-content {
+  color: #475466;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.trial-settlement-confirm-item {
+  border: 1px solid rgba(112, 128, 148, 0.16);
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px;
+}
+
+.trial-settlement-confirm-item strong {
+  color: #d92d20;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.trial-settlement-confirm-item p {
+  margin: 0;
+  color: #17212b;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.tutor-trial-settlement-field span {
+  color: #475466;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.tutor-trial-settlement-field input {
+  min-height: 38px;
+  border: 1px solid rgba(112, 128, 148, 0.2);
+  border-radius: 8px;
+  background: #fff;
+  color: #17212b;
+  font-size: 14px;
+  font-weight: 900;
+  outline: none;
+  padding: 0 10px;
+}
+
+.tutor-trial-settlement-field input:focus {
+  border-color: #2f7df6;
+  box-shadow: 0 0 0 3px rgba(47, 125, 246, 0.12);
+}
+
+.tutor-trial-settlement-error {
+  color: #d92d20;
+  font-size: 12px;
+  font-weight: 800;
+}

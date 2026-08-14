@@ -56,6 +56,7 @@
 
 ## 运行与部署文档
 
-- 用户端：`client/运行部署文档.md`
-- 管理端：`admin/运行部署文档.md`
-- 后端：`server/运行部署文档.md`
+- 用户端：`frontend/apps/运行部署文档.md`
+- 管理端（前端）：`frontend/admin/运行部署文档.md`
+- 后端（用户端）：`server/apps/运行部署文档.md`
+- 后端（管理端）：`server/admin/README.md`（工程尚未初始化）

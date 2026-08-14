@@ -10,7 +10,7 @@
 
 - 本项目规则只记录 `un-know` 专属约束、路径、运行方式、技术栈和验证命令。
 - 用户提出“以后都要”“加入开发规范”“记住这条规则”等长期要求时，先判断是通用规则还是本项目规则：通用规则写入 `/Users/bigfu/.codex/AGENTS.md`，项目规则写入本文件。
-- 简短硬规则写在本文件；具体业务说明、流程图、接口细节、验收标准写入 `docs/`、`client/` 或 `server/` 下的专题文档，并在需要时互相引用。
+- 简短硬规则写在本文件；具体业务说明、流程图、接口细节、验收标准写入 `docs/`、`frontend/apps/` 或 `server/` 下的专题文档，并在需要时互相引用。
 - 修改规则时保持可执行、可检查，避免只写抽象口号。
 - 规则变更影响代码行为时，应同时调整实现和验证命令。
 - 每次修改、增加、删除或调整产品功能时，必须同步更新 `docs/产品需求文档.md`；涉及角色、模块、流程、接口、校验、文案、入口或验收标准的变化都算产品功能变化。
@@ -120,9 +120,9 @@ Windows PowerShell：
 
 ```powershell
 New-Item -ItemType Directory -Force -Path .\log\client, .\log\server | Out-Null
-Start-Process -FilePath "npm.cmd" -ArgumentList "run dev:h5" -WorkingDirectory "$RepoRoot\client" -RedirectStandardOutput "$RepoRoot\log\client\h5.screen.log" -RedirectStandardError "$RepoRoot\log\client\h5.screen.err.log" -WindowStyle Hidden
+Start-Process -FilePath "npm.cmd" -ArgumentList "run dev:h5" -WorkingDirectory "$RepoRoot\frontend\apps" -RedirectStandardOutput "$RepoRoot\log\client\h5.screen.log" -RedirectStandardError "$RepoRoot\log\client\h5.screen.err.log" -WindowStyle Hidden
 
-Get-Content -LiteralPath "$RepoRoot\server\.env.prod.local" | ForEach-Object {
+Get-Content -LiteralPath "$RepoRoot\server\apps\.env.prod.local" | ForEach-Object {
   if ($_ -and $_ -notmatch "^\s*#") {
     $name, $value = $_ -split "=", 2
     if ($name -and $value) {
@@ -130,15 +130,15 @@ Get-Content -LiteralPath "$RepoRoot\server\.env.prod.local" | ForEach-Object {
     }
   }
 }
-Start-Process -FilePath "mvn.cmd" -ArgumentList "spring-boot:run" -WorkingDirectory "$RepoRoot\server" -RedirectStandardOutput "$RepoRoot\log\server\server.screen.log" -RedirectStandardError "$RepoRoot\log\server\server.screen.err.log" -WindowStyle Hidden
+Start-Process -FilePath "mvn.cmd" -ArgumentList "spring-boot:run" -WorkingDirectory "$RepoRoot\server\apps" -RedirectStandardOutput "$RepoRoot\log\server\server.screen.log" -RedirectStandardError "$RepoRoot\log\server\server.screen.err.log" -WindowStyle Hidden
 ```
 
 macOS/Linux：
 
 ```bash
 mkdir -p "$REPO_ROOT/log/client" "$REPO_ROOT/log/server"
-screen -dmS unknow-h5 bash -lc "cd '$REPO_ROOT/client' && npm run dev:h5 > '$REPO_ROOT/log/client/h5.screen.log' 2>&1"
-screen -dmS unknow-server bash -lc "cd '$REPO_ROOT/server' && set -a && source .env.prod.local && set +a && mvn spring-boot:run > '$REPO_ROOT/log/server/server.screen.log' 2>&1"
+screen -dmS unknow-h5 bash -lc "cd '$REPO_ROOT/frontend/apps' && npm run dev:h5 > '$REPO_ROOT/log/client/h5.screen.log' 2>&1"
+screen -dmS unknow-server bash -lc "cd '$REPO_ROOT/server/apps' && set -a && source .env.prod.local && set +a && mvn spring-boot:run > '$REPO_ROOT/log/server/server.screen.log' 2>&1"
 ```
 
 ### 启动验证
@@ -190,8 +190,8 @@ tail -n 200 "$REPO_ROOT/log/server/server.screen.log"
 ## 项目核心方法论
 
 - 用户展示名称唯一来源为用户表 `app_user.nickname`；接口、共享类型和前端展示不得新增或维护 `displayName`、`profileName`、`publisherName`、`peerName`、`senderName` 等用户名称别名。涉及多用户关系时使用嵌套用户快照，例如 `publisher.nickname`、`bidder.nickname`、`peer.nickname`、`sender.nickname`。
-- 复用沉淀按性质归属：业务相关复用方法沉淀在对应模块或组件目录，业务无关纯函数沉淀到 `client/apps/h5/src/tools`。
-- 类型集中管理：H5 可复用 TypeScript 类型集中维护在 `client/apps/h5/src/types`，共享契约类型维护在共享 domain 包；新增类型后同步全局声明或生成声明。
+- 复用沉淀按性质归属：业务相关复用方法沉淀在对应模块或组件目录，业务无关纯函数沉淀到 `frontend/apps/h5/src/tools`。
+- 类型集中管理：H5 可复用 TypeScript 类型集中维护在 `frontend/apps/h5/src/types`，共享契约类型维护在共享 domain 包；新增类型后同步全局声明或生成声明。
 - 样式按所有权归属：页面私有样式放在页面 `index.less`，共享组件专属样式放在组件目录，全局样式只保留基础、布局和真正跨组件共享的规则。
 
 ## 后端规范
@@ -210,10 +210,10 @@ tail -n 200 "$REPO_ROOT/log/server/server.screen.log"
 - `pages/<Module>/components` 下的页面私有组件使用扁平文件维护；页面私有 hook 维护在 `pages/<Module>/hooks`。
 - 每个 `pages/<Module>` 必须维护 `index.less` 并由 `index.tsx` 引入；该页面及其私有组件样式收敛到对应页面 stylesheet。
 - `components/<Component>` 下的共享组件按文件夹维护，组件专属样式放在同目录并由组件入口导入。
-- 全局通用 hook 维护在 `client/apps/h5/src/hooks`；局部 hook 维护在对应模块的 `hooks` 目录，不与组件文件同级散落。
+- 全局通用 hook 维护在 `frontend/apps/h5/src/hooks`；局部 hook 维护在对应模块的 `hooks` 目录，不与组件文件同级散落。
 - 涉及安全、身份、凭据、权限和业务流程推进的判断必须走真实接口和服务端状态；H5 本地散列、缓存和草稿只能作为输入便利或展示缓存，不作为最终正确性来源。
 - H5 页面出现固定头部、固定底部操作区和内部滚动主体时，DOM 与 CSS 层级必须体现同级区域关系；不得用视觉 fixed/sticky 掩盖错误嵌套导致的滚动或 footer 失效。
-- 表单校验、格式化、日期、金额、字段规则等通用纯逻辑优先复用或沉淀到 `client/apps/h5/src/tools`。
+- 表单校验、格式化、日期、金额、字段规则等通用纯逻辑优先复用或沉淀到 `frontend/apps/h5/src/tools`。
 - 全局消息提示由根节点注册单例组件；业务页面、组件和 hooks 直接从消息工具模块 import `showMessage`、`hideMessage` 触发或关闭提示，不为此在组件内调用额外 hook。
 - 已被 `unplugin-auto-import` 或 `src/types/global.d.ts` 覆盖的 TypeScript 类型，不在 H5 页面、组件和工具文件中重复显式导入；只保留确实无法全局声明的局部类型。
 
@@ -242,7 +242,7 @@ tail -n 200 "$REPO_ROOT/log/server/server.screen.log"
 前端 H5 修改后优先执行：
 
 ```bash
-cd client
+cd frontend/apps
 npm run typecheck:h5
 npm run lint:h5
 ```
@@ -252,7 +252,7 @@ npm run lint:h5
 后端修改后优先执行：
 
 ```bash
-cd server
+cd server/apps
 mvn -q -DskipTests compile
 ```
 

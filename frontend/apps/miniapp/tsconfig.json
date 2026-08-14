@@ -1,0 +1,16 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "types": ["@tarojs/taro"],
+    "paths": {
+      "@unknown/api-client": ["../packages/api-client/src"],
+      "@unknown/api-client/*": ["../packages/api-client/src/*"],
+      "@unknown/domain": ["../packages/domain/src"],
+      "@unknown/hooks": ["../packages/hooks/src"],
+      "@unknown/hooks/*": ["../packages/hooks/src/*"],
+      "@unknown/ui-tokens": ["../packages/ui-tokens/src"]
+    }
+  },
+  "include": ["src", "../packages/*/src"]
+}
