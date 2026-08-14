@@ -1,11 +1,13 @@
 import { useGlobalStore, useGlobalUser } from "@h5/store/global";
 import { isAuthSessionExpiredError } from "@unknown/api-client";
 import { useOngoingOrdersRealtime } from "@unknown/hooks";
+import { MineShortcut, QuickActionDock } from "@components/AppShell";
 import { getHuntingCertificationDataFromDraft } from "@components/HuntingCertificationCard/model";
-import { HuntingProjectDialog } from "@components/HuntingProjectDialog";
-import { PublishDraftConfirmDialog, PublishInfoDialog } from "@components/PublishInfoDialog";
-import { TutorCalendarDialog } from "@components/TutorCalendar";
-import { TutorCertificationInfoDialog } from "@components/TutorCertificationInfoDialog";
+import { PublishInfo } from "@components/PublishInfo";
+import { PublishDraftConfirm } from "@components/PublishInfo/DraftConfirm";
+import { TutorCalendar } from "@components/TutorCalendar";
+import { OngoingShortcut } from "@components/WorkflowOverlays";
+import { TutorCertificationInfo } from "@components/TutorCertificationInfo";
 import { useClientBusinessMutations } from "@h5/hooks/useClientBusinessMutations";
 import { useClientDataQueries } from "@h5/hooks/useClientDataQueries";
 import { useCheckoutFlow } from "@h5/hooks/useCheckoutFlow";
@@ -15,13 +17,13 @@ import { useProfileCompletionFlow } from "@h5/hooks/useProfileCompletionFlow";
 import { usePrimaryTabWorkspaceRefresh } from "@h5/hooks/usePrimaryTabWorkspaceRefresh";
 import { usePublishInfoFlow } from "@h5/hooks/usePublishInfoFlow";
 import { useRootNavigation } from "@h5/hooks/useRootNavigation";
-import { HuntingRecommendationDialog } from "@pages/home/delegation/components/HuntingRecommendationDialog";
-import { OngoingQuoteDialog } from "@pages/home/delegation/components/OngoingQuoteDialog";
+import { HuntingShortcut } from "@pages/home/delegation/components/HuntingShortcut";
+import { OngoingQuote } from "@pages/home/delegation/components/OngoingQuote";
 import { useHuntingTaskActions } from "@pages/home/delegation/hooks/useHuntingTaskActions";
 import { useOngoingQuoteFlow } from "@pages/home/delegation/hooks/useOngoingQuoteFlow";
-import { HuntingCertification } from "@pages/home/delegation/HuntingCertification";
-import { TutorCertification } from "@pages/home/job/edu/TutorCertification";
-import { TutorApplicationsDialog, TutorTrialListDialog } from "@pages/home/job/edu/components/TutorApplicationsDialog";
+import { HuntingCertification } from "@pages/home/delegation/hunting-certification";
+import { TutorCertification } from "@pages/home/job/edu/components/TutorCertification";
+import { TutorApplications, TutorTrialList } from "@pages/home/job/edu/components/TutorApplications";
 import { useTutorTrialActions } from "@pages/home/job/edu/hooks/useTutorTrialActions";
 import { campusAreaOptions, clientAddressesToAddressBookItems } from "@shared/clientPageModel";
 import { hideMessage, showMessage } from "@tools/messageToast";
@@ -73,9 +75,9 @@ export function App() {
   const [activeTutorTrialDemandId, setActiveTutorTrialDemandId] = useState<string | null>(null);
   const [isTutorTrialListOpen, setIsTutorTrialListOpen] = useState(false);
   const {
-    closeHuntingShortcutDialogs,
+    closeHuntingShortcutOverlays,
     closeRouteOverlays,
-    closeTutorDialogs,
+    closeTutorOverlays,
     handleAvatarClick,
     isHuntingProjectOpen,
     isHuntingRecommendationOpen,
@@ -418,7 +420,7 @@ export function App() {
           setIsOngoingOpen(false);
           setIsMineOpen(false);
           setIsProfileCompletionOpen(false);
-          closeTutorDialogs();
+          closeTutorOverlays();
           navigate(getRouteForTab("hunting"));
           showMessage(`狩猎项目已创建，系统匹配到 ${project.matchedCount} 个推荐委托。`, { type: "success" });
           void refetchHuntingTasks();
@@ -444,8 +446,8 @@ export function App() {
     setIsMineOpen(false);
     setIsOngoingOpen(false);
     setIsQuickDockExpanded(true);
-    closeTutorDialogs();
-    closeHuntingShortcutDialogs();
+    closeTutorOverlays();
+    closeHuntingShortcutOverlays();
     showMessage("家教认证已提交，当前状态为认证中。", { type: "success" });
     navigate(getRouteForTab(activeTab), { replace: true });
   }
@@ -466,8 +468,8 @@ export function App() {
     setIsMineOpen(false);
     setIsOngoingOpen(false);
     setIsQuickDockExpanded(true);
-    closeTutorDialogs();
-    closeHuntingShortcutDialogs();
+    closeTutorOverlays();
+    closeHuntingShortcutOverlays();
     showMessage("狩猎认证已提交，当前状态为认证中。", { type: "success" });
     void refetchHome();
     navigate(getRouteForTab(activeTab), { replace: true });
@@ -485,8 +487,8 @@ export function App() {
     setIsTutorApplicationOpen(false);
     setIsHuntingShortcutEnabled(false);
     setHuntingShortcutProject(null);
-    closeTutorDialogs();
-    closeHuntingShortcutDialogs();
+    closeTutorOverlays();
+    closeHuntingShortcutOverlays();
     resetProfileDraftForPhone(session.phone);
     showMessage(session.profileCompletionRequired ? "登录成功，可稍后进入设置补充资料。" : "登录成功。", {
       type: "success"
@@ -509,8 +511,8 @@ export function App() {
       setIsTutorApplicationOpen(false);
       setIsHuntingShortcutEnabled(false);
       setHuntingShortcutProject(null);
-      closeTutorDialogs();
-      closeHuntingShortcutDialogs();
+      closeTutorOverlays();
+      closeHuntingShortcutOverlays();
       if (reason === "expired") {
         showMessage("登录状态已过期，请重新登录。", { type: "warning" });
       } else {
@@ -521,8 +523,8 @@ export function App() {
     },
     [
       clearUser,
-      closeHuntingShortcutDialogs,
-      closeTutorDialogs,
+      closeHuntingShortcutOverlays,
+      closeTutorOverlays,
       navigate,
       resetForRole,
       resetPublishedHuntingTasks,
@@ -574,7 +576,7 @@ export function App() {
     setIsOngoingOpen(false);
     setIsQuickDockExpanded(true);
     setIsPublishInfoOpen(false);
-    closeHuntingShortcutDialogs();
+    closeHuntingShortcutOverlays();
     setIsTutorCalendarOpen(false);
     setIsTutorCertificationInfoOpen(true);
   }
@@ -632,7 +634,7 @@ export function App() {
     setIsQuickDockExpanded(true);
     setIsTutorCertificationInfoOpen(false);
     setIsPublishInfoOpen(false);
-    closeHuntingShortcutDialogs();
+    closeHuntingShortcutOverlays();
     setIsTutorCalendarOpen(true);
   }
 
@@ -661,26 +663,6 @@ export function App() {
   function handleOpenTutorTrialList(order?: ClientOrder) {
     setActiveTutorTrialDemandId(order?.id ?? null);
     setIsTutorTrialListOpen(true);
-  }
-
-  /** 进行中取消动作按业务类型分流，家教发布中主任务走真实取消发布接口。 */
-  function handleRequestOngoingCancel(order: ClientOrder) {
-    if (order.category === "tutor") {
-      void handleCancelTutorDemand(order);
-      return;
-    }
-
-    void handleHuntingTaskFulfillmentAction(order, "request_cancel");
-  }
-
-  /** 进行中完成动作按业务类型分流，家教试课走真实结束试课确认接口。 */
-  function handleRequestOngoingComplete(order: ClientOrder) {
-    if (order.category === "tutor") {
-      void handleRequestTutorTrialEnd(order);
-      return;
-    }
-
-    void handleHuntingTaskFulfillmentAction(order, "request_complete");
   }
 
   useEffect(() => {
@@ -884,110 +866,64 @@ export function App() {
             <Route path="*" element={<Navigate replace to={getDefaultRouteForRole(role)} />} />
           </Routes>
 
-          {isMineOpen ? (
-            <MinePopover
-              onClose={() => setIsMineOpen(false)}
-              onLogout={handleLogout}
-              onNavigate={handleNavigate}
-              onOpenPublish={handleOpenPublishInfo}
-              onOpenRecycle={handleOpenRecycleInfo}
-              onOpenTutorCalendar={handleOpenTutorCalendar}
-              onOpenTab={handleOpenTab}
-              onToggleTutorExposure={handleToggleTutorExposure}
-              walletSummary={workspaceData.walletSummary}
-            />
-          ) : null}
-
-          <div
-            className={`quick-action-dock ${isQuickDockExpanded ? "expanded" : "collapsed"}`}
-            aria-label="我的快捷操作"
-          >
-            <button
-              className={`quick-action-button quick-action-order order-shortcut grid h-[46px] w-[46px] place-items-center font-extrabold text-white ${hasPaymentRisk ? "danger" : ""}`}
-              onClick={() => {
+          <QuickActionDock isExpanded={isQuickDockExpanded}>
+            <OngoingShortcut
+              hasPaymentRisk={hasPaymentRisk}
+              isOpen={isOngoingOpen}
+              onCancelTutorDemand={handleCancelTutorDemand}
+              onClose={() => setIsOngoingOpen(false)}
+              onConfirmTutorTrialStart={handleConfirmTutorTrialStart}
+              onHuntingFulfillmentAction={handleHuntingTaskFulfillmentAction}
+              onOpen={() => {
                 setIsOngoingOpen(true);
                 setIsMineOpen(false);
               }}
-              type="button"
-              aria-label="查看进行中事项"
-            >
-              <PackageCheck size={18} />
-              <span className="quick-action-badge">{ongoingOrders.length}</span>
-            </button>
+              onOpenQuoteList={handleOpenOngoingQuoteList}
+              onOpenTutorApplications={handleOpenTutorApplications}
+              onOpenTutorTrialList={handleOpenTutorTrialList}
+              onRequestTutorTrialEnd={handleRequestTutorTrialEnd}
+              onSubmitTutorWorkflowAction={handleTutorWorkflowAction}
+              orders={ongoingOrders}
+            />
 
             {role === "student" ? (
-              <button
-                className={`quick-action-button quick-action-hunting hunting-shortcut grid h-[46px] w-[46px] place-items-center font-extrabold text-white ${
-                  isHuntingShortcutEnabled ? "active" : ""
-                }`}
-                onClick={handleOpenHuntingShortcut}
-                type="button"
-                aria-label={isHuntingShortcutEnabled ? "查看狩猎推荐委托" : "开启狩猎快捷开关"}
-              >
-                {isHuntingShortcutEnabled ? (
-                  <>
-                    <svg className="hunting-ecg-icon" aria-hidden="true" viewBox="0 0 30 22">
-                      <polyline points="1,12 7,12 10,5 14,18 18,8 21,12 29,12" />
-                    </svg>
-                    <span className="quick-action-badge">{recommendedHuntingTasks.length}</span>
-                  </>
-                ) : (
-                  <Crosshair size={18} />
-                )}
-              </button>
+              <HuntingShortcut
+                areaOptions={campusAreaOptions}
+                initialProject={huntingShortcutProject}
+                isEnabled={isHuntingShortcutEnabled}
+                isProjectOpen={isHuntingProjectOpen}
+                isRecommendationOpen={isHuntingRecommendationOpen}
+                onCloseProject={closeHuntingShortcutOverlays}
+                onCloseRecommendation={() => setIsHuntingRecommendationOpen(false)}
+                onDisable={handleDisableHuntingShortcut}
+                onOpen={handleOpenHuntingShortcut}
+                onSubmitProject={handleCreateHuntingProject}
+                recommendedTasks={recommendedHuntingTasks}
+              />
             ) : null}
-          </div>
+          </QuickActionDock>
 
-          <button
-            className="floating-avatar grid h-[54px] w-[54px] place-items-center text-[#17212b]"
-            onClick={handleAvatarClick}
-            type="button"
-            aria-expanded={isQuickDockExpanded}
-            aria-label="我的"
-          >
-            <UserRound size={22} />
-          </button>
+          <MineShortcut
+            isOpen={isMineOpen}
+            isQuickDockExpanded={isQuickDockExpanded}
+            onClose={() => setIsMineOpen(false)}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
+            onOpenPublish={handleOpenPublishInfo}
+            onOpenRecycle={handleOpenRecycleInfo}
+            onOpenTab={handleOpenTab}
+            onOpenTutorCalendar={handleOpenTutorCalendar}
+            onToggleTutorExposure={handleToggleTutorExposure}
+            onTrigger={handleAvatarClick}
+            walletSummary={workspaceData.walletSummary}
+          />
 
-          <BottomTabs activeTab={activeTab} onChange={handleOpenTab} />
+          <BottomTabs activeTab={activeTab} onChange={handleOpenTab} onOpenTutorPublish={handleOpenPublishInfo} />
         </>
       )}
 
-      {isHuntingProjectOpen ? (
-        <HuntingProjectDialog
-          areaOptions={campusAreaOptions}
-          initialProject={huntingShortcutProject}
-          onClose={closeHuntingShortcutDialogs}
-          onSubmit={handleCreateHuntingProject}
-        />
-      ) : null}
-
-      {isHuntingRecommendationOpen ? (
-        <HuntingRecommendationDialog
-          onClose={() => setIsHuntingRecommendationOpen(false)}
-          onDisable={handleDisableHuntingShortcut}
-          tasks={recommendedHuntingTasks}
-        />
-      ) : null}
-
-      {isOngoingOpen ? (
-        <OngoingOrdersDialog
-          onClose={() => setIsOngoingOpen(false)}
-          onConfirmCancel={(order) => void handleHuntingTaskFulfillmentAction(order, "confirm_cancel")}
-          onConfirmComplete={(order) => void handleHuntingTaskFulfillmentAction(order, "confirm_complete")}
-          onConfirmTutorTrialStart={handleConfirmTutorTrialStart}
-          onOpenQuoteList={handleOpenOngoingQuoteList}
-          onOpenTutorApplications={handleOpenTutorApplications}
-          onOpenTutorTrialList={handleOpenTutorTrialList}
-          onRepublish={(order) => void handleHuntingTaskFulfillmentAction(order, "republish")}
-          onTutorWorkflowAction={(order, action, payload) => handleTutorWorkflowAction({ ...payload, action, applicationId: order.id })}
-          onRequestCancel={handleRequestOngoingCancel}
-          onRequestComplete={handleRequestOngoingComplete}
-          orders={ongoingOrders}
-        />
-      ) : null}
-
       {ongoingQuoteTask ? (
-        <OngoingQuoteDialog
+        <OngoingQuote
           initialQuoteId={ongoingQuoteInitialQuoteId}
           onClose={handleCloseOngoingQuoteList}
           onConfirmQuote={handleConfirmHuntingQuote}
@@ -1010,7 +946,7 @@ export function App() {
       ) : null}
 
       {isProfileCompletionOpen && profileCompletionTemplate ? (
-        <ProfileCompletionDialog
+        <ProfileCompletion
           isSaving={createAddressMutation.isPending || updateAddressMutation.isPending}
           onChange={handleProfileDraftChange}
           onClose={() => setIsProfileCompletionOpen(false)}
@@ -1022,7 +958,7 @@ export function App() {
 
 
       {pendingPublishDraft ? (
-        <PublishDraftConfirmDialog
+        <PublishDraftConfirm
           draft={pendingPublishDraft}
           onClose={() => setPendingPublishDraft(null)}
           onDiscardDraft={() => openPublishInfo(pendingPublishType, null)}
@@ -1031,7 +967,7 @@ export function App() {
       ) : null}
 
       {isPublishInfoOpen ? (
-        <PublishInfoDialog
+        <PublishInfo
           addressItems={addressItems}
           childOptions={publishChildOptions}
           initialDraft={publishInfoInitialDraft}
@@ -1045,7 +981,7 @@ export function App() {
       ) : null}
 
       {isTutorApplicationOpen ? (
-        <TutorApplicationsDialog
+        <TutorApplications
           candidates={activeTutorApplicationCandidates}
           isConfirming={confirmTutorTrialMutation.isPending || tutorWorkflowActionMutation.isPending}
           onClose={() => {
@@ -1059,7 +995,7 @@ export function App() {
       ) : null}
 
       {isTutorTrialListOpen ? (
-        <TutorTrialListDialog
+        <TutorTrialList
           candidates={activeTutorTrialCandidates}
           isSubmitting={completeTutorTrialEndMutation.isPending || tutorWorkflowActionMutation.isPending}
           onClose={() => {
@@ -1072,7 +1008,7 @@ export function App() {
       ) : null}
 
       {isTutorCertificationInfoOpen ? (
-        <TutorCertificationInfoDialog
+        <TutorCertificationInfo
           onClose={() => setIsTutorCertificationInfoOpen(false)}
           onSave={handleSaveTutorCertificationInfo}
           profileDraft={user.profileDraft}
@@ -1080,7 +1016,7 @@ export function App() {
       ) : null}
 
       {isTutorCalendarOpen ? (
-        <TutorCalendarDialog
+        <TutorCalendar
           initialDate={getTutorDateKey(new Date())}
           onClose={() => setIsTutorCalendarOpen(false)}
           tasks={tutorCalendarTasks}

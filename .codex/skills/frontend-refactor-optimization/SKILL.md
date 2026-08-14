@@ -15,6 +15,7 @@ Use this skill for frontend cleanup requests that ask to find or optimize redund
 2. Start with targeted scans, then inspect context manually. Do not delete a variable only because it is referenced once.
 3. Classify each candidate before editing:
    - Remove: one-hop aliases such as `const next = value` when `value` is stable and no snapshot semantics are needed.
+   - Remove: one-hop helper wrappers that only call another parser/formatter with a single field, only read one field, or only add a trivial fallback, when the wrapper has no independent business rule, reuse boundary, type narrowing, or expensive computation benefit.
    - Remove: `const hasX = Boolean(x)` or `const isX = !!x` when used once and direct truthiness is equally clear.
    - Remove: `const rawX = [...]` immediately followed by `const x = rawX.filter(...)`; replace with a compact helper or direct expression.
    - Remove: temporary validation/result variables used only by the next `if`, when inlining keeps the failure path obvious.

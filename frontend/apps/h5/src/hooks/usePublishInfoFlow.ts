@@ -106,7 +106,7 @@ export function usePublishInfoFlow({
     }
   }
 
-  /** 发布委托、回收或家教信息。 */
+  /** 发布委托、回收、家教招募或家教聘用信息。 */
   function publishInfo(draft: PublishInfoDraft) {
     if (draft.type === "tutor") {
       const payload = buildPublishTutorDemandRequest(draft, addressItems, publishChildOptions);
@@ -116,13 +116,24 @@ export function usePublishInfoFlow({
           saveLocalPublishInfoDraft(draft, "published");
           setIsPublishInfoOpen(false);
           onPublishedToTab("tutor");
-          showMessage("家教需求已发布，已加入进行中列表。", { type: "success" });
+          showMessage("家教招募已发布，已加入进行中列表。", { type: "success" });
           refetchWorkspace();
         },
         onError: (error) => {
-          showMessage(getErrorMessage(error, "家教发布失败，请稍后重试。"), { type: "error" });
+          showMessage(getErrorMessage(error, "家教招募发布失败，请稍后重试。"), { type: "error" });
         }
       });
+      return;
+    }
+
+    if (draft.type === "tutorHire") {
+      try {
+        saveLocalPublishInfoDraft(draft, "draft");
+        setIsPublishInfoOpen(false);
+        showMessage("家教聘用发布接口暂未接入，已先保存为草稿。", { type: "warning" });
+      } catch {
+        showMessage("发布草稿保存失败，请检查浏览器存储权限。", { type: "error" });
+      }
       return;
     }
 
@@ -130,7 +141,7 @@ export function usePublishInfoFlow({
       try {
         saveLocalPublishInfoDraft(draft, "draft");
         setIsPublishInfoOpen(false);
-        showMessage("当前仅委托和回收接入真实发布，已先保存为草稿。", { type: "warning" });
+        showMessage("当前仅委托、回收和家教招募接入真实发布，已先保存为草稿。", { type: "warning" });
       } catch {
         showMessage("发布草稿保存失败，请检查浏览器存储权限。", { type: "error" });
       }

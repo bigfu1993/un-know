@@ -24,13 +24,13 @@ export function useOverlayController() {
   }
 
   /** 关闭家教相关全局弹窗，避免路由切换后残留。 */
-  function closeTutorDialogs() {
+  function closeTutorOverlays() {
     setIsTutorCalendarOpen(false);
     setIsTutorCertificationInfoOpen(false);
   }
 
   /** 关闭狩猎快捷相关弹窗，保持页面切换后的浮层状态一致。 */
-  function closeHuntingShortcutDialogs() {
+  function closeHuntingShortcutOverlays() {
     setIsHuntingRecommendationOpen(false);
     setIsHuntingProjectOpen(false);
   }
@@ -45,8 +45,8 @@ export function useOverlayController() {
   /** 路由或主模块切换时关闭所有跨页面残留浮层。 */
   function closeRouteOverlays() {
     closeFloatingPanels();
-    closeTutorDialogs();
-    closeHuntingShortcutDialogs();
+    closeTutorOverlays();
+    closeHuntingShortcutOverlays();
   }
 
   /** 点击头像时打开我的弹窗，双击头像时切换快捷入口展开状态。 */
@@ -78,9 +78,9 @@ export function useOverlayController() {
 
   return {
     closeFloatingPanels,
-    closeHuntingShortcutDialogs,
+    closeHuntingShortcutOverlays,
     closeRouteOverlays,
-    closeTutorDialogs,
+    closeTutorOverlays,
     handleAvatarClick,
     isHuntingProjectOpen,
     isHuntingRecommendationOpen,

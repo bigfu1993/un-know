@@ -97,7 +97,7 @@ export function ChatModule({
           <header className="flow-card compact p-[12px]">
             <div className="card-title flex items-center justify-between gap-[10px]">
               <MessageCircle size={18} />
-              <div>
+              <div className="chat-window-title-copy">
                 <strong>{activeConversation?.title ?? "聊天窗口"}</strong>
                 <span>{activeConversation?.peer.nickname ?? "请选择会话"}</span>
               </div>

@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     AutoImport({
       dts: path.resolve(__dirname, "src/auto-imports.d.ts"),
-      dirs: ["src/components/**", "src/pages/**", "src/shared/**", "src/store/**", "src/tools/**", "src/types/*.ts"],
+      dirs: ["src/components/**", "src/pages/**", "src/shared/**", "src/store/**", "src/tools/**", "src/types/*.ts", "src/ui/**"],
       imports: [
         "react",
         {
@@ -103,6 +103,7 @@ export default defineConfig({
       "@store": path.resolve(__dirname, "src/store"),
       "@tools": path.resolve(__dirname, "src/tools"),
       "@app-types": path.resolve(__dirname, "src/types"),
+      "@ui": path.resolve(__dirname, "src/ui"),
       "@unknown/api-client/": path.resolve(__dirname, "../packages/api-client/src/"),
       "@unknown/api-client": path.resolve(__dirname, "../packages/api-client/src"),
       "@unknown/domain": path.resolve(__dirname, "../packages/domain/src"),

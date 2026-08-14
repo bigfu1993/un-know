@@ -197,11 +197,6 @@ export function getTutorTaskStatusToneClassName(tone: TutorTaskStatusTone) {
   return "";
 }
 
-/** 判断候选人可用时间是否应在当前节点隐藏。 */
-export function getTutorTaskCandidateAvailability(candidate: TutorApplicationCandidate) {
-  return candidate.availability || "待补充";
-}
-
 /** 获取家教任务卡片状态展示行，家长主卡支持展示需求状态和申请状态两行。 */
 export function getTutorTaskStatusLabels(status?: string, role?: Role) {
   if (
@@ -224,6 +219,11 @@ export function getTutorTaskStatusLabels(status?: string, role?: Role) {
   const statusLabel = getTutorTrialStatusLabel(status);
 
   return statusLabel ? [statusLabel] : [];
+}
+
+/** 判断家长端家教主卡是否仍处于发布中，取消入口展示后由后端接口做最终限制。 */
+function isParentRecruitingTutorOrder(order: ClientOrder, role: Role) {
+  return role === "parent" && order.category === "tutor" && ["发布中", "家教招募中"].some((status) => order.status.includes(status));
 }
 
 /** 创建家教任务纯模型，供订单卡片、申请列表和试课列表统一消费。 */
@@ -255,7 +255,7 @@ export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelO
     if (order.canRequestComplete && node === "trialing") {
       actions.add("requestTrialEnd");
     }
-    if (order.canRequestCancel) {
+    if (order.canRequestCancel || isParentRecruitingTutorOrder(order, role)) {
       actions.add("cancelDemand");
     }
     if (order.canCancelTutorApplication && (node === "applicationPending" || node === "trialScheduled")) {

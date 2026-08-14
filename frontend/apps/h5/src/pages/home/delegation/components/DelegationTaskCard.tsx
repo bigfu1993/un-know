@@ -2,12 +2,12 @@ import type { KeyboardEvent } from "react";
 import { Banknote, CheckCircle2, Crosshair, MapPin, MessageCircle, Tags, UserRound } from "lucide-react";
 import { formatCurrency } from "@shared/clientPageModel";
 import {
-  getDelegationAmountText,
   getDelegationDestination,
   getDelegationPrimaryActionLabel,
   getDelegationPublishTime,
   getDelegationPublisherText,
   getDelegationRequirementTags,
+  getHuntingTaskAmountText,
   isDelegationTaskLocked
 } from "@pages/home/delegation/model";
 
@@ -41,7 +41,7 @@ export function DelegationTaskCard({ onAccept, onContact, onOpen, task }: Delega
     >
       <div className="card-title flex items-center justify-between gap-[10px] min-w-0">
         <Crosshair size={18} />
-        <div>
+        <div className="delegation-task-title-copy">
           <strong>{task.title}</strong>
           <span>发布时间：{getDelegationPublishTime(task)}</span>
         </div>
@@ -59,7 +59,7 @@ export function DelegationTaskCard({ onAccept, onContact, onOpen, task }: Delega
         <span>
           <Banknote size={14} />
           委托金额：
-          <strong className="delegation-task-amount">{getDelegationAmountText(task)}</strong>
+          <strong className="delegation-task-amount">{getHuntingTaskAmountText(task)}</strong>
         </span>
         {task.depositRequired ? (
           <span>

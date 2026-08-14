@@ -8,7 +8,7 @@ export {}
 declare global {
   const AccountSummaryCard: typeof import('./components/SummaryCards/index').AccountSummaryCard
   const Activity: typeof import('react').Activity
-  const AddressEditorDialog: typeof import('./pages/Settings/components/SettingsDialogs').AddressEditorDialog
+  const AddressEditor: typeof import('./pages/settings/components/SettingsPanels').AddressEditor
   const AddressInfoForm: typeof import('./components/AddressInfoForm/index').AddressInfoForm
   const AlertCircle: typeof import('lucide-react').AlertCircle
   const App: typeof import('@h5/App').App
@@ -21,16 +21,17 @@ declare global {
   const CalendarClock: typeof import('lucide-react').CalendarClock
   const ChatModule: typeof import('./components/ChatModule/index').ChatModule
   const CheckCircle2: typeof import('lucide-react').CheckCircle2
-  const CheckoutSheet: typeof import('./components/WorkflowDialogs/index').CheckoutSheet
+  const CheckoutSheet: typeof import('./components/WorkflowOverlays/index').CheckoutSheet
   const ChevronRight: typeof import('lucide-react').ChevronRight
   const CircleDollarSign: typeof import('lucide-react').CircleDollarSign
   const ClipboardCheck: typeof import('lucide-react').ClipboardCheck
-  const ConfirmActionDialog: typeof import('./components/ConfirmActionDialog/index').ConfirmActionDialog
+  const ConfirmAction: typeof import('./components/ConfirmAction/index').ConfirmAction
   const Crosshair: typeof import('lucide-react').Crosshair
   const Delegation: typeof import('./pages/home/delegation/index').Delegation
-  const DelegationAmountDialog: typeof import('./pages/home/delegation/components/DelegationAmountDialog').DelegationAmountDialog
+  const DelegationAmount: typeof import('./pages/home/delegation/components/DelegationAmount').DelegationAmount
   const DelegationTaskCard: typeof import('./pages/home/delegation/components/DelegationTaskCard').DelegationTaskCard
-  const DelegationTaskDetailDialog: typeof import('./pages/home/delegation/components/DelegationTaskDetailDialog').DelegationTaskDetailDialog
+  const DelegationTaskDetail: typeof import('./pages/home/delegation/components/DelegationTaskDetail').DelegationTaskDetail
+  const DemandCard: typeof import('./pages/home/job/edu/components/DemandCard').DemandCard
   const Featured: typeof import('./pages/home/shop/index').Featured
   const Filter: typeof import('lucide-react').Filter
   const Fragment: typeof import('react').Fragment
@@ -40,54 +41,59 @@ declare global {
   const Header: typeof import('./components/AppShell/index').Header
   const Heart: typeof import('lucide-react').Heart
   const Home: typeof import('lucide-react').Home
-  const HuntingCertification: typeof import('./pages/home/delegation/HuntingCertification/index').HuntingCertification
+  const HuntingCertification: typeof import('./pages/home/delegation/hunting-certification/index').HuntingCertification
   const HuntingCertificationCard: typeof import('./components/HuntingCertificationCard/index').HuntingCertificationCard
-  const HuntingCertificationPromptDialog: typeof import('./pages/home/delegation/components/HuntingCertificationPromptDialog').HuntingCertificationPromptDialog
-  const HuntingProjectDialog: typeof import('./components/HuntingProjectDialog/index').HuntingProjectDialog
-  const HuntingRecommendationDialog: typeof import('./pages/home/delegation/components/HuntingRecommendationDialog').HuntingRecommendationDialog
+  const HuntingCertificationPrompt: typeof import('./pages/home/delegation/components/HuntingCertificationPrompt').HuntingCertificationPrompt
+  const HuntingProject: typeof import('./components/HuntingProject/index').HuntingProject
+  const HuntingRecommendation: typeof import('./pages/home/delegation/components/HuntingRecommendation').HuntingRecommendation
   const KeyRound: typeof import('lucide-react').KeyRound
+  const ListFilters: typeof import('./pages/home/job/edu/components/ListFilters').ListFilters
   const LogOut: typeof import('lucide-react').LogOut
-  const Login: typeof import('./pages/Login/index').Login
-  const LoginForm: typeof import('./pages/Login/components/LoginForm').LoginForm
-  const LoginRegisterCard: typeof import('./pages/Login/components/LoginRegisterCard').LoginRegisterCard
-  const Marketing: typeof import('./pages/Marketing/index').Marketing
+  const Login: typeof import('./pages/login/index').Login
+  const LoginForm: typeof import('./pages/login/components/LoginForm').LoginForm
+  const LoginRegisterCard: typeof import('./pages/login/components/LoginRegisterCard').LoginRegisterCard
+  const Marketing: typeof import('./pages/marketing/index').Marketing
   const Megaphone: typeof import('lucide-react').Megaphone
-  const MerchantSales: typeof import('./pages/MerchantSales/index').MerchantSales
+  const MerchantSales: typeof import('./pages/merchant-sales/index').MerchantSales
   const MessageCircle: typeof import('lucide-react').MessageCircle
-  const MessageToast: typeof import('./components/MessageToast/index').MessageToast
+  const MessageToast: typeof import('./ui/MessageToast/index').MessageToast
   const Metric: typeof import('./components/PageWidgets/index').Metric
-  const Mine: typeof import('./pages/Mine/index').Mine
+  const Mine: typeof import('./pages/mine/index').Mine
   const MinePopover: typeof import('./components/AppShell/index').MinePopover
+  const MineShortcut: typeof import('./components/AppShell/index').MineShortcut
+  const Modal: typeof import('./ui/Modal/index').Modal
   const Navigate: typeof import('react-router-dom').Navigate
-  const NicknameEditorDialog: typeof import('./pages/Settings/components/SettingsDialogs').NicknameEditorDialog
-  const OngoingOrdersDialog: typeof import('./components/WorkflowDialogs/index').OngoingOrdersDialog
+  const NicknameEditor: typeof import('./pages/settings/components/SettingsPanels').NicknameEditor
+  const OngoingOrders: typeof import('./components/WorkflowOverlays/index').OngoingOrders
   const OngoingOrdersList: typeof import('./components/OngoingOrdersList/index').OngoingOrdersList
-  const OngoingQuoteDialog: typeof import('./pages/home/delegation/components/OngoingQuoteDialog').OngoingQuoteDialog
+  const OngoingQuote: typeof import('./pages/home/delegation/components/OngoingQuote').OngoingQuote
+  const OngoingShortcut: typeof import('./components/WorkflowOverlays/index').OngoingShortcut
   const OrderModuleCard: typeof import('./components/OrderModuleCard/index').OrderModuleCard
-  const Orders: typeof import('./pages/Orders/index').Orders
+  const Orders: typeof import('./pages/orders/index').Orders
   const PackageCheck: typeof import('lucide-react').PackageCheck
   const PageShell: typeof import('./components/AppShell/index').PageShell
   const PartTime: typeof import('./pages/home/job/index').PartTime
   const PartTimeJobCard: typeof import('./components/PageWidgets/index').PartTimeJobCard
-  const PasswordResetCard: typeof import('./pages/Login/components/PasswordResetCard').PasswordResetCard
-  const PasswordResetDialog: typeof import('./pages/Settings/components/SettingsDialogs').PasswordResetDialog
-  const PhoneChangeDialog: typeof import('./pages/Settings/components/SettingsDialogs').PhoneChangeDialog
+  const PasswordReset: typeof import('./pages/settings/components/SettingsPanels').PasswordReset
+  const PasswordResetCard: typeof import('./pages/login/components/PasswordResetCard').PasswordResetCard
+  const PhoneChange: typeof import('./pages/settings/components/SettingsPanels').PhoneChange
   const Plus: typeof import('lucide-react').Plus
   const ProductListCard: typeof import('./components/PageWidgets/index').ProductListCard
-  const ProfileCompletionDialog: typeof import('./components/WorkflowDialogs/index').ProfileCompletionDialog
+  const ProfileCompletion: typeof import('./components/WorkflowOverlays/index').ProfileCompletion
   const ProfileContextCard: typeof import('./components/AppShell/index').ProfileContextCard
-  const PublishDraftConfirmDialog: typeof import('./components/PublishInfoDialog/index').PublishDraftConfirmDialog
-  const PublishInfoDialog: typeof import('./components/PublishInfoDialog/index').PublishInfoDialog
+  const PublishDraftConfirm: typeof import('./components/PublishInfo/DraftConfirm').PublishDraftConfirm
+  const PublishInfo: typeof import('./components/PublishInfo/index').PublishInfo
   const QueryClient: typeof import('@tanstack/react-query').QueryClient
   const QueryClientProvider: typeof import('@tanstack/react-query').QueryClientProvider
-  const RegisterForm: typeof import('./pages/Login/components/RegisterForm').RegisterForm
-  const RegistrationGuide: typeof import('./pages/Login/components/RegistrationGuide').RegistrationGuide
+  const QuickActionDock: typeof import('./components/AppShell/index').QuickActionDock
+  const RegisterForm: typeof import('./pages/login/components/RegisterForm').RegisterForm
+  const RegistrationGuide: typeof import('./pages/login/components/RegistrationGuide').RegistrationGuide
   const Route: typeof import('react-router-dom').Route
   const Routes: typeof import('react-router-dom').Routes
   const ScrollingTicker: typeof import('./components/ScrollingTicker/index').ScrollingTicker
   const SectionHeader: typeof import('./components/PageWidgets/index').SectionHeader
   const Settings: typeof import('lucide-react').Settings
-  const SettingsView: typeof import('./pages/Settings/index').SettingsView
+  const SettingsView: typeof import('./pages/settings/index').SettingsView
   const ShieldCheck: typeof import('lucide-react').ShieldCheck
   const ShoppingBag: typeof import('lucide-react').ShoppingBag
   const Smartphone: typeof import('lucide-react').Smartphone
@@ -122,17 +128,17 @@ declare global {
   const TrialScheduleCalendar: typeof import('./components/TrialScheduleCalendar/index').TrialScheduleCalendar
   const Truck: typeof import('lucide-react').Truck
   const Tutor: typeof import('./pages/home/job/edu/index').Tutor
-  const TutorApplicationsDialog: typeof import('./pages/home/job/edu/components/TutorApplicationsDialog').TutorApplicationsDialog
-  const TutorCalendarDialog: typeof import('./components/TutorCalendar/index').TutorCalendarDialog
+  const TutorApplications: typeof import('./pages/home/job/edu/components/TutorApplications').TutorApplications
+  const TutorCalendar: typeof import('./components/TutorCalendar/index').TutorCalendar
   const TutorCard: typeof import('./components/TutorCard/index').TutorCard
-  const TutorCertification: typeof import('./pages/home/job/edu/TutorCertification').TutorCertification
-  const TutorCertificationInfoDialog: typeof import('./components/TutorCertificationInfoDialog/index').TutorCertificationInfoDialog
-  const TutorQualificationInfoDialog: typeof import('./pages/Settings/components/SettingsDialogs').TutorQualificationInfoDialog
+  const TutorCertification: typeof import('./pages/home/job/edu/components/TutorCertification').TutorCertification
+  const TutorCertificationInfo: typeof import('./components/TutorCertificationInfo/index').TutorCertificationInfo
+  const TutorQualificationInfo: typeof import('./pages/settings/components/SettingsPanels').TutorQualificationInfo
   const TutorTrialJobCard: typeof import('./components/PageWidgets/index').TutorTrialJobCard
-  const TutorTrialListDialog: typeof import('./pages/home/job/edu/components/TutorApplicationsDialog').TutorTrialListDialog
-  const TutorTrialScheduleDialog: typeof import('./components/TutorTrialScheduleDialog/index').TutorTrialScheduleDialog
+  const TutorTrialList: typeof import('./pages/home/job/edu/components/TutorApplications').TutorTrialList
+  const TutorTrialSchedule: typeof import('./components/TutorTrialSchedule/index').TutorTrialSchedule
   const UserRound: typeof import('lucide-react').UserRound
-  const Wallet: typeof import('./pages/Wallet/index').Wallet
+  const Wallet: typeof import('./pages/wallet/index').Wallet
   const WalletCards: typeof import('lucide-react').WalletCards
   const WalletSummaryCard: typeof import('./components/SummaryCards/index').WalletSummaryCard
   const WorkbenchInfoCard: typeof import('./components/PageWidgets/index').WorkbenchInfoCard
@@ -157,7 +163,7 @@ declare global {
   const clientPublishPlatformLabels: typeof import('@unknown/domain').clientPublishPlatformLabels
   const createAddressBookItem: typeof import('./shared/clientPageModel').createAddressBookItem
   const createContext: typeof import('react').createContext
-  const createDefaultDaySchedule: typeof import('./components/TutorTrialScheduleDialog/model').createDefaultDaySchedule
+  const createDefaultDaySchedule: typeof import('./components/TutorTrialSchedule/model').createDefaultDaySchedule
   const createGlobalStore: typeof import('./store/global').createGlobalStore
   const createRef: typeof import('react').createRef
   const createRoot: typeof import('react-dom/client').createRoot
@@ -169,7 +175,7 @@ declare global {
   const filterProducts: typeof import('./shared/clientPageModel').filterProducts
   const formatCompactWalletAmount: typeof import('./tools/wallet').formatCompactWalletAmount
   const formatCurrency: typeof import('./shared/clientPageModel').formatCurrency
-  const formatTrialScheduleDate: typeof import('./components/TutorTrialScheduleDialog/model').formatTrialScheduleDate
+  const formatTrialScheduleDate: typeof import('./components/TutorTrialSchedule/model').formatTrialScheduleDate
   const formatTutorSubjects: typeof import('./shared/tutorModel').formatTutorSubjects
   const formatWalletAmount: typeof import('./tools/wallet').formatWalletAmount
   const forwardRef: typeof import('react').forwardRef
@@ -178,7 +184,6 @@ declare global {
   const getDefaultDeliveryMode: typeof import('./shared/clientPageModel').getDefaultDeliveryMode
   const getDefaultPrimaryTab: typeof import('@unknown/domain').getDefaultPrimaryTab
   const getDefaultRouteForRole: typeof import('./shared/clientPageModel').getDefaultRouteForRole
-  const getDelegationAmountText: typeof import('./pages/home/delegation/model').getDelegationAmountText
   const getDelegationArea: typeof import('./pages/home/delegation/model').getDelegationArea
   const getDelegationDestination: typeof import('./pages/home/delegation/model').getDelegationDestination
   const getDelegationLatestTimeLabel: typeof import('./tools/publishInfo').getDelegationLatestTimeLabel
@@ -189,7 +194,7 @@ declare global {
   const getDelegationRequirementTags: typeof import('./pages/home/delegation/model').getDelegationRequirementTags
   const getDelegationTimeWeight: typeof import('./pages/home/delegation/model').getDelegationTimeWeight
   const getDeliveryFee: typeof import('./shared/clientPageModel').getDeliveryFee
-  const getEnabledPeriodSummaries: typeof import('./components/TutorTrialScheduleDialog/model').getEnabledPeriodSummaries
+  const getEnabledPeriodSummaries: typeof import('./components/TutorTrialSchedule/model').getEnabledPeriodSummaries
   const getErrorMessage: typeof import('./tools/messageToast').getErrorMessage
   const getFilledFieldCount: typeof import('./tools/validation').getFilledFieldCount
   const getFilledProfileDraft: typeof import('./shared/clientPageModel').getFilledProfileDraft
@@ -220,11 +225,11 @@ declare global {
   const getStoredProfileDraft: typeof import('./shared/clientPageModel').getStoredProfileDraft
   const getTabFromRoute: typeof import('./shared/clientPageModel').getTabFromRoute
   const getTabTitle: typeof import('./shared/clientPageModel').getTabTitle
-  const getTrialScheduleCalendarItems: typeof import('./components/TutorTrialScheduleDialog/model').getTrialScheduleCalendarItems
-  const getTrialScheduleDateKeysFromSummary: typeof import('./components/TutorTrialScheduleDialog/model').getTrialScheduleDateKeysFromSummary
-  const getTrialSchedulePlan: typeof import('./components/TutorTrialScheduleDialog/model').getTrialSchedulePlan
-  const getTrialScheduleSummaryLines: typeof import('./components/TutorTrialScheduleDialog/model').getTrialScheduleSummaryLines
-  const getTrialScheduleValueFromSummary: typeof import('./components/TutorTrialScheduleDialog/model').getTrialScheduleValueFromSummary
+  const getTrialScheduleCalendarItems: typeof import('./components/TutorTrialSchedule/model').getTrialScheduleCalendarItems
+  const getTrialScheduleDateKeysFromSummary: typeof import('./components/TutorTrialSchedule/model').getTrialScheduleDateKeysFromSummary
+  const getTrialSchedulePlan: typeof import('./components/TutorTrialSchedule/model').getTrialSchedulePlan
+  const getTrialScheduleSummaryLines: typeof import('./components/TutorTrialSchedule/model').getTrialScheduleSummaryLines
+  const getTrialScheduleValueFromSummary: typeof import('./components/TutorTrialSchedule/model').getTrialScheduleValueFromSummary
   const getTutorCalendarCells: typeof import('./tools/tutorCalendar').getTutorCalendarCells
   const getTutorCalendarTasks: typeof import('./tools/tutorCalendar').getTutorCalendarTasks
   const getTutorCardDataFromDraft: typeof import('./components/TutorCard/model').getTutorCardDataFromDraft
@@ -233,7 +238,6 @@ declare global {
   const getTutorDemandBudgetLabel: typeof import('./tools/tutorDemand').getTutorDemandBudgetLabel
   const getTutorMonthKey: typeof import('./tools/tutorCalendar').getTutorMonthKey
   const getTutorServiceScheduleSummaryFromOrderDetail: typeof import('./tools/tutorTrial').getTutorServiceScheduleSummaryFromOrderDetail
-  const getTutorTaskCandidateAvailability: typeof import('./tools/tutorTaskWorkflow').getTutorTaskCandidateAvailability
   const getTutorTaskNode: typeof import('./tools/tutorTaskWorkflow').getTutorTaskNode
   const getTutorTaskStatusLabels: typeof import('./tools/tutorTaskWorkflow').getTutorTaskStatusLabels
   const getTutorTaskStatusTone: typeof import('./tools/tutorTaskWorkflow').getTutorTaskStatusTone
@@ -258,9 +262,7 @@ declare global {
   const hasValidCounterQuoteAmount: typeof import('./pages/home/delegation/model').hasValidCounterQuoteAmount
   const hideMessage: typeof import('./tools/messageToast').hideMessage
   const huntingCertificationStatusLabels: typeof import('./components/HuntingCertificationCard/model').huntingCertificationStatusLabels
-  const isDelegationFulfillingStatus: typeof import('./pages/home/delegation/model').isDelegationFulfillingStatus
   const isDelegationListVisible: typeof import('./pages/home/delegation/model').isDelegationListVisible
-  const isDelegationQuoteStatus: typeof import('./pages/home/delegation/model').isDelegationQuoteStatus
   const isDelegationTaskLocked: typeof import('./pages/home/delegation/model').isDelegationTaskLocked
   const isHuntingCancelledStatus: typeof import('./pages/home/delegation/model').isHuntingCancelledStatus
   const isHuntingCompletedStatus: typeof import('./pages/home/delegation/model').isHuntingCompletedStatus
@@ -277,6 +279,7 @@ declare global {
   const isTutorApplicationListStatus: typeof import('./tools/tutorTrial').isTutorApplicationListStatus
   const isTutorApplicationPendingStatus: typeof import('./tools/tutorTrial').isTutorApplicationPendingStatus
   const isTutorFormalServiceStatus: typeof import('./tools/tutorTrial').isTutorFormalServiceStatus
+  const isTutorPublishType: typeof import('./tools/publishInfo').isTutorPublishType
   const isTutorServiceConfirmingStatus: typeof import('./tools/tutorTrial').isTutorServiceConfirmingStatus
   const isTutorServiceEndConfirmingStatus: typeof import('./tools/tutorTrial').isTutorServiceEndConfirmingStatus
   const isTutorServiceInvalidStatus: typeof import('./tools/tutorTrial').isTutorServiceInvalidStatus
@@ -290,6 +293,7 @@ declare global {
   const isTutorTrialResultProcessingStatus: typeof import('./tools/tutorTrial').isTutorTrialResultProcessingStatus
   const isTutorTrialSettledServicePendingStatus: typeof import('./tools/tutorTrial').isTutorTrialSettledServicePendingStatus
   const isTutorTrialingStatus: typeof import('./tools/tutorTrial').isTutorTrialingStatus
+  const isTutorWageAmountRequired: typeof import('./tools/publishInfo').isTutorWageAmountRequired
   const jobFilters: typeof import('./shared/clientPageModel').jobFilters
   const lazy: typeof import('react').lazy
   const localAuthCode: typeof import('./tools/localAuth').localAuthCode
@@ -302,6 +306,7 @@ declare global {
   const moduleRoutePaths: typeof import('./shared/clientPageModel').moduleRoutePaths
   const normalizeAddressBookItems: typeof import('./shared/clientPageModel').normalizeAddressBookItems
   const normalizeByKey: typeof import('./tools/validation').normalizeByKey
+  const normalizeTutorWageMode: typeof import('./tools/publishInfo').normalizeTutorWageMode
   const parentChildInfoFields: typeof import('./shared/clientPageModel').parentChildInfoFields
   const parentRegistrationAddressFields: typeof import('./shared/clientPageModel').parentRegistrationAddressFields
   const parentRegistrationProfileTemplate: typeof import('./shared/clientPageModel').parentRegistrationProfileTemplate
@@ -332,7 +337,7 @@ declare global {
   const stringifyTutorSubjectLevelItems: typeof import('./components/TutorCard/model').stringifyTutorSubjectLevelItems
   const subscribeMessageToast: typeof import('./tools/messageToast').subscribeMessageToast
   const tabIcons: typeof import('./shared/clientPageModel').tabIcons
-  const trialSchedulePeriods: typeof import('./components/TutorTrialScheduleDialog/model').trialSchedulePeriods
+  const trialSchedulePeriods: typeof import('./components/TutorTrialSchedule/model').trialSchedulePeriods
   const tutorCertificationStatusLabels: typeof import('./components/TutorCard/model').tutorCertificationStatusLabels
   const tutorGradeOptions: typeof import('./components/TutorCard/model').tutorGradeOptions
   const tutorLevelOptions: typeof import('./components/TutorCard/model').tutorLevelOptions
@@ -344,6 +349,7 @@ declare global {
   const tutorTrialAvailabilityDetailMarker: typeof import('./tools/tutorTrial').tutorTrialAvailabilityDetailMarker
   const tutorTrialFeeDetailMarker: typeof import('./tools/tutorTrial').tutorTrialFeeDetailMarker
   const tutorTrialScheduleDetailMarker: typeof import('./tools/tutorTrial').tutorTrialScheduleDetailMarker
+  const tutorWageModeOptions: typeof import('./tools/publishInfo').tutorWageModeOptions
   const use: typeof import('react').use
   const useActionState: typeof import('react').useActionState
   const useApplyTutorTrial: typeof import('@unknown/hooks').useApplyTutorTrial
@@ -405,8 +411,8 @@ declare global {
   export type { ChatModuleProps } from './components/ChatModule/index'
   import('./components/ChatModule/index')
   // @ts-ignore
-  export type { ConfirmActionDialogProps } from './components/ConfirmActionDialog/index'
-  import('./components/ConfirmActionDialog/index')
+  export type { ConfirmActionProps } from './components/ConfirmAction/index'
+  import('./components/ConfirmAction/index')
   // @ts-ignore
   export type { HuntingCertificationCardProps } from './components/HuntingCertificationCard/index'
   import('./components/HuntingCertificationCard/index')
@@ -420,11 +426,11 @@ declare global {
   export type { OrderModuleCounts } from './components/OrderModuleCard/model'
   import('./components/OrderModuleCard/model')
   // @ts-ignore
-  export type { PublishDraftConfirmDialogProps } from './components/PublishInfoDialog/PublishDraftConfirmDialog'
-  import('./components/PublishInfoDialog/PublishDraftConfirmDialog')
+  export type { PublishDraftConfirmProps } from './components/PublishInfo/DraftConfirm'
+  import('./components/PublishInfo/DraftConfirm')
   // @ts-ignore
-  export type { PublishInfoDialogProps } from './components/PublishInfoDialog/index'
-  import('./components/PublishInfoDialog/index')
+  export type { PublishInfoProps } from './components/PublishInfo/index'
+  import('./components/PublishInfo/index')
   // @ts-ignore
   export type { ScrollingTickerDirection, ScrollingTickerProps } from './components/ScrollingTicker/index'
   import('./components/ScrollingTicker/index')
@@ -432,10 +438,10 @@ declare global {
   export type { SummaryCardVariant, AccountSummaryCardProps, WalletSummaryCardProps } from './components/SummaryCards/index'
   import('./components/SummaryCards/index')
   // @ts-ignore
-  export type { TrialScheduleCalendarPeriod, TrialScheduleCalendarItem, TrialScheduleCalendarProps } from './components/TrialScheduleCalendar/index'
+  export type { TrialScheduleCalendarPeriod, TrialScheduleCalendarMode, TrialScheduleCalendarItem, TrialScheduleCalendarProps } from './components/TrialScheduleCalendar/index'
   import('./components/TrialScheduleCalendar/index')
   // @ts-ignore
-  export type { TutorCalendarTask, TutorCalendarDialogProps } from './components/TutorCalendar/index'
+  export type { TutorCalendarTask, TutorCalendarProps } from './components/TutorCalendar/index'
   import('./components/TutorCalendar/index')
   // @ts-ignore
   export type { TutorCardProps } from './components/TutorCard/index'
@@ -444,20 +450,20 @@ declare global {
   export type { TutorCardMode, TutorSubjectLevelItem, TutorCardData, TutorCertificationStatus } from './components/TutorCard/model'
   import('./components/TutorCard/model')
   // @ts-ignore
-  export type { TutorCertificationInfoSaveMode, TutorCertificationInfoDialogProps } from './components/TutorCertificationInfoDialog/index'
-  import('./components/TutorCertificationInfoDialog/index')
+  export type { TutorCertificationInfoSaveMode, TutorCertificationInfoProps } from './components/TutorCertificationInfo/index'
+  import('./components/TutorCertificationInfo/index')
   // @ts-ignore
-  export type { TrialSchedulePeriodKey, TrialSchedulePeriodConfig, TrialSchedulePeriodState, TrialScheduleDraft, TrialSchedulePlan, TrialScheduleValue, TrialScheduleCalendarMarker } from './components/TutorTrialScheduleDialog/model'
-  import('./components/TutorTrialScheduleDialog/model')
-  // @ts-ignore
-  export type { AddressEditorMode, PhoneChangeDraft, PasswordResetDraft } from './pages/Settings/components/SettingsDialogs'
-  import('./pages/Settings/components/SettingsDialogs')
+  export type { TrialSchedulePeriodKey, TrialSchedulePeriodConfig, TrialSchedulePeriodState, TrialScheduleDraft, TrialSchedulePlan, TrialScheduleValue, TrialScheduleCalendarMarker } from './components/TutorTrialSchedule/model'
+  import('./components/TutorTrialSchedule/model')
   // @ts-ignore
   export type { DelegationProps } from './pages/home/delegation/index'
   import('./pages/home/delegation/index')
   // @ts-ignore
   export type { DelegationSortMode, DelegationToolbarPanel } from './pages/home/delegation/model'
   import('./pages/home/delegation/model')
+  // @ts-ignore
+  export type { AddressEditorMode, PhoneChangeDraft, PasswordResetDraft } from './pages/settings/components/SettingsPanels'
+  import('./pages/settings/components/SettingsPanels')
   // @ts-ignore
   export type { StoredPasswordCredential, PasswordCredentialStore, PendingRegistrationRecord, PendingRegistrationStore } from './shared/clientPageModel'
   import('./shared/clientPageModel')
@@ -486,7 +492,7 @@ declare global {
   export type { H5RuntimeGlobals, ApiEnvelope, PasswordResetResult, LoginProps, LoginFormProps, RegisterFormProps, LoginRegisterCardProps, PasswordResetCardProps, RegistrationGuideProps } from './types/auth'
   import('./types/auth')
   // @ts-ignore
-  export type { HuntingAreaInputMode, HuntingProjectStop, HuntingProjectDraft, HuntingProject, HuntingProjectDialogProps } from './types/hunting-project'
+  export type { HuntingAreaInputMode, HuntingProjectStop, HuntingProjectDraft, HuntingProjectProps } from './types/hunting-project'
   import('./types/hunting-project')
   // @ts-ignore
   export type { MessageToastType, MessageToastState, MessageToastOptions } from './types/message-toast'
@@ -497,4 +503,7 @@ declare global {
   // @ts-ignore
   export type { ChildProfileOption, TutorTrialJob, TutorApplicationCandidate, TutorWorkflowAction, TutorWorkflowActionRequest } from './types/tutor-workflow'
   import('./types/tutor-workflow')
+  // @ts-ignore
+  export type { ModalProps } from './ui/Modal/index'
+  import('./ui/Modal/index')
 }

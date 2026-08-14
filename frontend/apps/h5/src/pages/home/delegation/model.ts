@@ -229,11 +229,6 @@ export function getDelegationPublishTime(task: HuntingTask) {
   return task.publishTime || "平台同步";
 }
 
-/** 获取委托金额展示文案。 */
-export function getDelegationAmountText(task: HuntingTask) {
-  return getHuntingTaskAmountText(task);
-}
-
 /** 获取委托发布者展示文案，手机号由服务端返回脱敏值。 */
 export function getDelegationPublisherText(task: HuntingTask) {
   return `${task.publisher.nickname || "平台用户"} · ${task.publisher.phone || "暂无手机号"}`;
@@ -251,19 +246,9 @@ export function getDelegationRequirementTags(task: HuntingTask) {
   return requirementItems.length > 0 ? requirementItems : ["无特殊要求"];
 }
 
-/** 判断委托是否处于报价阶段。 */
-export function isDelegationQuoteStatus(task: HuntingTask) {
-  return isHuntingQuoteStatus(task);
-}
-
 /** 委托任务池只展示发布和报价状态。 */
 export function isDelegationListVisible(task: HuntingTask) {
-  return isHuntingPublishedStatus(task) || isDelegationQuoteStatus(task);
-}
-
-/** 判断委托是否处于履约中。 */
-export function isDelegationFulfillingStatus(task: HuntingTask) {
-  return isHuntingFulfillingStatus(task);
+  return isHuntingPublishedStatus(task) || isHuntingQuoteStatus(task);
 }
 
 /** 判断委托是否已进入不可重复领取/报价的业务状态。 */
@@ -275,14 +260,14 @@ export function isDelegationTaskLocked(task: HuntingTask) {
 
 /** 获取委托卡片主按钮文案。 */
 export function getDelegationPrimaryActionLabel(task: HuntingTask) {
-  if (isDelegationFulfillingStatus(task)) {
+  if (isHuntingFulfillingStatus(task)) {
     return "履约中";
   }
   if (task.status.includes("完成") || task.status.includes("取消") || task.status.includes("异常")) {
     return task.status;
   }
 
-  return isDelegationQuoteStatus(task) || task.amountNegotiable || task.fee <= 0 ? "报价" : "接受委托";
+  return isHuntingQuoteStatus(task) || task.amountNegotiable || task.fee <= 0 ? "报价" : "接受委托";
 }
 
 /** 获取狩猎快捷开启后系统推荐的委托任务。 */

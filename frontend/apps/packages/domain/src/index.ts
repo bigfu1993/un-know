@@ -345,8 +345,12 @@ export interface TutorDemand {
   title?: string;
   description?: string;
   addressLabel?: string;
+  availableDuration?: number;
+  favoriteCount?: number;
+  goodReviewCount?: number;
   period?: string;
   publisher?: UserNickname;
+  recommendationScore?: number;
   sourceType?: "tutorDemand" | "tutorStudent";
   applicants: TutorApplicant[];
 }
@@ -364,6 +368,7 @@ export interface PublishTutorDemandRequest {
   periodEnd: string;
   trialEnabled?: boolean;
   trialDuration?: string;
+  wageAmount?: number | null;
   wageMode?: string;
   schoolTags?: string[];
   requirement?: string;

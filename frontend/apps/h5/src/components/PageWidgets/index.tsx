@@ -1,10 +1,10 @@
-import { TutorTrialScheduleDialog } from "@components/TutorTrialScheduleDialog";
-import type { TrialScheduleValue } from "@components/TutorTrialScheduleDialog/model";
+import { TutorTrialSchedule } from "@components/TutorTrialSchedule";
+import type { TrialScheduleValue } from "@components/TutorTrialSchedule/model";
 
 /** 业务页面标题栏属性。 */
 interface SectionHeaderProps {
   countText?: string;
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
 }
 
@@ -49,7 +49,7 @@ export function SectionHeader({ eyebrow, title, countText = "" }: SectionHeaderP
   return (
     <section className="section-title mb-[12px] mt-[20px] flex items-end justify-between gap-[12px]">
       <div className="min-w-0">
-        <p>{eyebrow}</p>
+        {eyebrow ? <p>{eyebrow}</p> : null}
         <h2>{title}</h2>
       </div>
       <span>{countText}</span>
@@ -79,7 +79,7 @@ export function WorkbenchInfoCard({
     <article className="flow-card compact workbench-info-card p-[13px]">
       <div className="card-title flex items-center justify-between gap-[10px]">
         <Icon size={18} />
-        <div>
+        <div className="workbench-info-copy">
           <strong>{title}</strong>
           <span>{description}</span>
         </div>
@@ -106,7 +106,7 @@ export function WorkbenchQuickEntryCard({
     <article className="flow-card compact workbench-quick-card p-[13px]">
       <div className="card-title flex items-center justify-between gap-[10px]">
         <Icon size={18} />
-        <div>
+        <div className="workbench-quick-copy">
           <strong>{title}</strong>
           <span>{description}</span>
         </div>
@@ -125,7 +125,7 @@ function QuickEntry({ icon: Icon, label, text }: WorkbenchQuickEntryItem) {
   return (
     <article className="quick-entry flex items-start gap-[10px] p-[10px]">
       <Icon size={18} />
-      <div>
+      <div className="quick-entry-copy">
         <strong>{label}</strong>
         <span>{text}</span>
       </div>
@@ -172,7 +172,7 @@ export function ProductListCard({
         </div>
         <div className="product-actions mt-[12px] flex flex-wrap items-center justify-between gap-[10px]">
           <span>合计 {formatCurrency(payableAmount)}</span>
-          <div>
+          <div className="product-card-action-buttons">
             <button
               className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
               type="button"
@@ -208,7 +208,7 @@ export function PartTimeJobCard({ job, mode = "student" }: { job: PartTimeJob; m
       <article className="flow-card p-[14px]">
         <div className="card-title flex items-center justify-between gap-[10px]">
           <BriefcaseBusiness size={18} />
-          <div>
+          <div className="merchant-job-title-copy">
             <strong>{job.title}</strong>
             <span>负责人：王店长 188****2201</span>
           </div>
@@ -223,7 +223,7 @@ export function PartTimeJobCard({ job, mode = "student" }: { job: PartTimeJob; m
         </div>
         <div className="product-actions mt-[12px] flex flex-wrap items-center justify-between gap-[10px]">
           <span>{job.fundingState}，可配置签到保证金。</span>
-          <div>
+          <div className="merchant-job-action-buttons">
             <button
               className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
               type="button"
@@ -258,7 +258,7 @@ export function PartTimeJobCard({ job, mode = "student" }: { job: PartTimeJob; m
     <article className="flow-card p-[14px]">
       <div className="card-title flex items-center justify-between gap-[10px]">
         <BriefcaseBusiness size={18} />
-        <div>
+        <div className="student-job-title-copy">
           <strong>{job.title}</strong>
           <span>{job.publisher.nickname}</span>
         </div>
@@ -278,7 +278,7 @@ export function PartTimeJobCard({ job, mode = "student" }: { job: PartTimeJob; m
       </div>
       <div className="product-actions mt-[12px] flex flex-wrap items-center justify-between gap-[10px]">
         <span>{job.signRule}</span>
-        <div>
+        <div className="student-job-action-buttons">
           <button
             className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
             type="button"
@@ -330,7 +330,7 @@ export function TutorTrialJobCard({
       <article className="flow-card tutor-trial-job-card p-[14px]">
         <div className="card-title flex items-center justify-between gap-[10px]">
           <GraduationCap size={18} />
-          <div>
+          <div className="tutor-trial-job-title-copy">
             <strong>{job.title}</strong>
             <span>{job.publisher.nickname}</span>
           </div>
@@ -345,7 +345,7 @@ export function TutorTrialJobCard({
         </div>
         <div className="product-actions mt-[12px] flex flex-wrap items-center justify-between gap-[10px]">
           <span>{job.requirement}</span>
-          <div>
+          <div className="tutor-trial-job-action-buttons">
             <button
               className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
               type="button"
@@ -364,7 +364,7 @@ export function TutorTrialJobCard({
         </div>
       </article>
       {isApplyScheduleOpen ? (
-        <TutorTrialScheduleDialog
+        <TutorTrialSchedule
           confirmLabel={isApplyingTrial ? "提交中" : "提交申请"}
           initialValue={null}
           isConfirming={isApplyingTrial}

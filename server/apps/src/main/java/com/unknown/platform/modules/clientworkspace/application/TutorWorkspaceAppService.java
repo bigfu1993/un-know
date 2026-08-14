@@ -124,7 +124,11 @@ public class TutorWorkspaceAppService {
     String addressLabel = support.defaultText(request.addressLabel(), "地址待补充");
     String periodStart = support.defaultText(request.periodStart(), "待定");
     String periodEnd = support.defaultText(request.periodEnd(), "待定");
-    String budget = Boolean.TRUE.equals(request.trialEnabled()) ? "需要试课" : "待议价";
+    String wageMode = normalizedTutorWageMode(request.wageMode());
+    long wageAmountCents = isTutorWageAmountRequired(wageMode)
+        ? support.toPositiveCents(request.wageAmount(), "TUTOR_WAGE_AMOUNT_REQUIRED", "请输入家教计薪金额")
+        : 0L;
+    String budget = tutorWageBudgetLabel(wageMode, wageAmountCents, Boolean.TRUE.equals(request.trialEnabled()));
     String school = addressLabel;
 
     jdbcTemplate.update(
@@ -154,7 +158,7 @@ public class TutorWorkspaceAppService {
         periodEnd,
         Boolean.TRUE.equals(request.trialEnabled()),
         support.defaultText(request.trialDuration(), ""),
-        support.defaultText(request.wageMode(), "按课时结算"),
+        wageMode,
         support.joinTags(request.schoolTags())
     );
     return findTutorDemand(publicId);
@@ -795,12 +799,12 @@ public class TutorWorkspaceAppService {
             boolean isRecruiting = isRecruitingTutorDemandStatus(status);
             boolean isDemandInProgress = !isClosed && (isFormalTutorDemandStatus(status) || !activeApplicationPublicId.isBlank());
             boolean canManageRecruitingDemand = isRecruiting && !isDemandInProgress;
-            boolean canCancelPublishedDemand = canManageRecruitingDemand && !hasTrialSchedule;
+            boolean canCancelPublishedDemand = canManageRecruitingDemand;
             boolean isServiceEndRequested = isSameTutorApplicationStatus(activeApplicationStatus, TUTOR_APPLICANT_STATUS_SERVICE_END_CONFIRMING);
             String displayStatus = isDemandInProgress
                 ? TUTOR_DEMAND_STATUS_IN_PROGRESS
                     + (isServiceEndRequested ? " · " + TUTOR_DEMAND_STATUS_SERVICE_END_REQUESTED : "")
-                : tutorDemandOrderStatus(status);
+                : tutorDemandStatusLabel(status);
             String scheduleDetail = isServiceSchedulePending || activeApplicationSchedule.isBlank()
                 ? ""
                 : " · 课程安排：" + activeApplicationSchedule;
@@ -1424,6 +1428,38 @@ public class TutorWorkspaceAppService {
   }
 
 
+  /** 兼容旧版家教计薪文案，并收敛到当前发布表单口径。 */
+  private String normalizedTutorWageMode(String wageMode) {
+    String normalizedWageMode = support.defaultText(wageMode, "按小时结算");
+
+    return switch (normalizedWageMode) {
+      case "按课时结算" -> "按小时结算";
+      case "按次结算" -> "按天结算";
+      case "按小时结算", "按天结算", "汇总结算" -> normalizedWageMode;
+      default -> "汇总结算";
+    };
+  }
+
+
+  private boolean isTutorWageAmountRequired(String wageMode) {
+    return "按小时结算".equals(wageMode) || "按天结算".equals(wageMode);
+  }
+
+
+  /** 生成家教兼职预算展示文案，供学生列表和家长进行中卡片共用。 */
+  private String tutorWageBudgetLabel(String wageMode, long wageAmountCents, boolean trialEnabled) {
+    String trialLabel = trialEnabled ? " · 需要试课" : "";
+
+    if (!isTutorWageAmountRequired(wageMode)) {
+      return wageMode + trialLabel;
+    }
+
+    String unit = "按天结算".equals(wageMode) ? "天" : "小时";
+
+    return wageMode + " · ¥" + support.toAmount(wageAmountCents) + "/" + unit + trialLabel;
+  }
+
+
   private boolean isRecruitingTutorDemandStatus(String status) {
     return TUTOR_DEMAND_STATUS_RECRUITING.equals(status) || TUTOR_DEMAND_STATUS_RECRUITING_LEGACY.equals(status);
   }
@@ -1498,11 +1534,6 @@ public class TutorWorkspaceAppService {
       return TUTOR_DEMAND_STATUS_IN_PROGRESS;
     }
     return status;
-  }
-
-
-  private String tutorDemandOrderStatus(String demandStatus) {
-    return tutorDemandStatusLabel(demandStatus);
   }
 
 

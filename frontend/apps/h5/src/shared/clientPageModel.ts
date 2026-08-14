@@ -59,6 +59,7 @@ export const jobFilters: Array<{ key: JobFilter; label: string }> = [
 export const tutorSorts: Array<{ key: TutorSort; label: string }> = [
   { key: "recommended", label: "系统推荐" },
   { key: "favorite", label: "收藏优先" },
+  { key: "goodReview", label: "好评优先" },
   { key: "hired", label: "受聘次数" },
   { key: "duration", label: "可兼职时长" }
 ];

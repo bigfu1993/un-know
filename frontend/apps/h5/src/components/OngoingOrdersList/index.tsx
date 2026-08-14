@@ -1,9 +1,10 @@
 import "./index.less";
-import { ConfirmActionDialog } from "@components/ConfirmActionDialog";
+import { ConfirmAction } from "@components/ConfirmAction";
+import { Modal } from "@ui/Modal";
 import { useCancelTutorApplication } from "@unknown/hooks";
 import { TrialScheduleCalendar, type TrialScheduleCalendarItem, type TrialScheduleCalendarPeriod } from "@components/TrialScheduleCalendar";
-import { TutorTrialScheduleDialog } from "@components/TutorTrialScheduleDialog";
-import { getTrialScheduleValueFromSummary, type TrialScheduleValue } from "@components/TutorTrialScheduleDialog/model";
+import { TutorTrialSchedule } from "@components/TutorTrialSchedule";
+import { getTrialScheduleValueFromSummary, type TrialScheduleValue } from "@components/TutorTrialSchedule/model";
 import { getErrorMessage, showMessage } from "@tools/messageToast";
 import {
   getTutorTrialAvailabilitySummaryFromOrderDetail,
@@ -297,7 +298,7 @@ function getActiveScheduleSections(sections: TutorSchedulePreviewSection[], acti
 }
 
 /** 学生端查看家长提交的试课日程弹窗。 */
-function TrialSchedulePreviewDialog({
+function TrialSchedulePreview({
   onClose,
   onConfirmTrial,
   onTutorWorkflowAction,
@@ -346,12 +347,15 @@ function TrialSchedulePreviewDialog({
   }
 
   return (
-    <section className="checkout-sheet" aria-label={previewConfig?.title ?? "时间安排详情"}>
-      <div className="sheet-backdrop" onClick={onClose} />
-      <article className="sheet-panel trial-schedule-preview-sheet mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]">
+    <>
+      <Modal
+        ariaLabel={previewConfig?.title ?? "时间安排详情"}
+        onClose={onClose}
+        panelClassName="trial-schedule-preview-sheet mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]"
+      >
         <div className="card-title flex items-center justify-between gap-[10px]">
           <CalendarClock size={18} />
-          <div>
+          <div className="trial-schedule-preview-title-copy">
             <strong>{previewConfig?.title ?? "时间安排"}</strong>
             <span>{previewConfig?.subtitle ?? order.title}</span>
           </div>
@@ -366,6 +370,7 @@ function TrialSchedulePreviewDialog({
               activeDate={selectedDate}
               initialDate={selectedDates[0]}
               maxSelectedDates={selectedDates.length}
+              mode="view"
               onActiveDateChange={setSelectedDate}
               scheduleItems={scheduleItems}
               selectedDates={selectedDates}
@@ -419,9 +424,9 @@ function TrialSchedulePreviewDialog({
             ) : null}
           </div>
         ) : null}
-      </article>
+      </Modal>
       {isConflictScheduleOpen ? (
-        <TutorTrialScheduleDialog
+        <TutorTrialSchedule
           confirmLabel={isSubmittingConflictSchedule ? "提交中" : "重新提交"}
           initialValue={initialConflictScheduleValue}
           isConfirming={isSubmittingConflictSchedule}
@@ -432,12 +437,12 @@ function TrialSchedulePreviewDialog({
           title="日程冲突"
         />
       ) : null}
-    </section>
+    </>
   );
 }
 
 /** 学生确认试课费用的弹窗，确认后流程进入家长雇佣决策。 */
-function TrialSettlementConfirmDialog({
+function TrialSettlementConfirm({
   onClose,
   onTutorWorkflowAction,
   order
@@ -473,12 +478,14 @@ function TrialSettlementConfirmDialog({
   }
 
   return (
-    <section className="checkout-sheet" aria-label="结算确认">
-      <div className="sheet-backdrop" onClick={onClose} />
-      <article className="sheet-panel trial-settlement-confirm-sheet mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]">
+    <Modal
+      ariaLabel="结算确认"
+      onClose={onClose}
+      panelClassName="trial-settlement-confirm-sheet mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]"
+    >
         <div className="card-title flex items-center justify-between gap-[10px]">
           <CircleDollarSign size={18} />
-          <div>
+          <div className="trial-settlement-confirm-title-copy">
             <strong>结算确认</strong>
             <span>{order.title}</span>
           </div>
@@ -514,13 +521,12 @@ function TrialSettlementConfirmDialog({
             {isSubmitting ? "确认中" : "结算"}
           </button>
         </div>
-      </article>
-    </section>
+    </Modal>
   );
 }
 
 /** 家长端结束正式雇佣前提交结算金额，提交后主任务进入已结束并等待学生确认结算。 */
-function ServiceSettlementDialog({
+function ServiceSettlement({
   onClose,
   onConfirm,
   order
@@ -554,12 +560,14 @@ function ServiceSettlementDialog({
   }
 
   return (
-    <section className="checkout-sheet" aria-label="正式服务结算">
-      <div className="sheet-backdrop" onClick={onClose} />
-      <article className="sheet-panel trial-settlement-confirm-sheet mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]">
+    <Modal
+      ariaLabel="正式服务结算"
+      onClose={onClose}
+      panelClassName="trial-settlement-confirm-sheet mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]"
+    >
         <div className="card-title flex items-center justify-between gap-[10px]">
           <CircleDollarSign size={18} />
-          <div>
+          <div className="service-settlement-title-copy">
             <strong>正式服务结算</strong>
             <span>{order.title}</span>
           </div>
@@ -602,8 +610,7 @@ function ServiceSettlementDialog({
             {isSubmitting ? "提交中" : "结算"}
           </button>
         </div>
-      </article>
-    </section>
+    </Modal>
   );
 }
 
@@ -1090,7 +1097,7 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
           return (
             <article className={`flow-card compact p-[12px] ${order.risk ? "risk-card" : ""}`} key={order.id}>
               <div className="card-title flex items-center justify-between gap-[10px]">
-                <div>
+                <div className="ongoing-order-title-copy">
                   <strong>{order.title}</strong>
                   <span>{order.id}</span>
                 </div>
@@ -1126,7 +1133,7 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
         ) : null}
       </div>
       {trialScheduleOrder ? (
-        <TrialSchedulePreviewDialog
+        <TrialSchedulePreview
           onClose={() => setTrialScheduleOrder(null)}
           onConfirmTrial={handlers.onConfirmTutorTrialStart}
           onTutorWorkflowAction={handlers.onTutorWorkflowAction}
@@ -1134,21 +1141,21 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
         />
       ) : null}
       {trialSettlementOrder ? (
-        <TrialSettlementConfirmDialog
+        <TrialSettlementConfirm
           onClose={() => setTrialSettlementOrder(null)}
           onTutorWorkflowAction={handlers.onTutorWorkflowAction}
           order={trialSettlementOrder}
         />
       ) : null}
       {serviceSettlementOrder ? (
-        <ServiceSettlementDialog
+        <ServiceSettlement
           onClose={() => setServiceSettlementOrder(null)}
           onConfirm={handleConfirmServiceSettlement}
           order={serviceSettlementOrder}
         />
       ) : null}
       {serviceScheduleOrder ? (
-        <TutorTrialScheduleDialog
+        <TutorTrialSchedule
           availableScheduleSummary={serviceScheduleAvailabilitySummary}
           blockedScheduleLabel="试"
           blockedScheduleSummary={serviceScheduleBlockedSummary}
@@ -1164,7 +1171,7 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
         />
       ) : null}
       {serviceAvailabilityState ? (
-        <TutorTrialScheduleDialog
+        <TutorTrialSchedule
           blockedScheduleLabel="试"
           blockedScheduleSummary={serviceAvailabilityBlockedSummary}
           confirmLabel={
@@ -1188,7 +1195,7 @@ export function OngoingOrdersList({ orders, ...handlers }: OngoingOrdersListProp
         />
       ) : null}
       {cancelConfirmation ? (
-        <ConfirmActionDialog
+        <ConfirmAction
           confirmLabel={cancelConfirmation.confirmLabel}
           description={cancelConfirmation.description}
           onClose={closeCancelConfirmation}

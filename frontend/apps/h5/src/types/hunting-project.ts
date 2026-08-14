@@ -25,7 +25,7 @@ export interface HuntingProject extends HuntingProjectDraft {
 }
 
 /** 狩猎项目表单弹窗属性。 */
-export interface HuntingProjectDialogProps {
+export interface HuntingProjectProps {
   areaOptions: string[];
   initialProject?: HuntingProject | null;
   onClose: () => void;

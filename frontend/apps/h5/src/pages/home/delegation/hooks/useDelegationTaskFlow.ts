@@ -1,4 +1,4 @@
-import { isDelegationQuoteStatus, isDelegationTaskLocked } from "@pages/home/delegation/model";
+import { isDelegationTaskLocked, isHuntingQuoteStatus } from "@pages/home/delegation/model";
 
 /** 委托页任务交互流程入参。 */
 interface UseDelegationTaskFlowOptions {
@@ -82,7 +82,7 @@ export function useDelegationTaskFlow({
   }
 
   /** 打开委托额度确认弹窗。 */
-  function openAmountDialog(task: HuntingTask) {
+  function openAmountPanel(task: HuntingTask) {
     setAmountTaskId(task.id);
   }
 
@@ -91,8 +91,8 @@ export function useDelegationTaskFlow({
     if (!validateTaskOperation(task)) {
       return;
     }
-    if (isDelegationQuoteStatus(task) || task.amountNegotiable || task.fee <= 0) {
-      openAmountDialog(task);
+    if (isHuntingQuoteStatus(task) || task.amountNegotiable || task.fee <= 0) {
+      openAmountPanel(task);
       return;
     }
 
@@ -100,7 +100,7 @@ export function useDelegationTaskFlow({
   }
 
   /** 关闭金额报价弹窗并重置本地校验反馈。 */
-  function closeAmountDialog() {
+  function closeAmountPanel() {
     setAmountTaskId(null);
   }
 
@@ -126,7 +126,7 @@ export function useDelegationTaskFlow({
 
   return {
     amountTask,
-    closeAmountDialog,
+    closeAmountPanel,
     closeCertificationPrompt,
     closeTaskDetail,
     handleAcceptTask,

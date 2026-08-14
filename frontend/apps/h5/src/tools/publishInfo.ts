@@ -2,13 +2,16 @@
 const localPublishInfoStorageKey = "unknown_h5_publish_info_drafts_v1";
 
 /** 发布信息类型。 */
-export type PublishInfoType = "delegation" | "recycle" | "partTime" | "tutor";
+export type PublishInfoType = "delegation" | "recycle" | "partTime" | "tutor" | "tutorHire";
 
 /** 委托金额模式。 */
 export type DelegationAmountMode = "input" | "negotiable";
 
 /** 委托发布要求标签。 */
 export const delegationRequirementTags = ["无损", "无拆", "准时", "尽快"];
+
+/** 家教计薪方式。 */
+export const tutorWageModeOptions = ["按小时结算", "按天结算", "汇总结算"];
 
 /** 发布信息弹窗表单草稿。 */
 export interface PublishInfoDraft {
@@ -33,6 +36,7 @@ export interface PublishInfoDraft {
   tutorSchoolTags: string[];
   tutorSubject: string;
   tutorTime: string;
+  tutorWageAmount: string;
   tutorWageMode: string;
   type: PublishInfoType;
 }
@@ -50,6 +54,27 @@ export function isPositiveAmount(value: string) {
   return Number.isFinite(amount) && amount > 0;
 }
 
+/** 兼容旧草稿中的家教计薪方式，并收敛到当前产品口径。 */
+export function normalizeTutorWageMode(value = "") {
+  const normalizedValue = value.trim();
+
+  if (normalizedValue === "按课时结算") {
+    return "按小时结算";
+  }
+  if (normalizedValue === "按次结算") {
+    return "按天结算";
+  }
+
+  return tutorWageModeOptions.includes(normalizedValue) ? normalizedValue : tutorWageModeOptions[0];
+}
+
+/** 判断当前家教计薪方式是否需要填写金额。 */
+export function isTutorWageAmountRequired(value: string) {
+  const wageMode = normalizeTutorWageMode(value);
+
+  return wageMode === "按小时结算" || wageMode === "按天结算";
+}
+
 /** 判断委托发布草稿是否选择协商金额。 */
 export function isNegotiableAmount(draft: Pick<PublishInfoDraft, "amountMode">) {
   return draft.amountMode === "negotiable";
@@ -58,6 +83,11 @@ export function isNegotiableAmount(draft: Pick<PublishInfoDraft, "amountMode">) 
 /** 判断当前发布类型是否可进入委托任务接口。 */
 export function isHuntingTaskPublishType(type: PublishInfoType): type is "delegation" | "recycle" {
   return type === "delegation" || type === "recycle";
+}
+
+/** 判断当前发布类型是否属于家教表单。 */
+export function isTutorPublishType(type: PublishInfoType): type is "tutor" | "tutorHire" {
+  return type === "tutor" || type === "tutorHire";
 }
 
 /** 获取委托发布截止时间展示文案。 */
@@ -128,8 +158,13 @@ export function buildPublishTutorDemandRequest(
   addressItems: AddressBookItem[],
   childOptions: ChildProfileOption[]
 ): PublishTutorDemandRequest {
+  if (draft.type !== "tutor") {
+    throw new Error("当前仅支持发布家教招募");
+  }
+
   const selectedChild = childOptions.find((child) => child.id === draft.childId);
   const addressLabel = getPublishDestinationLabel(draft.addressId, addressItems);
+  const wageMode = normalizeTutorWageMode(draft.tutorWageMode);
 
   return {
     addressId: draft.addressId,
@@ -139,13 +174,14 @@ export function buildPublishTutorDemandRequest(
     description: draft.description.trim(),
     periodEnd: draft.tutorDateEnd.trim(),
     periodStart: draft.tutorDateStart.trim(),
-    requirement: draft.requirement.trim(),
+    requirement: "",
     schoolTags: [],
     subject: draft.tutorSubject.trim() || "待沟通",
     title: draft.title.trim(),
     trialDuration: "",
     trialEnabled: draft.trialEnabled === "是",
-    wageMode: draft.tutorWageMode
+    wageAmount: isTutorWageAmountRequired(wageMode) ? Number(draft.tutorWageAmount.trim()) : null,
+    wageMode
   };
 }
 

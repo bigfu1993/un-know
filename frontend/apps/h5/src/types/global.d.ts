@@ -69,7 +69,7 @@ declare global {
   type HuntingProjectStop = import("@app-types/hunting-project").HuntingProjectStop;
   type HuntingProjectDraft = import("@app-types/hunting-project").HuntingProjectDraft;
   type HuntingProject = import("@app-types/hunting-project").HuntingProject;
-  type HuntingProjectDialogProps = import("@app-types/hunting-project").HuntingProjectDialogProps;
+  type HuntingProjectProps = import("@app-types/hunting-project").HuntingProjectProps;
 
   type PublishInfoType = import("@tools/publishInfo").PublishInfoType;
   type DelegationAmountMode = import("@tools/publishInfo").DelegationAmountMode;
@@ -83,5 +83,5 @@ declare global {
   type TutorCardData = import("@components/TutorCard/model").TutorCardData;
   type TutorCardMode = import("@components/TutorCard/model").TutorCardMode;
   type TutorCertificationStatus = import("@unknown/domain").TutorCertificationStatus;
-  type TutorCertificationInfoSaveMode = import("@components/TutorCertificationInfoDialog").TutorCertificationInfoSaveMode;
+  type TutorCertificationInfoSaveMode = import("@components/TutorCertificationInfo").TutorCertificationInfoSaveMode;
 }

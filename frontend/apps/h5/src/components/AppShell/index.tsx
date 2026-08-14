@@ -20,6 +20,22 @@ interface MinePopoverAction {
   tone?: MinePopoverActionTone;
 }
 
+/** 悬浮头像入口组件属性，外部只负责控制开合和业务动作。 */
+interface MineShortcutProps {
+  isOpen: boolean;
+  isQuickDockExpanded: boolean;
+  onClose: () => void;
+  onLogout: () => void;
+  onNavigate: (surface: PageSurface) => void;
+  onOpenPublish: () => void;
+  onOpenRecycle: () => void;
+  onOpenTab: (tab: ClientModuleKey) => void;
+  onOpenTutorCalendar: () => void;
+  onToggleTutorExposure: () => void;
+  onTrigger: () => void;
+  walletSummary: WalletSummary;
+}
+
 /** App 外壳组件集合，负责导航、资料提示、次级页壳和我的弹窗快捷入口。 */
 export function Header({ activeTab }: { activeTab: ClientModuleKey }) {
   const { role } = useGlobalUser();
@@ -32,7 +48,7 @@ export function Header({ activeTab }: { activeTab: ClientModuleKey }) {
       </div>
       <div className="top-role-switch p-[9px]" aria-label="当前登录身份">
         <span>当前身份</span>
-        <div>
+        <div className="top-role-switch-value">
           <button className="active" type="button">
             {roleLabels[role]}
           </button>
@@ -94,13 +110,22 @@ export function PageShell({
         >
           <ArrowLeft size={20} />
         </button>
-        <div>
+        <div className="page-shell-header-copy">
           <span>{eyebrow}</span>
           <strong>{title}</strong>
         </div>
       </header>
       {children}
     </section>
+  );
+}
+
+/** 右下角快捷入口轨道，仅维护展开态布局，内容由调用方插槽传入。 */
+export function QuickActionDock({ children, isExpanded }: { children: ReactNode; isExpanded: boolean }) {
+  return (
+    <div className={`quick-action-dock ${isExpanded ? "expanded" : "collapsed"}`} aria-label="我的快捷操作">
+      {children}
+    </div>
   );
 }
 
@@ -279,13 +304,60 @@ export function MinePopover({
   );
 }
 
+/** 我的悬浮头像入口，封装头像按钮和对应弹窗。 */
+export function MineShortcut({
+  isOpen,
+  isQuickDockExpanded,
+  onClose,
+  onLogout,
+  onNavigate,
+  onOpenPublish,
+  onOpenRecycle,
+  onOpenTab,
+  onOpenTutorCalendar,
+  onToggleTutorExposure,
+  onTrigger,
+  walletSummary
+}: MineShortcutProps) {
+  return (
+    <>
+      {isOpen ? (
+        <MinePopover
+          onClose={onClose}
+          onLogout={onLogout}
+          onNavigate={onNavigate}
+          onOpenPublish={onOpenPublish}
+          onOpenRecycle={onOpenRecycle}
+          onOpenTab={onOpenTab}
+          onOpenTutorCalendar={onOpenTutorCalendar}
+          onToggleTutorExposure={onToggleTutorExposure}
+          walletSummary={walletSummary}
+        />
+      ) : null}
+
+      <button
+        className="floating-avatar grid h-[54px] w-[54px] place-items-center text-[#17212b]"
+        onClick={onTrigger}
+        type="button"
+        aria-expanded={isQuickDockExpanded}
+        aria-haspopup="dialog"
+        aria-label="我的"
+      >
+        <UserRound size={22} />
+      </button>
+    </>
+  );
+}
+
 /** 底部主导航，所有角色共用，我的入口固定由悬浮头像承接。 */
 export function BottomTabs({
   activeTab,
-  onChange
+  onChange,
+  onOpenTutorPublish
 }: {
   activeTab: ClientModuleKey;
   onChange: (tab: ClientModuleKey) => void;
+  onOpenTutorPublish?: () => void;
 }) {
   const { role } = useGlobalUser();
 
@@ -295,13 +367,23 @@ export function BottomTabs({
       aria-label="H5 主导航"
     >
       {clientPrimaryTabs[role].map((tab) => {
-        const Icon = tabIcons[tab.key] ?? Home;
-        const label = tab.key === "hunting" ? "委托" : tab.label;
+        const isActiveTutorTab = tab.key === "tutor" && activeTab === "tutor";
+        const Icon = isActiveTutorTab ? Plus : (tabIcons[tab.key] ?? Home);
+        const label = isActiveTutorTab ? "发布家教" : tab.key === "hunting" ? "委托" : tab.label;
         return (
           <button
-            className={activeTab === tab.key ? "active" : ""}
+            className={[activeTab === tab.key ? "active" : "", isActiveTutorTab ? "publish-tab" : ""]
+              .filter(Boolean)
+              .join(" ")}
             key={tab.key}
-            onClick={() => onChange(tab.key)}
+            onClick={() => {
+              if (isActiveTutorTab && onOpenTutorPublish) {
+                onOpenTutorPublish();
+                return;
+              }
+
+              onChange(tab.key);
+            }}
             type="button"
           >
             <Icon size={18} />

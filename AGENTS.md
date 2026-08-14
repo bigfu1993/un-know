@@ -32,7 +32,7 @@
 
 用户要求“本地运行”“重启项目”“接口不通”“登录接口报错”或“按运行部署文档启动”时，必须先判断当前设备环境，再执行对应流程；不要把 macOS/Linux 的 `screen`、`lsof`、`nc` 命令直接套到 Windows，也不要把 Windows PowerShell 命令套到 macOS/Linux。
 
-启动前先检查 `8899`、`9988`、`15432` 是否已有监听；已有监听且服务可用时优先复用。只有确认端口进程属于当前 `un-know` 项目，且确实需要重启时，才停止旧进程。
+启动前先检查 `8899`、`9988`、`15432` 是否已有监听；已有监听且服务可用时优先复用。`scripts/dev/h5.sh` 会在 `8899` 已监听时跳过启动，`scripts/dev/app-server.sh` 会在 `9988` 已监听时跳过启动，`scripts/dev/h5+app-server.sh` 只启动缺失的服务。只有确认端口进程属于当前 `un-know` 项目，且确实需要重启时，才停止旧进程。
 
 ### 环境判断
 
@@ -81,11 +81,13 @@ if (-not $TunnelReady) {
 
 macOS/Linux：
 
+`./scripts/dev/app-server.sh` 会默认检查 `127.0.0.1:15432`；未监听时使用 `~/.ssh/unknow/bigfu.m2pro.mac.home.pem` 自动拉起隧道。需要手动排查时可执行：
+
 ```bash
 nc -zv 127.0.0.1 15432 || ssh -f -i ~/.ssh/unknow/bigfu.m2pro.mac.home.pem -o ExitOnForwardFailure=yes -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -N -L 15432:127.0.0.1:5432 root@8.153.110.192
 ```
 
-不允许为寻找密钥而枚举整个 `.ssh` 目录；默认路径不存在时，向用户询问明确密钥路径，或要求用户先手动建立 `127.0.0.1:15432` 隧道。
+不允许为寻找密钥而枚举整个 `.ssh` 目录；默认路径不存在时，向用户询问明确密钥路径，或要求用户先手动建立 `127.0.0.1:15432` 隧道。macOS/Linux 下可用 `APP_SERVER_TUNNEL_KEY` 指定密钥路径，或用 `APP_SERVER_TUNNEL_ENABLED=0` 跳过自动隧道检查。
 
 ### 清理旧进程
 
@@ -106,6 +108,7 @@ foreach ($port in 8899, 9988) {
 macOS/Linux：
 
 ```bash
+screen -S unknow-h5-app-server -X quit 2>/dev/null || true
 screen -S unknow-h5 -X quit 2>/dev/null || true
 screen -S unknow-server -X quit 2>/dev/null || true
 lsof -tiTCP:8899 -sTCP:LISTEN | xargs -r ps -o pid= -o command= -p
@@ -121,11 +124,11 @@ Windows PowerShell：
 ```powershell
 New-Item -ItemType Directory -Force -Path .\log\client, .\log\server | Out-Null
 Start-Process -FilePath "npm.cmd" -ArgumentList "run dev:h5" -WorkingDirectory "$RepoRoot\frontend\apps" -RedirectStandardOutput "$RepoRoot\log\client\h5.screen.log" -RedirectStandardError "$RepoRoot\log\client\h5.screen.err.log" -WindowStyle Hidden
-
-Get-Content -LiteralPath "$RepoRoot\server\apps\.env.prod.local" | ForEach-Object {
-  if ($_ -and $_ -notmatch "^\s*#") {
-    $name, $value = $_ -split "=", 2
-    if ($name -and $value) {
+Get-Content -LiteralPath "$RepoRoot\server\apps\.env.prod.local" -ErrorAction SilentlyContinue | ForEach-Object {
+  $line = $_.Trim()
+  if ($line -and -not $line.StartsWith("#")) {
+    $name, $value = $line -split "=", 2
+    if ($name -and $null -ne $value) {
       Set-Item -Path "Env:$name" -Value $value
     }
   }
@@ -136,9 +139,8 @@ Start-Process -FilePath "mvn.cmd" -ArgumentList "spring-boot:run" -WorkingDirect
 macOS/Linux：
 
 ```bash
-mkdir -p "$REPO_ROOT/log/client" "$REPO_ROOT/log/server"
-screen -dmS unknow-h5 bash -lc "cd '$REPO_ROOT/frontend/apps' && npm run dev:h5 > '$REPO_ROOT/log/client/h5.screen.log' 2>&1"
-screen -dmS unknow-server bash -lc "cd '$REPO_ROOT/server/apps' && set -a && source .env.prod.local && set +a && mvn spring-boot:run > '$REPO_ROOT/log/server/server.screen.log' 2>&1"
+mkdir -p "$REPO_ROOT/log/dev"
+screen -dmS unknow-h5-app-server bash -lc "cd '$REPO_ROOT' && ./scripts/dev/h5+app-server.sh > '$REPO_ROOT/log/dev/h5+app-server.screen.log' 2>&1"
 ```
 
 ### 启动验证
@@ -183,8 +185,8 @@ Get-Content -LiteralPath .\log\server\server.screen.err.log -Tail 200 -ErrorActi
 ```
 
 ```bash
-tail -n 160 "$REPO_ROOT/log/client/h5.screen.log"
-tail -n 200 "$REPO_ROOT/log/server/server.screen.log"
+tail -n 160 "$REPO_ROOT/log/dev/h5.log"
+tail -n 200 "$REPO_ROOT/log/dev/app-server.log"
 ```
 
 ## 项目核心方法论
@@ -204,7 +206,7 @@ tail -n 200 "$REPO_ROOT/log/server/server.screen.log"
 ## H5 前端规范
 
 - 技术栈：React、TypeScript、Vite。
-- H5 必须配置并使用全局别名引用源码目录：`@h5`、`@components`、`@pages`、`@shared`、`@store`、`@tools`、`@app-types`；业务源码中不得继续新增跨目录相对路径引用，生成文件除外。
+- H5 必须配置并使用全局别名引用源码目录：`@h5`、`@components`、`@pages`、`@shared`、`@store`、`@tools`、`@app-types`、`@ui`；业务源码中不得继续新增跨目录相对路径引用，生成文件除外。
 - `pages` 目录按业务模块组织；同一业务域的主页面、子页面和流程页应收敛到同一目录，避免在 `pages` 根部平铺孤立同域页面。
 - H5 首页业务域统一收敛在 `pages/home` 下：委托/狩猎归属 `home/delegation`，兼职归属 `home/job`，家教归属 `home/job/edu`，优选/商品归属 `home/shop`；同域组件、hooks、model 不得散落到其他页面目录。
 - `pages/<Module>/components` 下的页面私有组件使用扁平文件维护；页面私有 hook 维护在 `pages/<Module>/hooks`。
@@ -214,6 +216,7 @@ tail -n 200 "$REPO_ROOT/log/server/server.screen.log"
 - 涉及安全、身份、凭据、权限和业务流程推进的判断必须走真实接口和服务端状态；H5 本地散列、缓存和草稿只能作为输入便利或展示缓存，不作为最终正确性来源。
 - H5 页面出现固定头部、固定底部操作区和内部滚动主体时，DOM 与 CSS 层级必须体现同级区域关系；不得用视觉 fixed/sticky 掩盖错误嵌套导致的滚动或 footer 失效。
 - 表单校验、格式化、日期、金额、字段规则等通用纯逻辑优先复用或沉淀到 `frontend/apps/h5/src/tools`。
+- H5 表单中的输入框、下拉框和文本域默认使用小尺寸控件样式；共享样式需控制高度、内边距和字号，保持弹窗、列表筛选和资料表单紧凑可扫描。需要大尺寸控件时必须有明确业务理由，并检查移动端不撑高首屏。
 - 全局消息提示由根节点注册单例组件；业务页面、组件和 hooks 直接从消息工具模块 import `showMessage`、`hideMessage` 触发或关闭提示，不为此在组件内调用额外 hook。
 - 已被 `unplugin-auto-import` 或 `src/types/global.d.ts` 覆盖的 TypeScript 类型，不在 H5 页面、组件和工具文件中重复显式导入；只保留确实无法全局声明的局部类型。
 

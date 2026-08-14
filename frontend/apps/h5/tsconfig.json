@@ -41,6 +41,9 @@
       ],
       "@app-types/*": [
         "src/types/*"
+      ],
+      "@ui/*": [
+        "src/ui/*"
       ]
     }
   },

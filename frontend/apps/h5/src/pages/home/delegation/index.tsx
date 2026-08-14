@@ -2,10 +2,10 @@ import "./index.less";
 import { ArrowDownUp, Filter, RadioTower, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ScrollingTicker } from "@components/ScrollingTicker";
-import { DelegationAmountDialog } from "@pages/home/delegation/components/DelegationAmountDialog";
+import { DelegationAmount } from "@pages/home/delegation/components/DelegationAmount";
 import { DelegationTaskCard } from "@pages/home/delegation/components/DelegationTaskCard";
-import { DelegationTaskDetailDialog } from "@pages/home/delegation/components/DelegationTaskDetailDialog";
-import { HuntingCertificationPromptDialog } from "@pages/home/delegation/components/HuntingCertificationPromptDialog";
+import { DelegationTaskDetail } from "@pages/home/delegation/components/DelegationTaskDetail";
+import { HuntingCertificationPrompt } from "@pages/home/delegation/components/HuntingCertificationPrompt";
 import { delegationRuleTickerItems, delegationSortOptions } from "@pages/home/delegation/model";
 import { useDelegationList } from "@pages/home/delegation/hooks/useDelegationList";
 import { useDelegationTaskFlow } from "@pages/home/delegation/hooks/useDelegationTaskFlow";
@@ -49,7 +49,7 @@ export function Delegation({
   } = useDelegationList(huntingTasks);
   const {
     amountTask,
-    closeAmountDialog,
+    closeAmountPanel,
     closeCertificationPrompt,
     closeTaskDetail,
     handleAcceptTask,
@@ -207,7 +207,7 @@ export function Delegation({
       </div>
 
       {selectedTask ? (
-        <DelegationTaskDetailDialog
+        <DelegationTaskDetail
           onAccept={handleAcceptTask}
           onClose={closeTaskDetail}
           onContact={handleContactTask}
@@ -216,15 +216,15 @@ export function Delegation({
       ) : null}
 
       {amountTask ? (
-        <DelegationAmountDialog
-          onClose={closeAmountDialog}
+        <DelegationAmount
+          onClose={closeAmountPanel}
           onSubmit={submitAmount}
           task={amountTask}
         />
       ) : null}
 
       {isCertificationPromptOpen ? (
-        <HuntingCertificationPromptDialog
+        <HuntingCertificationPrompt
           certificationStatus={huntingCertificationStatus}
           onClose={closeCertificationPrompt}
           onOpenCertification={openHuntingCertificationFromPrompt}

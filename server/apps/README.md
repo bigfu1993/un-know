@@ -16,18 +16,31 @@
 
 ## 本地运行
 
-本地调试使用云服务器 PostgreSQL，先启动 SSH 隧道到 `127.0.0.1:15432`，再启动后端。
+本地调试使用云服务器 PostgreSQL。macOS/Linux 下直接执行 `scripts/dev/app-server.sh`，脚本会自动检查 `127.0.0.1:15432` 并在未监听时拉起 SSH 隧道；Windows PowerShell 下需先手动建立隧道再启动后端。
 
 ```powershell
 cd D:\code\un-know\server\apps
-
-$env:SPRING_PROFILES_ACTIVE="prod"
-$env:SPRING_DATASOURCE_URL="jdbc:postgresql://127.0.0.1:15432/unknown_platform"
-$env:SPRING_DATASOURCE_USERNAME="unknown_app"
-$env:SPRING_DATASOURCE_PASSWORD="数据库账号密码"
-
-mvn spring-boot:run
+Get-Content -LiteralPath .env.prod.local -ErrorAction SilentlyContinue | ForEach-Object {
+  $line = $_.Trim()
+  if ($line -and -not $line.StartsWith("#")) {
+    $name, $value = $line -split "=", 2
+    if ($name -and $null -ne $value) {
+      Set-Item -Path "Env:$name" -Value $value
+    }
+  }
+}
+mvn.cmd spring-boot:run
 ```
+
+macOS/Linux：
+
+```bash
+cd /Users/bigfu/code/un-know
+./scripts/dev/app-server.sh
+```
+
+数据库连接配置可预先写入本地忽略文件 `server/apps/.env.prod.local`，也可以通过当前终端环境变量传入。macOS/Linux 下需要改 SSH 密钥时设置 `APP_SERVER_TUNNEL_KEY`，需要跳过隧道时设置 `APP_SERVER_TUNNEL_ENABLED=0`。
+`app-server.sh` 启动前会检查 `127.0.0.1:9988`；已有监听时直接提示并跳过启动。
 
 ## 快速验证
 
