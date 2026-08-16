@@ -22,6 +22,7 @@ import {
   WalletCards,
   XCircle
 } from "lucide-react";
+import { ScheduleCalendar } from "@components/ScheduleCalendar";
 import { TrialScheduleCalendar } from "@components/TrialScheduleCalendar";
 import { formatTutorSubjects, parseTutorSubjects, tutorSubjectOptions } from "@shared/tutorModel";
 import {
@@ -781,6 +782,10 @@ function TutorPlanPeriodPicker({
   );
   const [activeDate, setActiveDate] = useState(draft.tutorDateStart || todayKey);
   const [pendingRangeStartDate, setPendingRangeStartDate] = useState<string | null>(null);
+  /** 对比区 ScheduleCalendar 的选中日期列表，独立于计划周期的开始~结束区间，验证多选能力。 */
+  const [scheduleCalendarSelectedDates, setScheduleCalendarSelectedDates] = useState<string[]>([]);
+  /** 对比区 ScheduleCalendar 的测试用交互模式，用来验证查看/编辑两种模式的表现。 */
+  const [scheduleCalendarMode, setScheduleCalendarMode] = useState<ScheduleCalendarMode>("edit");
   const hasSelectedRange = selectedDateKeys.length > 0 && !pendingRangeStartDate;
 
   /**
@@ -812,6 +817,15 @@ function TutorPlanPeriodPicker({
     setPendingRangeStartDate(null);
   }
 
+  /** 对比区 ScheduleCalendar 单击已查看日期时切换选中：支持多选，独立维护一份选中日期列表。 */
+  function handleToggleScheduleCalendarDate(dateKey: string) {
+    setScheduleCalendarSelectedDates((currentDates) =>
+      currentDates.includes(dateKey)
+        ? currentDates.filter((currentDate) => currentDate !== dateKey)
+        : [...currentDates, dateKey].sort()
+    );
+  }
+
   return (
     <Modal
       ariaLabel="选择计划周期"
@@ -840,6 +854,32 @@ function TutorPlanPeriodPicker({
           scheduleItems={[]}
           selectedDates={selectedDateKeys}
         />
+
+        {/*
+          临时对比区：新版 ScheduleCalendar 已移除双击逻辑，改成"单击查看、再单击已查看的日期切换选中"，
+          支持多选，选中日期独立维护（不复用计划周期的开始~结束区间），便于对比新旧日历样式，验证后再决定是否移除。
+        */}
+        <div className="grid gap-[6px]">
+          <div className="flex items-center justify-between gap-[10px]">
+            <span className="text-[12px] text-[#657181]">新版日历组件对比（ScheduleCalendar）</span>
+            <button
+              className="ghost-button px-[10px] py-[6px] text-[12px]"
+              onClick={() => setScheduleCalendarMode((currentMode) => (currentMode === "edit" ? "view" : "edit"))}
+              type="button"
+            >
+              测试：当前{scheduleCalendarMode === "edit" ? "编辑" : "查看"}模式，点击切换
+            </button>
+          </div>
+          <ScheduleCalendar
+            activeDate={activeDate}
+            maxSelectedDates={null}
+            mode={scheduleCalendarMode}
+            onActiveDateChange={setActiveDate}
+            onToggleDate={handleToggleScheduleCalendarDate}
+            rangeStartDate={pendingRangeStartDate}
+            selectedDates={scheduleCalendarSelectedDates}
+          />
+        </div>
 
         <div className="sheet-actions grid grid-cols-2 gap-[8px]">
           <button className="ghost-button min-h-[38px] px-[10px] py-[8px]" onClick={onClose} type="button">

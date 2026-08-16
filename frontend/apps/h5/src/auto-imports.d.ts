@@ -92,6 +92,7 @@ declare global {
   const RegistrationGuide: typeof import('./pages/login/components/RegistrationGuide').RegistrationGuide
   const Route: typeof import('react-router-dom').Route
   const Routes: typeof import('react-router-dom').Routes
+  const ScheduleCalendar: typeof import('./components/ScheduleCalendar/index').ScheduleCalendar
   const ScrollingTicker: typeof import('./components/ScrollingTicker/index').ScrollingTicker
   const SectionHeader: typeof import('./components/PageWidgets/index').SectionHeader
   const Settings: typeof import('lucide-react').Settings
@@ -433,6 +434,9 @@ declare global {
   // @ts-ignore
   export type { PublishInfoProps } from './components/PublishInfo/index'
   import('./components/PublishInfo/index')
+  // @ts-ignore
+  export type { ScheduleCalendarMode, ScheduleCalendarProps } from './components/ScheduleCalendar/index'
+  import('./components/ScheduleCalendar/index')
   // @ts-ignore
   export type { ScrollingTickerDirection, ScrollingTickerProps } from './components/ScrollingTicker/index'
   import('./components/ScrollingTicker/index')
