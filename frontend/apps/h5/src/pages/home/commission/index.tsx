@@ -2,17 +2,17 @@ import "./index.less";
 import { ArrowDownUp, Filter, RadioTower, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ScrollingTicker } from "@components/ScrollingTicker";
-import { DelegationAmount } from "@pages/home/delegation/components/DelegationAmount";
-import { DelegationTaskCard } from "@pages/home/delegation/components/DelegationTaskCard";
-import { DelegationTaskDetail } from "@pages/home/delegation/components/DelegationTaskDetail";
-import { HuntingCertificationPrompt } from "@pages/home/delegation/components/HuntingCertificationPrompt";
-import { delegationRuleTickerItems, delegationSortOptions } from "@pages/home/delegation/model";
-import { useDelegationList } from "@pages/home/delegation/hooks/useDelegationList";
-import { useDelegationTaskFlow } from "@pages/home/delegation/hooks/useDelegationTaskFlow";
+import { CommissionAmount } from "@pages/home/commission/components/CommissionAmount";
+import { CommissionTaskCard } from "@pages/home/commission/components/CommissionTaskCard";
+import { CommissionTaskDetail } from "@pages/home/commission/components/CommissionTaskDetail";
+import { HuntingCertificationPrompt } from "@pages/home/commission/components/HuntingCertificationPrompt";
+import { commissionRuleTickerItems, commissionSortOptions } from "@pages/home/commission/model";
+import { useCommissionList } from "@pages/home/commission/hooks/useCommissionList";
+import { useCommissionTaskFlow } from "@pages/home/commission/hooks/useCommissionTaskFlow";
 import { showMessage } from "@tools/messageToast";
 
 /** 委托页属性。 */
-export interface DelegationProps {
+export interface CommissionProps {
   huntingCertificationStatus: HuntingCertificationStatus;
   huntingTasks: HuntingTask[];
   isRefreshing?: boolean;
@@ -23,7 +23,7 @@ export interface DelegationProps {
 }
 
 /** 委托/狩猎页面，负责工具条编排、任务列表组合和页面级弹窗挂载。 */
-export function Delegation({
+export function Commission({
   huntingCertificationStatus,
   huntingTasks,
   isRefreshing = false,
@@ -31,7 +31,7 @@ export function Delegation({
   onOpenHuntingCertification,
   onQuoteTask,
   onRefreshTasks
-}: DelegationProps) {
+}: CommissionProps) {
   const [isHuntingModeEnabled, setIsHuntingModeEnabled] = useState(false);
   const {
     activePanel,
@@ -46,7 +46,7 @@ export function Delegation({
     setSortMode,
     sortMode,
     visibleTasks
-  } = useDelegationList(huntingTasks);
+  } = useCommissionList(huntingTasks);
   const {
     amountTask,
     closeAmountPanel,
@@ -61,7 +61,7 @@ export function Delegation({
     openTaskDetail,
     selectedTask,
     submitAmount
-  } = useDelegationTaskFlow({
+  } = useCommissionTaskFlow({
     displayTasks,
     huntingCertificationStatus,
     onAcceptTask,
@@ -94,12 +94,12 @@ export function Delegation({
   }
 
   return (
-    <section className="module-stack delegation-page grid gap-[10px]">
-      <ScrollingTicker ariaLabel="委托规则" items={delegationRuleTickerItems} />
+    <section className="module-stack commission-page grid gap-[10px]">
+      <ScrollingTicker ariaLabel="委托规则" items={commissionRuleTickerItems} />
 
-      <div className="delegation-toolbar grid gap-[8px]">
-        <div className="delegation-toolbar-row flex items-center gap-[8px]">
-          <label className="delegation-search min-w-0 flex-1">
+      <div className="commission-toolbar grid gap-[8px]">
+        <div className="commission-toolbar-row flex items-center gap-[8px]">
+          <label className="commission-search min-w-0 flex-1">
             <span className="sr-only">搜索标题</span>
             <input
               onChange={(event) => setKeyword(event.target.value)}
@@ -111,7 +111,7 @@ export function Delegation({
           <button
             aria-expanded={activePanel === "area"}
             aria-label={`区域筛选，当前${selectedArea || "全部区域"}`}
-            className={`delegation-icon-button ${activePanel === "area" ? "active" : ""}`}
+            className={`commission-icon-button ${activePanel === "area" ? "active" : ""}`}
             onClick={() => setActivePanel((panel) => (panel === "area" ? null : "area"))}
             type="button"
           >
@@ -120,7 +120,7 @@ export function Delegation({
           <button
             aria-expanded={activePanel === "sort"}
             aria-label={`排序，当前${selectedSortLabel}`}
-            className={`delegation-icon-button ${activePanel === "sort" ? "active" : ""}`}
+            className={`commission-icon-button ${activePanel === "sort" ? "active" : ""}`}
             onClick={() => setActivePanel((panel) => (panel === "sort" ? null : "sort"))}
             type="button"
           >
@@ -128,7 +128,7 @@ export function Delegation({
           </button>
           <button
             aria-pressed={isHuntingModeEnabled}
-            className={`delegation-icon-button delegation-live-button ${isHuntingModeEnabled ? "active" : ""}`}
+            className={`commission-icon-button commission-live-button ${isHuntingModeEnabled ? "active" : ""}`}
             onClick={handleToggleHuntingMode}
             type="button"
             aria-label={isHuntingModeEnabled ? "关闭狩猎模式" : "开启狩猎模式"}
@@ -138,7 +138,7 @@ export function Delegation({
         </div>
 
         {activePanel === "area" ? (
-          <div className="delegation-option-panel flex flex-wrap gap-[8px]" aria-label="区域筛选">
+          <div className="commission-option-panel flex flex-wrap gap-[8px]" aria-label="区域筛选">
             {["", ...areaOptions].map((area) => (
               <button
                 className={selectedArea === area ? "active" : ""}
@@ -156,8 +156,8 @@ export function Delegation({
         ) : null}
 
         {activePanel === "sort" ? (
-          <div className="delegation-option-panel flex flex-wrap gap-[8px]" aria-label="排序方式">
-            {delegationSortOptions.map((option) => (
+          <div className="commission-option-panel flex flex-wrap gap-[8px]" aria-label="排序方式">
+            {commissionSortOptions.map((option) => (
               <button
                 className={sortMode === option.value ? "active" : ""}
                 key={option.value}
@@ -173,7 +173,7 @@ export function Delegation({
           </div>
         ) : null}
 
-        <div className={`delegation-live-status ${isHuntingModeEnabled ? "live" : ""}`}>
+        <div className={`commission-live-status ${isHuntingModeEnabled ? "live" : ""}`}>
           <span>
             {isHuntingModeEnabled
               ? "狩猎模式已开启，委托列表实时推送中。"
@@ -188,9 +188,9 @@ export function Delegation({
         </div>
       </div>
 
-      <div className="card-list delegation-task-scroll grid gap-[10px]">
+      <div className="card-list commission-task-scroll grid gap-[10px]">
         {visibleTasks.map((task) => (
-          <DelegationTaskCard
+          <CommissionTaskCard
             key={task.id}
             onAccept={handleAcceptTask}
             onContact={handleContactTask}
@@ -207,7 +207,7 @@ export function Delegation({
       </div>
 
       {selectedTask ? (
-        <DelegationTaskDetail
+        <CommissionTaskDetail
           onAccept={handleAcceptTask}
           onClose={closeTaskDetail}
           onContact={handleContactTask}
@@ -216,7 +216,7 @@ export function Delegation({
       ) : null}
 
       {amountTask ? (
-        <DelegationAmount
+        <CommissionAmount
           onClose={closeAmountPanel}
           onSubmit={submitAmount}
           task={amountTask}

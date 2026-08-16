@@ -1,12 +1,10 @@
 import { useGlobalStore, useGlobalUser } from "@h5/store/global";
 import { isAuthSessionExpiredError } from "@unknown/api-client";
 import { useOngoingOrdersRealtime } from "@unknown/hooks";
-import { MineShortcut, QuickActionDock } from "@components/AppShell";
 import { getHuntingCertificationDataFromDraft } from "@components/HuntingCertificationCard/model";
 import { PublishInfo } from "@components/PublishInfo";
 import { PublishDraftConfirm } from "@components/PublishInfo/DraftConfirm";
 import { TutorCalendar } from "@components/TutorCalendar";
-import { OngoingShortcut } from "@components/WorkflowOverlays";
 import { TutorCertificationInfo } from "@components/TutorCertificationInfo";
 import { useClientBusinessMutations } from "@h5/hooks/useClientBusinessMutations";
 import { useClientDataQueries } from "@h5/hooks/useClientDataQueries";
@@ -17,14 +15,14 @@ import { useProfileCompletionFlow } from "@h5/hooks/useProfileCompletionFlow";
 import { usePrimaryTabWorkspaceRefresh } from "@h5/hooks/usePrimaryTabWorkspaceRefresh";
 import { usePublishInfoFlow } from "@h5/hooks/usePublishInfoFlow";
 import { useRootNavigation } from "@h5/hooks/useRootNavigation";
-import { HuntingShortcut } from "@pages/home/delegation/components/HuntingShortcut";
-import { OngoingQuote } from "@pages/home/delegation/components/OngoingQuote";
-import { useHuntingTaskActions } from "@pages/home/delegation/hooks/useHuntingTaskActions";
-import { useOngoingQuoteFlow } from "@pages/home/delegation/hooks/useOngoingQuoteFlow";
-import { HuntingCertification } from "@pages/home/delegation/hunting-certification";
-import { TutorCertification } from "@pages/home/job/edu/components/TutorCertification";
-import { TutorApplications, TutorTrialList } from "@pages/home/job/edu/components/TutorApplications";
-import { useTutorTrialActions } from "@pages/home/job/edu/hooks/useTutorTrialActions";
+import { OngoingQuote } from "@pages/home/commission/components/OngoingQuote";
+import { useHuntingTaskActions } from "@pages/home/commission/hooks/useHuntingTaskActions";
+import { useOngoingQuoteFlow } from "@pages/home/commission/hooks/useOngoingQuoteFlow";
+import { HuntingCertification } from "@pages/home/commission/hunting-certification";
+import { TutorCertification } from "@pages/home/edu/components/TutorCertification";
+import { TutorApplications, TutorTrialList } from "@pages/home/edu/components/TutorApplications";
+import { FloatingActions } from "@pages/home/auth";
+import { useTutorTrialActions } from "@pages/home/edu/hooks/useTutorTrialActions";
 import { campusAreaOptions, clientAddressesToAddressBookItems } from "@shared/clientPageModel";
 import { hideMessage, showMessage } from "@tools/messageToast";
 import { getTutorCalendarTasks, getTutorDateKey } from "@tools/tutorCalendar";
@@ -775,7 +773,7 @@ export function App() {
         activePage || isSettingsRoute || isMineRoute
           ? "page-mode pb-[28px]"
           : "pb-[calc(92px+env(safe-area-inset-bottom))]"
-      } ${activeTab === "hunting" && !activePage && !isSettingsRoute && !isMineRoute ? "delegation-shell" : ""} ${
+      } ${activeTab === "hunting" && !activePage && !isSettingsRoute && !isMineRoute ? "commission-shell" : ""} ${
         isPrimaryListShell ? "list-shell" : ""
       } ${hasPrimaryContextCard ? "has-context-card" : "no-context-card"}`}
     >
@@ -839,9 +837,9 @@ export function App() {
               }
             />
             <Route
-              path="/delegation"
+              path="/commission"
               element={
-                <Delegation
+                <Commission
                   huntingCertificationStatus={huntingCertificationStatus}
                   huntingTasks={mergedHuntingTasks}
                   isRefreshing={isHuntingTasksFetching}
@@ -866,56 +864,54 @@ export function App() {
             <Route path="*" element={<Navigate replace to={getDefaultRouteForRole(role)} />} />
           </Routes>
 
-          <QuickActionDock isExpanded={isQuickDockExpanded}>
-            <OngoingShortcut
-              hasPaymentRisk={hasPaymentRisk}
-              isOpen={isOngoingOpen}
-              onCancelTutorDemand={handleCancelTutorDemand}
-              onClose={() => setIsOngoingOpen(false)}
-              onConfirmTutorTrialStart={handleConfirmTutorTrialStart}
-              onHuntingFulfillmentAction={handleHuntingTaskFulfillmentAction}
-              onOpen={() => {
+          <FloatingActions
+            hunting={{
+              areaOptions: campusAreaOptions,
+              initialProject: huntingShortcutProject,
+              isEnabled: isHuntingShortcutEnabled,
+              isProjectOpen: isHuntingProjectOpen,
+              isRecommendationOpen: isHuntingRecommendationOpen,
+              onCloseProject: closeHuntingShortcutOverlays,
+              onCloseRecommendation: () => setIsHuntingRecommendationOpen(false),
+              onDisable: handleDisableHuntingShortcut,
+              onOpen: handleOpenHuntingShortcut,
+              onSubmitProject: handleCreateHuntingProject,
+              recommendedTasks: recommendedHuntingTasks
+            }}
+            isQuickDockExpanded={isQuickDockExpanded}
+            mine={{
+              isOpen: isMineOpen,
+              isQuickDockExpanded,
+              onClose: () => setIsMineOpen(false),
+              onLogout: handleLogout,
+              onNavigate: handleNavigate,
+              onOpenPublish: handleOpenPublishInfo,
+              onOpenRecycle: handleOpenRecycleInfo,
+              onOpenTab: handleOpenTab,
+              onOpenTutorCalendar: handleOpenTutorCalendar,
+              onToggleTutorExposure: handleToggleTutorExposure,
+              onTrigger: handleAvatarClick,
+              walletSummary: workspaceData.walletSummary
+            }}
+            ongoing={{
+              hasPaymentRisk,
+              isOpen: isOngoingOpen,
+              onCancelTutorDemand: handleCancelTutorDemand,
+              onClose: () => setIsOngoingOpen(false),
+              onConfirmTutorTrialStart: handleConfirmTutorTrialStart,
+              onHuntingFulfillmentAction: handleHuntingTaskFulfillmentAction,
+              onOpen: () => {
                 setIsOngoingOpen(true);
                 setIsMineOpen(false);
-              }}
-              onOpenQuoteList={handleOpenOngoingQuoteList}
-              onOpenTutorApplications={handleOpenTutorApplications}
-              onOpenTutorTrialList={handleOpenTutorTrialList}
-              onRequestTutorTrialEnd={handleRequestTutorTrialEnd}
-              onSubmitTutorWorkflowAction={handleTutorWorkflowAction}
-              orders={ongoingOrders}
-            />
-
-            {role === "student" ? (
-              <HuntingShortcut
-                areaOptions={campusAreaOptions}
-                initialProject={huntingShortcutProject}
-                isEnabled={isHuntingShortcutEnabled}
-                isProjectOpen={isHuntingProjectOpen}
-                isRecommendationOpen={isHuntingRecommendationOpen}
-                onCloseProject={closeHuntingShortcutOverlays}
-                onCloseRecommendation={() => setIsHuntingRecommendationOpen(false)}
-                onDisable={handleDisableHuntingShortcut}
-                onOpen={handleOpenHuntingShortcut}
-                onSubmitProject={handleCreateHuntingProject}
-                recommendedTasks={recommendedHuntingTasks}
-              />
-            ) : null}
-          </QuickActionDock>
-
-          <MineShortcut
-            isOpen={isMineOpen}
-            isQuickDockExpanded={isQuickDockExpanded}
-            onClose={() => setIsMineOpen(false)}
-            onLogout={handleLogout}
-            onNavigate={handleNavigate}
-            onOpenPublish={handleOpenPublishInfo}
-            onOpenRecycle={handleOpenRecycleInfo}
-            onOpenTab={handleOpenTab}
-            onOpenTutorCalendar={handleOpenTutorCalendar}
-            onToggleTutorExposure={handleToggleTutorExposure}
-            onTrigger={handleAvatarClick}
-            walletSummary={workspaceData.walletSummary}
+              },
+              onOpenQuoteList: handleOpenOngoingQuoteList,
+              onOpenTutorApplications: handleOpenTutorApplications,
+              onOpenTutorTrialList: handleOpenTutorTrialList,
+              onRequestTutorTrialEnd: handleRequestTutorTrialEnd,
+              onSubmitTutorWorkflowAction: handleTutorWorkflowAction,
+              orders: ongoingOrders
+            }}
+            role={role}
           />
 
           <BottomTabs activeTab={activeTab} onChange={handleOpenTab} onOpenTutorPublish={handleOpenPublishInfo} />

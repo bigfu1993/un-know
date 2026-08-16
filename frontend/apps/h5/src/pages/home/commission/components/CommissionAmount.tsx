@@ -3,18 +3,18 @@ import { Banknote, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
 /** 委托报价金额弹窗属性。 */
-interface DelegationAmountProps {
+interface CommissionAmountProps {
   onClose: () => void;
   onSubmit: (amount: number) => Promise<void> | void;
   task: HuntingTask;
 }
 
 /** 委托额度确认弹窗，负责展示当前任务标题和金额输入。 */
-export function DelegationAmount({
+export function CommissionAmount({
   onClose,
   onSubmit,
   task
-}: DelegationAmountProps) {
+}: CommissionAmountProps) {
   const [amountDraft, setAmountDraft] = useState(() => (task.fee > 0 ? String(task.fee) : ""));
   const [amountError, setAmountError] = useState("");
 
@@ -41,12 +41,12 @@ export function DelegationAmount({
     <Modal
       ariaLabel="委托额度确认"
       onClose={onClose}
-      panelClassName="delegation-amount-modal mx-auto grid max-w-[420px] gap-[12px] p-[14px]"
+      panelClassName="commission-amount-modal mx-auto grid max-w-[420px] gap-[12px] p-[14px]"
       panelElement="div"
     >
       <div className="card-title flex items-center justify-between gap-[10px]">
         <Banknote size={18} />
-        <div className="delegation-amount-title-copy">
+        <div className="commission-amount-title-copy">
           <strong>委托额度</strong>
           <span>{task.title}</span>
         </div>

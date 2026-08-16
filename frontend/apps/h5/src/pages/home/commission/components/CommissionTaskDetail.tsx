@@ -2,17 +2,17 @@ import { Banknote, Clock3, Crosshair, MapPin, MessageCircle, Tags, UserRound, XC
 import { Modal } from "@ui/Modal";
 import { formatCurrency } from "@shared/clientPageModel";
 import {
-  getDelegationDestination,
-  getDelegationPrimaryActionLabel,
-  getDelegationPublishTime,
-  getDelegationPublisherText,
-  getDelegationRequirementTags,
+  getCommissionDestination,
+  getCommissionPrimaryActionLabel,
+  getCommissionPublishTime,
+  getCommissionPublisherText,
+  getCommissionRequirementTags,
   getHuntingTaskAmountText,
-  isDelegationTaskLocked
-} from "@pages/home/delegation/model";
+  isCommissionTaskLocked
+} from "@pages/home/commission/model";
 
 /** 委托详情弹窗属性。 */
-interface DelegationTaskDetailProps {
+interface CommissionTaskDetailProps {
   onAccept: (task: HuntingTask) => void;
   onClose: () => void;
   onContact: (task: HuntingTask) => void;
@@ -20,22 +20,22 @@ interface DelegationTaskDetailProps {
 }
 
 /** 委托详情弹窗，展示完整任务信息并复用当前任务动作。 */
-export function DelegationTaskDetail({
+export function CommissionTaskDetail({
   onAccept,
   onClose,
   onContact,
   task
-}: DelegationTaskDetailProps) {
+}: CommissionTaskDetailProps) {
   return (
     <Modal
       ariaLabel="委托详情"
       onClose={onClose}
-      panelClassName="delegation-detail-modal mx-auto grid max-w-[420px] gap-[12px] p-[14px]"
+      panelClassName="commission-detail-modal mx-auto grid max-w-[420px] gap-[12px] p-[14px]"
       panelElement="div"
     >
       <div className="card-title flex items-center justify-between gap-[10px]">
         <Crosshair size={18} />
-        <div className="delegation-detail-title-copy">
+        <div className="commission-detail-title-copy">
           <strong>{task.title}</strong>
           <span>{task.status}</span>
         </div>
@@ -48,18 +48,18 @@ export function DelegationTaskDetail({
           <XCircle size={20} />
         </button>
       </div>
-      <div className="delegation-preview grid gap-[9px]">
+      <div className="commission-preview grid gap-[9px]">
         <span>
           <Clock3 size={15} />
-          发布时间：{getDelegationPublishTime(task)}
+          发布时间：{getCommissionPublishTime(task)}
         </span>
         <span>
           <MapPin size={15} />
-          委托目的地：{getDelegationDestination(task)}
+          委托目的地：{getCommissionDestination(task)}
         </span>
         <span>
           <UserRound size={15} />
-          发布者：{getDelegationPublisherText(task)}
+          发布者：{getCommissionPublisherText(task)}
         </span>
         <span>
           <Banknote size={15} />
@@ -77,11 +77,11 @@ export function DelegationTaskDetail({
         </span>
         <span>
           <Tags size={15} />
-          要求：{getDelegationRequirementTags(task).join("、")}
+          要求：{getCommissionRequirementTags(task).join("、")}
         </span>
       </div>
       {!task.isMine ? (
-        <div className="delegation-card-actions flex flex-wrap gap-[8px]">
+        <div className="commission-card-actions flex flex-wrap gap-[8px]">
           <button
             className="ghost-button inline-flex min-h-[36px] flex-1 items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466] disabled:text-[#748092]"
             onClick={() => onContact(task)}
@@ -91,12 +91,12 @@ export function DelegationTaskDetail({
           </button>
           <button
             className="primary-button inline-flex min-h-[36px] flex-1 items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
-            disabled={isDelegationTaskLocked(task)}
+            disabled={isCommissionTaskLocked(task)}
             onClick={() => onAccept(task)}
             type="button"
           >
             <Banknote size={15} />
-            {getDelegationPrimaryActionLabel(task)}
+            {getCommissionPrimaryActionLabel(task)}
           </button>
         </div>
       ) : null}

@@ -7,7 +7,7 @@ import {
   hasInvalidCounterQuoteAmount,
   hasValidCounterQuoteAmount,
   isQuoteLockedForPublisher
-} from "@pages/home/delegation/model";
+} from "@pages/home/commission/model";
 
 /** 进行中委托报价处理弹窗属性。 */
 interface OngoingQuoteProps {
@@ -98,7 +98,7 @@ export function OngoingQuote({
     <Modal
       ariaLabel="报价列表"
       onClose={onClose}
-      panelClassName="delegation-quote-modal mx-auto grid max-w-[420px] gap-[12px] p-[14px]"
+      panelClassName="commission-quote-modal mx-auto grid max-w-[420px] gap-[12px] p-[14px]"
       panelElement="div"
     >
       <div className="card-title flex items-center justify-between gap-[10px]">
@@ -116,14 +116,14 @@ export function OngoingQuote({
           <XCircle size={20} />
         </button>
       </div>
-      <div className="delegation-quote-list grid gap-[8px]">
+      <div className="commission-quote-list grid gap-[8px]">
         {quotes.map((quote) => {
           const isLockedQuote = isQuoteLockedForPublisher(task, quote);
           const hasQuoteCounterAmount = hasCounterQuoteAmount(quote);
 
           return (
             <button
-              className={`delegation-quote-option grid gap-[5px] p-[10px] text-left ${
+              className={`commission-quote-option grid gap-[5px] p-[10px] text-left ${
                 selectedQuoteId === quote.id ? "active" : ""
               } ${isLockedQuote ? "locked" : ""}`}
               disabled={isLockedQuote}
@@ -133,7 +133,7 @@ export function OngoingQuote({
             >
               <span className="flex items-center justify-between gap-[8px]">
                 <strong>{quote.bidder.nickname}</strong>
-                <span className="delegation-quote-price inline-flex items-center gap-[6px]">
+                <span className="commission-quote-price inline-flex items-center gap-[6px]">
                   {hasQuoteCounterAmount ? <del>{formatCurrency(quote.originalAmount ?? quote.amount)}</del> : null}
                   <em className={hasQuoteCounterAmount ? "counter" : ""}>{formatCurrency(quote.amount)}</em>
                 </span>
@@ -151,7 +151,7 @@ export function OngoingQuote({
           </article>
         ) : null}
       </div>
-      <label className="delegation-quote-counter grid gap-[6px]">
+      <label className="commission-quote-counter grid gap-[6px]">
         <span>{counterPrompt}</span>
         <input
           inputMode="decimal"
@@ -161,7 +161,7 @@ export function OngoingQuote({
           value={counterAmount}
         />
       </label>
-      <div className="delegation-quote-actions grid gap-[8px]">
+      <div className="commission-quote-actions grid gap-[8px]">
         <button
           className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
           disabled={!canSubmit}

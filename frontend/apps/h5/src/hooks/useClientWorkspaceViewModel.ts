@@ -2,7 +2,7 @@ import {
   getHuntingHistoryOrders,
   getHuntingOngoingOrders,
   getRecommendedHuntingTasks
-} from "@pages/home/delegation/model";
+} from "@pages/home/commission/model";
 import { getTutorDemandBudgetLabel } from "@tools/tutorDemand";
 import { isTutorTrialSettledServicePendingStatus } from "@tools/tutorTrial";
 

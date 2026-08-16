@@ -1,4 +1,4 @@
-import { getHuntingTaskPublishTimeText } from "@pages/home/delegation/model";
+import { getHuntingTaskPublishTimeText } from "@pages/home/commission/model";
 import { getChildProfileOptions } from "@shared/clientPageModel";
 import {
   buildPublishHuntingTaskRequest,

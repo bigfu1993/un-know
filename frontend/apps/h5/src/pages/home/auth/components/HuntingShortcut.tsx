@@ -1,8 +1,8 @@
 import { HuntingProject as HuntingProjectOverlay } from "@components/HuntingProject";
-import { HuntingRecommendation } from "@pages/home/delegation/components/HuntingRecommendation";
+import { HuntingRecommendation } from "./HuntingRecommendation";
 
 /** 狩猎快捷入口属性，调用方只提供开合状态和真实业务动作。 */
-interface HuntingShortcutProps {
+export interface HuntingShortcutProps {
   areaOptions: string[];
   initialProject: HuntingProject | null;
   isEnabled: boolean;

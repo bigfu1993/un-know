@@ -91,13 +91,13 @@ export function getHuntingQuoteActionLabel(task: HuntingTask) {
 export function getHuntingOngoingOrders(tasks: HuntingTask[], role: Role): ClientOrder[] {
   return tasks
     .filter((task) => {
-      const isDelegationInProgress =
+      const isCommissionInProgress =
         Boolean(task.isMine) &&
         (isHuntingPublishedStatus(task) || isHuntingQuoteStatus(task) || isHuntingFulfillingStatus(task));
       const isQuotedHunting = Boolean(task.isQuotedByMe) && isHuntingQuoteStatus(task);
       const isHuntingInProgress = Boolean(task.isAcceptedByMe) && isHuntingFulfillingStatus(task);
 
-      return isDelegationInProgress || isQuotedHunting || isHuntingInProgress;
+      return isCommissionInProgress || isQuotedHunting || isHuntingInProgress;
     })
     .map((task) => {
       const isFulfilling = isHuntingFulfillingStatus(task);
@@ -175,19 +175,19 @@ export function getHuntingTaskAmountText(task: HuntingTask) {
 }
 
 /** 委托任务排序方式。 */
-export type DelegationSortMode = "amountAsc" | "amountDesc" | "default" | "time";
+export type CommissionSortMode = "amountAsc" | "amountDesc" | "default" | "time";
 
 /** 委托页展开面板类型。 */
-export type DelegationToolbarPanel = "area" | "sort" | null;
+export type CommissionToolbarPanel = "area" | "sort" | null;
 
 /** 委托页顶部规则滚动字幕文案。 */
-export const delegationRuleTickerItems = [
+export const commissionRuleTickerItems = [
   "结算规则：发布方确认服务结束后进入观察期，默认 3 天后进入可提现钱包。",
   "取消协商规则：接受委托后 2 分钟内可自助取消，5 分钟内可协商取消。"
 ];
 
 /** 委托任务排序选项。 */
-export const delegationSortOptions: Array<{ label: string; value: DelegationSortMode }> = [
+export const commissionSortOptions: Array<{ label: string; value: CommissionSortMode }> = [
   { label: "默认排序", value: "default" },
   { label: "时间优先", value: "time" },
   { label: "金额从高到低", value: "amountDesc" },
@@ -195,12 +195,12 @@ export const delegationSortOptions: Array<{ label: string; value: DelegationSort
 ];
 
 /** 获取委托地址中的区域信息。 */
-export function getDelegationArea(location: string) {
+export function getCommissionArea(location: string) {
   return location.split(/->|→|·|,|，/)[0]?.trim() || "未知区域";
 }
 
 /** 获取委托时间排序权重，数字越小代表越靠前。 */
-export function getDelegationTimeWeight(latestTime: string) {
+export function getCommissionTimeWeight(latestTime: string) {
   if (latestTime.includes("已超过")) {
     return Number.MAX_SAFE_INTEGER;
   }
@@ -220,22 +220,22 @@ export function getDelegationTimeWeight(latestTime: string) {
 }
 
 /** 获取委托目的地展示文案。 */
-export function getDelegationDestination(task: HuntingTask) {
+export function getCommissionDestination(task: HuntingTask) {
   return task.destination || task.location || "目的地待补充";
 }
 
 /** 获取委托发布时间展示文案。 */
-export function getDelegationPublishTime(task: HuntingTask) {
+export function getCommissionPublishTime(task: HuntingTask) {
   return task.publishTime || "平台同步";
 }
 
 /** 获取委托发布者展示文案，手机号由服务端返回脱敏值。 */
-export function getDelegationPublisherText(task: HuntingTask) {
+export function getCommissionPublisherText(task: HuntingTask) {
   return `${task.publisher.nickname || "平台用户"} · ${task.publisher.phone || "暂无手机号"}`;
 }
 
 /** 获取委托要求标签。 */
-export function getDelegationRequirementTags(task: HuntingTask) {
+export function getCommissionRequirementTags(task: HuntingTask) {
   const taggedRequirements = task.requirementTags ?? [];
   const textRequirements = (task.requirement || task.urgency || "无特殊要求")
     .split(/、|,|，|\s+/)
@@ -247,19 +247,19 @@ export function getDelegationRequirementTags(task: HuntingTask) {
 }
 
 /** 委托任务池只展示发布和报价状态。 */
-export function isDelegationListVisible(task: HuntingTask) {
+export function isCommissionListVisible(task: HuntingTask) {
   return isHuntingPublishedStatus(task) || isHuntingQuoteStatus(task);
 }
 
 /** 判断委托是否已进入不可重复领取/报价的业务状态。 */
-export function isDelegationTaskLocked(task: HuntingTask) {
+export function isCommissionTaskLocked(task: HuntingTask) {
   const lockedStatusKeywords = ["履约中", "进行中", "已领取", "完成", "取消", "异常", "争议"];
 
   return Boolean(task.pendingAmount) || lockedStatusKeywords.some((keyword) => task.status.includes(keyword));
 }
 
 /** 获取委托卡片主按钮文案。 */
-export function getDelegationPrimaryActionLabel(task: HuntingTask) {
+export function getCommissionPrimaryActionLabel(task: HuntingTask) {
   if (isHuntingFulfillingStatus(task)) {
     return "履约中";
   }

@@ -1,7 +1,7 @@
-import { isDelegationTaskLocked, isHuntingQuoteStatus } from "@pages/home/delegation/model";
+import { isCommissionTaskLocked, isHuntingQuoteStatus } from "@pages/home/commission/model";
 
 /** 委托页任务交互流程入参。 */
-interface UseDelegationTaskFlowOptions {
+interface UseCommissionTaskFlowOptions {
   displayTasks: HuntingTask[];
   huntingCertificationStatus: HuntingCertificationStatus;
   onAcceptTask: (task: HuntingTask) => Promise<void> | void;
@@ -12,7 +12,7 @@ interface UseDelegationTaskFlowOptions {
 }
 
 /** 委托页详情、认证提示和报价金额弹窗流程。 */
-export function useDelegationTaskFlow({
+export function useCommissionTaskFlow({
   displayTasks,
   huntingCertificationStatus,
   onAcceptTask,
@@ -20,7 +20,7 @@ export function useDelegationTaskFlow({
   onQuoteTask,
   showMessage,
   visibleTasks
-}: UseDelegationTaskFlowOptions) {
+}: UseCommissionTaskFlowOptions) {
   const [isCertificationPromptOpen, setIsCertificationPromptOpen] = useState(false);
   const [amountTaskId, setAmountTaskId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -74,7 +74,7 @@ export function useDelegationTaskFlow({
       openCertificationPrompt();
       return false;
     }
-    if (isDelegationTaskLocked(task)) {
+    if (isCommissionTaskLocked(task)) {
       return false;
     }
 

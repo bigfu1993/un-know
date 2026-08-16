@@ -1,27 +1,27 @@
-.h5-shell.delegation-shell {
+.h5-shell.commission-shell {
   height: 100dvh;
   overflow: hidden;
 }
 
-.delegation-page {
+.commission-page {
   grid-template-rows: auto auto minmax(0, 1fr);
   height: calc(100dvh - 102px - env(safe-area-inset-bottom));
   min-height: 0;
 }
 
-.h5-shell.has-context-card .delegation-page {
+.h5-shell.has-context-card .commission-page {
   height: calc(100dvh - 184px - env(safe-area-inset-bottom));
 }
 
-.delegation-toolbar {
+.commission-toolbar {
   padding: 0 0 3px;
 }
 
-.delegation-toolbar-row {
+.commission-toolbar-row {
   min-width: 0;
 }
 
-.delegation-task-scroll {
+.commission-task-scroll {
   min-height: 0;
   align-content: start;
   margin-inline: -2px;
@@ -31,11 +31,11 @@
   scrollbar-gutter: stable;
 }
 
-.delegation-task-card {
+.commission-task-card {
   cursor: pointer;
 }
 
-.delegation-task-card:focus-visible {
+.commission-task-card:focus-visible {
   outline: 3px solid rgba(23, 94, 117, 0.18);
   outline-offset: 2px;
 }
@@ -51,8 +51,8 @@
   font-weight: 900;
 }
 
-.delegation-task-fields,
-.delegation-preview {
+.commission-task-fields,
+.commission-preview {
   span {
     display: flex;
     min-width: 0;
@@ -70,27 +70,27 @@
   }
 }
 
-.delegation-task-amount {
+.commission-task-amount {
   color: #d9344e;
   font-size: 14px;
   font-weight: 900;
 }
 
-.delegation-detail-modal,
-.delegation-amount-modal {
+.commission-detail-modal,
+.commission-amount-modal {
   width: min(420px, calc(100vw - 28px));
 }
 
-.delegation-detail-modal .delegation-card-actions {
+.commission-detail-modal .commission-card-actions {
   padding-right: 0;
 }
 
-.delegation-amount-modal .sheet-actions {
+.commission-amount-modal .sheet-actions {
   grid-template-columns: minmax(0, 1fr);
 }
 
-.delegation-search,
-.delegation-filter {
+.commission-search,
+.commission-filter {
   span {
     color: #657181;
     font-size: 12px;
@@ -108,8 +108,8 @@
   }
 }
 
-.delegation-search input,
-.delegation-filter select {
+.commission-search input,
+.commission-filter select {
   box-sizing: border-box;
   border: 1px solid #d9e1e8;
   border-radius: 8px;
@@ -117,13 +117,13 @@
   outline: 0;
 }
 
-.delegation-search input:focus,
-.delegation-filter select:focus {
+.commission-search input:focus,
+.commission-filter select:focus {
   border-color: #175e75;
   box-shadow: 0 0 0 3px rgba(23, 94, 117, 0.12);
 }
 
-.delegation-icon-button {
+.commission-icon-button {
   display: grid;
   width: 36px;
   height: 36px;
@@ -135,19 +135,19 @@
   color: #475466;
 }
 
-.delegation-icon-button.active {
+.commission-icon-button.active {
   border-color: #b8dbe4;
   background: #dceef3;
   color: #175e75;
 }
 
-.delegation-live-button.active {
+.commission-live-button.active {
   border-color: #b8ead5;
   background: #eefaf4;
   color: #1d6f55;
 }
 
-.delegation-option-panel {
+.commission-option-panel {
   padding: 6px;
   border: 1px solid #d9e1e8;
   border-radius: 8px;
@@ -169,7 +169,7 @@
   }
 }
 
-.delegation-live-status {
+.commission-live-status {
   display: flex;
   min-height: 30px;
   align-items: center;
@@ -207,26 +207,26 @@
   }
 }
 
-.delegation-live-status.live {
+.commission-live-status.live {
   background: #eefaf4;
   color: #1d6f55;
 }
 
-.delegation-filter-row {
+.commission-filter-row {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
-.delegation-card-actions {
+.commission-card-actions {
   width: 100%;
   justify-content: flex-start;
   padding-right: 64px;
 }
 
-.delegation-quote-button {
+.commission-quote-button {
   position: relative;
 }
 
-.delegation-quote-badge {
+.commission-quote-badge {
   display: inline-grid;
   min-width: 17px;
   height: 17px;
@@ -239,44 +239,44 @@
   line-height: 1;
 }
 
-.delegation-quote-option {
+.commission-quote-option {
   border: 1px solid #e4e9f1;
   border-radius: 8px;
   background: #fff;
   color: #17212b;
 }
 
-.delegation-quote-option.active {
+.commission-quote-option.active {
   border-color: #1f7a63;
   background: #eefaf4;
 }
 
-.delegation-quote-option.locked {
+.commission-quote-option.locked {
   cursor: not-allowed;
   background: #fff8f8;
   opacity: 0.86;
 }
 
-.delegation-quote-price del {
+.commission-quote-price del {
   color: #8a96a5;
   font-size: 12px;
 }
 
-.delegation-quote-price .counter {
+.commission-quote-price .counter {
   color: #d92d20;
 }
 
-.delegation-quote-option span:last-child {
+.commission-quote-option span:last-child {
   color: #657181;
   font-size: 12px;
 }
 
-.delegation-quote-counter span {
+.commission-quote-counter span {
   color: #657181;
   font-size: 12px;
 }
 
-.delegation-quote-counter input {
+.commission-quote-counter input {
   min-height: 34px;
   border: 1px solid #d9e1ec;
   border-radius: 8px;
@@ -284,24 +284,6 @@
   padding: 0 9px;
   color: #17212b;
   font-size: 12px;
-}
-
-.hunting-recommendation-panel {
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  overflow: hidden;
-}
-
-.hunting-recommendation-list {
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding-right: 2px;
-}
-
-.hunting-recommendation-card .meta-line span {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
 }
 
 .hunting-certification-prompt {

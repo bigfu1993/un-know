@@ -1,37 +1,37 @@
 import {
-  delegationSortOptions,
-  getDelegationArea,
-  getDelegationDestination,
-  getDelegationTimeWeight,
-  isDelegationListVisible,
-  type DelegationSortMode,
-  type DelegationToolbarPanel
-} from "@pages/home/delegation/model";
+  commissionSortOptions,
+  getCommissionArea,
+  getCommissionDestination,
+  getCommissionTimeWeight,
+  isCommissionListVisible,
+  type CommissionSortMode,
+  type CommissionToolbarPanel
+} from "@pages/home/commission/model";
 
 /** 委托列表筛选、排序和工具面板状态。 */
-export function useDelegationList(tasks: HuntingTask[]) {
+export function useCommissionList(tasks: HuntingTask[]) {
   const [keyword, setKeyword] = useState("");
-  const [activePanel, setActivePanel] = useState<DelegationToolbarPanel>(null);
+  const [activePanel, setActivePanel] = useState<CommissionToolbarPanel>(null);
   const [selectedArea, setSelectedArea] = useState("");
-  const [sortMode, setSortMode] = useState<DelegationSortMode>("default");
+  const [sortMode, setSortMode] = useState<CommissionSortMode>("default");
   const displayTasks = useMemo(() => tasks, [tasks]);
-  const listTasks = useMemo(() => displayTasks.filter(isDelegationListVisible), [displayTasks]);
+  const listTasks = useMemo(() => displayTasks.filter(isCommissionListVisible), [displayTasks]);
   const areaOptions = useMemo(
-    () => Array.from(new Set(listTasks.map((task) => getDelegationArea(getDelegationDestination(task))))),
+    () => Array.from(new Set(listTasks.map((task) => getCommissionArea(getCommissionDestination(task))))),
     [listTasks]
   );
   const visibleTasks = useMemo(() => {
     const normalizedKeyword = keyword.trim().toLowerCase();
     const filteredTasks = listTasks.filter((task) => {
       const titleMatched = normalizedKeyword ? task.title.toLowerCase().includes(normalizedKeyword) : true;
-      const areaMatched = selectedArea ? getDelegationArea(getDelegationDestination(task)) === selectedArea : true;
+      const areaMatched = selectedArea ? getCommissionArea(getCommissionDestination(task)) === selectedArea : true;
 
       return titleMatched && areaMatched;
     });
 
     return [...filteredTasks].sort((leftTask, rightTask) => {
       if (sortMode === "time") {
-        return getDelegationTimeWeight(leftTask.latestTime) - getDelegationTimeWeight(rightTask.latestTime);
+        return getCommissionTimeWeight(leftTask.latestTime) - getCommissionTimeWeight(rightTask.latestTime);
       }
       if (sortMode === "amountDesc") {
         return rightTask.fee - leftTask.fee;
@@ -44,7 +44,7 @@ export function useDelegationList(tasks: HuntingTask[]) {
     });
   }, [listTasks, keyword, selectedArea, sortMode]);
   const selectedSortLabel =
-    delegationSortOptions.find((option) => option.value === sortMode)?.label ?? "默认排序";
+    commissionSortOptions.find((option) => option.value === sortMode)?.label ?? "默认排序";
 
   return {
     activePanel,

@@ -68,7 +68,7 @@ export const tutorSorts: Array<{ key: TutorSort; label: string }> = [
 export const moduleRoutePaths: Partial<Record<ClientModuleKey, string>> = {
   featured: "/featured",
   partTime: "/part-time",
-  hunting: "/delegation",
+  hunting: "/commission",
   merchantSales: "/merchant-sales",
   marketing: "/marketing",
   tutor: "/tutor"
