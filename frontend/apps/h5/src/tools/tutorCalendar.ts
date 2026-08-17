@@ -1,4 +1,4 @@
-import { parseTutorSubjects } from "@shared/tutorModel";
+import { getTutorSubjectLabel, parseTutorSubjects } from "@shared/tutorModel";
 
 /** 获取家教日历使用的日期字符串。 */
 export function getTutorDateKey(date: Date) {
@@ -12,6 +12,13 @@ export function getTutorDateKey(date: Date) {
 /** 获取家教日历使用的月份字符串。 */
 export function getTutorMonthKey(date: Date) {
   return getTutorDateKey(date).slice(0, 7);
+}
+
+/** 日程/日历默认查看日期：可选日期集合里包含今天就默认选中今天，否则回退到第一个可选日期。 */
+export function getDefaultTutorScheduleDate(availableDates: string[]) {
+  const todayKey = getTutorDateKey(new Date());
+
+  return availableDates.includes(todayKey) ? todayKey : (availableDates[0] ?? "");
 }
 
 /** 生成指定月份的家教日历网格。 */
@@ -35,7 +42,8 @@ export function getTutorCalendarTasks(profileDraft: ProfileDraftState): TutorCal
   const today = new Date();
   const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
   const thirdDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 3);
-  const subject = parseTutorSubjects(profileDraft.tutorSubject)[0] ?? "数学";
+  const subjectKey = parseTutorSubjects(profileDraft.tutorSubject)[0] ?? TutorSubject.Math;
+  const subject = getTutorSubjectLabel(subjectKey);
 
   return [
     {

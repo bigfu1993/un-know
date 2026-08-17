@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** 客户端商品接口，承接学生和家长的优选商品列表与购买下单流程。 */
 @RestController
-@RequestMapping("/api/client/products")
+@RequestMapping("/client/products")
 public class ProductClientController {
   private final ProductAppService productAppService;
   private final ClientSessionService clientSessionService;

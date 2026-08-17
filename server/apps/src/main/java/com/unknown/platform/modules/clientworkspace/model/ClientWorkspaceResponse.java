@@ -5,9 +5,13 @@ import com.unknown.platform.modules.auth.model.ClientRole;
 import java.math.BigDecimal;
 import java.util.List;
 
-/** 客户端工作台聚合响应，按角色返回多个模块的首页级数据。 */
+/**
+ * 客户端工作台聚合响应，按角色返回多个模块的首页级数据。
+ *
+ * <p>进行中订单不再由这个聚合响应承载，改为独立的
+ * {@code GET /client/workspace/ongoing} 接口，见 {@link ClientOrder}。</p>
+ */
 public record ClientWorkspaceResponse(
-    List<ClientOrder> orders,
     List<PartTimeJob> partTimeJobs,
     HuntingSummary huntingSummary,
     List<HuntingTask> huntingTasks,

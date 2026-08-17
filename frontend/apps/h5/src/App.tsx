@@ -13,19 +13,14 @@ import { useRootNavigation } from "@h5/hooks/useRootNavigation";
 import { OngoingQuote } from "@pages/home/commission/components/OngoingQuote";
 import { useHuntingTaskActions } from "@pages/home/commission/hooks/useHuntingTaskActions";
 import { useOngoingQuoteFlow } from "@pages/home/commission/hooks/useOngoingQuoteFlow";
-import { HuntingCertification } from "@pages/home/commission/hunting-certification";
-import { TutorCertification } from "@pages/home/edu/components/TutorCertification";
+import { HuntingCertification } from "@pages/home/auth/components/Mine/components/HuntingCertification";
+import { TutorCertification } from "@pages/home/auth/components/Mine/components/TutorCertification";
 import { TutorApplications, TutorTrialList } from "@pages/home/edu/components/TutorApplications";
 import { FloatingActions } from "@pages/home/auth";
 import { useTutorTrialActions } from "@pages/home/edu/hooks/useTutorTrialActions";
 import { campusAreaOptions, clientAddressesToAddressBookItems } from "@shared/clientPageModel";
 import { hideMessage, showMessage } from "@tools/messageToast";
 import { getTutorCalendarTasks, getTutorDateKey } from "@tools/tutorCalendar";
-
-/** React Query 首次返回工作台数据前使用的稳定空工作台数据。 */
-const emptyWorkspaceData = {
-  orders: [] as ClientOrder[]
-};
 
 /** H5 根组件，负责登录态、角色数据、路由栈和全局弹窗编排。 */
 export function App() {
@@ -100,26 +95,41 @@ export function App() {
     isAddressLoading,
     isHomeLoading,
     isHuntingTasksFetching,
-    isHuntingTasksLoading,
     isPartTimeJobsFetching,
-    isPartTimeJobsLoading,
     isTutorDemandsFetching,
-    isTutorDemandsLoading,
     isWorkspaceFetching,
-    isWorkspaceLoading,
+    ongoingOrdersError,
+    ongoingOrdersResponse,
     partTimeJobsError,
     partTimeJobsResponse,
     refetchHome,
     refetchHuntingTasks,
+    refetchOngoingOrders,
     refetchPartTimeJobs,
+    refetchTutorApplications,
     refetchTutorDemands,
     refetchWorkspace,
+    tutorApplicationsError,
+    tutorApplicationsResponse,
     tutorDemandsError,
     tutorDemandsResponse,
     workspaceError,
     workspaceResponse
   } = useClientDataQueries({
     isAuthenticated,
+    // 委托/狩猎：狩猎 tab 打开，或狩猎快捷推荐面板/项目面板/快捷开关任一处于开启状态时才需要。
+    isHuntingDataNeeded:
+      activeTab === "hunting" || isHuntingRecommendationOpen || isHuntingProjectOpen || isHuntingShortcutEnabled,
+    // 进行中：只在悬浮"进行中"弹窗打开时才需要，弹窗徽标数字在首次打开前不准确（已知体验取舍）。
+    isOngoingOrdersNeeded: isOngoingOpen,
+    isPartTimeTabActive: activeTab === "partTime",
+    // 家教申请候选：进行中弹窗或其派生的申请列表/试课列表子弹窗任一打开时才需要。
+    isTutorApplicationsNeeded: isOngoingOpen || isTutorApplicationOpen || isTutorTrialListOpen,
+    // 家教需求：家教 tab 或兼职 tab（兼职页同时展示试课兼职卡片）激活时才需要。
+    isTutorDemandsNeeded: activeTab === "tutor" || activeTab === "partTime",
+    // 工作台聚合（钱包/商户看板/商户商品）：我的弹窗、钱包页、兼职 tab（商户看板）或商户经营 tab 任一激活时才需要。
+    isWorkspaceNeeded:
+      isMineOpen || activePage === "wallet" || activeTab === "partTime" || activeTab === "merchantSales",
     role,
     sessionKey: user.session?.accessToken
   });
@@ -144,13 +154,22 @@ export function App() {
     updateTutorExposureMutation
   } = useClientBusinessMutations();
   const addressItems = useMemo(() => clientAddressesToAddressBookItems(clientAddresses), [clientAddresses]);
-  /** 刷新工作台聚合数据和已拆分的三类业务列表。 */
+  /** 刷新工作台聚合数据和已拆分的五类业务列表。 */
   const refetchWorkspaceData = useCallback(() => {
     void refetchWorkspace();
+    void refetchOngoingOrders();
     void refetchPartTimeJobs();
     void refetchHuntingTasks();
     void refetchTutorDemands();
-  }, [refetchHuntingTasks, refetchPartTimeJobs, refetchTutorDemands, refetchWorkspace]);
+    void refetchTutorApplications();
+  }, [
+    refetchHuntingTasks,
+    refetchOngoingOrders,
+    refetchPartTimeJobs,
+    refetchTutorApplications,
+    refetchTutorDemands,
+    refetchWorkspace
+  ]);
   /** 仅刷新委托/狩猎列表，用于接单、报价和狩猎轮询。 */
   const refetchHuntingTaskList = useCallback(() => {
     void refetchHuntingTasks();
@@ -269,7 +288,8 @@ export function App() {
     role,
     workspaceData: {
       huntingTasks: huntingTasksResponse,
-      orders: workspaceResponse?.orders ?? emptyWorkspaceData.orders,
+      orders: ongoingOrdersResponse,
+      tutorApplications: tutorApplicationsResponse,
       tutorDemands: tutorDemandsResponse
     }
   });
@@ -340,14 +360,18 @@ export function App() {
     requestTutorTrialEnd: (applicationId) => requestTutorTrialEndMutation.mutateAsync(applicationId),
     showMessage
   });
-  const dataError = homeError ?? workspaceError ?? partTimeJobsError ?? huntingTasksError ?? tutorDemandsError ?? addressError;
-  const isInitialDataLoading =
-    isHomeLoading ||
-    isWorkspaceLoading ||
-    isPartTimeJobsLoading ||
-    isHuntingTasksLoading ||
-    isTutorDemandsLoading ||
-    isAddressLoading;
+  const dataError =
+    homeError ??
+    workspaceError ??
+    ongoingOrdersError ??
+    partTimeJobsError ??
+    huntingTasksError ??
+    tutorDemandsError ??
+    tutorApplicationsError ??
+    addressError;
+  // 进行中/兼职/委托-狩猎/家教/家教申请/工作台这 6 类业务查询已改为按 tab、弹窗等真实消费场景按需加载，
+  // 不再统一预加载，因此不计入首屏阻塞态；只有首页角色资料和地址簿是渲染整个 App 外壳必需的基础数据。
+  const isInitialDataLoading = isHomeLoading || isAddressLoading;
   const huntingCertificationStatus = useMemo(
     () => getHuntingCertificationDataFromDraft(user.profileDraft).certificationStatus,
     [user.profileDraft]
@@ -433,8 +457,18 @@ export function App() {
     showMessage("狩猎快捷已关闭。", { type: "success" });
   }
 
-  /** 家教认证提交完成后回到当前主模块首页，并用全局提示承接提交结果。 */
-  function handleTutorCertificationSubmitted() {
+  /** 家教认证提交完成后回到当前主模块首页，并同步服务端返回的认证状态。 */
+  function handleTutorCertificationSubmitted(
+    tutorCertificationStatus: TutorCertificationStatus,
+    nextCertificationDraft: ProfileDraftState
+  ) {
+    const nextProfileDraft = {
+      ...user.profileDraft,
+      ...nextCertificationDraft,
+      tutorCertificationStatus
+    };
+
+    syncProfileDraft(nextProfileDraft);
     setPageStack([]);
     setIsMineOpen(false);
     setIsOngoingOpen(false);
@@ -442,6 +476,7 @@ export function App() {
     closeTutorOverlays();
     closeHuntingShortcutOverlays();
     showMessage("家教认证已提交，当前状态为认证中。", { type: "success" });
+    void refetchHome();
     navigate(getRouteForTab(activeTab), { replace: true });
   }
 
@@ -736,7 +771,9 @@ export function App() {
     );
   }
 
-  if (!homeData || !workspaceResponse || isInitialDataLoading) {
+  // workspaceResponse 已有稳定空值兜底，不再作为 App 外壳阻塞条件——工作台聚合数据现在按需加载，
+  // 不能因为它还没被任何 tab/弹窗触发就把整个 App 卡在加载页。
+  if (!homeData || isInitialDataLoading) {
     return (
       <main className="login-shell mx-auto grid min-h-screen max-w-[540px] content-center gap-[14px] px-[14px] py-[28px] text-[#17212b]">
         <section className="login-card grid gap-[14px] p-[16px]">
@@ -782,7 +819,11 @@ export function App() {
               orders={orderDetailOrders}
             />
           ) : activePage === "tutorCertification" ? (
-            <TutorCertification onBack={handleBack} onSubmitted={handleTutorCertificationSubmitted} />
+            <TutorCertification
+              onBack={handleBack}
+              onSubmitError={(error) => showMessage(getErrorMessage(error, "家教认证提交失败，请稍后重试。"), { type: "error" })}
+              onSubmitted={handleTutorCertificationSubmitted}
+            />
           ) : activePage === "huntingCertification" ? (
             <HuntingCertification
               onBack={handleBack}
@@ -810,7 +851,7 @@ export function App() {
 
           <Routes>
             <Route
-              path="/featured"
+              path="/shop"
               element={
                 <Featured
                   onOpenCheckout={handleOpenCheckout}
@@ -820,7 +861,7 @@ export function App() {
               }
             />
             <Route
-              path="/part-time"
+              path="/job"
               element={
                 <PartTime
                   dashboard={workspaceData.merchantDashboard}
@@ -855,7 +896,7 @@ export function App() {
               }
             />
             <Route path="/marketing" element={<Marketing />} />
-            <Route path="/tutor" element={<Tutor tutorDemands={workspaceData.tutorDemands} />} />
+            <Route path="/edu" element={<Tutor tutorDemands={workspaceData.tutorDemands} />} />
             <Route path="*" element={<Navigate replace to={getDefaultRouteForRole(role)} />} />
           </Routes>
 
@@ -894,6 +935,7 @@ export function App() {
               onCancelTutorDemand: handleCancelTutorDemand,
               onClose: () => setIsOngoingOpen(false),
               onConfirmTutorTrialStart: handleConfirmTutorTrialStart,
+              onDebugRefetch: () => void refetchOngoingOrders(),
               onHuntingFulfillmentAction: handleHuntingTaskFulfillmentAction,
               onOpen: () => {
                 setIsOngoingOpen(true);

@@ -1,4 +1,4 @@
-import { HuntingRecommendation } from "./HuntingRecommendation";
+import { OngoingHuntings } from "./OngoingHuntings";
 
 /** 狩猎快捷入口属性，调用方只提供开合状态和真实业务动作。 */
 export interface HuntingShortcutProps {
@@ -63,7 +63,7 @@ export function HuntingShortcut({
       ) : null}
 
       {isRecommendationOpen ? (
-        <HuntingRecommendation onClose={onCloseRecommendation} onDisable={onDisable} tasks={recommendedTasks} />
+        <OngoingHuntings onClose={onCloseRecommendation} onDisable={onDisable} tasks={recommendedTasks} />
       ) : null}
     </>
   );

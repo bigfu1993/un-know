@@ -56,22 +56,15 @@ export const jobFilters: Array<{ key: JobFilter; label: string }> = [
   { key: "latest", label: "最新发布" },
   { key: "hourly", label: "时薪优先" }
 ];
-export const tutorSorts: Array<{ key: TutorSort; label: string }> = [
-  { key: "recommended", label: "系统推荐" },
-  { key: "favorite", label: "收藏优先" },
-  { key: "goodReview", label: "好评优先" },
-  { key: "hired", label: "受聘次数" },
-  { key: "duration", label: "可兼职时长" }
-];
 
 // 底部导航路由和默认重定向的唯一来源。
 export const moduleRoutePaths: Partial<Record<ClientModuleKey, string>> = {
-  featured: "/featured",
-  partTime: "/part-time",
+  featured: "/shop",
+  partTime: "/job",
   hunting: "/commission",
   merchantSales: "/merchant-sales",
   marketing: "/marketing",
-  tutor: "/tutor"
+  tutor: "/edu"
 };
 
 /** 注册资料、场景资料补充和设置页预览共用的地址字段。 */
@@ -411,11 +404,11 @@ export function getProfileRequirementTemplate(role: Role, activeTab: ClientModul
 }
 
 export function getDefaultRouteForRole(role: Role) {
-  return moduleRoutePaths[getDefaultPrimaryTab(role)] ?? "/featured";
+  return moduleRoutePaths[getDefaultPrimaryTab(role)] ?? "/shop";
 }
 
 export function getRouteForTab(tab: ClientModuleKey) {
-  return moduleRoutePaths[tab] ?? "/featured";
+  return moduleRoutePaths[tab] ?? "/shop";
 }
 
 export function getTabFromRoute(pathname: string): ClientModuleKey | null {

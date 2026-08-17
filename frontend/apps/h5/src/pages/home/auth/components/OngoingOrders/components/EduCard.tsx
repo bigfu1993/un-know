@@ -1,3 +1,4 @@
+import { MapPin, Tags } from "lucide-react";
 import { useCancelTutorApplication } from "@unknown/hooks";
 import { getErrorMessage, showMessage } from "@tools/messageToast";
 import {
@@ -108,7 +109,7 @@ function TrialSchedulePreview({
   const scheduleItems = getTrialSchedulePreviewItems(scheduleSections);
   const selectedDates = scheduleItems.map((item) => item.date);
   const initialConflictScheduleValue = useMemo(() => getTrialScheduleValueFromSummary(availabilitySummary), [availabilitySummary]);
-  const [selectedDate, setSelectedDate] = useState(selectedDates[0] ?? "");
+  const [selectedDate, setSelectedDate] = useState(() => getDefaultTutorScheduleDate(selectedDates));
   const previewPeriods: Array<{ key: TrialScheduleCalendarPeriod; label: string }> = [
     { key: "morning", label: "上午" },
     { key: "afternoon", label: "下午" },
@@ -516,29 +517,31 @@ export function EduCard({ onOpenCancelConfirmation, order, role, ...handlers }: 
 
   return (
     <>
-      <article className={`flow-card compact p-[12px] ${order.risk ? "risk-card" : ""}`}>
-        <div className="card-title flex items-center justify-between gap-[10px]">
+      <article className={`flow-card compact edu-order-card-container grid gap-[6px] p-[12px] ${order.risk ? "risk-card" : ""}`}>
+        <div className="edu-order-card-header card-title flex items-center justify-between gap-[10px]">
           <GraduationCap size={18} />
           <div className="ongoing-order-title-copy min-w-0 flex-1">
-            <strong>{order.title}</strong>
+            <strong className="card-title-chip">{order.title}</strong>
           </div>
           <OrderStatus order={order} tutorTask={tutorTask} />
         </div>
-        <div className="card-detail grid gap-[6px] mt-[10px]">
-          <div className="card-detail-item grid grid-cols-[56px_minmax(0,1fr)] items-center gap-[8px]">
-            <span className="card-detail-title">学科</span>
-            <span className="card-detail-content">{order.subject}</span>
+        <div className="edu-order-card-content job-task-fields grid gap-[7px]">
+          <div className="grid grid-cols-2 gap-[7px]">
+            <span>
+              <Tags size={14} />
+              学科：{order.subject}
+            </span>
+            <span>
+              <CalendarClock size={14} />
+              时间：{periodDaysLabel}
+            </span>
           </div>
-          <div className="card-detail-item grid grid-cols-[56px_minmax(0,1fr)] items-center gap-[8px]">
-            <span className="card-detail-title">时间</span>
-            <span className="card-detail-content">{periodDaysLabel}</span>
-          </div>
-          <div className="card-detail-item grid grid-cols-[56px_minmax(0,1fr)] items-center gap-[8px]">
-            <span className="card-detail-title">位置</span>
-            <span className="card-detail-content">{order.address}</span>
-          </div>
+          <span>
+            <MapPin size={14} />
+            位置：{order.address}
+          </span>
         </div>
-        <div className="card-action">
+        <div className="edu-order-card-footer">
           <OrderActions
             isCancellingTutorApplication={cancelTutorApplicationMutation.isPending}
             order={order}

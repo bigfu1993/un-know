@@ -11,14 +11,18 @@ import com.unknown.platform.modules.clientworkspace.model.ApplyTutorTrialRequest
 import com.unknown.platform.modules.clientworkspace.model.CompleteTutorTrialEndRequest;
 import com.unknown.platform.modules.clientworkspace.model.ConfirmTutorTrialRequest;
 import com.unknown.platform.modules.clientworkspace.model.PublishTutorDemandRequest;
+import com.unknown.platform.modules.clientworkspace.model.TutorSubjects;
 import com.unknown.platform.modules.clientworkspace.model.TutorWorkflowActionRequest;
 import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -111,9 +115,16 @@ public class TutorWorkspaceAppService {
    * @param authorization 登录访问令牌，可为空
    * @return 家教需求或可公开家教学生列表
    */
-  public List<TutorDemand> listTutorDemands(ClientRole role, String authorization) {
+  public List<Object> listTutorDemands(ClientRole role, String authorization) {
     Long currentUserId = clientSessionService.userIdOrNull(authorization);
     return tutorDemands(role, currentUserId);
+  }
+
+
+  /** {@link #tutorApplications} 的接口层入口，从登录态解析当前用户 ID。 */
+  public List<TutorDemand> listTutorApplications(ClientRole role, String authorization) {
+    Long currentUserId = clientSessionService.userIdOrNull(authorization);
+    return tutorApplications(role, currentUserId);
   }
 
 
@@ -124,8 +135,10 @@ public class TutorWorkspaceAppService {
     support.ensureUserRole(currentUserId, ClientRole.parent, "TUTOR_DEMAND_PARENT_ONLY", "仅家长账号可以发布家教需求");
     String publicId = nextTutorDemandPublicId();
     String childName = support.defaultText(request.childName(), "孩子");
-    String subject = support.defaultText(request.subject(), "待沟通");
-    String title = support.defaultText(request.title(), childName + subject + "家教");
+    // 学科从固定选项选择，不再兜底成"待沟通"这类不属于任何 KEY 的占位文案；未选学科视为提交无效。
+    TutorSubjects.requireValidKeys(request.subject());
+    String subject = request.subject();
+    String title = support.defaultText(request.title(), childName + TutorSubjects.label(subject) + "家教");
     String addressLabel = support.defaultText(request.addressLabel(), "地址待补充");
     String periodStart = support.defaultText(request.periodStart(), "待定");
     String periodEnd = support.defaultText(request.periodEnd(), "待定");
@@ -953,45 +966,66 @@ public class TutorWorkspaceAppService {
   }
 
 
-  public List<TutorDemand> tutorDemands(ClientRole role, Long currentUserId) {
+  public List<Object> tutorDemands(ClientRole role, Long currentUserId) {
     if (role == ClientRole.parent) {
-      List<TutorDemand> demands = new ArrayList<>(tutorExposedStudents());
-      demands.addAll(parentTutorDemands(currentUserId));
-      return demands;
+      return new ArrayList<>(tutorExposedStudents());
     }
 
-    return publishedTutorDemands();
+    return new ArrayList<>(publishedTutorDemands());
   }
 
 
-  /** 家长端家教列表展示已开启家教开关且认证通过的学生信息。 */
-  private List<TutorDemand> tutorExposedStudents() {
+  /**
+   * 家长自己发布的家教需求及其申请人，独立于 {@link #tutorDemands} 页面浏览列表，
+   * 只服务"进行中"弹窗（试课申请列表/试课中列表）。
+   */
+  public List<TutorDemand> tutorApplications(ClientRole role, Long currentUserId) {
+    if (role != ClientRole.parent) {
+      return List.of();
+    }
+
+    return parentTutorDemands(currentUserId);
+  }
+
+
+  /** 家长端家教列表展示已开启家教开关、认证通过且真实提交过认证资料的学生信息。
+   *  直接返回 app_user 和 tutor_certification 两张表的原始列值，不做任何加工/打码；
+   *  认证信息以 {@code tutor_certification} 为 key，整表数据作为子对象合并进 app_user 数据对象。 */
+  private List<Map<String, Object>> tutorExposedStudents() {
     return jdbcTemplate.query(
         """
-            SELECT id, COALESCE(NULLIF(nickname, ''), '未设置昵称') AS nickname,
-                   phone, credit_score
-            FROM app_user
-            WHERE role = 'student'
-              AND tutor_certification_status = 'normal'
-              AND tutor_exposure_enabled = TRUE
-            ORDER BY credit_score DESC, updated_at DESC, id DESC
+            SELECT u.id, u.nickname, u.phone, u.credit_score,
+                   tc.subject, tc.school, tc.major, tc.gender, tc.gpa, tc.certificate,
+                   tc.real_name, tc.id_card, tc.age, tc.native_place, tc.xuexin_screenshot
+            FROM app_user u
+            INNER JOIN tutor_certification tc ON tc.user_id = u.id
+            WHERE u.role = 'student'
+              AND u.tutor_certification_status = 'normal'
+              AND u.tutor_exposure_enabled = TRUE
+            ORDER BY u.credit_score DESC, u.updated_at DESC, u.id DESC
             """,
-        (rs, rowNum) -> new TutorDemand(
-            "student-" + rs.getLong("id"),
-            rs.getString("nickname"),
-            "已开启家教",
-            "认证学生",
-            "可沟通",
-            "可联系",
-            rs.getString("nickname") + "的家教资料",
-            "该学生已开启家教开关，认证信息可被家长查看。",
-            "平台认证",
-            "长期可沟通",
-            List.of(),
-            new UserNickname(rs.getString("nickname"), support.maskPhone(rs.getString("phone"))),
-            "tutorStudent",
-            List.of()
-        )
+        (rs, rowNum) -> {
+          Map<String, Object> tutorCertification = new LinkedHashMap<>();
+          tutorCertification.put("subject", rs.getString("subject"));
+          tutorCertification.put("school", rs.getString("school"));
+          tutorCertification.put("major", rs.getString("major"));
+          tutorCertification.put("gender", rs.getString("gender"));
+          tutorCertification.put("gpa", rs.getString("gpa"));
+          tutorCertification.put("certificate", rs.getString("certificate"));
+          tutorCertification.put("real_name", rs.getString("real_name"));
+          tutorCertification.put("id_card", rs.getString("id_card"));
+          tutorCertification.put("age", rs.getString("age"));
+          tutorCertification.put("native_place", rs.getString("native_place"));
+          tutorCertification.put("xuexin_screenshot", rs.getString("xuexin_screenshot"));
+
+          Map<String, Object> appUser = new LinkedHashMap<>();
+          appUser.put("id", rs.getLong("id"));
+          appUser.put("nickname", rs.getString("nickname"));
+          appUser.put("phone", rs.getString("phone"));
+          appUser.put("credit_score", rs.getInt("credit_score"));
+          appUser.put("tutor_certification", tutorCertification);
+          return appUser;
+        }
     );
   }
 

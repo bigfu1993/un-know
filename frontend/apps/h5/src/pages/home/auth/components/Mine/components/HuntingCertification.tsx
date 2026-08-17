@@ -1,4 +1,3 @@
-import "./index.less";
 import { useGlobalUser } from "@h5/store/global";
 import { useSubmitHuntingCertification } from "@unknown/hooks";
 import { getFilledProfileDraft } from "@shared/clientPageModel";

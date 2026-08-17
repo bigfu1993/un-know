@@ -1,4 +1,4 @@
-import { formatTutorSubjects, parseTutorSubjects } from "@shared/tutorModel";
+import { formatTutorSubjectLabels, formatTutorSubjects, parseTutorSubjects } from "@shared/tutorModel";
 
 export type { TutorCertificationStatus };
 
@@ -85,8 +85,8 @@ export function getTutorCardDataFromDraft(profileDraft: ProfileDraftState): Tuto
   const subjectLevelItems = parseTutorSubjectLevelItems(profileDraft);
   const subjectText =
     subjectLevelItems.length > 0
-      ? formatTutorSubjects(subjectLevelItems.map((item) => item.subject))
-      : profileDraft.tutorSubject || "学科待完善";
+      ? formatTutorSubjectLabels(formatTutorSubjects(subjectLevelItems.map((item) => item.subject)))
+      : formatTutorSubjectLabels(profileDraft.tutorSubject) || "学科待完善";
   const gradeText =
     subjectLevelItems.length > 0
       ? Array.from(new Set(subjectLevelItems.map((item) => item.grade))).join("、")

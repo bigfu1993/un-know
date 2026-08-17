@@ -1,8 +1,4 @@
-import {
-  getHuntingHistoryOrders,
-  getHuntingOngoingOrders,
-  getRecommendedHuntingTasks
-} from "@pages/home/commission/model";
+import { getHuntingHistoryOrders, getRecommendedHuntingTasks } from "@pages/home/commission/model";
 import { getTutorDemandBudgetLabel } from "@tools/tutorDemand";
 import { isTutorTrialSettledServicePendingStatus } from "@tools/tutorTrial";
 
@@ -14,8 +10,16 @@ interface UseClientWorkspaceViewModelOptions {
   workspaceData: {
     huntingTasks: HuntingTask[];
     orders: ClientOrder[];
-    tutorDemands: TutorDemand[];
+    /** 家长自己发布的家教需求 + 申请人，只服务进行中弹窗，跟页面浏览列表 tutorDemands 分开请求。 */
+    tutorApplications: TutorDemand[];
+    /** 家教列表浏览：学生角色是 TutorDemand 需求，家长角色是 TutorCertifiedStudent 原始学生数据。 */
+    tutorDemands: Array<TutorDemand | TutorCertifiedStudent>;
   };
+}
+
+/** 判断家教列表条目是否是家长端浏览的原始认证学生数据，而不是家教需求。 */
+export function isTutorCertifiedStudent(demand: TutorDemand | TutorCertifiedStudent): demand is TutorCertifiedStudent {
+  return "tutor_certification" in demand;
 }
 
 /** 家教品类归档终态：需求主状态和申请细分状态各自的已结束/已取消，加上申请细分状态特有的
@@ -66,7 +70,7 @@ export function useClientWorkspaceViewModel({
   const tutorTrialJobs: TutorTrialJob[] = useMemo(
     () =>
       workspaceData.tutorDemands
-        .filter((demand) => demand.sourceType !== "tutorStudent")
+        .filter((demand): demand is TutorDemand => !isTutorCertifiedStudent(demand) && demand.sourceType !== "tutorStudent")
         .map((demand) => ({
           address: demand.addressLabel ?? demand.school,
           budget: getTutorDemandBudgetLabel(demand.budget),
@@ -85,7 +89,7 @@ export function useClientWorkspaceViewModel({
   );
   const tutorApplicationCandidates: TutorApplicationCandidate[] = useMemo(
     () =>
-      workspaceData.tutorDemands.flatMap((demand) =>
+      workspaceData.tutorApplications.flatMap((demand) =>
         demand.applicants.map((applicant) => ({
           availability: applicant.availability,
           demandId: demand.id,
@@ -102,12 +106,11 @@ export function useClientWorkspaceViewModel({
           trialSchedule: applicant.trialSchedule
         }))
       ),
-    [workspaceData.tutorDemands]
+    [workspaceData.tutorApplications]
   );
-  const ongoingOrders = useMemo(
-    () => [...getHuntingOngoingOrders(mergedHuntingTasks, role), ...ongoingRoleOrders],
-    [mergedHuntingTasks, role, ongoingRoleOrders]
-  );
+  // 进行中列表现在由后端 /workspace/ongoing 接口按角色直接聚合返回（学生角色已包含委托/狩猎），
+  // 不再需要前端用 getHuntingOngoingOrders 从 huntingTasksResponse 现算拼接。
+  const ongoingOrders = ongoingRoleOrders;
   const orderDetailOrders = useMemo(
     () => [...getHuntingHistoryOrders(mergedHuntingTasks, role), ...roleOrders],
     [mergedHuntingTasks, role, roleOrders]

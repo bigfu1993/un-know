@@ -1,4 +1,4 @@
-import { tutorSubjectOptions } from "@shared/tutorModel";
+import { getTutorSubjectLabel, tutorSubjectOptions } from "@shared/tutorModel";
 import { localAuthCode, localPasswordMinLength } from "@tools/localAuth";
 import { hasInvalidRequiredFields, normalizeByKey, validateByKey } from "@tools/validation";
 
@@ -154,7 +154,7 @@ export function TutorQualificationInfo({
                 onClick={() => onToggleSubject(subject)}
                 type="button"
               >
-                {subject}
+                {getTutorSubjectLabel(subject)}
               </button>
             ))}
           </div>

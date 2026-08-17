@@ -9,6 +9,7 @@ declare global {
 
   type ClientOrder = import("@unknown/domain").ClientOrder;
   type ClientModuleKey = import("@unknown/domain").ClientModuleKey;
+  type ClientWorkspacePayload = import("@unknown/domain").ClientWorkspacePayload;
   type DeliveryMode = import("@unknown/domain").DeliveryMode;
   type HuntingSummary = import("@unknown/domain").HuntingSummary;
   type HuntingQuote = import("@unknown/domain").HuntingQuote;
@@ -26,6 +27,8 @@ declare global {
   type ProductSummary = import("@unknown/domain").ProductSummary;
   type Role = import("@unknown/domain").Role;
   type TutorDemand = import("@unknown/domain").TutorDemand;
+  type TutorCertificationRecord = import("@unknown/domain").TutorCertificationRecord;
+  type TutorCertifiedStudent = import("@unknown/domain").TutorCertifiedStudent;
   type TutorApplicant = import("@unknown/domain").TutorApplicant;
   type TutorExposureResponse = import("@unknown/domain").TutorExposureResponse;
   type ChatConversation = import("@unknown/domain").ChatConversation;
@@ -39,7 +42,6 @@ declare global {
   type LoginCredentialMode = import("@app-types/app").LoginCredentialMode;
   type ProductFilter = import("@app-types/app").ProductFilter;
   type JobFilter = import("@app-types/app").JobFilter;
-  type TutorSort = import("@app-types/app").TutorSort;
   type CheckoutState = import("@app-types/app").CheckoutState;
   type ClientAddress = import("@unknown/domain").ClientAddress;
   type ClientAddressRequest = import("@unknown/domain").ClientAddressRequest;
@@ -80,8 +82,8 @@ declare global {
   type TutorTrialJob = import("@app-types/tutor-workflow").TutorTrialJob;
   type TutorApplicationCandidate = import("@app-types/tutor-workflow").TutorApplicationCandidate;
   type TutorCalendarTask = import("@components/TutorCalendar").TutorCalendarTask;
-  type TutorCardData = import("@components/TutorCard/model").TutorCardData;
-  type TutorCardMode = import("@components/TutorCard/model").TutorCardMode;
+  type TutorCardData = import("@components/TutorCertificationCard/model").TutorCardData;
+  type TutorCardMode = import("@components/TutorCertificationCard/model").TutorCardMode;
   type TutorCertificationStatus = import("@unknown/domain").TutorCertificationStatus;
   type TutorCertificationInfoSaveMode = import("@components/TutorCertificationInfo").TutorCertificationInfoSaveMode;
 }

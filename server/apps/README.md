@@ -4,11 +4,11 @@
 
 ## 已接入能力
 
-- 用户端登录接口：`POST /api/client/auth/login`
-- 用户端首页接口：`GET /api/client/home`
-- 用户端商品接口：`GET /api/client/products`
-- 用户端购买接口：`POST /api/client/products/purchase`
-- 用户端工作台接口：`GET /api/client/workspace`
+- 用户端登录接口：`POST /client/auth/login`
+- 用户端首页接口：`GET /client/home`
+- 用户端商品接口：`GET /client/products`
+- 用户端购买接口：`POST /client/products/purchase`
+- 用户端工作台接口：`GET /client/workspace`
 - 管理端健康检查：`GET /api/admin/health`
 - Actuator 健康检查：`GET /actuator/health`
 - OpenAPI 文档：`/swagger-ui/index.html`
@@ -46,13 +46,13 @@ cd /Users/bigfu/code/un-know
 
 ```text
 GET  http://127.0.0.1:9988/actuator/health
-GET  http://127.0.0.1:9988/api/client/home
-GET  http://127.0.0.1:9988/api/client/products
-GET  http://127.0.0.1:9988/api/client/workspace
-POST http://127.0.0.1:9988/api/client/auth/login
-POST http://127.0.0.1:9988/api/client/auth/register
-POST http://127.0.0.1:9988/api/client/auth/miniapp/one-tap-login
-POST http://127.0.0.1:9988/api/client/products/purchase
+GET  http://127.0.0.1:9988/client/home
+GET  http://127.0.0.1:9988/client/products
+GET  http://127.0.0.1:9988/client/workspace
+POST http://127.0.0.1:9988/client/auth/login
+POST http://127.0.0.1:9988/client/auth/register
+POST http://127.0.0.1:9988/client/auth/miniapp/one-tap-login
+POST http://127.0.0.1:9988/client/products/purchase
 ```
 
 登录后的业务接口需要携带 `Authorization: Bearer {accessToken}` 和 `X-Client-User-Role: {role}`，不再使用 `?role=` 查询参数。

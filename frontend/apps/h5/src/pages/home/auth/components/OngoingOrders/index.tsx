@@ -1,5 +1,6 @@
 import { useConfirmAction } from "@h5/hooks/useConfirmAction";
 import { EduCard } from "./components/EduCard";
+import { FilterTags } from "./components/FilterTags";
 import { OrderActions, OrderStatus } from "./components/OrderActions";
 import { getOngoingOrderCategory, getOngoingOrderDisplayDetail, showOngoingOrderMessagePlaceholder } from "./model";
 
@@ -12,8 +13,13 @@ export interface OngoingOrdersProps {
   orders: ClientOrder[];
   onCancelTutorDemand?: (order: ClientOrder) => void;
   onClose: () => void;
+  /** 测试用：点击弹窗标题手动触发一次进行中列表查询，不做真实业务用途，验证完可移除。 */
+  onDebugRefetch?: () => void;
   onConfirmTutorTrialStart?: (order: ClientOrder) => void;
-  onHuntingFulfillmentAction?: (order: ClientOrder, action: OngoingHuntingFulfillmentAction) => Promise<unknown> | unknown;
+  onHuntingFulfillmentAction?: (
+    order: ClientOrder,
+    action: OngoingHuntingFulfillmentAction
+  ) => Promise<unknown> | unknown;
   onOpenQuoteList?: (order: ClientOrder) => void;
   onOpenTutorApplications?: (order: ClientOrder) => void;
   onOpenTutorTrialList?: (order: ClientOrder) => void;
@@ -24,15 +30,6 @@ export interface OngoingOrdersProps {
     }
   ) => Promise<boolean> | boolean | void;
 }
-
-/** 进行中列表筛选标签配置。 */
-const ongoingOrderFilterOptions: Array<{ label: string; value: OngoingOrderFilter }> = [
-  { label: "全部", value: "all" },
-  { label: "优选", value: "featured" },
-  { label: "委托", value: "delegation" },
-  { label: "狩猎", value: "hunting" },
-  { label: "家教", value: "tutor" }
-];
 
 /**
  * 进行中事项弹窗，负责分类筛选、空状态和卡片展示，家教卡片委托给 EduCard 自己承接状态和弹窗，
@@ -45,6 +42,7 @@ export function OngoingOrders({
   onCancelTutorDemand,
   onClose,
   onConfirmTutorTrialStart,
+  onDebugRefetch,
   onHuntingFulfillmentAction,
   onOpenQuoteList,
   onOpenTutorApplications,
@@ -128,23 +126,18 @@ export function OngoingOrders({
       surfaceClassName="ongoing-panel"
       title={
         <>
-          <strong>进行中的列表卡片</strong>
+          <strong
+            onClick={onDebugRefetch}
+            style={onDebugRefetch ? { cursor: "pointer" } : undefined}
+            title={onDebugRefetch ? "点击手动查询进行中列表（测试用）" : undefined}
+          >
+            进行中的列表卡片
+          </strong>
           <span>{orders.length} 个进行中事项</span>
         </>
       }
     >
-      <div className="ongoing-filter-tags flex flex-wrap gap-[8px]" aria-label="筛选进行中事项">
-        {ongoingOrderFilterOptions.map((option) => (
-          <button
-            className={activeFilter === option.value ? "active" : ""}
-            key={option.value}
-            onClick={() => setActiveFilter(option.value)}
-            type="button"
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
+      <FilterTags onChange={setActiveFilter} value={activeFilter} />
       <div className="ongoing-list grid gap-[10px]">
         {filteredOrders.map((order) => {
           if (getOngoingOrderCategory(order) === "tutor") {
@@ -173,7 +166,12 @@ export function OngoingOrders({
                 <span>{order.amountLabel ?? formatCurrency(order.amount)}</span>
                 <span>{order.contact}</span>
               </div>
-              <OrderActions order={order} {...handlers} onMessageOrder={showOngoingOrderMessagePlaceholder} onOpenCancelConfirmation={openCancelConfirmation} />
+              <OrderActions
+                order={order}
+                {...handlers}
+                onMessageOrder={showOngoingOrderMessagePlaceholder}
+                onOpenCancelConfirmation={openCancelConfirmation}
+              />
             </article>
           );
         })}

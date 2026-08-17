@@ -18,8 +18,8 @@ public class SecurityConfig {
         .cors(Customizer.withDefaults())
         .authorizeHttpRequests(registry -> registry
             .requestMatchers(
-                "/api/client/auth/**",
-                "/api/client/home",
+                "/client/auth/**",
+                "/client/home",
                 "/api/admin/health",
                 "/actuator/health",
                 "/v3/api-docs/**",

@@ -1,3 +1,5 @@
+import { FileText, MapPin, Tags } from "lucide-react";
+
 /** 试课标记片段，跟后端 tutorWageBudgetLabel 拼接格式保持一致。 */
 const TRIAL_REQUIRED_SEGMENT = "需要试课";
 
@@ -35,7 +37,7 @@ function EduJobScheduleView({
   onConfirmApply?: () => void;
   periodDates: string[];
 }) {
-  const [activeDate, setActiveDate] = useState(periodDates[0] ?? "");
+  const [activeDate, setActiveDate] = useState(() => getDefaultTutorScheduleDate(periodDates));
 
   return (
     <Modal
@@ -107,8 +109,8 @@ export function EduTaskCard({
 
   return (
     <>
-      <article className="flow-card edu-job-card p-[14px]">
-        <div className="card-title flex items-center justify-between gap-[10px]">
+      <article className="flow-card edu-job-card-container grid gap-[6px] p-[14px]">
+        <div className="edu-job-card-header card-title flex items-center justify-between gap-[10px]">
           <GraduationCap size={18} />
           <div className="edu-job-title-copy min-w-0 flex-1">
             <strong>{job.title}</strong>
@@ -119,22 +121,27 @@ export function EduTaskCard({
             <em>{feeLabel}</em>
           </div>
         </div>
-        <p>{job.description}</p>
-        <div className="card-detail grid gap-[6px] mt-[10px]">
-          <div className="card-detail-item grid grid-cols-[56px_minmax(0,1fr)] items-center gap-[8px]">
-            <span className="card-detail-title">学科</span>
-            <span className="card-detail-content">{job.subject}</span>
+        <div className="edu-job-card-content job-task-fields grid gap-[7px]">
+          <div className="grid grid-cols-2 gap-[7px]">
+            <span>
+              <Tags size={14} />
+              学科：{job.subject}
+            </span>
+            <span>
+              <CalendarClock size={14} />
+              时间：{periodDaysLabel}
+            </span>
           </div>
-          <div className="card-detail-item grid grid-cols-[56px_minmax(0,1fr)] items-center gap-[8px]">
-            <span className="card-detail-title">时间</span>
-            <span className="card-detail-content">{periodDaysLabel}</span>
-          </div>
-          <div className="card-detail-item grid grid-cols-[56px_minmax(0,1fr)] items-center gap-[8px]">
-            <span className="card-detail-title">位置</span>
-            <span className="card-detail-content">{job.address}</span>
-          </div>
+          <span>
+            <MapPin size={14} />
+            位置：{job.address}
+          </span>
+          <span>
+            <FileText size={14} />
+            描述：{job.description}
+          </span>
         </div>
-        <div className="card-action mt-[12px] flex flex-wrap items-center gap-[8px]">
+        <div className="edu-job-card-footer flex flex-wrap items-center gap-[8px]">
           <button
             className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
             onClick={() => setIsScheduleViewOpen(true)}

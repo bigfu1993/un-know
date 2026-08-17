@@ -33,21 +33,21 @@ export function CommissionTaskCard({ onAccept, onContact, onOpen, task }: Commis
 
   return (
     <article
-      className="flow-card commission-task-card grid gap-[10px] p-[14px]"
+      className="flow-card commission-card-container grid gap-[10px] p-[14px]"
       onClick={() => onOpen(task)}
       onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
     >
-      <div className="card-title flex items-center justify-between gap-[10px] min-w-0">
+      <div className="commission-card-header card-title flex items-center justify-between gap-[10px] min-w-0">
         <Crosshair size={18} />
-        <div className="commission-task-title-copy">
-          <strong>{task.title}</strong>
+        <div className="commission-task-title-copy min-w-0 flex-1">
+          <strong className="card-title-chip">{task.title}</strong>
           <span>发布时间：{getCommissionPublishTime(task)}</span>
         </div>
         {task.isMine ? <em className="mine-task-badge">我的</em> : null}
       </div>
-      <div className="commission-task-fields grid gap-[7px]">
+      <div className="commission-card-content commission-task-fields grid gap-[7px]">
         <span>
           <MapPin size={14} />
           目的地：{getCommissionDestination(task)}
@@ -73,25 +73,23 @@ export function CommissionTaskCard({ onAccept, onContact, onOpen, task }: Commis
         </span>
       </div>
       {!task.isMine ? (
-        <div className="product-actions flex flex-wrap items-center justify-between gap-[10px]">
-          <div className="commission-card-actions flex flex-wrap gap-[8px]" onClick={(event) => event.stopPropagation()}>
-            <button
-              className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466] disabled:text-[#748092]"
-              onClick={() => onContact(task)}
-              type="button"
-            >
-              <MessageCircle size={15} /> 联系
-            </button>
-            <button
-              className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
-              disabled={isCommissionTaskLocked(task)}
-              onClick={() => onAccept(task)}
-              type="button"
-            >
-              <CheckCircle2 size={15} />
-              {getCommissionPrimaryActionLabel(task)}
-            </button>
-          </div>
+        <div className="commission-card-footer flex flex-wrap items-center gap-[8px]" onClick={(event) => event.stopPropagation()}>
+          <button
+            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466] disabled:text-[#748092]"
+            onClick={() => onContact(task)}
+            type="button"
+          >
+            <MessageCircle size={15} /> 联系
+          </button>
+          <button
+            className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+            disabled={isCommissionTaskLocked(task)}
+            onClick={() => onAccept(task)}
+            type="button"
+          >
+            <CheckCircle2 size={15} />
+            {getCommissionPrimaryActionLabel(task)}
+          </button>
         </div>
       ) : null}
     </article>

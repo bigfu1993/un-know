@@ -20,7 +20,7 @@ import {
   UserRound,
   WalletCards
 } from "lucide-react";
-import { formatTutorSubjects, parseTutorSubjects, tutorSubjectOptions } from "@shared/tutorModel";
+import { formatTutorSubjects, getTutorSubjectLabel, parseTutorSubjects, tutorSubjectOptions } from "@shared/tutorModel";
 import {
   delegationRequirementTags,
   isNegotiableAmount,
@@ -667,7 +667,7 @@ function TutorPublishFields({
         icon={BookOpen}
         label="学科"
         onChange={onChange}
-        options={tutorSubjectOptions}
+        options={tutorSubjectOptions.map((subject) => ({ label: getTutorSubjectLabel(subject), value: subject }))}
       />
       <TutorPlanPeriodField draft={draft} onChange={onChange} onChangeTutorDates={onChangeTutorDates} />
       <SwitchField
@@ -1139,16 +1139,16 @@ function MultiTagChoiceField({
   icon: typeof Plus;
   label: string;
   onChange: PublishInfoFieldChange;
-  options: string[];
+  options: Array<{ label: string; value: string }>;
 }) {
   const value = String(draft[field] ?? "");
   const selectedOptions = parseTutorSubjects(value);
 
-  /** 切换一个 tag 选项，并按项目现有学科字符串格式写回草稿。 */
-  function handleToggleOption(option: string) {
-    const nextOptions = selectedOptions.includes(option)
-      ? selectedOptions.filter((selectedOption) => selectedOption !== option)
-      : [...selectedOptions, option];
+  /** 切换一个 tag 选项（KEY），并按项目现有学科字符串格式写回草稿。 */
+  function handleToggleOption(optionValue: string) {
+    const nextOptions = selectedOptions.includes(optionValue)
+      ? selectedOptions.filter((selectedOption) => selectedOption !== optionValue)
+      : [...selectedOptions, optionValue];
 
     onChange(field, formatTutorSubjects(nextOptions));
   }
@@ -1159,10 +1159,10 @@ function MultiTagChoiceField({
       <div className="publish-choice-tags flex flex-wrap gap-[8px]" aria-label={`多选${label}`}>
         {options.map((option) => (
           <PublishChoiceTag
-            active={selectedOptions.includes(option)}
-            key={option}
-            label={option}
-            onSelect={() => handleToggleOption(option)}
+            active={selectedOptions.includes(option.value)}
+            key={option.value}
+            label={option.label}
+            onSelect={() => handleToggleOption(option.value)}
           />
         ))}
       </div>

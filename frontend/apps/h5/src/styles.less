@@ -617,18 +617,23 @@ body,
   }
 }
 
-.card-detail-title {
-  color: #9aa4b2;
-  font-size: 13px;
+/** 卡片标题圆角底色，跨模块共用（委托、家教等列表卡片）；有详情入口时标题本身可点开详情，用底色提示可点击。 */
+.card-title-chip {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  border: 0;
+  border-radius: 8px;
+  padding: 3px 8px;
+  background: transparent;
+  color: #17212b;
+  font-size: 14px;
   font-weight: 700;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.card-detail-content {
-  min-width: 0;
-  color: #17212b;
-  font-size: 13px;
-  font-weight: 700;
-}
 
 .flow-card {
   padding: 11px;

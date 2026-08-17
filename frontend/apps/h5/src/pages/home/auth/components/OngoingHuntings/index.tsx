@@ -1,15 +1,15 @@
 import { Banknote, MapPin, RadioTower } from "lucide-react";
 import { getHuntingTaskAmountText } from "@pages/home/commission/model";
 
-/** 狩猎快捷推荐弹窗属性。 */
-interface HuntingRecommendationProps {
+/** 进行中狩猎（系统推荐委托）弹窗属性。 */
+interface OngoingHuntingsProps {
   onClose: () => void;
   onDisable: () => void;
   tasks: HuntingTask[];
 }
 
-/** 狩猎快捷开启后的系统推荐委托列表。 */
-export function HuntingRecommendation({ onClose, onDisable, tasks }: HuntingRecommendationProps) {
+/** 狩猎快捷开启后的系统推荐委托列表，是狩猎品类的"进行中"弹窗。 */
+export function OngoingHuntings({ onClose, onDisable, tasks }: OngoingHuntingsProps) {
   return (
     <Modal
       ariaLabel="狩猎推荐委托"

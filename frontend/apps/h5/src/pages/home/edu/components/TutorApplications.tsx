@@ -1,6 +1,7 @@
-import { Info, ReceiptText } from "lucide-react";
+import { ReceiptText } from "lucide-react";
 import { createTutorTaskModel } from "@tools/tutorTaskWorkflow";
 import { useConfirmAction } from "@h5/hooks/useConfirmAction";
+import { TutorCard } from "./TutorCard";
 
 /** 家长端试课申请列表弹窗属性。 */
 interface TutorApplicationsProps {
@@ -40,12 +41,6 @@ interface TutorTrialListProps {
     applicationId: string;
     demandId?: string;
   }) => Promise<boolean> | boolean | void;
-}
-
-/** 家教信息详情弹窗属性。 */
-interface TutorApplicantDetailProps {
-  candidate: TutorApplicationCandidate;
-  onClose: () => void;
 }
 
 /** 家长端确认结束试课前的结算弹窗属性。 */
@@ -214,7 +209,6 @@ function getTutorTrialCandidateSchedulePreview(candidate: TutorApplicationCandid
 /** 家长端选择试课家教并确认试课安排。 */
 export function TutorApplications({ candidates, isConfirming = false, onCancelTrial, onClose, onConfirm, onReject }: TutorApplicationsProps) {
   const [selectedCandidateId, setSelectedCandidateId] = useState("");
-  const [detailCandidate, setDetailCandidate] = useState<TutorApplicationCandidate | null>(null);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [trialScheduleValue, setTrialScheduleValue] = useState<TrialScheduleValue | null>(null);
   const {
@@ -307,68 +301,70 @@ export function TutorApplications({ candidates, isConfirming = false, onCancelTr
             const candidateTask = createTutorTaskModel({ candidate, role: "parent" });
             const isTrialConfirming = candidateTask.node === "trialScheduled";
             const isCandidateSelected = selectedCandidateId === candidate.id;
+            const detailItems = [
+              { label: "学校", value: candidate.school || "待补充" },
+              { label: "专业", value: candidate.major || "待补充" },
+              { label: "GPA", value: candidate.gpa || "待补充" },
+              { label: "受聘次数", value: `${candidate.hiredTimes} 次` },
+              { label: "可用时间", value: candidate.availability || "待补充" }
+            ];
 
             return (
-              <article
-                className={`tutor-application-card flow-card compact grid gap-[6px] p-[12px] text-left ${
-                  isCandidateSelected ? "active" : ""
-                } ${isTrialConfirming ? "trial-confirming" : ""}`}
-                key={candidate.id}
-              >
-                <div className="tutor-application-name-row flex items-center gap-[6px]">
-                  <button
-                    className="tutor-application-select tutor-application-name-action text-left"
-                    onClick={() => handleSelectCandidate(candidate)}
-                    type="button"
-                  >
-                    <strong>{candidate.nickname}</strong>
-                  </button>
-                  {isTrialConfirming ? renderTutorCandidateStatus(candidateTask) : null}
-                  <button
-                    aria-label={`查看${candidate.nickname}家教信息`}
-                    className="tutor-application-detail-button grid place-items-center"
-                    onClick={() => setDetailCandidate(candidate)}
-                    type="button"
-                  >
-                    <Info size={15} />
-                  </button>
-                </div>
-                <button
-                  className="tutor-application-select text-left"
-                  onClick={() => handleSelectCandidate(candidate)}
-                  type="button"
-                >
-                  <span>
-                    {candidate.school} · {candidate.major}
-                  </span>
-                </button>
-                {candidateTask.node === "applicationPending" || candidateTask.node === "trialScheduled" ? (
-                  <div className="tutor-application-actions flex flex-wrap gap-[8px]">
-                    <button
-                      className={`${
-                        candidateTask.node === "trialScheduled" ? "text-button danger" : "danger-outline-button"
-                      } inline-flex min-h-[30px] items-center justify-center gap-[5px] px-[9px] py-[6px] text-[12px]`}
-                      disabled={isConfirming}
-                      onClick={() => {
-                        if (candidateTask.node === "trialScheduled") {
-                          openCancelConfirmation({
-                            confirmLabel: "确认取消",
-                            description: "取消后该学生本次试课安排结束，学生端与家长端列表会按真实状态刷新。",
-                            onConfirm: () => onCancelTrial?.({ applicationId: candidate.id, demandId: candidate.demandId }),
-                            title: "取消试课"
-                          });
-                          return;
-                        }
-
-                        onReject?.({ applicationId: candidate.id, demandId: candidate.demandId });
-                      }}
-                      type="button"
-                    >
-                      {candidateTask.node === "trialScheduled" ? "取消试课" : "拒绝试课"}
-                    </button>
+              <TutorCard
+                className={isTrialConfirming ? "trial-confirming" : ""}
+                detail={
+                  <div className="tutor-applicant-detail-list grid gap-[8px]">
+                    {detailItems.map((item) => (
+                      <div className="tutor-applicant-detail-item flex items-start justify-between gap-[12px]" key={item.label}>
+                        <span>{item.label}</span>
+                        <strong>{item.value}</strong>
+                      </div>
+                    ))}
                   </div>
-                ) : null}
-              </article>
+                }
+                detailTitle={candidate.nickname}
+                footer={
+                  candidateTask.node === "applicationPending" || candidateTask.node === "trialScheduled" ? (
+                    <div className="tutor-application-actions flex flex-wrap gap-[8px]">
+                      <button
+                        className={`${
+                          candidateTask.node === "trialScheduled" ? "text-button danger" : "danger-outline-button"
+                        } inline-flex min-h-[30px] items-center justify-center gap-[5px] px-[9px] py-[6px] text-[12px]`}
+                        disabled={isConfirming}
+                        onClick={() => {
+                          if (candidateTask.node === "trialScheduled") {
+                            openCancelConfirmation({
+                              confirmLabel: "确认取消",
+                              description: "取消后该学生本次试课安排结束，学生端与家长端列表会按真实状态刷新。",
+                              onConfirm: () => onCancelTrial?.({ applicationId: candidate.id, demandId: candidate.demandId }),
+                              title: "取消试课"
+                            });
+                            return;
+                          }
+
+                          onReject?.({ applicationId: candidate.id, demandId: candidate.demandId });
+                        }}
+                        type="button"
+                      >
+                        {candidateTask.node === "trialScheduled" ? "取消试课" : "拒绝试课"}
+                      </button>
+                    </div>
+                  ) : null
+                }
+                key={candidate.id}
+                onSelect={() => handleSelectCandidate(candidate)}
+                selected={isCandidateSelected}
+                title={
+                  <>
+                    {candidate.nickname}
+                    {isTrialConfirming ? renderTutorCandidateStatus(candidateTask) : null}
+                  </>
+                }
+              >
+                <span>
+                  {candidate.school} · {candidate.major}
+                </span>
+              </TutorCard>
             );
           })}
           {visibleCandidates.length === 0 ? (
@@ -408,10 +404,6 @@ export function TutorApplications({ candidates, isConfirming = false, onCancelTr
           {getConfirmButtonLabel()}
         </button>
       </Modal>
-
-      {detailCandidate ? (
-        <TutorApplicantDetail candidate={detailCandidate} onClose={() => setDetailCandidate(null)} />
-      ) : null}
 
       {isScheduleOpen ? (
         <TutorTrialSchedule
@@ -958,14 +950,14 @@ function TutorSchedulePreview({
 }: TutorSchedulePreviewProps) {
   const scheduleItems = useMemo(() => getTutorSchedulePreviewCalendarItems(sections), [sections]);
   const selectedDates = useMemo(() => scheduleItems.map((scheduleItem) => scheduleItem.date), [scheduleItems]);
-  const firstSelectedDate = selectedDates[0];
-  const [activeDate, setActiveDate] = useState<string | undefined>(() => firstSelectedDate);
+  const defaultActiveDate = getDefaultTutorScheduleDate(selectedDates) || undefined;
+  const [activeDate, setActiveDate] = useState<string | undefined>(() => defaultActiveDate);
   const activeDateSections = getTutorSchedulePreviewActiveSections(sections, activeDate);
 
   /** 切换预览对象时同步默认查看日期。 */
   useEffect(() => {
-    setActiveDate(firstSelectedDate);
-  }, [firstSelectedDate, summary]);
+    setActiveDate(defaultActiveDate);
+  }, [defaultActiveDate, summary]);
 
   return (
     <Modal
@@ -1120,40 +1112,6 @@ function TutorTrialSettlement({ candidate, isSubmitting = false, mode = "trial",
           >
             结算
           </button>
-        </div>
-    </Modal>
-  );
-}
-/** 家教信息详情弹窗，展示申请学生可公开的家教资料。 */
-function TutorApplicantDetail({ candidate, onClose }: TutorApplicantDetailProps) {
-  const detailItems = [
-    { label: "学校", value: candidate.school || "待补充" },
-    { label: "专业", value: candidate.major || "待补充" },
-    { label: "GPA", value: candidate.gpa || "待补充" },
-    { label: "受聘次数", value: `${candidate.hiredTimes} 次` },
-    { label: "可用时间", value: candidate.availability || "待补充" }
-  ];
-
-  return (
-    <Modal
-      ariaLabel="家教信息详情"
-      icon={<Info size={18} />}
-      onClose={onClose}
-      panelClassName="tutor-applicant-detail-panel mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]"
-      title={
-        <>
-          <strong>{candidate.nickname}</strong>
-          <span>家教信息</span>
-        </>
-      }
-    >
-        <div className="tutor-applicant-detail-list grid gap-[8px]">
-          {detailItems.map((item) => (
-            <div className="tutor-applicant-detail-item flex items-start justify-between gap-[12px]" key={item.label}>
-              <span>{item.label}</span>
-              <strong>{item.value}</strong>
-            </div>
-          ))}
         </div>
     </Modal>
   );

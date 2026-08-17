@@ -67,7 +67,7 @@ export function Mine({
           onOpen={() => onNavigate("wallet")}
           walletSummary={walletSummary}
         />
-        <TutorCard
+        <TutorCertificationCard
           {...tutorCardData}
           className="mine-tutor-card p-[14px]"
           mode={tutorCardMode}

@@ -35,10 +35,10 @@ declare global {
   const Crosshair: typeof import('lucide-react').Crosshair
   const DemandCard: typeof import('./pages/home/edu/components/DemandCard').DemandCard
   const EduCard: typeof import('./pages/home/auth/components/OngoingOrders/components/EduCard').EduCard
-  const EduStudentCard: typeof import('./pages/home/edu/components/EduStudentCard').EduStudentCard
   const EduTaskCard: typeof import('./pages/home/job/components/EduTaskCard').EduTaskCard
   const Featured: typeof import('./pages/home/shop/index').Featured
   const Filter: typeof import('lucide-react').Filter
+  const FilterTags: typeof import('./pages/home/auth/components/OngoingOrders/components/FilterTags').FilterTags
   const FloatingActions: typeof import('./pages/home/auth/index').FloatingActions
   const Fragment: typeof import('react').Fragment
   const GlobalStoreContext: typeof import('./store/global').GlobalStoreContext
@@ -47,7 +47,7 @@ declare global {
   const Header: typeof import('./components/AppShell/index').Header
   const Heart: typeof import('lucide-react').Heart
   const Home: typeof import('lucide-react').Home
-  const HuntingCertification: typeof import('./pages/home/commission/hunting-certification/index').HuntingCertification
+  const HuntingCertification: typeof import('./pages/home/auth/components/Mine/components/HuntingCertification').HuntingCertification
   const HuntingCertificationCard: typeof import('./components/HuntingCertificationCard/index').HuntingCertificationCard
   const HuntingCertificationPrompt: typeof import('./pages/home/commission/components/HuntingCertificationPrompt').HuntingCertificationPrompt
   const HuntingProject: typeof import('./components/HuntingProject/index').HuntingProject
@@ -72,6 +72,7 @@ declare global {
   const Navigate: typeof import('react-router-dom').Navigate
   const NicknameEditor: typeof import('./pages/settings/components/SettingsPanels').NicknameEditor
   const OngoingEduCard: typeof import('./pages/home/auth/components/OngoingOrders/components/EduCard').OngoingEduCard
+  const OngoingHuntings: typeof import('./pages/home/auth/components/OngoingHuntings/index').OngoingHuntings
   const OngoingOrderActions: typeof import('./pages/home/auth/components/OngoingOrders/components/OrderActions').OngoingOrderActions
   const OngoingOrderStatus: typeof import('./pages/home/auth/components/OngoingOrders/components/OrderActions').OngoingOrderStatus
   const OngoingOrders: typeof import('./pages/home/auth/components/OngoingOrders/index').OngoingOrders
@@ -145,13 +146,15 @@ declare global {
   const TutorApplicantStatus: typeof import('./db/tutorStatus').TutorApplicantStatus
   const TutorApplications: typeof import('./pages/home/edu/components/TutorApplications').TutorApplications
   const TutorCalendar: typeof import('./components/TutorCalendar/index').TutorCalendar
-  const TutorCard: typeof import('./components/TutorCard/index').TutorCard
-  const TutorCertification: typeof import('./pages/home/edu/components/TutorCertification').TutorCertification
+  const TutorCard: typeof import('./pages/home/edu/components/TutorCard').TutorCard
+  const TutorCertification: typeof import('./pages/home/auth/components/Mine/components/TutorCertification').TutorCertification
+  const TutorCertificationCard: typeof import('./components/TutorCertificationCard/index').TutorCertificationCard
   const TutorCertificationInfo: typeof import('./components/TutorCertificationInfo/index').TutorCertificationInfo
   const TutorDemandStatus: typeof import('./db/tutorStatus').TutorDemandStatus
   const TutorOrderStatus: typeof import('./db/tutorStatus').TutorOrderStatus
   const TutorQualificationInfo: typeof import('./pages/settings/components/SettingsPanels').TutorQualificationInfo
   const TutorStatus: typeof import('./db/tutorStatus').TutorStatus
+  const TutorSubject: typeof import('./db/tutorSubject').TutorSubject
   const TutorTrialJobCard: typeof import('./components/PageWidgets/index').TutorTrialJobCard
   const TutorTrialList: typeof import('./pages/home/edu/components/TutorApplications').TutorTrialList
   const TutorTrialSchedule: typeof import('./components/TutorTrialSchedule/index').TutorTrialSchedule
@@ -195,6 +198,7 @@ declare global {
   const formatCompactWalletAmount: typeof import('./tools/wallet').formatCompactWalletAmount
   const formatCurrency: typeof import('./shared/clientPageModel').formatCurrency
   const formatTrialScheduleDate: typeof import('./components/TutorTrialSchedule/model').formatTrialScheduleDate
+  const formatTutorSubjectLabels: typeof import('./shared/tutorModel').formatTutorSubjectLabels
   const formatTutorSubjects: typeof import('./shared/tutorModel').formatTutorSubjects
   const formatWalletAmount: typeof import('./tools/wallet').formatWalletAmount
   const forwardRef: typeof import('react').forwardRef
@@ -210,6 +214,7 @@ declare global {
   const getDefaultDeliveryMode: typeof import('./shared/clientPageModel').getDefaultDeliveryMode
   const getDefaultPrimaryTab: typeof import('@unknown/domain').getDefaultPrimaryTab
   const getDefaultRouteForRole: typeof import('./shared/clientPageModel').getDefaultRouteForRole
+  const getDefaultTutorScheduleDate: typeof import('./tools/tutorCalendar').getDefaultTutorScheduleDate
   const getDelegationLatestTimeLabel: typeof import('./tools/publishInfo').getDelegationLatestTimeLabel
   const getDelegationRequirementLabel: typeof import('./tools/publishInfo').getDelegationRequirementLabel
   const getDeliveryFee: typeof import('./shared/clientPageModel').getDeliveryFee
@@ -253,13 +258,14 @@ declare global {
   const getTrialScheduleValueFromSummary: typeof import('./components/TutorTrialSchedule/model').getTrialScheduleValueFromSummary
   const getTutorCalendarCells: typeof import('./tools/tutorCalendar').getTutorCalendarCells
   const getTutorCalendarTasks: typeof import('./tools/tutorCalendar').getTutorCalendarTasks
-  const getTutorCardDataFromDraft: typeof import('./components/TutorCard/model').getTutorCardDataFromDraft
-  const getTutorCardMode: typeof import('./components/TutorCard/model').getTutorCardMode
+  const getTutorCardDataFromDraft: typeof import('./components/TutorCertificationCard/model').getTutorCardDataFromDraft
+  const getTutorCardMode: typeof import('./components/TutorCertificationCard/model').getTutorCardMode
   const getTutorDateKey: typeof import('./tools/tutorCalendar').getTutorDateKey
   const getTutorDemandBudgetLabel: typeof import('./tools/tutorDemand').getTutorDemandBudgetLabel
   const getTutorMonthKey: typeof import('./tools/tutorCalendar').getTutorMonthKey
   const getTutorOrderSchedulePreviewConfig: typeof import('./pages/home/auth/components/OngoingOrders/model').getTutorOrderSchedulePreviewConfig
   const getTutorServiceScheduleSummaryFromOrderDetail: typeof import('./tools/tutorTrial').getTutorServiceScheduleSummaryFromOrderDetail
+  const getTutorSubjectLabel: typeof import('./shared/tutorModel').getTutorSubjectLabel
   const getTutorTaskNode: typeof import('./tools/tutorTaskWorkflow').getTutorTaskNode
   const getTutorTaskStatusLabels: typeof import('./tools/tutorTaskWorkflow').getTutorTaskStatusLabels
   const getTutorTaskStatusTone: typeof import('./tools/tutorTaskWorkflow').getTutorTaskStatusTone
@@ -303,6 +309,7 @@ declare global {
   const isQuoteLockedForPublisher: typeof import('./pages/home/commission/model').isQuoteLockedForPublisher
   const isTutorApplicationListStatus: typeof import('./tools/tutorTrial').isTutorApplicationListStatus
   const isTutorApplicationPendingStatus: typeof import('./tools/tutorTrial').isTutorApplicationPendingStatus
+  const isTutorCertifiedStudent: typeof import('./hooks/useClientWorkspaceViewModel').isTutorCertifiedStudent
   const isTutorFormalServiceStatus: typeof import('./tools/tutorTrial').isTutorFormalServiceStatus
   const isTutorPublishType: typeof import('./tools/publishInfo').isTutorPublishType
   const isTutorServiceConfirmingStatus: typeof import('./tools/tutorTrial').isTutorServiceConfirmingStatus
@@ -335,7 +342,7 @@ declare global {
   const parentChildInfoFields: typeof import('./shared/clientPageModel').parentChildInfoFields
   const parentRegistrationAddressFields: typeof import('./shared/clientPageModel').parentRegistrationAddressFields
   const parentRegistrationProfileTemplate: typeof import('./shared/clientPageModel').parentRegistrationProfileTemplate
-  const parseTutorSubjectLevelItems: typeof import('./components/TutorCard/model').parseTutorSubjectLevelItems
+  const parseTutorSubjectLevelItems: typeof import('./components/TutorCertificationCard/model').parseTutorSubjectLevelItems
   const parseTutorSubjects: typeof import('./shared/tutorModel').parseTutorSubjects
   const parseTutorTrialSchedule: typeof import('./tools/tutorTrial').parseTutorTrialSchedule
   const parseWalletBucketAmount: typeof import('./tools/wallet').parseWalletBucketAmount
@@ -361,19 +368,19 @@ declare global {
   const showMessage: typeof import('./tools/messageToast').showMessage
   const showOngoingOrderMessagePlaceholder: typeof import('./pages/home/auth/components/OngoingOrders/model').showOngoingOrderMessagePlaceholder
   const startTransition: typeof import('react').startTransition
-  const stringifyTutorSubjectLevelItems: typeof import('./components/TutorCard/model').stringifyTutorSubjectLevelItems
+  const stringifyTutorSubjectLevelItems: typeof import('./components/TutorCertificationCard/model').stringifyTutorSubjectLevelItems
   const subscribeMessageToast: typeof import('./tools/messageToast').subscribeMessageToast
   const tabIcons: typeof import('./shared/clientPageModel').tabIcons
   const trialSchedulePeriods: typeof import('./components/TutorTrialSchedule/model').trialSchedulePeriods
   const tutorApplicantStatusLabel: typeof import('./db/tutorStatus').tutorApplicantStatusLabel
-  const tutorCertificationStatusLabels: typeof import('./components/TutorCard/model').tutorCertificationStatusLabels
+  const tutorCertificationStatusLabels: typeof import('./components/TutorCertificationCard/model').tutorCertificationStatusLabels
   const tutorDemandStatusLabel: typeof import('./db/tutorStatus').tutorDemandStatusLabel
-  const tutorGradeOptions: typeof import('./components/TutorCard/model').tutorGradeOptions
-  const tutorLevelOptions: typeof import('./components/TutorCard/model').tutorLevelOptions
+  const tutorGradeOptions: typeof import('./components/TutorCertificationCard/model').tutorGradeOptions
+  const tutorLevelOptions: typeof import('./components/TutorCertificationCard/model').tutorLevelOptions
   const tutorServiceAvailabilityDetailMarker: typeof import('./tools/tutorTrial').tutorServiceAvailabilityDetailMarker
   const tutorServiceFeeDetailMarker: typeof import('./tools/tutorTrial').tutorServiceFeeDetailMarker
   const tutorServiceScheduleDetailMarker: typeof import('./tools/tutorTrial').tutorServiceScheduleDetailMarker
-  const tutorSorts: typeof import('./shared/clientPageModel').tutorSorts
+  const tutorSubjectLabel: typeof import('./db/tutorSubject').tutorSubjectLabel
   const tutorSubjectOptions: typeof import('./shared/tutorModel').tutorSubjectOptions
   const tutorTrialAvailabilityDetailMarker: typeof import('./tools/tutorTrial').tutorTrialAvailabilityDetailMarker
   const tutorTrialFeeDetailMarker: typeof import('./tools/tutorTrial').tutorTrialFeeDetailMarker
@@ -486,11 +493,11 @@ declare global {
   export type { TutorCalendarTask, TutorCalendarProps } from './components/TutorCalendar/index'
   import('./components/TutorCalendar/index')
   // @ts-ignore
-  export type { TutorCardProps } from './components/TutorCard/index'
-  import('./components/TutorCard/index')
+  export type { TutorCertificationCardProps } from './components/TutorCertificationCard/index'
+  import('./components/TutorCertificationCard/index')
   // @ts-ignore
-  export type { TutorCardMode, TutorSubjectLevelItem, TutorCardData, TutorCertificationStatus } from './components/TutorCard/model'
-  import('./components/TutorCard/model')
+  export type { TutorCardMode, TutorSubjectLevelItem, TutorCardData, TutorCertificationStatus } from './components/TutorCertificationCard/model'
+  import('./components/TutorCertificationCard/model')
   // @ts-ignore
   export type { TutorCertificationInfoSaveMode, TutorCertificationInfoProps } from './components/TutorCertificationInfo/index'
   import('./components/TutorCertificationInfo/index')
@@ -501,14 +508,17 @@ declare global {
   export type { TutorDemandStatus, TutorApplicantStatus, TutorOrderStatus } from './db/tutorStatus'
   import('./db/tutorStatus')
   // @ts-ignore
+  export type { TutorSubject } from './db/tutorSubject'
+  import('./db/tutorSubject')
+  // @ts-ignore
   export type { ConfirmActionConfig } from './hooks/useConfirmAction'
   import('./hooks/useConfirmAction')
   // @ts-ignore
   export type { HuntingShortcutProps } from './pages/home/auth/components/HuntingShortcut'
   import('./pages/home/auth/components/HuntingShortcut')
   // @ts-ignore
-  export type { MinePopoverProps } from './pages/home/auth/components/MinePopover'
-  import('./pages/home/auth/components/MinePopover')
+  export type { MineProps } from './pages/home/auth/components/Mine/index'
+  import('./pages/home/auth/components/Mine/index')
   // @ts-ignore
   export type { MineShortcutProps } from './pages/home/auth/components/MineShortcut'
   import('./pages/home/auth/components/MineShortcut')
@@ -555,7 +565,7 @@ declare global {
   export type { WalletMonthOption, WalletMonthlySummary } from './tools/wallet'
   import('./tools/wallet')
   // @ts-ignore
-  export type { PageSurface, AuthMode, LoginCredentialMode, ProductFilter, JobFilter, TutorSort, CheckoutState } from './types/app'
+  export type { PageSurface, AuthMode, LoginCredentialMode, ProductFilter, JobFilter, CheckoutState } from './types/app'
   import('./types/app')
   // @ts-ignore
   export type { H5RuntimeGlobals, ApiEnvelope, PasswordResetResult, LoginProps, LoginFormProps, RegisterFormProps, LoginRegisterCardProps, PasswordResetCardProps, RegistrationGuideProps } from './types/auth'

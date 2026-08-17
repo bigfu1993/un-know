@@ -1,18 +1,18 @@
 import { useGlobalUser } from "@h5/store/global";
 
 /** 头像弹窗快捷入口的视觉强调类型。 */
-type MinePopoverActionTone = "default" | "publish" | "recycle";
+type MineActionTone = "default" | "publish" | "recycle";
 
 /** 头像弹窗快捷入口配置。 */
-interface MinePopoverAction {
+interface MineAction {
   action: () => void;
   icon: LucideIcon;
   label: string;
-  tone?: MinePopoverActionTone;
+  tone?: MineActionTone;
 }
 
 /** 悬浮头像弹窗属性。 */
-export interface MinePopoverProps {
+export interface MineProps {
   onClose: () => void;
   onLogout: () => void;
   onNavigate: (surface: PageSurface) => void;
@@ -25,7 +25,7 @@ export interface MinePopoverProps {
 }
 
 /** 悬浮头像弹窗，承接账户概览、认证入口和快捷操作。 */
-export function MinePopover({
+export function Mine({
   walletSummary,
   onClose,
   onLogout,
@@ -35,7 +35,7 @@ export function MinePopover({
   onOpenTab,
   onToggleTutorExposure,
   onNavigate
-}: MinePopoverProps) {
+}: MineProps) {
   const { accountStatusText, creditScore, phone, profileDraft, nickname, role } = useGlobalUser();
   const tutorCardData = getTutorCardDataFromDraft(profileDraft);
   const tutorCardMode = getTutorCardMode(tutorCardData.certificationStatus, "simple");
@@ -51,11 +51,11 @@ export function MinePopover({
   const isTutorExposureEnabled = profileDraft.tutorExposureEnabled === "true";
   const isCompactCertificationRow =
     tutorCardMode === "entry" && huntingCertificationMode === "entry" && shouldShowHuntingCertificationCard;
-  const certifiedTutorActions: MinePopoverAction[] =
+  const certifiedTutorActions: MineAction[] =
     tutorCardData.certificationStatus === "normal"
       ? [{ label: "家教日程", icon: CalendarClock, action: onOpenTutorCalendar }]
       : [];
-  const actions: MinePopoverAction[] =
+  const actions: MineAction[] =
     role === "student"
       ? [
           { label: "发布", icon: Plus, action: onOpenPublish, tone: "publish" },
@@ -140,7 +140,7 @@ export function MinePopover({
           }`}
         >
           {shouldShowTutorCertificationCard ? (
-            <TutorCard
+            <TutorCertificationCard
               {...tutorCardData}
               className="popover-tutor-card p-[10px]"
               mode={tutorCardMode}

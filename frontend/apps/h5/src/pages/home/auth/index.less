@@ -82,6 +82,19 @@
   align-content: center;
 }
 
+// 家教认证、狩猎认证表单共用样式，两个表单都收在 Mine 模块内，随 auth 模块统一样式维护。
+.tutor-certification-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tutor-certification-form .profile-field {
+  align-content: start;
+}
+
+.tutor-gender-control button {
+  min-height: 38px;
+}
+
 .popover-account {
   grid-template-columns: minmax(0, 1fr);
   border-radius: 8px;

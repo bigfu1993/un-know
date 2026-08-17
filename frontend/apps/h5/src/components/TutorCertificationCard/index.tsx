@@ -2,7 +2,7 @@ import "./index.less";
 import { BadgeCheck, GraduationCap } from "lucide-react";
 
 /** 家教卡片属性。 */
-export interface TutorCardProps extends TutorCardData {
+export interface TutorCertificationCardProps extends TutorCardData {
   className?: string;
   mode?: TutorCardMode;
   onOpenInfo?: () => void;
@@ -10,7 +10,7 @@ export interface TutorCardProps extends TutorCardData {
 }
 
 /** 家教资格卡片，供我的页和头像弹窗复用。 */
-export function TutorCard({
+export function TutorCertificationCard({
   certificationStatus,
   className,
   grade,
@@ -19,7 +19,7 @@ export function TutorCard({
   onOpenInfo,
   onStartCertification,
   subject
-}: TutorCardProps) {
+}: TutorCertificationCardProps) {
   const rootClassName = ["tutor-card", `tutor-card--${mode}`, className].filter(Boolean).join(" ");
   const statusText = tutorCertificationStatusLabels[certificationStatus];
   const subjectButtonLabel = mode === "simple" ? subject : `${subject} · ${grade}`;

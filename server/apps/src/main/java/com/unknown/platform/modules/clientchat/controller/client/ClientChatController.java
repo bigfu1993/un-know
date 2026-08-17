@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** 客户端独立聊天接口，暂不绑定现有页面入口。 */
 @RestController
-@RequestMapping("/api/client/chat")
+@RequestMapping("/client/chat")
 public class ClientChatController {
   private final ClientChatAppService clientChatAppService;
 

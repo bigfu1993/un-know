@@ -112,6 +112,24 @@ export interface SubmitHuntingCertificationResponse {
   huntingCertificationStatus: HuntingCertificationStatus;
 }
 
+export interface SubmitTutorCertificationRequest {
+  realName: string;
+  gender: string;
+  age: string;
+  nativePlace: string;
+  idCard: string;
+  school: string;
+  major: string;
+  subject: string;
+  xuexinScreenshot?: string;
+  gpa?: string;
+  certificate?: string;
+}
+
+export interface SubmitTutorCertificationResponse {
+  tutorCertificationStatus: TutorCertificationStatus;
+}
+
 /** 客户端地址簿条目，服务端字段与 H5 地址表单保持一一对应。 */
 export interface ClientAddress {
   id: string;
@@ -365,6 +383,30 @@ export interface TutorDemand {
   applicants: TutorApplicant[];
 }
 
+/** 学生提交的家教认证原始信息，字段直接对应 tutor_certification 表列，不做加工。 */
+export interface TutorCertificationRecord {
+  subject: string;
+  school: string;
+  major: string;
+  gender: string;
+  gpa: string | null;
+  certificate: string | null;
+  real_name: string;
+  id_card: string;
+  age: string;
+  native_place: string;
+  xuexin_screenshot: string | null;
+}
+
+/** 家长端浏览的认证学生原始数据，app_user 表字段合并 tutor_certification 子对象，不做加工/脱敏。 */
+export interface TutorCertifiedStudent {
+  id: number;
+  nickname: string;
+  phone: string;
+  credit_score: number;
+  tutor_certification: TutorCertificationRecord;
+}
+
 /** 家长发布家教需求请求。 */
 export interface PublishTutorDemandRequest {
   title: string;
@@ -572,7 +614,6 @@ export interface WalletRecord {
 }
 
 export interface ClientWorkspacePayload {
-  orders: ClientOrder[];
   partTimeJobs: PartTimeJob[];
   huntingSummary: HuntingSummary;
   huntingTasks: HuntingTask[];

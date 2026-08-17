@@ -11,6 +11,8 @@ import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceRespons
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.PartTimeJob;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.WalletRecord;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.WalletSummary;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -56,16 +58,39 @@ public class ClientWorkspaceAppService {
     Long currentUserId = clientSessionService.userIdOrNull(authorization);
 
     return new ClientWorkspaceResponse(
-        orders(role, currentUserId),
         partTimeJobs(),
         huntingTaskAppService.huntingSummary(),
         huntingTaskAppService.huntingTasks(currentUserId),
-        tutorWorkspaceAppService.tutorDemands(role, currentUserId),
+        // 家教需求列表已改由独立的 /workspace/edu/tutors 接口提供（家长角色返回原始学生数据、
+        // 学生角色返回 TutorDemand），前端也已改为消费该独立接口，这里不再重复查询。
+        List.of(),
         merchantDashboard(),
         merchantProducts(),
         walletSummary(role),
         walletRecords(role)
     );
+  }
+
+
+  /**
+   * 获取当前账号"进行中"列表，取代原来嵌在工作台聚合响应里的 orders 字段，不管什么角色
+   * 都查这同一个接口，按角色聚合不同业务域：学生角色含优选/委托/狩猎/家教，家长角色含
+   * 优选/家教，商户角色只有优选（店铺全部购买订单）。
+   *
+   * @param role 当前角色
+   * @param authorization 登录访问令牌，可为空
+   * @return 当前角色进行中订单列表
+   */
+  public List<ClientOrder> ongoingOrders(ClientRole role, String authorization) {
+    Long currentUserId = clientSessionService.userIdOrNull(authorization);
+    List<ClientOrder> orders = new ArrayList<>(purchaseOrders(role));
+    orders.addAll(tutorWorkspaceAppService.tutorOrders(role, currentUserId));
+
+    if (role == ClientRole.student) {
+      orders.addAll(huntingOngoingOrders(role, authorization));
+    }
+
+    return orders;
   }
 
 
@@ -79,7 +104,8 @@ public class ClientWorkspaceAppService {
   }
 
 
-  private List<ClientOrder> orders(ClientRole role, Long currentUserId) {
+  /** 商城购买订单，按角色返回：商户看店铺全部订单，其余角色只看自己角色下单的订单。 */
+  private List<ClientOrder> purchaseOrders(ClientRole role) {
     String sql = role == ClientRole.merchant
         ? """
             SELECT po.order_no, p.title, po.status, po.total_amount_cents,
@@ -100,16 +126,159 @@ public class ClientWorkspaceAppService {
             LIMIT 20
             """;
 
-    List<ClientOrder> orders = role == ClientRole.merchant
+    return role == ClientRole.merchant
         ? new ArrayList<>(jdbcTemplate.query(sql, (rs, rowNum) -> mapOrder(role, rs.getString("order_no"),
             rs.getString("title"), rs.getString("status"), rs.getLong("total_amount_cents"),
             rs.getString("contact_phone"), rs.getString("detail"), rs.getString("risk"))))
         : new ArrayList<>(jdbcTemplate.query(sql, (rs, rowNum) -> mapOrder(role, rs.getString("order_no"),
             rs.getString("title"), rs.getString("status"), rs.getLong("total_amount_cents"),
             rs.getString("contact_phone"), rs.getString("detail"), rs.getString("risk")), role.name()));
+  }
 
-    orders.addAll(tutorWorkspaceAppService.tutorOrders(role, currentUserId));
+
+  /**
+   * 把委托/狩猎任务里跟当前账号相关的发布方委托或服务方报价/履约任务转换成进行中订单，
+   * 逻辑对齐前端历史实现 {@code pages/home/commission/model.ts} 的 getHuntingOngoingOrders，
+   * 只服务学生角色（家长不做委托/狩猎）。
+   */
+  private List<ClientOrder> huntingOngoingOrders(ClientRole role, String authorization) {
+    List<ClientWorkspaceResponse.HuntingTask> tasks = huntingTaskAppService.listHuntingTasks(authorization);
+    List<ClientOrder> orders = new ArrayList<>();
+
+    for (ClientWorkspaceResponse.HuntingTask task : tasks) {
+      boolean isPublished = isHuntingPublishedStatus(task.status());
+      boolean isQuote = isHuntingQuoteStatus(task.status());
+      boolean isFulfilling = isHuntingFulfillingStatus(task.status());
+      boolean isCommissionInProgress = Boolean.TRUE.equals(task.isMine()) && (isPublished || isQuote || isFulfilling);
+      boolean isQuotedHunting = Boolean.TRUE.equals(task.isQuotedByMe()) && isQuote;
+      boolean isHuntingInProgress = Boolean.TRUE.equals(task.isAcceptedByMe()) && isFulfilling;
+
+      if (!isCommissionInProgress && !isQuotedHunting && !isHuntingInProgress) {
+        continue;
+      }
+
+      boolean isPublisher = Boolean.TRUE.equals(task.isMine());
+      boolean isHunter = Boolean.TRUE.equals(task.isAcceptedByMe()) && !isPublisher;
+      boolean isCancelPending = "取消待确认".equals(task.fulfillmentAction());
+      boolean isCompletePending = "完成待确认".equals(task.fulfillmentAction());
+
+      orders.add(ClientOrder.builder()
+          .id(task.id())
+          .role(role)
+          .title(task.title())
+          .status(huntingOngoingStatus(task))
+          .amount(task.pendingAmount() != null ? task.pendingAmount() : task.fee())
+          .contact(isPublisher
+              ? huntingFulfillmentContact(task)
+              : isQuote ? "我报价的委托" : "我履约的委托")
+          .detail(task.mode() + " · " + support.defaultText(task.fulfillmentAction(), task.latestTime())
+              + " · " + support.defaultText(task.destination(), task.location()))
+          .amountLabel(huntingOngoingAmountLabel(task))
+          .category(isPublisher ? "delegation" : "hunting")
+          .phoneNumber(isPublisher ? (task.acceptedUser() == null ? null : task.acceptedUser().phone()) : task.publisher().phone())
+          .quoteAmount(task.pendingAmount())
+          .quoteActionLabel(huntingQuoteActionLabel(task))
+          .quoteCount(isPublisher ? task.quoteCount() : null)
+          .quoteId(task.pendingQuoteId())
+          .canCall(isPublisher && isFulfilling)
+          .canMessage(isFulfilling)
+          .canRequestCancel((isPublisher || isHunter) && isFulfilling && task.fulfillmentAction() == null)
+          .canRequestComplete(isHunter && isFulfilling && task.fulfillmentAction() == null)
+          .canConfirmCancel((isPublisher || isHunter) && isCancelPending)
+          .canConfirmComplete(isPublisher && isCompletePending && !Boolean.TRUE.equals(task.fulfillmentActionByMe()))
+          .canRepublish(isPublisher && isCancelPending)
+          .build());
+    }
+
     return orders;
+  }
+
+
+  /** 判断委托是否处在报价阶段，兼容迁移前旧状态文案。 */
+  private boolean isHuntingQuoteStatus(String status) {
+    return status != null && status.contains("报价");
+  }
+
+
+  /** 判断委托是否处在发布等待阶段，兼容迁移前旧状态文案。 */
+  private boolean isHuntingPublishedStatus(String status) {
+    return status != null && (status.contains("发布") || status.contains("待领取"));
+  }
+
+
+  /** 判断委托是否处在履约阶段，兼容迁移前旧状态文案。 */
+  private boolean isHuntingFulfillingStatus(String status) {
+    return status != null && (status.contains("履约中") || status.contains("进行中") || status.contains("已领取"));
+  }
+
+
+  /** 判断报价是否等待服务方确认。 */
+  private boolean isHuntingQuoteWaitingHunter(String status) {
+    return status != null && status.contains("待服务方确认");
+  }
+
+
+  /** 获取进行中列表内委托/狩猎卡片展示状态。 */
+  private String huntingOngoingStatus(ClientWorkspaceResponse.HuntingTask task) {
+    boolean hasPendingQuote = isHuntingQuoteStatus(task.status())
+        && (Boolean.TRUE.equals(task.isQuotedByMe()) || task.quoteCount() > 0);
+
+    if (task.fulfillmentAction() != null) {
+      return "待确认";
+    }
+    if (hasPendingQuote) {
+      return "报价确认中";
+    }
+    if (isHuntingFulfillingStatus(task.status())) {
+      return "履约中";
+    }
+    if (isHuntingPublishedStatus(task.status()) || isHuntingQuoteStatus(task.status())) {
+      return "发布";
+    }
+    return task.status();
+  }
+
+
+  /** 获取进行中列表内委托/狩猎卡片金额展示文案。 */
+  private String huntingOngoingAmountLabel(ClientWorkspaceResponse.HuntingTask task) {
+    if (Boolean.TRUE.equals(task.isQuotedByMe()) && task.pendingAmount() != null) {
+      return "报价：" + formatCurrencyLabel(task.pendingAmount());
+    }
+    if (Boolean.TRUE.equals(task.isMine()) && isHuntingQuoteStatus(task.status()) && task.quoteCount() > 0) {
+      return task.quoteCount() + " 个报价";
+    }
+    if (Boolean.TRUE.equals(task.amountNegotiable()) || task.fee().compareTo(BigDecimal.ZERO) <= 0) {
+      return "协商";
+    }
+    return formatCurrencyLabel(task.fee());
+  }
+
+
+  /** 获取履约中委托的对接方展示文案。 */
+  private String huntingFulfillmentContact(ClientWorkspaceResponse.HuntingTask task) {
+    if (Boolean.TRUE.equals(task.isMine())) {
+      String acceptedNickname = task.acceptedUser() == null ? "" : support.defaultText(task.acceptedUser().nickname(), "");
+      return acceptedNickname.isEmpty() ? "履约方待确认" : "履约方：" + acceptedNickname;
+    }
+
+    return "发布方：" + support.defaultText(task.publisher().nickname(), "平台用户");
+  }
+
+
+  /** 获取服务方在进行中列表内可见的报价协商操作文案。 */
+  private String huntingQuoteActionLabel(ClientWorkspaceResponse.HuntingTask task) {
+    if (!Boolean.TRUE.equals(task.isMine()) && Boolean.TRUE.equals(task.isQuotedByMe())
+        && isHuntingQuoteWaitingHunter(task.pendingQuoteStatus())) {
+      return "协商报价";
+    }
+
+    return null;
+  }
+
+
+  /** 跟前端 formatCurrency 对齐的金额展示文案。 */
+  private String formatCurrencyLabel(BigDecimal amount) {
+    return "¥" + amount.setScale(2, RoundingMode.HALF_UP);
   }
 
 

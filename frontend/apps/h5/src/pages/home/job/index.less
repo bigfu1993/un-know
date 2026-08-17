@@ -109,7 +109,7 @@
   flex: 0 0 auto;
 }
 
-.edu-job-card .card-title em {
+.edu-job-card-container .card-title em {
   color: #c2410c;
   font-style: normal;
   font-weight: 900;
@@ -123,6 +123,25 @@
 
 .edu-job-schedule-sheet {
   border-radius: 8px 8px 0 0;
+}
+
+// 兼职卡片详情展示样式参考委托页面 .commission-task-fields，规则保持一致。
+.job-task-fields {
+  span {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 4px;
+    color: #657181;
+    font-size: 12px;
+    line-height: 1.38;
+    overflow-wrap: anywhere;
+  }
+
+  svg {
+    flex: 0 0 auto;
+    color: #175e75;
+  }
 }
 
 .delegation-live-status {

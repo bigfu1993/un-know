@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** 客户端认证接口，承接 H5、App 壳和 Taro 小程序共用的登录注册协议。 */
 @RestController
-@RequestMapping("/api/client/auth")
+@RequestMapping("/client/auth")
 public class AuthClientController {
   private final AuthAppService authAppService;
 

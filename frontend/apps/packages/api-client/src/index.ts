@@ -6,6 +6,7 @@ import {
   ClientAddress,
   ClientAddressRequest,
   ClientHomePayload,
+  ClientOrder,
   ClientWorkspacePayload,
   CompleteTutorTrialEndRequest,
   ConfirmTutorTrialRequest,
@@ -33,6 +34,9 @@ import {
   SendChatMessageRequest,
   SubmitHuntingCertificationRequest,
   SubmitHuntingCertificationResponse,
+  SubmitTutorCertificationRequest,
+  SubmitTutorCertificationResponse,
+  TutorCertifiedStudent,
   TutorDemand,
   TutorExposureResponse,
   UpdateNicknameRequest,
@@ -261,21 +265,21 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export async function loginClient(payload: LoginRequest): Promise<LoginResponse> {
-  return requestJson<LoginResponse>("/api/client/auth/login", {
+  return requestJson<LoginResponse>("/client/auth/login", {
     method: "POST",
     body: JSON.stringify(payload)
   });
 }
 
 export async function registerClient(payload: RegisterRequest): Promise<LoginResponse> {
-  return requestJson<LoginResponse>("/api/client/auth/register", {
+  return requestJson<LoginResponse>("/client/auth/register", {
     method: "POST",
     body: JSON.stringify(payload)
   });
 }
 
 export async function selectClientRole(payload: SelectRoleRequest, accessToken: string): Promise<LoginResponse> {
-  return requestJson<LoginResponse>("/api/client/auth/select-role", {
+  return requestJson<LoginResponse>("/client/auth/select-role", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`
@@ -285,7 +289,7 @@ export async function selectClientRole(payload: SelectRoleRequest, accessToken: 
 }
 
 export async function miniappOneTapLogin(payload: MiniappOneTapLoginRequest): Promise<LoginResponse> {
-  return requestJson<LoginResponse>("/api/client/auth/miniapp/one-tap-login", {
+  return requestJson<LoginResponse>("/client/auth/miniapp/one-tap-login", {
     method: "POST",
     body: JSON.stringify(payload)
   });
@@ -294,88 +298,100 @@ export async function miniappOneTapLogin(payload: MiniappOneTapLoginRequest): Pr
 export async function resetClientPassword(
   payload: ResetClientPasswordRequest
 ): Promise<ResetClientPasswordResponse> {
-  return requestJson<ResetClientPasswordResponse>("/api/client/auth/reset-password", {
+  return requestJson<ResetClientPasswordResponse>("/client/auth/reset-password", {
     method: "POST",
     body: JSON.stringify(payload)
   });
 }
 
 export async function getClientHome(): Promise<ClientHomePayload> {
-  return requestJson<ClientHomePayload>("/api/client/home");
+  return requestJson<ClientHomePayload>("/client/home");
 }
 
 export async function getProducts(): Promise<ProductSummary[]> {
-  return requestJson<ProductSummary[]>("/api/client/products");
+  return requestJson<ProductSummary[]>("/client/products");
 }
 
 export async function getClientWorkspace(): Promise<ClientWorkspacePayload> {
-  return requestJson<ClientWorkspacePayload>("/api/client/workspace");
+  return requestJson<ClientWorkspacePayload>("/client/workspace");
+}
+
+/** 获取当前账号"进行中"列表，不管什么角色都查这同一个接口，后端按登录态解析角色和用户 ID
+ *  聚合不同业务域：学生角色含优选/委托/狩猎/家教，家长角色含优选/家教。 */
+export async function getOngoingOrders(): Promise<ClientOrder[]> {
+  return requestJson<ClientOrder[]>("/client/workspace/ongoing");
 }
 
 export async function getPartTimeJobs(): Promise<PartTimeJob[]> {
-  return requestJson<PartTimeJob[]>("/api/client/workspace/part-time-jobs");
+  return requestJson<PartTimeJob[]>("/client/workspace/jobs");
 }
 
 export async function getHuntingTasks(): Promise<HuntingTask[]> {
-  return requestJson<HuntingTask[]>("/api/client/workspace/hunting-tasks");
+  return requestJson<HuntingTask[]>("/client/workspace/commission");
 }
 
-export async function getTutorDemands(): Promise<TutorDemand[]> {
-  return requestJson<TutorDemand[]>("/api/client/workspace/tutor-demands");
+/** 家教列表独立接口：学生角色返回 TutorDemand 需求列表，家长角色返回原始认证学生数据。 */
+export async function getTutorDemands(): Promise<Array<TutorDemand | TutorCertifiedStudent>> {
+  return requestJson<Array<TutorDemand | TutorCertifiedStudent>>("/client/workspace/edu/tutors");
+}
+
+/** 获取家长自己发布的家教需求及申请人，只服务进行中弹窗，跟页面浏览列表分开请求。 */
+export async function getTutorApplications(): Promise<TutorDemand[]> {
+  return requestJson<TutorDemand[]>("/client/workspace/tutor/ongoing");
 }
 
 export async function getClientAddresses(): Promise<ClientAddress[]> {
-  return requestJson<ClientAddress[]>("/api/client/profile/addresses");
+  return requestJson<ClientAddress[]>("/client/profile/addresses");
 }
 
 export async function updateClientNickname(payload: UpdateNicknameRequest): Promise<UserNickname> {
-  return requestJson<UserNickname>("/api/client/profile/nickname", {
+  return requestJson<UserNickname>("/client/profile/nickname", {
     method: "PUT",
     body: JSON.stringify(payload)
   });
 }
 
 export async function createClientAddress(payload: ClientAddressRequest): Promise<ClientAddress> {
-  return requestJson<ClientAddress>("/api/client/profile/addresses", {
+  return requestJson<ClientAddress>("/client/profile/addresses", {
     method: "POST",
     body: JSON.stringify(payload)
   });
 }
 
 export async function updateClientAddress(addressId: string, payload: ClientAddressRequest): Promise<ClientAddress> {
-  return requestJson<ClientAddress>(`/api/client/profile/addresses/${encodeURIComponent(addressId)}`, {
+  return requestJson<ClientAddress>(`/client/profile/addresses/${encodeURIComponent(addressId)}`, {
     method: "PUT",
     body: JSON.stringify(payload)
   });
 }
 
 export async function useClientAddress(addressId: string): Promise<ClientAddress[]> {
-  return requestJson<ClientAddress[]>(`/api/client/profile/addresses/${encodeURIComponent(addressId)}/current`, {
+  return requestJson<ClientAddress[]>(`/client/profile/addresses/${encodeURIComponent(addressId)}/current`, {
     method: "POST"
   });
 }
 
 export async function deleteClientAddress(addressId: string): Promise<ClientAddress[]> {
-  return requestJson<ClientAddress[]>(`/api/client/profile/addresses/${encodeURIComponent(addressId)}`, {
+  return requestJson<ClientAddress[]>(`/client/profile/addresses/${encodeURIComponent(addressId)}`, {
     method: "DELETE"
   });
 }
 
 export async function publishHuntingTask(payload: PublishHuntingTaskRequest): Promise<HuntingTask> {
-  return requestJson<HuntingTask>("/api/client/workspace/hunting-tasks", {
+  return requestJson<HuntingTask>("/client/workspace/commission", {
     method: "POST",
     body: JSON.stringify(payload)
   });
 }
 
 export async function acceptHuntingTask(taskId: string): Promise<HuntingTask> {
-  return requestJson<HuntingTask>(`/api/client/workspace/hunting-tasks/${encodeURIComponent(taskId)}/accept`, {
+  return requestJson<HuntingTask>(`/client/workspace/commission/${encodeURIComponent(taskId)}/accept`, {
     method: "POST"
   });
 }
 
 export async function quoteHuntingTask(taskId: string, payload: QuoteHuntingTaskRequest): Promise<HuntingTask> {
-  return requestJson<HuntingTask>(`/api/client/workspace/hunting-tasks/${encodeURIComponent(taskId)}/quotes`, {
+  return requestJson<HuntingTask>(`/client/workspace/commission/${encodeURIComponent(taskId)}/quotes`, {
     method: "POST",
     body: JSON.stringify(payload)
   });
@@ -383,7 +399,7 @@ export async function quoteHuntingTask(taskId: string, payload: QuoteHuntingTask
 
 export async function confirmHuntingTaskQuote(taskId: string, quoteId: string): Promise<HuntingTask> {
   return requestJson<HuntingTask>(
-    `/api/client/workspace/hunting-tasks/${encodeURIComponent(taskId)}/quotes/${encodeURIComponent(quoteId)}/confirm`,
+    `/client/workspace/commission/${encodeURIComponent(taskId)}/quotes/${encodeURIComponent(quoteId)}/confirm`,
     {
       method: "POST"
     }
@@ -396,7 +412,7 @@ export async function decideHuntingTaskQuote(
   payload: HuntingQuoteDecisionRequest
 ): Promise<HuntingTask> {
   return requestJson<HuntingTask>(
-    `/api/client/workspace/hunting-tasks/${encodeURIComponent(taskId)}/quotes/${encodeURIComponent(quoteId)}/decision`,
+    `/client/workspace/commission/${encodeURIComponent(taskId)}/quotes/${encodeURIComponent(quoteId)}/decision`,
     {
       method: "POST",
       body: JSON.stringify(payload)
@@ -409,7 +425,7 @@ export async function handleHuntingTaskFulfillmentAction(
   payload: HuntingTaskFulfillmentActionRequest
 ): Promise<HuntingTask> {
   return requestJson<HuntingTask>(
-    `/api/client/workspace/hunting-tasks/${encodeURIComponent(taskId)}/fulfillment-action`,
+    `/client/workspace/commission/${encodeURIComponent(taskId)}/fulfillment-action`,
     {
       method: "POST",
       body: JSON.stringify(payload)
@@ -420,7 +436,16 @@ export async function handleHuntingTaskFulfillmentAction(
 export async function submitHuntingCertification(
   payload: SubmitHuntingCertificationRequest
 ): Promise<SubmitHuntingCertificationResponse> {
-  return requestJson<SubmitHuntingCertificationResponse>("/api/client/profile/hunting-certification", {
+  return requestJson<SubmitHuntingCertificationResponse>("/client/profile/hunting-certification", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function submitTutorCertification(
+  payload: SubmitTutorCertificationRequest
+): Promise<SubmitTutorCertificationResponse> {
+  return requestJson<SubmitTutorCertificationResponse>("/client/profile/tutor-certification", {
     method: "POST",
     body: JSON.stringify(payload)
   });
@@ -428,21 +453,21 @@ export async function submitHuntingCertification(
 
 
 export async function updateTutorExposure(enabled: boolean): Promise<TutorExposureResponse> {
-  return requestJson<TutorExposureResponse>("/api/client/profile/tutor-exposure", {
+  return requestJson<TutorExposureResponse>("/client/profile/tutor-exposure", {
     method: "PUT",
     body: JSON.stringify({ enabled })
   });
 }
 
 export async function createHuntingProject(payload: CreateHuntingProjectRequest): Promise<HuntingProjectResponse> {
-  return requestJson<HuntingProjectResponse>("/api/client/workspace/hunting-projects", {
+  return requestJson<HuntingProjectResponse>("/client/workspace/hunting-projects", {
     method: "POST",
     body: JSON.stringify(payload)
   });
 }
 
 export async function publishTutorDemand(payload: PublishTutorDemandRequest): Promise<TutorDemand> {
-  return requestJson<TutorDemand>("/api/client/workspace/tutor-demands", {
+  return requestJson<TutorDemand>("/client/workspace/tutor-demands", {
     method: "POST",
     body: JSON.stringify(payload)
   });
@@ -450,7 +475,7 @@ export async function publishTutorDemand(payload: PublishTutorDemandRequest): Pr
 
 /** 学生直接提交试课申请，demandId 已经在 URL 里，不需要额外 payload。 */
 export async function applyTutorTrial(demandId: string): Promise<TutorDemand> {
-  return requestJson<TutorDemand>(`/api/client/workspace/tutor-demands/${encodeURIComponent(demandId)}/applications`, {
+  return requestJson<TutorDemand>(`/client/workspace/tutor-demands/${encodeURIComponent(demandId)}/applications`, {
     method: "POST"
   });
 }
@@ -458,7 +483,7 @@ export async function applyTutorTrial(demandId: string): Promise<TutorDemand> {
 /** 学生取消自己的家教试课申请。 */
 export async function cancelTutorApplication(applicationId: string): Promise<TutorDemand> {
   return requestJson<TutorDemand>(
-    `/api/client/workspace/tutor-applications/${encodeURIComponent(applicationId)}/cancel`,
+    `/client/workspace/tutor-applications/${encodeURIComponent(applicationId)}/cancel`,
     { method: "POST" }
   );
 }
@@ -469,7 +494,7 @@ export async function confirmTutorTrial(
   payload: ConfirmTutorTrialRequest
 ): Promise<TutorDemand> {
   return requestJson<TutorDemand>(
-    `/api/client/workspace/tutor-demands/${encodeURIComponent(demandId)}/applications/${encodeURIComponent(applicationId)}/trial`,
+    `/client/workspace/tutor-demands/${encodeURIComponent(demandId)}/applications/${encodeURIComponent(applicationId)}/trial`,
     {
       method: "POST",
       body: JSON.stringify(payload)
@@ -479,7 +504,7 @@ export async function confirmTutorTrial(
 
 export async function confirmTutorTrialStart(applicationId: string): Promise<TutorDemand> {
   return requestJson<TutorDemand>(
-    `/api/client/workspace/tutor-applications/${encodeURIComponent(applicationId)}/trial/confirm`,
+    `/client/workspace/tutor-applications/${encodeURIComponent(applicationId)}/trial/confirm`,
     {
       method: "POST"
     }
@@ -488,7 +513,7 @@ export async function confirmTutorTrialStart(applicationId: string): Promise<Tut
 
 export async function requestTutorTrialEnd(applicationId: string): Promise<TutorDemand> {
   return requestJson<TutorDemand>(
-    `/api/client/workspace/tutor-applications/${encodeURIComponent(applicationId)}/trial/end-request`,
+    `/client/workspace/tutor-applications/${encodeURIComponent(applicationId)}/trial/end-request`,
     {
       method: "POST"
     }
@@ -501,7 +526,7 @@ export async function completeTutorTrialEnd(
   payload: CompleteTutorTrialEndRequest
 ): Promise<TutorDemand> {
   return requestJson<TutorDemand>(
-    `/api/client/workspace/tutor-demands/${encodeURIComponent(demandId)}/applications/${encodeURIComponent(applicationId)}/trial/end`,
+    `/client/workspace/tutor-demands/${encodeURIComponent(demandId)}/applications/${encodeURIComponent(applicationId)}/trial/end`,
     {
       method: "POST",
       body: JSON.stringify(payload)
@@ -510,7 +535,7 @@ export async function completeTutorTrialEnd(
 }
 
 export async function cancelTutorDemand(demandId: string): Promise<TutorDemand> {
-  return requestJson<TutorDemand>(`/api/client/workspace/tutor-demands/${encodeURIComponent(demandId)}/cancel`, {
+  return requestJson<TutorDemand>(`/client/workspace/tutor-demands/${encodeURIComponent(demandId)}/cancel`, {
     method: "POST"
   });
 }
@@ -520,7 +545,7 @@ export async function handleTutorWorkflowAction(
   payload: TutorWorkflowActionRequest
 ): Promise<TutorDemand> {
   return requestJson<TutorDemand>(
-    `/api/client/workspace/tutor-applications/${encodeURIComponent(applicationId)}/workflow-action`,
+    `/client/workspace/tutor-applications/${encodeURIComponent(applicationId)}/workflow-action`,
     {
       method: "POST",
       body: JSON.stringify(payload)
@@ -529,40 +554,40 @@ export async function handleTutorWorkflowAction(
 }
 
 export async function getChatConversations(): Promise<ChatConversation[]> {
-  return requestJson<ChatConversation[]>("/api/client/chat/conversations");
+  return requestJson<ChatConversation[]>("/client/chat/conversations");
 }
 
 export async function createChatConversation(payload: CreateChatConversationRequest): Promise<ChatConversation> {
-  return requestJson<ChatConversation>("/api/client/chat/conversations", {
+  return requestJson<ChatConversation>("/client/chat/conversations", {
     method: "POST",
     body: JSON.stringify(payload)
   });
 }
 
 export async function getChatMessages(conversationId: string): Promise<ChatMessage[]> {
-  return requestJson<ChatMessage[]>(`/api/client/chat/conversations/${encodeURIComponent(conversationId)}/messages`);
+  return requestJson<ChatMessage[]>(`/client/chat/conversations/${encodeURIComponent(conversationId)}/messages`);
 }
 
 export async function sendChatMessage(conversationId: string, payload: SendChatMessageRequest): Promise<ChatMessage> {
-  return requestJson<ChatMessage>(`/api/client/chat/conversations/${encodeURIComponent(conversationId)}/messages`, {
+  return requestJson<ChatMessage>(`/client/chat/conversations/${encodeURIComponent(conversationId)}/messages`, {
     method: "POST",
     body: JSON.stringify(payload)
   });
 }
 
 export async function getChatQuickActions(): Promise<ChatQuickAction[]> {
-  return requestJson<ChatQuickAction[]>("/api/client/chat/quick-actions");
+  return requestJson<ChatQuickAction[]>("/client/chat/quick-actions");
 }
 
 export async function createChatQuickAction(payload: ChatQuickActionRequest): Promise<ChatQuickAction> {
-  return requestJson<ChatQuickAction>("/api/client/chat/quick-actions", {
+  return requestJson<ChatQuickAction>("/client/chat/quick-actions", {
     method: "POST",
     body: JSON.stringify(payload)
   });
 }
 
 export async function purchaseProduct(payload: PurchaseRequest): Promise<PurchaseResponse> {
-  return requestJson<PurchaseResponse>("/api/client/products/purchase", {
+  return requestJson<PurchaseResponse>("/client/products/purchase", {
     method: "POST",
     body: JSON.stringify(payload)
   });

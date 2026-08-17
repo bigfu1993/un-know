@@ -1,7 +1,7 @@
 import "./index.less";
 import { CheckCircle2, GraduationCap, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { tutorSubjectOptions } from "@shared/tutorModel";
+import { getTutorSubjectLabel, tutorSubjectOptions } from "@shared/tutorModel";
 import { normalizeByKey, validateByKey } from "@tools/validation";
 
 /** 家教认证信息弹窗保存模式。 */
@@ -329,7 +329,7 @@ function SubjectLevelPreview({ rows }: { rows: TutorSubjectLevelItem[] }) {
       <strong>可授课学科</strong>
       {normalizedRows.map((item) => (
         <span key={`${item.subject}-${item.grade}-${item.level}`}>
-          <em>{item.subject}</em>
+          <em>{getTutorSubjectLabel(item.subject)}</em>
           <small>{item.grade}</small>
           <strong>{item.level}</strong>
         </span>
@@ -369,7 +369,7 @@ function SubjectLevelEditor({
             <select onChange={(event) => onChange(index, "subject", event.target.value)} value={item.subject}>
               {tutorSubjectOptions.map((subject) => (
                 <option key={subject} value={subject}>
-                  {subject}
+                  {getTutorSubjectLabel(subject)}
                 </option>
               ))}
             </select>

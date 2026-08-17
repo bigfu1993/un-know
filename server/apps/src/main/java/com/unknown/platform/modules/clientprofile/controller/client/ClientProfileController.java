@@ -7,6 +7,8 @@ import com.unknown.platform.modules.clientprofile.model.ClientAddressRequest;
 import com.unknown.platform.modules.clientprofile.model.ClientAddressResponse;
 import com.unknown.platform.modules.clientprofile.model.SubmitHuntingCertificationRequest;
 import com.unknown.platform.modules.clientprofile.model.SubmitHuntingCertificationResponse;
+import com.unknown.platform.modules.clientprofile.model.SubmitTutorCertificationRequest;
+import com.unknown.platform.modules.clientprofile.model.SubmitTutorCertificationResponse;
 import com.unknown.platform.modules.clientprofile.model.TutorExposureResponse;
 import com.unknown.platform.modules.clientprofile.model.UpdateNicknameRequest;
 import com.unknown.platform.modules.clientprofile.model.UpdateTutorExposureRequest;
@@ -26,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 客户端个人资料接口，提供登录后的认证资料和地址簿管理能力。
  */
 @RestController
-@RequestMapping("/api/client/profile")
+@RequestMapping("/client/profile")
 public class ClientProfileController {
   private final ClientProfileAppService clientProfileAppService;
 
@@ -152,5 +154,13 @@ public class ClientProfileController {
       @Valid @RequestBody SubmitHuntingCertificationRequest request
   ) {
     return ApiResponse.ok(clientProfileAppService.submitHuntingCertification(authorization, request));
+  }
+
+  @PostMapping("/tutor-certification")
+  public ApiResponse<SubmitTutorCertificationResponse> submitTutorCertification(
+      @RequestHeader(value = "Authorization", required = false) String authorization,
+      @Valid @RequestBody SubmitTutorCertificationRequest request
+  ) {
+    return ApiResponse.ok(clientProfileAppService.submitTutorCertification(authorization, request));
   }
 }

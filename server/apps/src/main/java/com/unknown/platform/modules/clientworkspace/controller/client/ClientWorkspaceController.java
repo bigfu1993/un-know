@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** 客户端工作台接口，聚合订单、兼职、委托/狩猎、家教、商户商品和钱包数据。 */
 @RestController
-@RequestMapping("/api/client")
+@RequestMapping("/client")
 public class ClientWorkspaceController {
   private final ClientWorkspaceAppService clientWorkspaceAppService;
   private final HuntingTaskAppService huntingTaskAppService;
@@ -72,23 +72,41 @@ public class ClientWorkspaceController {
     return ApiResponse.ok(clientWorkspaceAppService.getWorkspace(role, authorization));
   }
 
+  /**
+   * 获取当前账号"进行中"列表独立接口，不管什么角色都查这同一个接口，后端按请求头解析出的
+   * 角色和登录态聚合不同业务域数据：学生角色含优选/委托/狩猎/家教，家长角色含优选/家教。
+   *
+   * @param authorization 登录访问令牌，可为空
+   * @param clientRoleHeader 登录用户角色请求头
+   * @return 当前角色进行中订单列表
+   */
+  @GetMapping("/workspace/ongoing")
+  public ApiResponse<List<ClientWorkspaceResponse.ClientOrder>> ongoingOrders(
+      @RequestHeader(value = "Authorization", required = false) String authorization,
+      @RequestHeader(value = ClientSessionService.CLIENT_USER_ROLE_HEADER, required = false) String clientRoleHeader
+  ) {
+    ClientRole role = clientSessionService.resolveClientRole(authorization, clientRoleHeader);
+    return ApiResponse.ok(clientWorkspaceAppService.ongoingOrders(role, authorization));
+  }
+
   /** 获取兼职列表独立接口，避免兼职页依赖完整工作台聚合响应。 */
-  @GetMapping("/workspace/part-time-jobs")
+  @GetMapping("/workspace/jobs")
   public ApiResponse<List<PartTimeJob>> partTimeJobs() {
     return ApiResponse.ok(clientWorkspaceAppService.listPartTimeJobs());
   }
 
   /** 获取委托/狩猎任务列表独立接口，保留登录用户视角下的报价和履约状态。 */
-  @GetMapping("/workspace/hunting-tasks")
+  @GetMapping("/workspace/commission")
   public ApiResponse<List<HuntingTask>> huntingTasks(
       @RequestHeader(value = "Authorization", required = false) String authorization
   ) {
     return ApiResponse.ok(huntingTaskAppService.listHuntingTasks(authorization));
   }
 
-  /** 获取家教列表独立接口，按当前角色返回家长或学生视角数据。 */
-  @GetMapping("/workspace/tutor-demands")
-  public ApiResponse<List<TutorDemand>> tutorDemands(
+  /** 获取家教列表独立接口，按当前角色返回家长或学生视角可浏览数据（不含进行中申请人详情）。
+   *  家长角色返回 app_user 合并 tutor_certification 的原始学生数据；学生角色仍返回 TutorDemand 需求列表。 */
+  @GetMapping("/workspace/edu/tutors")
+  public ApiResponse<List<Object>> tutorDemands(
       @RequestHeader(value = "Authorization", required = false) String authorization,
       @RequestHeader(value = ClientSessionService.CLIENT_USER_ROLE_HEADER, required = false) String clientRoleHeader
   ) {
@@ -96,8 +114,18 @@ public class ClientWorkspaceController {
     return ApiResponse.ok(tutorWorkspaceAppService.listTutorDemands(role, authorization));
   }
 
+  /** 获取家长自己发布的家教需求及申请人独立接口，只服务进行中弹窗，跟页面浏览列表分开。 */
+  @GetMapping("/workspace/tutor/ongoing")
+  public ApiResponse<List<TutorDemand>> tutorApplications(
+      @RequestHeader(value = "Authorization", required = false) String authorization,
+      @RequestHeader(value = ClientSessionService.CLIENT_USER_ROLE_HEADER, required = false) String clientRoleHeader
+  ) {
+    ClientRole role = clientSessionService.resolveClientRole(authorization, clientRoleHeader);
+    return ApiResponse.ok(tutorWorkspaceAppService.listTutorApplications(role, authorization));
+  }
+
   /** 发布委托或回收任务，返回列表可直接展示的任务卡片数据。 */
-  @PostMapping("/workspace/hunting-tasks")
+  @PostMapping("/workspace/commission")
   public ApiResponse<HuntingTask> publishHuntingTask(
       @Valid @RequestBody PublishHuntingTaskRequest request,
       @RequestHeader(value = "Authorization", required = false) String authorization
@@ -222,7 +250,7 @@ public class ClientWorkspaceController {
   }
 
   /** 服务方接受固定金额委托，后端完成锁单和押金冻结校验。 */
-  @PostMapping("/workspace/hunting-tasks/{taskId}/accept")
+  @PostMapping("/workspace/commission/{taskId}/accept")
   public ApiResponse<HuntingTask> acceptHuntingTask(
       @PathVariable String taskId,
       @RequestHeader(value = "Authorization", required = false) String authorization
@@ -233,7 +261,7 @@ public class ClientWorkspaceController {
   }
 
   /** 服务方提交报价，报价等待发布方确认后才进入履约。 */
-  @PostMapping("/workspace/hunting-tasks/{taskId}/quotes")
+  @PostMapping("/workspace/commission/{taskId}/quotes")
   public ApiResponse<HuntingTask> quoteHuntingTask(
       @PathVariable String taskId,
       @Valid @RequestBody QuoteHuntingTaskRequest request,
@@ -245,7 +273,7 @@ public class ClientWorkspaceController {
   }
 
   /** 发布方确认报价，确认后任务进入履约并冻结服务方押金。 */
-  @PostMapping("/workspace/hunting-tasks/{taskId}/quotes/{quoteId}/confirm")
+  @PostMapping("/workspace/commission/{taskId}/quotes/{quoteId}/confirm")
   public ApiResponse<HuntingTask> confirmHuntingQuote(
       @PathVariable String taskId,
       @PathVariable String quoteId,
@@ -257,7 +285,7 @@ public class ClientWorkspaceController {
   }
 
   /** 发布方或服务方处理报价协商，可确认、拒绝或改价后推送给对方。 */
-  @PostMapping("/workspace/hunting-tasks/{taskId}/quotes/{quoteId}/decision")
+  @PostMapping("/workspace/commission/{taskId}/quotes/{quoteId}/decision")
   public ApiResponse<HuntingTask> decideHuntingQuote(
       @PathVariable String taskId,
       @PathVariable String quoteId,
@@ -270,7 +298,7 @@ public class ClientWorkspaceController {
   }
 
   /** 履约阶段处理服务方取消/完成申请、发布方确认以及取消后的再次发布。 */
-  @PostMapping("/workspace/hunting-tasks/{taskId}/fulfillment-action")
+  @PostMapping("/workspace/commission/{taskId}/fulfillment-action")
   public ApiResponse<HuntingTask> handleHuntingTaskFulfillmentAction(
       @PathVariable String taskId,
       @RequestBody HuntingTaskFulfillmentActionRequest request,

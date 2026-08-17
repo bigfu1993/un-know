@@ -4,7 +4,6 @@ export type AuthMode = "login" | "register";
 export type LoginCredentialMode = "code" | "password";
 export type ProductFilter = "selfRun" | "stock" | "hourly" | "latest";
 export type JobFilter = "latest" | "hourly";
-export type TutorSort = "recommended" | "favorite" | "hired" | "duration" | "goodReview";
 
 export interface CheckoutState {
   product: import("@unknown/domain").ProductSummary;

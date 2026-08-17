@@ -1,7 +1,7 @@
-import { MinePopover } from "./MinePopover";
+import { Mine } from "./Mine";
 
 /** 我的悬浮头像入口属性，外部只负责控制开合和业务动作。 */
-export interface MineShortcutProps extends MinePopoverProps {
+export interface MineShortcutProps extends MineProps {
   isOpen: boolean;
   isQuickDockExpanded: boolean;
   onTrigger: () => void;
@@ -16,7 +16,7 @@ export function MineShortcut({
 }: MineShortcutProps) {
   return (
     <>
-      {isOpen ? <MinePopover {...popoverProps} /> : null}
+      {isOpen ? <Mine {...popoverProps} /> : null}
 
       <button
         className="floating-avatar grid h-[54px] w-[54px] place-items-center text-[#17212b]"

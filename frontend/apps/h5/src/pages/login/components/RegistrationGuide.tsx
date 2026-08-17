@@ -30,7 +30,7 @@ function getH5ApiBaseUrl() {
 
 /** 为刚注册的账号确认最终角色，并返回刷新后的会话。 */
 async function selectClientRoleAfterRegistration(accessToken: string, role: Role) {
-  const response = await fetch(`${getH5ApiBaseUrl()}/api/client/auth/select-role`, {
+  const response = await fetch(`${getH5ApiBaseUrl()}/client/auth/select-role`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -49,7 +49,7 @@ async function selectClientRoleAfterRegistration(accessToken: string, role: Role
 
 /** 注册引导阶段地址填写完整时，使用新会话令牌直接创建服务端当前地址。 */
 async function createClientAddressAfterRegistration(accessToken: string, profileDraft: ProfileDraftState) {
-  const response = await fetch(`${getH5ApiBaseUrl()}/api/client/profile/addresses`, {
+  const response = await fetch(`${getH5ApiBaseUrl()}/client/profile/addresses`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,

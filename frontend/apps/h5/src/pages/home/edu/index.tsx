@@ -1,140 +1,136 @@
 import "./index.less";
-import { EduStudentCard } from "./components/EduStudentCard";
+import { BookOpen, MessageCircle, School, Tags } from "lucide-react";
+import { isTutorCertifiedStudent } from "@h5/hooks/useClientWorkspaceViewModel";
+import { TutorCard } from "./components/TutorCard";
 import { ListFilters } from "./components/ListFilters";
-import { parseTutorSubjects } from "@shared/tutorModel";
+import { formatTutorSubjectLabels, parseTutorSubjects } from "@shared/tutorModel";
 
-/** 家教卡片可能匹配的学校来源。 */
-function getTutorDemandSchools(demand: TutorDemand) {
-  return Array.from(
-    new Set(
-      [demand.school, ...demand.applicants.map((applicant) => applicant.school)]
-        .map((value) => value.trim())
-        .filter(Boolean)
-    )
-  );
-}
-
-/** 根据可用时间文本粗略折算可兼职时长，优先使用真实日期和时间段数量。 */
-function getAvailabilityScore(value: string) {
-  const normalizedValue = value.trim();
-
-  if (!normalizedValue) {
-    return 0;
-  }
-
-  const dateCount = normalizedValue.match(/\d{4}-\d{2}-\d{2}/g)?.length ?? 0;
-  const timeRangeCount = normalizedValue.match(/\d{1,2}:\d{2}\s*(?:-|~|至)\s*\d{1,2}:\d{2}/g)?.length ?? 0;
-
-  if (dateCount || timeRangeCount) {
-    return dateCount * 3 + timeRangeCount;
-  }
-
-  if (/长期|全周|每天|随时/.test(normalizedValue)) {
-    return 10;
-  }
-  if (/周末|工作日|上午|下午|晚上/.test(normalizedValue)) {
-    return 4;
-  }
-
-  return 1;
-}
-
-/** 家教需求的最高受聘次数，来自真实申请人字段。 */
-function getTutorDemandHiredScore(demand: TutorDemand) {
-  return Math.max(0, ...demand.applicants.map((applicant) => applicant.hiredTimes));
-}
-
-/** 家教需求的可兼职时长分值，来自真实申请人可用时间字段。 */
-function getTutorDemandDurationScore(demand: TutorDemand) {
-  const applicantScore = demand.applicants.reduce((sum, applicant) => sum + getAvailabilityScore(applicant.availability), 0);
-
-  return demand.availableDuration ?? (applicantScore || getAvailabilityScore(demand.period ?? ""));
-}
-
-/** 存在真实排序分值时按分值降序，否则保持服务端稳定顺序。 */
-function sortTutorDemandsByScore(
-  tutorDemands: TutorDemand[],
-  getScore: (demand: TutorDemand) => number,
-  getStableOrder: (demand: TutorDemand) => number
-) {
-  if (!tutorDemands.some((demand) => getScore(demand) > 0)) {
-    return tutorDemands;
-  }
-
-  return [...tutorDemands].sort(
-    (left, right) => getScore(right) - getScore(left) || getStableOrder(left) - getStableOrder(right)
-  );
-}
-
-/** 按筛选条件和排序条件生成家教可见列表。 */
-function getVisibleTutorDemands(
-  tutorDemands: TutorDemand[],
-  selectedSchool: string,
-  selectedSubject: string,
-  tutorSort: TutorSort
-) {
-  const filteredDemands = tutorDemands.filter((demand) => {
-    const schoolMatched = selectedSchool ? getTutorDemandSchools(demand).includes(selectedSchool) : true;
-    const subjectMatched = selectedSubject ? parseTutorSubjects(demand.subject).includes(selectedSubject) : true;
+/** 按学校、学科筛选认证学生列表；列表顺序沿用服务端信用分排序，不做前端二次排序。 */
+function getVisibleTutorStudents(students: TutorCertifiedStudent[], selectedSchool: string, selectedSubject: string) {
+  return students.filter((student) => {
+    const schoolMatched = selectedSchool ? student.tutor_certification.school === selectedSchool : true;
+    const subjectMatched = selectedSubject
+      ? parseTutorSubjects(student.tutor_certification.subject).includes(selectedSubject)
+      : true;
 
     return schoolMatched && subjectMatched;
   });
-  const originalIndexes = new Map(filteredDemands.map((demand, index) => [demand.id, index]));
-  const getStableOrder = (demand: TutorDemand) => originalIndexes.get(demand.id) ?? 0;
-
-  if (tutorSort === "recommended") {
-    return sortTutorDemandsByScore(filteredDemands, (demand) => demand.recommendationScore ?? 0, getStableOrder);
-  }
-  if (tutorSort === "favorite") {
-    return sortTutorDemandsByScore(filteredDemands, (demand) => demand.favoriteCount ?? 0, getStableOrder);
-  }
-  if (tutorSort === "goodReview") {
-    return sortTutorDemandsByScore(filteredDemands, (demand) => demand.goodReviewCount ?? 0, getStableOrder);
-  }
-  if (tutorSort === "hired") {
-    return sortTutorDemandsByScore(filteredDemands, getTutorDemandHiredScore, getStableOrder);
-  }
-  if (tutorSort === "duration") {
-    return sortTutorDemandsByScore(filteredDemands, getTutorDemandDurationScore, getStableOrder);
-  }
-
-  return filteredDemands;
 }
 
-/** 家长家教招募页面，维护家教需求卡片的排序状态。 */
-export function Tutor({ tutorDemands }: { tutorDemands: TutorDemand[] }) {
+/** 性别对应的图标颜色，男生蓝色、女生粉色，其余性别沿用 .card-title svg 的默认色。
+ *  用内联 style 而不是 Tailwind 类名，因为全局 `.card-title svg { color: #1d6f55 }`
+ *  比单个 class 选择器优先级更高，className 会被它覆盖，必须用内联样式才能真正生效。 */
+function getGenderIconColor(gender: string) {
+  if (gender === "男") {
+    return "#2563eb";
+  }
+  if (gender === "女") {
+    return "#db2777";
+  }
+  return undefined;
+}
+
+/** 认证学生详情弹窗展示的全部字段，不含信用分。 */
+function getTutorStudentDetailItems(student: TutorCertifiedStudent) {
+  const certification = student.tutor_certification;
+
+  return [
+    { label: "昵称", value: student.nickname || "未设置昵称" },
+    { label: "手机号", value: student.phone || "待补充" },
+    { label: "真实姓名", value: certification.real_name || "待补充" },
+    { label: "性别", value: certification.gender || "待补充" },
+    { label: "年龄", value: certification.age || "待补充" },
+    { label: "籍贯", value: certification.native_place || "待补充" },
+    { label: "学校", value: certification.school || "待补充" },
+    { label: "专业", value: certification.major || "待补充" },
+    { label: "学科", value: formatTutorSubjectLabels(certification.subject) || "待补充" },
+    { label: "绩点", value: certification.gpa || "待补充" },
+    { label: "证书", value: certification.certificate || "待补充" },
+    { label: "身份证号", value: certification.id_card || "待补充" },
+    { label: "学信网", value: certification.xuexin_screenshot || "待补充" }
+  ];
+}
+
+/** 家长家教招募页面，浏览已认证并开启家教开关的学生档案。 */
+export function Tutor({ tutorDemands }: { tutorDemands: Array<TutorDemand | TutorCertifiedStudent> }) {
   const [selectedSchool, setSelectedSchool] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
-  const [tutorSort, setTutorSort] = useState<TutorSort>("recommended");
-  const tutorStudentDemands = useMemo(
-    () => tutorDemands.filter((demand) => demand.sourceType !== "tutorDemand"),
-    [tutorDemands]
-  );
+  const tutorStudents = useMemo(() => tutorDemands.filter(isTutorCertifiedStudent), [tutorDemands]);
   const visibleTutorStudents = useMemo(
-    () => getVisibleTutorDemands(tutorStudentDemands, selectedSchool, selectedSubject, tutorSort),
-    [selectedSchool, selectedSubject, tutorSort, tutorStudentDemands]
+    () => getVisibleTutorStudents(tutorStudents, selectedSchool, selectedSubject),
+    [selectedSchool, selectedSubject, tutorStudents]
   );
   return (
     <section className="module-stack tutor-list-page grid gap-[10px]">
       <SectionHeader countText={`${visibleTutorStudents.length} 个学生`} title="家教招募" />
 
       <ListFilters
-        demands={tutorStudentDemands}
         onSchoolChange={setSelectedSchool}
-        onSortChange={setTutorSort}
         onSubjectChange={setSelectedSubject}
         selectedSchool={selectedSchool}
-        selectedSort={tutorSort}
         selectedSubject={selectedSubject}
+        students={tutorStudents}
       />
 
-      {visibleTutorStudents.map((demand) => (
-        <EduStudentCard demand={demand} key={demand.id} />
+      {visibleTutorStudents.map((student) => (
+        <TutorCard
+          detail={
+            <div className="tutor-applicant-detail-list grid gap-[8px]">
+              {getTutorStudentDetailItems(student).map((item) => (
+                <div
+                  className="tutor-applicant-detail-item flex items-start justify-between gap-[12px]"
+                  key={item.label}
+                >
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </div>
+              ))}
+            </div>
+          }
+          detailTitle={student.tutor_certification.real_name}
+          footer={
+            <>
+              <button
+                className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+                onClick={() => showMessage(`${student.tutor_certification.real_name} 的消息能力后续接入。`, { type: "warning" })}
+                type="button"
+              >
+                <MessageCircle size={15} /> 消息
+              </button>
+              <button
+                className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+                type="button"
+              >
+                <Heart size={15} /> 收藏学生
+              </button>
+            </>
+          }
+          icon={<GraduationCap size={18} style={{ color: getGenderIconColor(student.tutor_certification.gender) }} />}
+          key={student.id}
+          title={student.tutor_certification.real_name}
+        >
+          <div className="job-task-fields grid gap-[4px]">
+            <div className="grid grid-cols-2 gap-[4px]">
+              <span>
+                <School size={14} />
+                学校：{student.tutor_certification.school}
+              </span>
+              <span>
+                <BookOpen size={14} />
+                专业：{student.tutor_certification.major}
+              </span>
+            </div>
+            <span>
+              <Tags size={14} />
+              学科：{formatTutorSubjectLabels(student.tutor_certification.subject)}
+            </span>
+          </div>
+        </TutorCard>
       ))}
       {visibleTutorStudents.length === 0 ? (
         <article className="empty-state p-[16px] text-center">
           <strong>暂无匹配学生</strong>
-          <span>换个学校、学科或排序方式再试试。</span>
+          <span>换个学校或学科再试试。</span>
         </article>
       ) : null}
     </section>

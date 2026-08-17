@@ -1,6 +1,7 @@
-import { useGlobalStore, useGlobalUser } from "@h5/store/global";
+import { useGlobalUser } from "@h5/store/global";
+import { useSubmitTutorCertification } from "@unknown/hooks";
 import { getFilledProfileDraft } from "@shared/clientPageModel";
-import { parseTutorSubjects, tutorSubjectOptions } from "@shared/tutorModel";
+import { getTutorSubjectLabel, parseTutorSubjects, tutorSubjectOptions } from "@shared/tutorModel";
 import { normalizeByKey, validateByKey } from "@tools/validation";
 
 /** 家教认证字段配置。 */
@@ -40,10 +41,17 @@ function getInitialTutorCertificationDraft(profileDraft: ProfileDraftState): Tut
   };
 }
 
-/** 学生家教资格认证页面，当前阶段提交后进入“认证中”状态。 */
-export function TutorCertification({ onBack, onSubmitted }: { onBack: () => void; onSubmitted: () => void }) {
+/** 家教认证页面属性。 */
+interface TutorCertificationProps {
+  onBack: () => void;
+  onSubmitError: (error: unknown) => void;
+  onSubmitted: (tutorCertificationStatus: TutorCertificationStatus, nextCertificationDraft: ProfileDraftState) => void;
+}
+
+/** 学生家教资格认证页面，提交后由服务端持久化审核状态并返回最新状态。 */
+export function TutorCertification({ onBack, onSubmitError, onSubmitted }: TutorCertificationProps) {
   const { profileDraft } = useGlobalUser();
-  const setUserProfileDraft = useGlobalStore((state) => state.setUserProfileDraft);
+  const submitTutorCertificationMutation = useSubmitTutorCertification();
   const [draft, setDraft] = useState<TutorCertificationDraft>(() => getInitialTutorCertificationDraft(profileDraft));
   const selectedSubjects = parseTutorSubjects(draft.tutorSubject);
   const requiredFieldResults = tutorCertificationFields
@@ -53,6 +61,7 @@ export function TutorCertification({ onBack, onSubmitted }: { onBack: () => void
   const subjectValidation = validateByKey("tutorSubject", draft.tutorSubject ?? "", { label: "学科", required: true });
   const isFormValid =
     genderValidation.isValid && subjectValidation.isValid && requiredFieldResults.every((result) => result.isValid);
+  const isSubmitting = submitTutorCertificationMutation.isPending;
 
   /** 更新认证字段并复用统一输入归一化。 */
   function handleFieldChange(key: string, value: string) {
@@ -71,25 +80,39 @@ export function TutorCertification({ onBack, onSubmitted }: { onBack: () => void
     handleFieldChange("tutorSubject", nextSubjects.join("、"));
   }
 
-  /** 提交本地认证草稿，等待后端认证接口上线后替换为真实提交。 */
+  /** 提交家教认证资料，认证状态以服务端返回为准。 */
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!isFormValid) {
+    if (!isFormValid || isSubmitting) {
       return;
     }
 
-    const filledDraft = getFilledProfileDraft({
-      ...draft,
-      tutorCertificationStatus: "reviewing",
-      tutorLevel: profileDraft.tutorLevel || "L1"
-    });
-
-    setUserProfileDraft({
-      ...profileDraft,
-      ...filledDraft
-    });
-    onSubmitted();
+    submitTutorCertificationMutation.mutate(
+      {
+        realName: draft.tutorRealName ?? "",
+        gender: draft.tutorGender ?? "",
+        age: draft.tutorAge ?? "",
+        nativePlace: draft.tutorNativePlace ?? "",
+        idCard: draft.tutorIdCard ?? "",
+        school: draft.tutorSchool ?? "",
+        major: draft.tutorMajor ?? "",
+        subject: draft.tutorSubject ?? "",
+        xuexinScreenshot: draft.tutorXuexinScreenshot || undefined,
+        gpa: draft.tutorGpa || undefined,
+        certificate: draft.tutorCertificate || undefined
+      },
+      {
+        onSuccess: (response) => {
+          const filledDraft = getFilledProfileDraft({
+            ...draft,
+            tutorLevel: profileDraft.tutorLevel || "L1"
+          });
+          onSubmitted(response.tutorCertificationStatus, filledDraft);
+        },
+        onError: onSubmitError
+      }
+    );
   }
 
   return (
@@ -123,7 +146,7 @@ export function TutorCertification({ onBack, onSubmitted }: { onBack: () => void
                 onClick={() => handleSubjectToggle(subject)}
                 type="button"
               >
-                {subject}
+                {getTutorSubjectLabel(subject)}
               </button>
             ))}
           </div>
@@ -157,6 +180,7 @@ export function TutorCertification({ onBack, onSubmitted }: { onBack: () => void
         <div className="sheet-actions grid gap-[8px]">
           <button
             className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+            disabled={isSubmitting}
             onClick={onBack}
             type="button"
           >
@@ -164,10 +188,10 @@ export function TutorCertification({ onBack, onSubmitted }: { onBack: () => void
           </button>
           <button
             className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
-            disabled={!isFormValid}
+            disabled={!isFormValid || isSubmitting}
             type="submit"
           >
-            提交认证
+            {isSubmitting ? "提交中..." : "提交认证"}
           </button>
         </div>
       </form>

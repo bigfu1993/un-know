@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** 客户端首页接口，供 H5、App 壳和小程序共享首页工作台数据。 */
 @RestController
-@RequestMapping("/api/client")
+@RequestMapping("/client")
 public class ClientHomeController {
   private final ClientHomeAppService clientHomeAppService;
   private final ClientSessionService clientSessionService;
