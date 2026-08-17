@@ -1,7 +1,5 @@
 import "./index.less";
-import { Modal } from "@ui/Modal";
 import { CalendarClock, XCircle } from "lucide-react";
-import { TrialScheduleCalendar } from "@components/TrialScheduleCalendar";
 import { getTutorDateKey } from "@tools/tutorCalendar";
 import {
   createDefaultDaySchedule,

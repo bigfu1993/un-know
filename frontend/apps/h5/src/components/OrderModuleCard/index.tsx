@@ -1,6 +1,5 @@
 import "./index.less";
 import { ChevronRight, PackageCheck } from "lucide-react";
-import { getOrderModuleCounts } from "@components/OrderModuleCard/model";
 
 /** 订单模块卡片展示模式，默认模式用于我的页面，简单模式预留给轻量入口。 */
 export type OrderModuleCardVariant = "default" | "simple";

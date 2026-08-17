@@ -1,6 +1,4 @@
 /** 跨页面流程弹窗，仅负责采集或展示数据，提交和导航由调用方处理。 */
-import { AddressInfoForm } from "@components/AddressInfoForm";
-import { Modal } from "@ui/Modal";
 import { hasInvalidRequiredFields } from "@tools/validation";
 
 /** 渲染当前场景资料模板，并将保存动作交给 App。 */

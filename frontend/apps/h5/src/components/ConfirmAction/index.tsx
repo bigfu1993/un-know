@@ -1,5 +1,4 @@
 import "./index.less";
-import { Modal } from "@ui/Modal";
 import { AlertTriangle, XCircle } from "lucide-react";
 
 /** 二次确认弹窗属性，用于高风险或不可直接撤销的业务动作。 */

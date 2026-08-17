@@ -1,92 +1,11 @@
-/** 学生已提交试课申请、等待家长处理时的展示状态。 */
-export const TUTOR_APPLICATION_PENDING_STATUS = "申请试课中";
-
-/** 家长已提交试课安排后，学生端等待确认流程的展示状态。 */
-export const TUTOR_TRIAL_CONFIRMING_STATUS = "试课日程确认中";
-
-/** 家长已提交试课安排后的旧版展示状态。 */
-export const TUTOR_TRIAL_CONFIRMING_LEGACY_STATUS = "试课确认中";
-
-/** 学生已确认家长安排后，试课正在进行的展示状态。 */
-export const TUTOR_TRIALING_STATUS = "试课中";
-
-/** 学生提交结束试课后，等待家长确认的展示状态。 */
-export const TUTOR_TRIAL_END_CONFIRMING_STATUS = "结束试课确认中";
-
-/** 家长处理试课是否正式雇佣时的展示状态。 */
-export const TUTOR_TRIAL_RESULT_PROCESSING_STATUS = "试课结果处理";
-
-/** 家长已发起正式雇佣，等待学生确认的展示状态。 */
-export const TUTOR_SERVICE_CONFIRMING_STATUS = "正式雇佣确认中";
-
-/** 旧版正式雇佣确认状态。 */
-export const TUTOR_SERVICE_CONFIRMING_LEGACY_STATUS = "家教服务确认中";
-
-/** 学生同意正式雇佣后，等待家长提交正式雇佣日程的展示状态。 */
-export const TUTOR_SERVICE_SCHEDULE_PENDING_STATUS = "正式雇佣日程确认中";
-
-/** 旧版学生同意正式雇佣后，等待家长提交兼职日程的展示状态。 */
-export const TUTOR_SERVICE_SCHEDULE_PENDING_LEGACY_STATUS = "兼职日程待提交";
-
-/** 旧版家长提交兼职日程后，等待学生确认的展示状态。 */
-export const TUTOR_SERVICE_SCHEDULE_CONFIRMING_STATUS = "兼职日程确认中";
-
-/** 家长提交正式雇佣日程后的正式雇佣状态。 */
-export const TUTOR_FORMAL_SERVICE_STATUS = "正式雇佣";
-
-/** 学生发起正式服务结束后，等待家长提交结算金额的状态。 */
-export const TUTOR_SERVICE_END_CONFIRMING_STATUS = "结束兼职确认中";
-
-/** 学生同意正式雇佣后，家教需求主任务进入进行中。 */
-export const TUTOR_DEMAND_IN_PROGRESS_STATUS = "进行中";
-
-/** 旧版正式家教服务状态。 */
-export const TUTOR_FORMAL_SERVICE_LEGACY_STATUS = "正式家教服务";
-
-/** 旧版家教进行中状态。 */
-export const TUTOR_FORMAL_SERVICE_RUNNING_LEGACY_STATUS = "家教进行中";
-
-/** 家教或试课结算等待学生确认的展示状态。 */
-export const TUTOR_SETTLEMENT_CONFIRMING_STATUS = "结算确认中";
-
-/** 学生要求修改结算金额后的展示状态。 */
-export const TUTOR_SETTLEMENT_REVISING_STATUS = "结算修改中";
-
-/** 家教系统计算结算金额时的展示状态。 */
-export const TUTOR_SYSTEM_SETTLING_STATUS = "系统结算中";
-
-/** 家长不正式雇佣且继续发布后的试课终态。 */
-export const TUTOR_TRIAL_ENDED_STATUS = "试课已结束";
-
-/** 学生已确认试课费用，等待家长决定是否正式雇佣的状态。 */
-export const TUTOR_TRIAL_SETTLED_SERVICE_PENDING_STATUS = "试课已结算";
-
-/** 旧版试课已结算并等待正式雇佣状态。 */
-export const TUTOR_TRIAL_SETTLED_SERVICE_PENDING_LEGACY_STATUS = "试课已结算+雇佣确认中";
-
-/** 家长拒绝试课后的学生端失效状态。 */
-export const TUTOR_REJECTED_STATUS = "已失效";
-
-/** 旧版拒绝试课状态。 */
-export const TUTOR_REJECTED_LEGACY_STATUS = "已拒绝";
-
-/** 学生拒绝正式雇佣后的终态。 */
-export const TUTOR_SERVICE_INVALID_STATUS = "正式雇佣失效";
-
-/** 判断申请是否处于等待家长处理阶段，并兼容迁移前状态。 */
+/** 判断申请是否处于等待家长处理阶段。 */
 export function isTutorApplicationPendingStatus(status?: string) {
-  return Boolean(
-    status?.includes(TUTOR_APPLICATION_PENDING_STATUS) || status?.includes("等待家长确认试课")
-  );
+  return Boolean(status?.includes(TutorStatus.ApplicationPending));
 }
 
 /** 判断家教试课申请是否处于家长已确认日程、等待试课确认的状态。 */
 export function isTutorTrialConfirmingStatus(status?: string) {
-  return Boolean(
-    status?.includes(TUTOR_TRIAL_CONFIRMING_STATUS) ||
-      status?.includes(TUTOR_TRIAL_CONFIRMING_LEGACY_STATUS) ||
-      status?.includes("试课已确认")
-  );
+  return Boolean(status?.includes(TutorStatus.TrialConfirming));
 }
 
 /** 判断家教试课申请是否处于试课中。 */
@@ -94,7 +13,7 @@ export function isTutorTrialingStatus(status?: string) {
   const normalizedStatus = status ?? "";
 
   return Boolean(
-    normalizedStatus.includes(TUTOR_TRIALING_STATUS) &&
+    normalizedStatus.includes(TutorStatus.Trialing) &&
       !isTutorApplicationPendingStatus(normalizedStatus) &&
       !isTutorTrialConfirmingStatus(normalizedStatus) &&
       !isTutorTrialEndConfirmingStatus(normalizedStatus)
@@ -103,76 +22,70 @@ export function isTutorTrialingStatus(status?: string) {
 
 /** 判断家教试课申请是否处于结束试课确认中。 */
 export function isTutorTrialEndConfirmingStatus(status?: string) {
-  return Boolean(status?.includes(TUTOR_TRIAL_END_CONFIRMING_STATUS));
+  return Boolean(status?.includes(TutorStatus.TrialEndConfirming));
 }
 
 /** 判断正式雇佣是否处于学生发起结束、等待家长结算的状态。 */
 export function isTutorServiceEndConfirmingStatus(status?: string) {
-  return Boolean(status?.includes(TUTOR_SERVICE_END_CONFIRMING_STATUS));
+  return Boolean(status?.includes(TutorStatus.ServiceEndConfirming));
 }
 
 /** 兼容旧数据状态值，统一返回当前产品文案。 */
 export function getTutorTrialStatusLabel(status?: string) {
   if (isTutorApplicationPendingStatus(status)) {
-    return TUTOR_APPLICATION_PENDING_STATUS;
+    return TutorStatus.ApplicationPending;
   }
   if (isTutorTrialEndConfirmingStatus(status)) {
-    return TUTOR_TRIAL_END_CONFIRMING_STATUS;
+    return TutorStatus.TrialEndConfirming;
   }
   if (isTutorTrialingStatus(status)) {
-    return TUTOR_TRIALING_STATUS;
+    return TutorStatus.Trialing;
   }
   if (isTutorTrialSettledServicePendingStatus(status)) {
-    return TUTOR_TRIAL_SETTLED_SERVICE_PENDING_STATUS;
+    return TutorStatus.TrialSettledServicePending;
   }
   if (isTutorServiceConfirmingStatus(status)) {
-    return TUTOR_SERVICE_CONFIRMING_STATUS;
+    return TutorStatus.ServiceConfirming;
   }
   if (isTutorServiceSchedulePendingStatus(status)) {
-    return TUTOR_SERVICE_SCHEDULE_PENDING_STATUS;
+    return TutorStatus.ServiceSchedulePending;
   }
   if (isTutorServiceEndConfirmingStatus(status)) {
-    return TUTOR_SERVICE_END_CONFIRMING_STATUS;
+    return TutorStatus.ServiceEndConfirming;
   }
-  if (status?.includes(TUTOR_DEMAND_IN_PROGRESS_STATUS)) {
-    return TUTOR_DEMAND_IN_PROGRESS_STATUS;
+  if (status?.includes(TutorStatus.DemandInProgress)) {
+    return TutorStatus.DemandInProgress;
   }
   if (isTutorServiceScheduleConfirmingStatus(status) || isTutorFormalServiceStatus(status)) {
-    return TUTOR_FORMAL_SERVICE_STATUS;
+    return TutorStatus.FormalService;
   }
 
-  return isTutorTrialConfirmingStatus(status) ? TUTOR_TRIAL_CONFIRMING_STATUS : status ?? "";
+  return isTutorTrialConfirmingStatus(status) ? TutorStatus.TrialConfirming : status ?? "";
 }
 
 /** 判断申请是否处于试课结果处理阶段。 */
 export function isTutorTrialResultProcessingStatus(status?: string) {
-  return Boolean(status?.includes(TUTOR_TRIAL_RESULT_PROCESSING_STATUS));
+  return Boolean(status?.includes(TutorStatus.TrialResultProcessing));
 }
 
 /** 判断申请是否已完成试课费用确认并等待家长处理雇佣结果。 */
 export function isTutorTrialSettledServicePendingStatus(status?: string) {
-  return Boolean(
-    status?.includes(TUTOR_TRIAL_SETTLED_SERVICE_PENDING_STATUS) ||
-      status?.includes(TUTOR_TRIAL_SETTLED_SERVICE_PENDING_LEGACY_STATUS)
-  );
+  return Boolean(status?.includes(TutorStatus.TrialSettledServicePending));
 }
 
 /** 判断申请是否处于正式雇佣确认阶段。 */
 export function isTutorServiceConfirmingStatus(status?: string) {
-  return Boolean(status?.includes(TUTOR_SERVICE_CONFIRMING_STATUS) || status?.includes(TUTOR_SERVICE_CONFIRMING_LEGACY_STATUS));
+  return Boolean(status?.includes(TutorStatus.ServiceConfirming));
 }
 
 /** 判断申请是否处于正式雇佣日程待家长提交阶段。 */
 export function isTutorServiceSchedulePendingStatus(status?: string) {
-  return Boolean(
-    status?.includes(TUTOR_SERVICE_SCHEDULE_PENDING_STATUS) ||
-      status?.includes(TUTOR_SERVICE_SCHEDULE_PENDING_LEGACY_STATUS)
-  );
+  return Boolean(status?.includes(TutorStatus.ServiceSchedulePending));
 }
 
 /** 判断申请是否处于旧版兼职日程确认阶段。 */
 export function isTutorServiceScheduleConfirmingStatus(status?: string) {
-  return Boolean(status?.includes(TUTOR_SERVICE_SCHEDULE_CONFIRMING_STATUS));
+  return Boolean(status?.includes(TutorStatus.ServiceScheduleConfirming));
 }
 
 /** 判断申请是否已经进入正式雇佣。 */
@@ -180,10 +93,8 @@ export function isTutorFormalServiceStatus(status?: string) {
   const normalizedStatus = status ?? "";
 
   return Boolean(
-    normalizedStatus === TUTOR_FORMAL_SERVICE_STATUS ||
-      normalizedStatus.includes(TUTOR_DEMAND_IN_PROGRESS_STATUS) ||
-      normalizedStatus.includes(TUTOR_FORMAL_SERVICE_LEGACY_STATUS) ||
-      normalizedStatus.includes(TUTOR_FORMAL_SERVICE_RUNNING_LEGACY_STATUS) ||
+    normalizedStatus === TutorStatus.FormalService ||
+      normalizedStatus.includes(TutorStatus.DemandInProgress) ||
       isTutorServiceScheduleConfirmingStatus(status)
   );
 }
@@ -191,26 +102,25 @@ export function isTutorFormalServiceStatus(status?: string) {
 /** 判断申请是否处于结算确认或修改阶段。 */
 export function isTutorSettlementStatus(status?: string) {
   return Boolean(
-    status?.includes(TUTOR_SETTLEMENT_CONFIRMING_STATUS) ||
-      status?.includes(TUTOR_SETTLEMENT_REVISING_STATUS) ||
-      status?.includes(TUTOR_SYSTEM_SETTLING_STATUS)
+    status?.includes(TutorStatus.SettlementConfirming) ||
+      status?.includes(TutorStatus.SettlementRevising) ||
+      status?.includes(TutorStatus.SystemSettling)
   );
 }
 
 /** 判断学生是否已拒绝正式雇佣。 */
 export function isTutorServiceInvalidStatus(status?: string) {
-  return Boolean(status?.includes(TUTOR_SERVICE_INVALID_STATUS));
+  return Boolean(status?.includes(TutorStatus.ServiceInvalid));
 }
 
 /** 判断申请是否处于不可继续操作的终态。 */
 export function isTutorTerminalStatus(status?: string) {
   return [
-    "已取消",
-    "已结束",
-    TUTOR_TRIAL_ENDED_STATUS,
-    TUTOR_REJECTED_STATUS,
-    TUTOR_REJECTED_LEGACY_STATUS,
-    TUTOR_SERVICE_INVALID_STATUS
+    TutorStatus.Cancelled,
+    TutorStatus.Ended,
+    TutorStatus.TrialEnded,
+    TutorStatus.Rejected,
+    TutorStatus.ServiceInvalid
   ].some((item) => status?.includes(item));
 }
 

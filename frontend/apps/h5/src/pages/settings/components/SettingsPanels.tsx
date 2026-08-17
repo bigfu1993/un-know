@@ -1,6 +1,3 @@
-import { AddressInfoForm } from "@components/AddressInfoForm";
-import { Modal } from "@ui/Modal";
-import { tutorCertificationStatusLabels } from "@components/TutorCard/model";
 import { tutorSubjectOptions } from "@shared/tutorModel";
 import { localAuthCode, localPasswordMinLength } from "@tools/localAuth";
 import { hasInvalidRequiredFields, normalizeByKey, validateByKey } from "@tools/validation";

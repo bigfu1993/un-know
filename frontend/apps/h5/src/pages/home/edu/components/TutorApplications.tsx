@@ -1,16 +1,4 @@
 import { Info, ReceiptText } from "lucide-react";
-import { ConfirmAction } from "@components/ConfirmAction";
-import { Modal } from "@ui/Modal";
-import { TrialScheduleCalendar, type TrialScheduleCalendarItem, type TrialScheduleCalendarPeriod } from "@components/TrialScheduleCalendar";
-import { TutorTrialSchedule } from "@components/TutorTrialSchedule";
-import {
-  formatTrialScheduleDate,
-  getEnabledPeriodSummaries,
-  getTrialScheduleCalendarItems,
-  getTrialScheduleSummaryLines,
-  getTrialScheduleValueFromSummary
-} from "@components/TutorTrialSchedule/model";
-import type { TrialScheduleValue } from "@components/TutorTrialSchedule/model";
 import { createTutorTaskModel } from "@tools/tutorTaskWorkflow";
 import { useConfirmAction } from "@h5/hooks/useConfirmAction";
 

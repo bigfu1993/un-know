@@ -1,4 +1,3 @@
-import { Modal } from "@ui/Modal";
 import { ClipboardCheck, XCircle } from "lucide-react";
 
 /** 发布草稿确认弹窗属性。 */

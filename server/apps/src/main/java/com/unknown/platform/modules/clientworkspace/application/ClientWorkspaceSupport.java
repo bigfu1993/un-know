@@ -45,6 +45,18 @@ public class ClientWorkspaceSupport {
   }
 
 
+  /** 把 joinTags 拼接出的顿号分隔字符串还原为列表，跟 joinTags 互为逆操作。 */
+  public List<String> splitTags(String raw) {
+    if (raw == null || raw.isBlank()) {
+      return List.of();
+    }
+    return Arrays.stream(raw.split("、"))
+        .map(String::strip)
+        .filter((tag) -> !tag.isBlank())
+        .toList();
+  }
+
+
   public long roleUserId(ClientRole role) {
     List<Long> ids = jdbcTemplate.query(
         "SELECT id FROM app_user WHERE role = ? ORDER BY updated_at DESC, id DESC LIMIT 1",

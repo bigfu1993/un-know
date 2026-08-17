@@ -14,6 +14,8 @@ export interface TutorTrialJob {
   id: string;
   parentPhone: string;
   period: string;
+  /** 计划周期实际选中的完整日期集合，允许不连续的零散日期；period 只是这个集合的开始至结束摘要文案。 */
+  periodDates: string[];
   publisher: import("@unknown/domain").UserNickname;
   requirement: string;
   status: string;

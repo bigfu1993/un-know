@@ -1,18 +1,8 @@
 import "./index.less";
-import { Modal } from "@ui/Modal";
 import { CheckCircle2, GraduationCap, Pencil, Plus, RefreshCw, Trash2, XCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { tutorSubjectOptions } from "@shared/tutorModel";
 import { normalizeByKey, validateByKey } from "@tools/validation";
-import { ScrollingTicker } from "@components/ScrollingTicker";
-import {
-  parseTutorSubjectLevelItems,
-  stringifyTutorSubjectLevelItems,
-  tutorCertificationStatusLabels,
-  tutorGradeOptions,
-  tutorLevelOptions,
-  type TutorSubjectLevelItem
-} from "@components/TutorCard/model";
 
 /** 家教认证信息弹窗保存模式。 */
 export type TutorCertificationInfoSaveMode = "edit" | "recertify";

@@ -1,9 +1,5 @@
 import "./index.less";
 import { useGlobalUser } from "@h5/store/global";
-import { OrderModuleCard } from "@components/OrderModuleCard";
-import { AccountSummaryCard, WalletSummaryCard } from "@components/SummaryCards";
-import { TutorCard } from "@components/TutorCard";
-import { getTutorCardDataFromDraft, getTutorCardMode } from "@components/TutorCard/model";
 
 /** 所有角色共用的账户中心页面，跨页面跳转由 App 统一承接。 */
 export function Mine({

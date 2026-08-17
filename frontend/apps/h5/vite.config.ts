@@ -8,7 +8,17 @@ export default defineConfig({
     react(),
     AutoImport({
       dts: path.resolve(__dirname, "src/auto-imports.d.ts"),
-      dirs: ["src/components/**", "src/pages/**", "src/shared/**", "src/store/**", "src/tools/**", "src/types/*.ts", "src/ui/**"],
+      dirs: [
+        "src/components/**",
+        "src/db/*.ts",
+        "src/hooks/**",
+        "src/pages/**",
+        "src/shared/**",
+        "src/store/**",
+        "src/tools/**",
+        "src/types/*.ts",
+        "src/ui/**"
+      ],
       imports: [
         "react",
         {
@@ -62,6 +72,7 @@ export default defineConfig({
             "BadgeCheck",
             "BriefcaseBusiness",
             "CalendarClock",
+            "CalendarDays",
             "CheckCircle2",
             "ChevronRight",
             "CircleDollarSign",
@@ -98,6 +109,7 @@ export default defineConfig({
     alias: {
       "@h5": path.resolve(__dirname, "src"),
       "@components": path.resolve(__dirname, "src/components"),
+      "@db": path.resolve(__dirname, "src/db"),
       "@pages": path.resolve(__dirname, "src/pages"),
       "@shared": path.resolve(__dirname, "src/shared"),
       "@store": path.resolve(__dirname, "src/store"),

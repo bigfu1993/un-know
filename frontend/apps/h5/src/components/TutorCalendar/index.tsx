@@ -1,6 +1,5 @@
 /** 家教课程日历任务数据。 */
 import "./index.less";
-import { Modal } from "@ui/Modal";
 import { getTutorCalendarCells, getTutorDateKey, getTutorMonthKey } from "@tools/tutorCalendar";
 
 export interface TutorCalendarTask {

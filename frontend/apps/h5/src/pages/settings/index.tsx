@@ -1,7 +1,5 @@
 import "./index.less";
 import { useGlobalStore, useGlobalUser } from "@h5/store/global";
-import { AddressInfoForm } from "@components/AddressInfoForm";
-import { tutorCertificationStatusLabels } from "@components/TutorCard/model";
 import {
   AddressEditor,
   NicknameEditor,

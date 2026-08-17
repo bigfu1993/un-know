@@ -124,6 +124,7 @@ public class TutorWorkspaceAppService {
     String addressLabel = support.defaultText(request.addressLabel(), "地址待补充");
     String periodStart = support.defaultText(request.periodStart(), "待定");
     String periodEnd = support.defaultText(request.periodEnd(), "待定");
+    String periodDates = support.joinTags(request.periodDates());
     String wageMode = normalizedTutorWageMode(request.wageMode());
     long wageAmountCents = isTutorWageAmountRequired(wageMode)
         ? support.toPositiveCents(request.wageAmount(), "TUTOR_WAGE_AMOUNT_REQUIRED", "请输入家教计薪金额")
@@ -136,10 +137,10 @@ public class TutorWorkspaceAppService {
             INSERT INTO tutor_demand (
               public_id, parent_user_id, child, subject, school, budget, status,
               title, description, requirement, address_id, address_label, child_id,
-              period_start, period_end, trial_enabled, trial_duration, wage_mode, school_tags,
+              period_start, period_end, period_dates, trial_enabled, trial_duration, wage_mode, school_tags,
               enabled, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, NOW())
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, NOW())
             """,
         publicId,
         currentUserId,
@@ -156,6 +157,7 @@ public class TutorWorkspaceAppService {
         support.clean(request.childId()),
         periodStart,
         periodEnd,
+        periodDates,
         Boolean.TRUE.equals(request.trialEnabled()),
         support.defaultText(request.trialDuration(), ""),
         wageMode,
@@ -174,10 +176,8 @@ public class TutorWorkspaceAppService {
     if (!isRecruitingTutorDemandStatus(demand.status())) {
       throw new BusinessException("TUTOR_DEMAND_CLOSED", "该家教兼职已不可申请");
     }
+    /** 学生端直接提交申请，不再要求先选可试课时间；具体安排改为申请通过后由双方另行协商。 */
     String availability = request == null ? "" : support.clean(request.availability());
-    if (availability.isBlank()) {
-      throw new BusinessException("TUTOR_TRIAL_AVAILABILITY_REQUIRED", "请先提交可试课时间");
-    }
     TutorApplicationRow existingApplication = findLatestTutorApplicationForStudent(demand, currentUserId);
     if (existingApplication != null && !isTutorApplicationTerminalStatus(existingApplication.status())) {
       if (!isTutorApplicationPendingStatus(existingApplication.status())) {
@@ -681,7 +681,7 @@ public class TutorWorkspaceAppService {
       return jdbcTemplate.query(
           """
               SELECT td.public_id, td.title, td.child, td.subject, td.budget, td.status, td.address_label,
-                     td.period_start, td.period_end,
+                     td.period_start, td.period_end, td.period_dates,
                      (
                        SELECT COUNT(*)
                        FROM tutor_applicant ta
@@ -830,6 +830,9 @@ public class TutorWorkspaceAppService {
                     + scheduleDetail)
                 .amountLabel(rs.getString("budget"))
                 .category("tutor")
+                .subject(rs.getString("subject"))
+                .address(support.defaultText(rs.getString("address_label"), "地址待补充"))
+                .periodDates(support.splitTags(rs.getString("period_dates")))
                 .quoteCount(rs.getInt("applicant_count"))
                 .trialCount(rs.getInt("trialing_count"))
                 .quoteId(activeApplicationPublicId)
@@ -858,7 +861,7 @@ public class TutorWorkspaceAppService {
             SELECT ta.public_id, ta.status, ta.availability, ta.trial_fee_cents,
                    COALESCE(NULLIF(trial_schedule.schedule_summary, ''), '') AS trial_schedule,
                    COALESCE(NULLIF(service_schedule.schedule_summary, ''), '') AS service_schedule,
-                   td.title, td.subject, td.budget, td.status AS demand_status, td.address_label, td.period_start, td.period_end,
+                   td.title, td.subject, td.budget, td.status AS demand_status, td.address_label, td.period_start, td.period_end, td.period_dates,
                    COALESCE(NULLIF(parent.nickname, ''), '未设置昵称') AS parent_nickname,
                    COALESCE(parent.phone, '') AS parent_phone
             FROM tutor_applicant ta
@@ -914,6 +917,9 @@ public class TutorWorkspaceAppService {
               .detail(orderDetail)
               .amountLabel(rs.getString("budget"))
               .category("tutor")
+              .subject(rs.getString("subject"))
+              .address(support.defaultText(rs.getString("address_label"), "地址待补充"))
+              .periodDates(support.splitTags(rs.getString("period_dates")))
               .phoneNumber(support.maskPhone(rs.getString("parent_phone")))
               .canCall(canContact)
               .canMessage(canContact)
@@ -977,6 +983,7 @@ public class TutorWorkspaceAppService {
             "该学生已开启家教开关，认证信息可被家长查看。",
             "平台认证",
             "长期可沟通",
+            List.of(),
             new UserNickname(rs.getString("nickname"), support.maskPhone(rs.getString("phone"))),
             "tutorStudent",
             List.of()
@@ -994,7 +1001,7 @@ public class TutorWorkspaceAppService {
     return jdbcTemplate.query(
         """
             SELECT td.id, td.public_id, td.child, td.subject, td.school, td.budget, td.status,
-                   td.title, td.description, td.address_label, td.period_start, td.period_end,
+                   td.title, td.description, td.address_label, td.period_start, td.period_end, td.period_dates,
                    COALESCE(NULLIF(u.nickname, ''), '未设置昵称') AS publisher_nickname,
                    COALESCE(u.phone, '') AS publisher_phone
             FROM tutor_demand td
@@ -1015,6 +1022,7 @@ public class TutorWorkspaceAppService {
             support.defaultText(rs.getString("description"), "暂无描述"),
             support.defaultText(rs.getString("address_label"), rs.getString("school")),
             tutorPeriod(rs.getString("period_start"), rs.getString("period_end")),
+            support.splitTags(rs.getString("period_dates")),
             new UserNickname(rs.getString("publisher_nickname"), support.maskPhone(rs.getString("publisher_phone"))),
             "tutorDemand",
             tutorApplicants(rs.getLong("id"))
@@ -1031,7 +1039,7 @@ public class TutorWorkspaceAppService {
     return jdbcTemplate.query(
         """
             SELECT td.id, td.public_id, td.child, td.subject, td.school, td.budget, td.status,
-                   td.title, td.description, td.address_label, td.period_start, td.period_end,
+                   td.title, td.description, td.address_label, td.period_start, td.period_end, td.period_dates,
                    COALESCE(NULLIF(u.nickname, ''), '未设置昵称') AS publisher_nickname,
                    COALESCE(u.phone, '') AS publisher_phone
             FROM tutor_demand td
@@ -1051,6 +1059,7 @@ public class TutorWorkspaceAppService {
             support.defaultText(rs.getString("description"), "暂无描述"),
             support.defaultText(rs.getString("address_label"), rs.getString("school")),
             tutorPeriod(rs.getString("period_start"), rs.getString("period_end")),
+            support.splitTags(rs.getString("period_dates")),
             new UserNickname(rs.getString("publisher_nickname"), support.maskPhone(rs.getString("publisher_phone"))),
             "tutorDemand",
             tutorApplicants(rs.getLong("id"))
@@ -1065,7 +1074,7 @@ public class TutorWorkspaceAppService {
     List<TutorDemand> demands = jdbcTemplate.query(
         """
             SELECT td.id, td.public_id, td.child, td.subject, td.school, td.budget, td.status,
-                   td.title, td.description, td.address_label, td.period_start, td.period_end,
+                   td.title, td.description, td.address_label, td.period_start, td.period_end, td.period_dates,
                    COALESCE(NULLIF(u.nickname, ''), '未设置昵称') AS publisher_nickname,
                    COALESCE(u.phone, '') AS publisher_phone
             FROM tutor_demand td
@@ -1085,6 +1094,7 @@ public class TutorWorkspaceAppService {
             support.defaultText(rs.getString("description"), "暂无描述"),
             support.defaultText(rs.getString("address_label"), rs.getString("school")),
             tutorPeriod(rs.getString("period_start"), rs.getString("period_end")),
+            support.splitTags(rs.getString("period_dates")),
             new UserNickname(rs.getString("publisher_nickname"), support.maskPhone(rs.getString("publisher_phone"))),
             "tutorDemand",
             tutorApplicants(rs.getLong("id"))

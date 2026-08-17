@@ -1,5 +1,4 @@
 import { Banknote } from "lucide-react";
-import { Modal } from "@ui/Modal";
 import {
   canConfirmHuntingQuote,
   canCounterHuntingQuote,

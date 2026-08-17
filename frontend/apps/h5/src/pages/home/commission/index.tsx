@@ -1,7 +1,6 @@
 import "./index.less";
 import { ArrowDownUp, Filter, RadioTower, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
-import { ScrollingTicker } from "@components/ScrollingTicker";
 import { CommissionAmount } from "@pages/home/commission/components/CommissionAmount";
 import { CommissionTaskCard } from "@pages/home/commission/components/CommissionTaskCard";
 import { CommissionTaskDetail } from "@pages/home/commission/components/CommissionTaskDetail";

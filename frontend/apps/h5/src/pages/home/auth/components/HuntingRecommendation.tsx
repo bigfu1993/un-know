@@ -1,5 +1,4 @@
 import { Banknote, MapPin, RadioTower } from "lucide-react";
-import { Modal } from "@ui/Modal";
 import { getHuntingTaskAmountText } from "@pages/home/commission/model";
 
 /** 狩猎快捷推荐弹窗属性。 */

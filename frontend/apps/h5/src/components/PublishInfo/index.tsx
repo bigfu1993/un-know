@@ -1,5 +1,4 @@
 import "./index.less";
-import { Modal } from "@ui/Modal";
 import {
   BadgeCheck,
   BookOpen,
@@ -22,8 +21,6 @@ import {
   WalletCards,
   XCircle
 } from "lucide-react";
-import { ScheduleCalendar } from "@components/ScheduleCalendar";
-import { TrialScheduleCalendar } from "@components/TrialScheduleCalendar";
 import { formatTutorSubjects, parseTutorSubjects, tutorSubjectOptions } from "@shared/tutorModel";
 import {
   delegationRequirementTags,
@@ -109,6 +106,7 @@ const initialPublishInfoDraft: PublishInfoDraft = {
   trialEnabled: "是",
   tutorDateEnd: "",
   tutorDateStart: "",
+  tutorDates: [],
   tutorSchoolTags: [],
   tutorSubject: "",
   tutorTime: "",
@@ -171,6 +169,52 @@ function getPublishPeriodRangeDateKeys(startDate: string, endDate: string) {
   }
 
   return dateKeys;
+}
+
+/**
+ * 把已排序的日期 key 切分成若干段连续区间：逐个日期比对，能接上"前一段末尾+1天"就并入当前段，
+ * 接不上就另起一段；不看整体是否全部连续，允许结果里同时存在连续段和孤立的单独日期。
+ */
+function splitPeriodDateKeysIntoContinuousSegments(sortedDateKeys: string[]) {
+  const segments: string[][] = [];
+
+  sortedDateKeys.forEach((dateKey) => {
+    const lastSegment = segments[segments.length - 1];
+    const lastDateKeyInSegment = lastSegment?.[lastSegment.length - 1];
+
+    if (lastDateKeyInSegment) {
+      const nextExpectedDate = getDateFromDateKey(lastDateKeyInSegment);
+      nextExpectedDate.setDate(nextExpectedDate.getDate() + 1);
+
+      if (getTutorDateKey(nextExpectedDate) === dateKey) {
+        lastSegment.push(dateKey);
+        return;
+      }
+    }
+
+    segments.push([dateKey]);
+  });
+
+  return segments;
+}
+
+/**
+ * 计划周期选中日期的详情文案：先把选中日期切分成若干连续段，每段内部连续的两天以上用"开始 - 结束"，
+ * 段内只有一天就直接显示这天，段与段之间用顿号分隔——同一组选中里可以同时出现连续区间和孤立日期。
+ */
+function formatPublishPeriodDatesDetail(dates: string[]) {
+  if (dates.length === 0) {
+    return "请选择计划周期";
+  }
+
+  const sortedDateKeys = [...dates].sort();
+  const segments = splitPeriodDateKeysIntoContinuousSegments(sortedDateKeys);
+
+  return segments
+    .map((segment) =>
+      segment.length > 1 ? formatPublishPeriodRange(segment[0], segment[segment.length - 1]) : formatPublishPeriodDate(segment[0])
+    )
+    .join("、");
 }
 
 /** 获取地址下拉展示文案。 */
@@ -273,6 +317,14 @@ export function PublishInfo({
     }));
   }
 
+  /** 更新家教计划周期实际选中的日期集合；单独走这个 setter 是因为 handleFieldChange 只接受字符串值。 */
+  function handleChangeTutorDates(dates: string[]) {
+    setDraft((currentDraft) => ({
+      ...currentDraft,
+      tutorDates: dates
+    }));
+  }
+
   /** 提交发布草稿。 */
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -345,6 +397,7 @@ export function PublishInfo({
               childOptions={childOptions}
               draft={draft}
               onChange={handleFieldChange}
+              onChangeTutorDates={handleChangeTutorDates}
             />
           )}
         </div>
@@ -590,12 +643,14 @@ function TutorPublishFields({
   addressItems,
   childOptions,
   draft,
-  onChange
+  onChange,
+  onChangeTutorDates
 }: {
   addressItems: AddressBookItem[];
   childOptions: ChildProfileOption[];
   draft: PublishInfoDraft;
   onChange: (key: keyof PublishInfoDraft, value: string) => void;
+  onChangeTutorDates: (dates: string[]) => void;
 }) {
   return (
     <div className="publish-form-fields grid gap-[10px]">
@@ -627,7 +682,7 @@ function TutorPublishFields({
         onChange={onChange}
         options={tutorSubjectOptions}
       />
-      <TutorPlanPeriodField draft={draft} onChange={onChange} />
+      <TutorPlanPeriodField draft={draft} onChange={onChange} onChangeTutorDates={onChangeTutorDates} />
       <SwitchField
         checked={draft.trialEnabled === "是"}
         icon={BadgeCheck}
@@ -723,41 +778,59 @@ function TutorAddressField({
 /** 家教招募和家教聘用的计划周期字段，合并开始和结束日期入口。 */
 function TutorPlanPeriodField({
   draft,
-  onChange
+  onChange,
+  onChangeTutorDates
 }: {
   draft: PublishInfoDraft;
   onChange: PublishInfoFieldChange;
+  onChangeTutorDates: (dates: string[]) => void;
 }) {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const hasInvalidDateRange = Boolean(draft.tutorDateStart && draft.tutorDateEnd && draft.tutorDateEnd < draft.tutorDateStart);
   const hasSelectedRange = Boolean(draft.tutorDateStart && draft.tutorDateEnd && !hasInvalidDateRange);
 
+  /** 重置计划周期：清空选中的完整日期集合和推导出的开始~结束日期。 */
+  function handleResetPeriod() {
+    onChangeTutorDates([]);
+    onChange("tutorDateStart", "");
+    onChange("tutorDateEnd", "");
+  }
+
   return (
     <div className={`profile-field publish-field tutor-period-date-field grid gap-[8px] ${hasSelectedRange ? "" : "missing"}`}>
       <FieldLabel icon={CalendarDays} label="计划周期" />
-      <div
-        aria-haspopup="dialog"
-        aria-label="选择计划周期"
-        className={`tutor-period-date-field__trigger ${hasSelectedRange ? "filled" : ""}`}
-        onClick={() => setIsPickerOpen(true)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            setIsPickerOpen(true);
-          }
-        }}
-        role="button"
-        tabIndex={0}
-      >
-        <span className="tutor-period-date-field__value">
-          {formatPublishPeriodRange(draft.tutorDateStart, draft.tutorDateEnd)}
-        </span>
+      <div className={`tutor-period-date-field__trigger flex items-center justify-between gap-[10px] ${hasSelectedRange ? "filled" : ""}`}>
+        <div
+          aria-haspopup="dialog"
+          aria-label="选择计划周期"
+          className="tutor-period-date-field__open grid gap-[2px]"
+          onClick={() => setIsPickerOpen(true)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              setIsPickerOpen(true);
+            }
+          }}
+          role="button"
+          tabIndex={0}
+        >
+          {hasSelectedRange ? (
+            <span className="tutor-period-date-field__count">共 {draft.tutorDates.length} 天</span>
+          ) : null}
+          <span className="tutor-period-date-field__value">{formatPublishPeriodDatesDetail(draft.tutorDates)}</span>
+        </div>
+        {hasSelectedRange ? (
+          <button className="tutor-period-date-field__reset text-button" onClick={handleResetPeriod} type="button">
+            重置
+          </button>
+        ) : null}
       </div>
       {hasInvalidDateRange ? <em>周期结束日期不能早于开始日期</em> : null}
       {isPickerOpen ? (
         <TutorPlanPeriodPicker
           draft={draft}
           onChange={onChange}
+          onChangeTutorDates={onChangeTutorDates}
           onClose={() => setIsPickerOpen(false)}
         />
       ) : null}
@@ -765,64 +838,52 @@ function TutorPlanPeriodField({
   );
 }
 
-/** 家教计划周期弹窗，复用试课日历的双击范围选择。 */
+/** 家教计划周期弹窗，用日历面板选择开始~结束日期。 */
 function TutorPlanPeriodPicker({
   draft,
   onChange,
+  onChangeTutorDates,
   onClose
 }: {
   draft: PublishInfoDraft;
   onChange: PublishInfoFieldChange;
+  onChangeTutorDates: (dates: string[]) => void;
   onClose: () => void;
 }) {
   const todayKey = useMemo(() => getTutorDateKey(new Date()), []);
-  const selectedDateKeys = useMemo(
-    () => getPublishPeriodRangeDateKeys(draft.tutorDateStart, draft.tutorDateEnd),
-    [draft.tutorDateEnd, draft.tutorDateStart]
+  /** 初始选中日期优先用草稿里已经保存的零散日期集合；老草稿只有开始~结束区间时，退化成展开这段连续区间。 */
+  const initialSelectedDateKeys = useMemo(
+    () => (draft.tutorDates.length > 0 ? draft.tutorDates : getPublishPeriodRangeDateKeys(draft.tutorDateStart, draft.tutorDateEnd)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   );
   const [activeDate, setActiveDate] = useState(draft.tutorDateStart || todayKey);
-  const [pendingRangeStartDate, setPendingRangeStartDate] = useState<string | null>(null);
-  /** 对比区 ScheduleCalendar 的选中日期列表，独立于计划周期的开始~结束区间，验证多选能力。 */
-  const [scheduleCalendarSelectedDates, setScheduleCalendarSelectedDates] = useState<string[]>([]);
-  /** 对比区 ScheduleCalendar 的测试用交互模式，用来验证查看/编辑两种模式的表现。 */
-  const [scheduleCalendarMode, setScheduleCalendarMode] = useState<ScheduleCalendarMode>("edit");
-  const hasSelectedRange = selectedDateKeys.length > 0 && !pendingRangeStartDate;
+  /** 日历当前选中的日期集合（可以是不连续的零散日期），是本弹窗的选中数据源头；开始~结束日期只是从中推导出的连续区间摘要。 */
+  const [selectedDateKeys, setSelectedDateKeys] = useState<string[]>(initialSelectedDateKeys);
+  const sortedSelectedDateKeys = useMemo(() => [...selectedDateKeys].sort(), [selectedDateKeys]);
+  const periodStartDate = sortedSelectedDateKeys[0] ?? "";
+  const periodEndDate = sortedSelectedDateKeys[sortedSelectedDateKeys.length - 1] ?? "";
+  const hasSelectedRange = selectedDateKeys.length > 0;
 
   /**
-   * 双击两次确定计划周期范围（第一下定起点，第二下定终点）；
-   * 已经有一段范围时新起点会先清空上一轮范围，重新开始一轮选择。
+   * 选中日期集合变化后，把完整日期集合和推导出的开始~结束日期一起同步回发布草稿：
+   * tutorDates 保留真实的零散选中结果，tutorDateStart/tutorDateEnd 只作展示用的连续区间摘要，
+   * 提交接口时两者都会带上，不会再出现"选的零散日期、提交后只剩一段连续区间"的丢失。
+   * 确认按钮的可点击状态直接看 hasSelectedRange，不受这里的一拍延迟影响。
    */
-  function handleDoubleClickDateRange(dateKey: string, selectableDateKeys: string[]) {
-    setActiveDate(dateKey);
+  useEffect(() => {
+    onChangeTutorDates(sortedSelectedDateKeys);
+    onChange("tutorDateStart", periodStartDate);
+    onChange("tutorDateEnd", periodEndDate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortedSelectedDateKeys, periodStartDate, periodEndDate]);
 
-    if (!pendingRangeStartDate) {
-      setPendingRangeStartDate(dateKey);
-      onChange("tutorDateStart", "");
-      onChange("tutorDateEnd", "");
-      return;
-    }
-
-    const [rangeMinDateKey, rangeMaxDateKey] = [pendingRangeStartDate, dateKey].sort();
-    const rangeDateKeys = selectableDateKeys
-      .filter((selectableDateKey) => selectableDateKey >= rangeMinDateKey && selectableDateKey <= rangeMaxDateKey)
-      .sort();
-
-    if (rangeDateKeys.length === 0) {
-      setPendingRangeStartDate(null);
-      return;
-    }
-
-    onChange("tutorDateStart", rangeDateKeys[0]);
-    onChange("tutorDateEnd", rangeDateKeys[rangeDateKeys.length - 1]);
-    setPendingRangeStartDate(null);
-  }
-
-  /** 对比区 ScheduleCalendar 单击已查看日期时切换选中：支持多选，独立维护一份选中日期列表。 */
-  function handleToggleScheduleCalendarDate(dateKey: string) {
-    setScheduleCalendarSelectedDates((currentDates) =>
-      currentDates.includes(dateKey)
-        ? currentDates.filter((currentDate) => currentDate !== dateKey)
-        : [...currentDates, dateKey].sort()
+  /** 单击已查看日期或滑动选择结束时触发：切换选中，支持多选和滑动批量选中/取消。 */
+  function handleToggleSelectedDate(dateKey: string) {
+    setSelectedDateKeys((currentDateKeys) =>
+      currentDateKeys.includes(dateKey)
+        ? currentDateKeys.filter((currentDateKey) => currentDateKey !== dateKey)
+        : [...currentDateKeys, dateKey]
     );
   }
 
@@ -836,57 +897,28 @@ function TutorPlanPeriodPicker({
           <CalendarDays size={18} />
           <div className="tutor-plan-period-title-copy">
             <strong>计划周期</strong>
-            <span>{pendingRangeStartDate ? "选择结束日期" : formatPublishPeriodRange(draft.tutorDateStart, draft.tutorDateEnd)}</span>
+            <span>{formatPublishPeriodRange(periodStartDate, periodEndDate)}</span>
           </div>
           <button aria-label="关闭" className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button">
             <XCircle size={20} />
           </button>
         </div>
 
-        <TrialScheduleCalendar
+        <ScheduleCalendar
           activeDate={activeDate}
-          initialDate={activeDate}
           maxSelectedDates={null}
           mode="edit"
           onActiveDateChange={setActiveDate}
-          onDayDoubleClick={handleDoubleClickDateRange}
-          rangeStartDate={pendingRangeStartDate}
-          scheduleItems={[]}
+          onToggleDate={handleToggleSelectedDate}
           selectedDates={selectedDateKeys}
         />
 
-        {/*
-          临时对比区：新版 ScheduleCalendar 已移除双击逻辑，改成"单击查看、再单击已查看的日期切换选中"，
-          支持多选，选中日期独立维护（不复用计划周期的开始~结束区间），便于对比新旧日历样式，验证后再决定是否移除。
-        */}
-        <div className="grid gap-[6px]">
-          <div className="flex items-center justify-between gap-[10px]">
-            <span className="text-[12px] text-[#657181]">新版日历组件对比（ScheduleCalendar）</span>
-            <button
-              className="ghost-button px-[10px] py-[6px] text-[12px]"
-              onClick={() => setScheduleCalendarMode((currentMode) => (currentMode === "edit" ? "view" : "edit"))}
-              type="button"
-            >
-              测试：当前{scheduleCalendarMode === "edit" ? "编辑" : "查看"}模式，点击切换
-            </button>
-          </div>
-          <ScheduleCalendar
-            activeDate={activeDate}
-            maxSelectedDates={null}
-            mode={scheduleCalendarMode}
-            onActiveDateChange={setActiveDate}
-            onToggleDate={handleToggleScheduleCalendarDate}
-            rangeStartDate={pendingRangeStartDate}
-            selectedDates={scheduleCalendarSelectedDates}
-          />
-        </div>
-
-        <div className="sheet-actions grid grid-cols-2 gap-[8px]">
-          <button className="ghost-button min-h-[38px] px-[10px] py-[8px]" onClick={onClose} type="button">
+        <div className="sheet-actions flex gap-[10px]">
+          <button className="ghost-button flex-1 min-h-[38px] px-[10px] py-[8px]" onClick={onClose} type="button">
             取消
           </button>
           <button
-            className="primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+            className="primary-button flex-1 min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
             disabled={!hasSelectedRange}
             onClick={onClose}
             type="button"

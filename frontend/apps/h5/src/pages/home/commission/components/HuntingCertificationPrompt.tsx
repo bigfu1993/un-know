@@ -1,6 +1,4 @@
 import { Crosshair, ShieldAlert, XCircle } from "lucide-react";
-import { Modal } from "@ui/Modal";
-import { huntingCertificationStatusLabels } from "@components/HuntingCertificationCard/model";
 
 /** 狩猎认证提示弹窗属性。 */
 interface HuntingCertificationPromptProps {

@@ -1,5 +1,6 @@
 import "./index.less";
-import { TutorTrialJobCard } from "@components/PageWidgets";
+import { EduCard } from "./components/EduCard";
+import { PartTimeJobCard } from "./components/PartTimeJobCard";
 
 /** 学生兼职页展开的工具面板。 */
 type PartTimeToolbarPanel = "area" | "sort" | null;
@@ -38,7 +39,7 @@ export function PartTime({
   dashboard: MerchantDashboard;
   jobs: PartTimeJob[];
   tutorJobs?: TutorTrialJob[];
-  onApplyTutorTrial?: (job: TutorTrialJob, availability: string) => Promise<unknown> | unknown;
+  onApplyTutorTrial?: (job: TutorTrialJob) => Promise<unknown> | unknown;
 }) {
   const [keyword, setKeyword] = useState("");
   const [activePanel, setActivePanel] = useState<PartTimeToolbarPanel>(null);
@@ -159,7 +160,7 @@ export function PartTime({
 
       <div className="card-list part-time-list-scroll grid gap-[10px]">
         {visibleTutorJobs.map((job) => (
-          <TutorTrialJobCard job={job} key={job.id} onApplyTrial={onApplyTutorTrial} />
+          <EduCard job={job} key={job.id} onApplyTrial={onApplyTutorTrial} />
         ))}
         {visibleJobs.map((job) => (
           <PartTimeJobCard job={job} key={job.id} />

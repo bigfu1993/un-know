@@ -1,4 +1,4 @@
-import { MinePopover, type MinePopoverProps } from "./MinePopover";
+import { MinePopover } from "./MinePopover";
 
 /** 我的悬浮头像入口属性，外部只负责控制开合和业务动作。 */
 export interface MineShortcutProps extends MinePopoverProps {

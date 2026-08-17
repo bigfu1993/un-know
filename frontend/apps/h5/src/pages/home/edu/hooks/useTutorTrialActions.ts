@@ -2,7 +2,6 @@ import { getErrorMessage } from "@tools/messageToast";
 
 /** 家教试课申请载荷。 */
 interface ApplyTutorTrialPayload {
-  availability: string;
   demandId: string;
   message?: string;
 }
@@ -74,15 +73,10 @@ export function useTutorTrialActions({
   requestTutorTrialEnd,
   showMessage
 }: UseTutorTrialActionsOptions) {
-  /** 学生端提交家教试课申请，申请记录由服务端进入进行中列表。 */
-  async function handleApplyTutorTrial(job: TutorTrialJob, availability: string) {
+  /** 学生端直接提交家教试课申请，不再要求先选可试课时间，申请记录由服务端进入进行中列表。 */
+  async function handleApplyTutorTrial(job: TutorTrialJob) {
     try {
-      if (!availability.trim()) {
-        showMessage("请先选择可试课时间。", { type: "warning" });
-        return false;
-      }
-
-      await applyTutorTrial({ availability, demandId: job.id, message: "申请试课" });
+      await applyTutorTrial({ demandId: job.id, message: "申请试课" });
       openOngoingOrders();
       showMessage("试课申请已提交，可在进行中查看状态。", { type: "success" });
       refetchWorkspace();

@@ -1,4 +1,3 @@
-import { Modal } from "@ui/Modal";
 import { Banknote, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 

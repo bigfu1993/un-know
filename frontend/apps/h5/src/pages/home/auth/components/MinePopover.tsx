@@ -1,12 +1,4 @@
 import { useGlobalUser } from "@h5/store/global";
-import { HuntingCertificationCard } from "@components/HuntingCertificationCard";
-import {
-  getHuntingCertificationCardMode,
-  getHuntingCertificationDataFromDraft
-} from "@components/HuntingCertificationCard/model";
-import { AccountSummaryCard, WalletSummaryCard } from "@components/SummaryCards";
-import { TutorCard } from "@components/TutorCard";
-import { getTutorCardDataFromDraft, getTutorCardMode } from "@components/TutorCard/model";
 
 /** 头像弹窗快捷入口的视觉强调类型。 */
 type MinePopoverActionTone = "default" | "publish" | "recycle";

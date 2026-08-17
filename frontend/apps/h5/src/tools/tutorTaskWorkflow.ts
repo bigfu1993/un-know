@@ -15,16 +15,8 @@ import {
   isTutorTrialEndConfirmingStatus,
   isTutorTrialSettledServicePendingStatus,
   isTutorTrialingStatus,
-  isTutorTrialResultProcessingStatus,
-  TUTOR_DEMAND_IN_PROGRESS_STATUS,
-  TUTOR_SERVICE_CONFIRMING_STATUS,
-  TUTOR_SETTLEMENT_CONFIRMING_STATUS,
-  TUTOR_SETTLEMENT_REVISING_STATUS,
-  TUTOR_SYSTEM_SETTLING_STATUS
+  isTutorTrialResultProcessingStatus
 } from "@tools/tutorTrial";
-
-/** 家长端主任务在学生申请结束正式服务后的第二状态展示。 */
-const TUTOR_PARENT_SERVICE_END_REQUESTED_STATUS = "申请结束中";
 
 /** 家教任务流程节点，前端只做展示和动作编排，真实迁移以服务端状态为准。 */
 export type TutorTaskNode =
@@ -105,13 +97,13 @@ export interface TutorTaskModel {
 /** 从服务端状态文案归一化为家教任务流程节点。 */
 export function getTutorTaskNode(status?: string): TutorTaskNode {
   if (isTutorSettlementStatus(status)) {
-    if (status?.includes(TUTOR_SETTLEMENT_REVISING_STATUS)) {
+    if (status?.includes(TutorStatus.SettlementRevising)) {
       return "settlementRevising";
     }
-    if (status?.includes(TUTOR_SYSTEM_SETTLING_STATUS)) {
+    if (status?.includes(TutorStatus.SystemSettling)) {
       return "systemSettling";
     }
-    if (status?.includes(TUTOR_SETTLEMENT_CONFIRMING_STATUS)) {
+    if (status?.includes(TutorStatus.SettlementConfirming)) {
       return "settlementConfirming";
     }
   }
@@ -142,16 +134,13 @@ export function getTutorTaskNode(status?: string): TutorTaskNode {
   if (isTutorTrialConfirmingStatus(status)) {
     return "trialScheduled";
   }
-  if (status?.includes("家教进行中")) {
-    return "formalTutoring";
-  }
-  if (status?.includes("已取消")) {
+  if (status?.includes(TutorStatus.Cancelled)) {
     return "cancelled";
   }
-  if (status?.includes("已拒绝") || status?.includes("已失效") || status?.includes("正式雇佣失效")) {
+  if (status?.includes(TutorStatus.Rejected) || status?.includes(TutorStatus.ServiceInvalid)) {
     return "rejected";
   }
-  if (isTutorTerminalStatus(status) || status?.includes("已结束")) {
+  if (isTutorTerminalStatus(status) || status?.includes(TutorStatus.Ended)) {
     return "ended";
   }
   if (isTutorApplicationPendingStatus(status)) {
@@ -201,19 +190,19 @@ export function getTutorTaskStatusToneClassName(tone: TutorTaskStatusTone) {
 export function getTutorTaskStatusLabels(status?: string, role?: Role) {
   if (
     role === "parent" &&
-    status?.includes(TUTOR_DEMAND_IN_PROGRESS_STATUS) &&
-    status.includes(TUTOR_PARENT_SERVICE_END_REQUESTED_STATUS)
+    status?.includes(TutorStatus.DemandInProgress) &&
+    status.includes(TutorStatus.ServiceEndRequested)
   ) {
-    return [TUTOR_DEMAND_IN_PROGRESS_STATUS, TUTOR_PARENT_SERVICE_END_REQUESTED_STATUS];
+    return [TutorStatus.DemandInProgress, TutorStatus.ServiceEndRequested];
   }
   if (isTutorServiceInvalidStatus(status)) {
     return ["试课完成", "拒绝正式委托"];
   }
   if (isTutorTrialSettledServicePendingStatus(status)) {
-    return ["试课已结算", "等待正式雇佣"];
+    return [TutorStatus.TrialSettledServicePending, "等待正式雇佣"];
   }
   if (isTutorServiceConfirmingStatus(status)) {
-    return [TUTOR_SERVICE_CONFIRMING_STATUS];
+    return [TutorStatus.ServiceConfirming];
   }
 
   const statusLabel = getTutorTrialStatusLabel(status);
@@ -223,7 +212,7 @@ export function getTutorTaskStatusLabels(status?: string, role?: Role) {
 
 /** 判断家长端家教主卡是否仍处于发布中，取消入口展示后由后端接口做最终限制。 */
 function isParentRecruitingTutorOrder(order: ClientOrder, role: Role) {
-  return role === "parent" && order.category === "tutor" && ["发布中", "家教招募中"].some((status) => order.status.includes(status));
+  return role === "parent" && order.category === "tutor" && order.status.includes(TutorStatus.Recruiting);
 }
 
 /** 创建家教任务纯模型，供订单卡片、申请列表和试课列表统一消费。 */

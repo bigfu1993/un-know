@@ -30,6 +30,12 @@ public record ClientWorkspaceResponse(
       String amountLabel,
       String category,
       String phoneNumber,
+      /** 家教卡片专用：学科，非家教品类为 null。 */
+      String subject,
+      /** 家教卡片专用：家教地址，非家教品类为 null。 */
+      String address,
+      /** 家教卡片专用：计划周期实际选中的完整日期集合，允许不连续的零散日期；非家教品类为 null。 */
+      List<String> periodDates,
       BigDecimal quoteAmount,
       Integer quoteCount,
       Integer trialCount,
@@ -74,6 +80,9 @@ public record ClientWorkspaceResponse(
       private String amountLabel;
       private String category;
       private String phoneNumber;
+      private String subject;
+      private String address;
+      private List<String> periodDates;
       private BigDecimal quoteAmount;
       private Integer quoteCount;
       private Integer trialCount;
@@ -149,6 +158,21 @@ public record ClientWorkspaceResponse(
 
       public Builder phoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+        return this;
+      }
+
+      public Builder subject(String subject) {
+        this.subject = subject;
+        return this;
+      }
+
+      public Builder address(String address) {
+        this.address = address;
+        return this;
+      }
+
+      public Builder periodDates(List<String> periodDates) {
+        this.periodDates = periodDates;
         return this;
       }
 
@@ -251,7 +275,7 @@ public record ClientWorkspaceResponse(
       public ClientOrder build() {
         return new ClientOrder(
             id, role, title, status, amount, contact, detail, risk, amountLabel, category,
-            phoneNumber, quoteAmount, quoteCount, trialCount, quoteActionLabel, quoteId,
+            phoneNumber, subject, address, periodDates, quoteAmount, quoteCount, trialCount, quoteActionLabel, quoteId,
             canCall, canMessage, canRequestCancel, canRequestComplete, canConfirmCancel,
             canConfirmComplete, canRepublish, canAgreeTrial, canOpenTrialResult, canOpenTrialSchedule,
             canOpenTutorTrialList, canOpenTutorApplications, canRejectTrial, canCancelTutorApplication
@@ -361,6 +385,8 @@ public record ClientWorkspaceResponse(
       String description,
       String addressLabel,
       String period,
+      /** 计划周期实际选中的完整日期集合，允许不连续的零散日期；period 只是这个集合的开始至结束摘要文案。 */
+      List<String> periodDates,
       UserNickname publisher,
       String sourceType,
       List<TutorApplicant> applicants

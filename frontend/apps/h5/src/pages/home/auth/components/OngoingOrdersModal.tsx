@@ -1,11 +1,10 @@
-import { OngoingOrdersList } from "@components/OngoingOrdersList";
-import { Modal } from "@ui/Modal";
+import { OngoingOrders } from "./OngoingOrders";
 
 /** 委托履约动作由进行中弹窗按按钮语义映射到真实业务 action。 */
 export type OngoingHuntingFulfillmentAction = HuntingTaskFulfillmentActionRequest["action"];
 
 /** 进行中事项弹窗属性，调用方提供真实业务动作。 */
-export interface OngoingOrdersProps {
+export interface OngoingOrdersModalProps {
   maxHeight?: string;
   orders: ClientOrder[];
   onCancelTutorDemand?: (order: ClientOrder) => void;
@@ -24,7 +23,7 @@ export interface OngoingOrdersProps {
 }
 
 /** 进行中事项弹窗，支持分类筛选和面板高度配置。 */
-export function OngoingOrders({
+export function OngoingOrdersModal({
   maxHeight = "min(72vh, 620px)",
   orders,
   onClose,
@@ -36,7 +35,7 @@ export function OngoingOrders({
   onOpenTutorTrialList,
   onRequestTutorTrialEnd,
   onSubmitTutorWorkflowAction
-}: OngoingOrdersProps) {
+}: OngoingOrdersModalProps) {
   /** 将进行中委托按钮映射到服务端履约 action。 */
   function handleHuntingFulfillmentAction(order: ClientOrder, action: OngoingHuntingFulfillmentAction) {
     void onHuntingFulfillmentAction?.(order, action);
@@ -99,7 +98,7 @@ export function OngoingOrders({
           <XCircle size={20} />
         </button>
       </div>
-      <OngoingOrdersList
+      <OngoingOrders
         orders={orders}
         onConfirmCancel={(order) => handleHuntingFulfillmentAction(order, "confirm_cancel")}
         onConfirmComplete={(order) => handleHuntingFulfillmentAction(order, "confirm_complete")}

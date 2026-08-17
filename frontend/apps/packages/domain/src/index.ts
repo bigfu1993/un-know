@@ -205,6 +205,12 @@ export interface ClientOrder {
   contact: string;
   detail: string;
   phoneNumber?: string;
+  /** 家教卡片专用：学科，非家教品类为空。 */
+  subject?: string;
+  /** 家教卡片专用：家教地址，非家教品类为空。 */
+  address?: string;
+  /** 家教卡片专用：计划周期实际选中的完整日期集合，允许不连续的零散日期；非家教品类为空。 */
+  periodDates?: string[];
   quoteAmount?: number;
   quoteCount?: number;
   trialCount?: number;
@@ -349,6 +355,8 @@ export interface TutorDemand {
   favoriteCount?: number;
   goodReviewCount?: number;
   period?: string;
+  /** 计划周期实际选中的完整日期集合，允许不连续的零散日期；period 只是这个集合的开始至结束摘要文案。 */
+  periodDates?: string[];
   publisher?: UserNickname;
   recommendationScore?: number;
   sourceType?: "tutorDemand" | "tutorStudent";
@@ -366,6 +374,8 @@ export interface PublishTutorDemandRequest {
   childName?: string;
   periodStart: string;
   periodEnd: string;
+  /** 计划周期实际选中的完整日期集合，允许不连续的零散日期；periodStart/periodEnd 是这个集合里的最早/最晚日期，仅作连续区间摘要。 */
+  periodDates?: string[];
   trialEnabled?: boolean;
   trialDuration?: string;
   wageAmount?: number | null;
@@ -376,7 +386,8 @@ export interface PublishTutorDemandRequest {
 
 /** 学生申请家教试课请求。 */
 export interface ApplyTutorTrialRequest {
-  availability: string;
+  /** 可试课时间，学生端直接提交申请时不再收集，留空由双方后续另行协商。 */
+  availability?: string;
   message?: string;
 }
 

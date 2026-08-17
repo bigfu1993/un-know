@@ -1,4 +1,3 @@
-import { HuntingProject as HuntingProjectOverlay } from "@components/HuntingProject";
 import { HuntingRecommendation } from "./HuntingRecommendation";
 
 /** 狩猎快捷入口属性，调用方只提供开合状态和真实业务动作。 */
@@ -55,7 +54,7 @@ export function HuntingShortcut({
       </button>
 
       {isProjectOpen ? (
-        <HuntingProjectOverlay
+        <HuntingProject
           areaOptions={areaOptions}
           initialProject={initialProject}
           onClose={onCloseProject}

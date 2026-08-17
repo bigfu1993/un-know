@@ -1,33 +1,39 @@
-.schedule-calendar {
+.calendar-panel {
   display: grid;
   gap: 8px;
 }
 
-.schedule-calendar__toolbar strong {
+.calendar-panel__toolbar strong {
   color: #17212b;
   font-size: 14px;
 }
 
-.schedule-calendar__weekdays,
-.schedule-calendar__grid {
+.calendar-panel__weekdays,
+.calendar-panel__grid {
   grid-template-columns: repeat(7, minmax(0, 1fr));
   width: min(100%, 312px);
   justify-self: center;
 }
 
-.schedule-calendar__weekdays span {
+.calendar-panel__weekdays span {
   color: #657181;
   font-size: 12px;
   font-weight: 800;
   text-align: center;
 }
 
-.schedule-calendar__grid {
+.calendar-panel__grid {
   gap: 3px;
 }
 
+/* 编辑模式下单元格要支持按住滑动选择，关掉浏览器默认的触屏滚动/文字选中手势，避免和滑动手势打架。 */
+.calendar-panel__grid.edit-mode .calendar-panel__day {
+  touch-action: none;
+  user-select: none;
+}
+
 /* 线框是单元格的默认常驻样式，默认灰色；单击查看时才切换成主题色，用来区分"查看中"的单元格。 */
-.schedule-calendar__day {
+.calendar-panel__day {
   position: relative;
   width: 42px;
   height: 42px;
@@ -46,23 +52,23 @@
     color 160ms ease;
 }
 
-.schedule-calendar__day.empty {
+.calendar-panel__day.empty {
   border-color: transparent;
   background: transparent;
 }
 
 /* 查看：单击后的当前查看单元格，线框从默认灰色切换成主题色；主题色线框只属于查看态，选中不会占用这个颜色。过去的日期一样可以查看，同样显示这条线框。 */
-.schedule-calendar__day.active:not(.range-start) {
+.calendar-panel__day.active:not(.range-start) {
   border-color: #175e75;
 }
 
 /* 早于当天的日期：数字文字用中性灰弱化视觉存在感，但比线框灰更深，保证可读；已选中时仍按选中态显示。 */
-.schedule-calendar__day.past:not(.selected) strong {
+.calendar-panel__day.past:not(.selected) strong {
   color: #9aa5b1;
 }
 
 /* 选中：背景填充浅蓝色，边框保持默认颜色；不是当前查看单元格时线框依旧是默认灰色，只有背景能看出选中。 */
-.schedule-calendar__day.selected:not(.range-start) {
+.calendar-panel__day.selected:not(.range-start) {
   background: #dceef3;
 }
 
@@ -70,13 +76,13 @@
  * 待确认的范围起点（由调用方自行维护对应流程）：改用琥珀色系，
  * 和"查看"/"选中"共用的青色线框完全不同色系，避免动画循环到浅色阶段时和其它状态混淆。
  */
-.schedule-calendar__day.range-start:not(.selected) {
+.calendar-panel__day.range-start:not(.selected) {
   border-color: #b45309;
   box-shadow: inset 0 0 0 2px rgba(180, 83, 9, 0.65);
-  animation: schedule-calendar-range-start-pulse 1.1s ease-in-out infinite;
+  animation: calendar-panel-range-start-pulse 1.1s ease-in-out infinite;
 }
 
-@keyframes schedule-calendar-range-start-pulse {
+@keyframes calendar-panel-range-start-pulse {
   0%,
   100% {
     background: #fff7e6;
@@ -90,22 +96,22 @@
 }
 
 /* 当天日期保持不变：不管是否选中、是否范围起点，数字徽标始终是实心深色圆。 */
-.schedule-calendar__day.today strong {
+.calendar-panel__day.today strong {
   background: #17212b;
   color: #fff;
   box-shadow: none;
 }
 
-.schedule-calendar__day.limited:not(.selected) {
+.calendar-panel__day.limited:not(.selected) {
   background: #f7f9fb;
 }
 
-.schedule-calendar__day:disabled {
+.calendar-panel__day:disabled {
   cursor: not-allowed;
   opacity: 0.45;
 }
 
-.schedule-calendar__day strong {
+.calendar-panel__day strong {
   position: relative;
   z-index: 2;
   display: inline-grid;

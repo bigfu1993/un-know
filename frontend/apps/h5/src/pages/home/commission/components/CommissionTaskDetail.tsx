@@ -1,5 +1,4 @@
 import { Banknote, Clock3, Crosshair, MapPin, MessageCircle, Tags, UserRound, XCircle } from "lucide-react";
-import { Modal } from "@ui/Modal";
 import { formatCurrency } from "@shared/clientPageModel";
 import {
   getCommissionDestination,
