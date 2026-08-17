@@ -1,5 +1,5 @@
 import "./index.less";
-import { CheckCircle2, GraduationCap, Pencil, Plus, RefreshCw, Trash2, XCircle } from "lucide-react";
+import { CheckCircle2, GraduationCap, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { tutorSubjectOptions } from "@shared/tutorModel";
 import { normalizeByKey, validateByKey } from "@tools/validation";
@@ -183,27 +183,19 @@ export function TutorCertificationInfo({
   return (
     <Modal
       ariaLabel="家教认证信息"
+      headerClassName="tutor-certification-info-header"
+      icon={<GraduationCap size={18} />}
       onClose={onClose}
       onSubmit={handleSubmit}
       panelClassName="tutor-certification-info-sheet mx-auto grid max-h-[82vh] max-w-[540px] gap-[12px] overflow-hidden px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]"
       panelElement="form"
+      title={
+        <>
+          <strong>家教认证信息</strong>
+          <span>{tutorCertificationStatusLabels[certificationStatus]}</span>
+        </>
+      }
     >
-        <div className="card-title tutor-certification-info-header flex items-center justify-between gap-[10px]">
-          <GraduationCap size={18} />
-          <div className="tutor-certification-info-title-copy">
-            <strong>家教认证信息</strong>
-            <span>{tutorCertificationStatusLabels[certificationStatus]}</span>
-          </div>
-          <button
-            className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
-            onClick={onClose}
-            type="button"
-            aria-label="关闭"
-          >
-            <XCircle size={20} />
-          </button>
-        </div>
-
         <div className="tutor-certification-info-body grid gap-[12px]">
           {isEditing ? (
             <SubjectLevelEditor

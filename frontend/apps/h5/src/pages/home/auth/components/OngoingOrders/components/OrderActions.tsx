@@ -162,15 +162,6 @@ export function OrderActions({
               ) : null}
             </button>
           ) : null}
-          {(tutorTask ? tutorTask.can("rejectTrial") : order.canRejectTrial) ? (
-            <button
-              className="danger-outline-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
-              onClick={() => showLocalTutorWorkflowMessage("已拒绝试课申请。")}
-              type="button"
-            >
-              拒绝
-            </button>
-          ) : null}
           {order.canAgreeTrial && category !== "tutor" ? (
             <button
               className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"

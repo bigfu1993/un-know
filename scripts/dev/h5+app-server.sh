@@ -49,11 +49,36 @@ is_tcp_listening() {
   return 1
 }
 
-print_port_process() {
-  local port="$1"
+kill_port_listener() {
+  local name="$1"
+  local port="$2"
+  local pids
 
-  if command -v lsof >/dev/null 2>&1; then
-    lsof -nP -iTCP:"${port}" -sTCP:LISTEN || true
+  if ! command -v lsof >/dev/null 2>&1; then
+    printf '[dev:h5+app-server] command not found: lsof, cannot stop %s on 127.0.0.1:%s automatically.\n' "${name}" "${port}" >&2
+    return 1
+  fi
+
+  pids="$(lsof -nP -tiTCP:"${port}" -sTCP:LISTEN 2>/dev/null || true)"
+  if [[ -z "${pids}" ]]; then
+    return 0
+  fi
+
+  printf '[dev:h5+app-server] 127.0.0.1:%s is already listening (pid: %s); stopping %s before restart.\n' "${port}" "${pids}" "${name}"
+  # shellcheck disable=SC2086
+  kill ${pids} >/dev/null 2>&1 || true
+
+  local waited=0
+  while is_tcp_listening "${port}" && [[ "${waited}" -lt 20 ]]; do
+    sleep 1
+    waited=$((waited + 1))
+  done
+
+  if is_tcp_listening "${port}"; then
+    printf '[dev:h5+app-server] 127.0.0.1:%s still listening after SIGTERM; sending SIGKILL.\n' "${port}" >&2
+    # shellcheck disable=SC2086
+    kill -9 ${pids} >/dev/null 2>&1 || true
+    sleep 1
   fi
 }
 
@@ -92,23 +117,14 @@ run_service() {
 }
 
 if is_tcp_listening "${H5_PORT}"; then
-  printf '[dev:h5+app-server] 127.0.0.1:%s is already listening; skip starting H5.\n' "${H5_PORT}"
-  print_port_process "${H5_PORT}"
-else
-  run_service "h5" "${LOG_DIR}/h5.log" "${SCRIPT_DIR}/h5.sh"
+  kill_port_listener "h5" "${H5_PORT}"
 fi
+run_service "h5" "${LOG_DIR}/h5.log" "${SCRIPT_DIR}/h5.sh"
 
 if is_tcp_listening "${APP_SERVER_PORT}"; then
-  printf '[dev:h5+app-server] 127.0.0.1:%s is already listening; skip starting app server.\n' "${APP_SERVER_PORT}"
-  print_port_process "${APP_SERVER_PORT}"
-else
-  run_service "app-server" "${LOG_DIR}/app-server.log" "${SCRIPT_DIR}/app-server.sh"
+  kill_port_listener "app-server" "${APP_SERVER_PORT}"
 fi
-
-if [[ "${#PIDS[@]}" -eq 0 ]]; then
-  printf '[dev:h5+app-server] H5 and app server are already running; nothing to start.\n'
-  exit 0
-fi
+run_service "app-server" "${LOG_DIR}/app-server.log" "${SCRIPT_DIR}/app-server.sh"
 
 printf '[dev:h5+app-server] h5 log: %s\n' "${LOG_DIR}/h5.log"
 printf '[dev:h5+app-server] app-server log: %s\n' "${LOG_DIR}/app-server.log"

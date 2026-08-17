@@ -24,18 +24,40 @@ is_tcp_listening() {
   return 1
 }
 
-print_port_process() {
+kill_port_listener() {
   local port="$1"
+  local pids
 
-  if command -v lsof >/dev/null 2>&1; then
-    lsof -nP -iTCP:"${port}" -sTCP:LISTEN || true
+  if ! command -v lsof >/dev/null 2>&1; then
+    printf '[app-server] command not found: lsof, cannot stop the process on 127.0.0.1:%s automatically.\n' "${port}" >&2
+    return 1
+  fi
+
+  pids="$(lsof -nP -tiTCP:"${port}" -sTCP:LISTEN 2>/dev/null || true)"
+  if [[ -z "${pids}" ]]; then
+    return 0
+  fi
+
+  printf '[app-server] 127.0.0.1:%s is already listening (pid: %s); stopping it before restart.\n' "${port}" "${pids}"
+  # shellcheck disable=SC2086
+  kill ${pids} >/dev/null 2>&1 || true
+
+  local waited=0
+  while is_tcp_listening "${port}" && [[ "${waited}" -lt 20 ]]; do
+    sleep 1
+    waited=$((waited + 1))
+  done
+
+  if is_tcp_listening "${port}"; then
+    printf '[app-server] 127.0.0.1:%s still listening after SIGTERM; sending SIGKILL.\n' "${port}" >&2
+    # shellcheck disable=SC2086
+    kill -9 ${pids} >/dev/null 2>&1 || true
+    sleep 1
   fi
 }
 
 if [[ "$#" -eq 0 ]] && is_tcp_listening "${APP_SERVER_PORT}"; then
-  printf '[app-server] 127.0.0.1:%s is already listening; skip starting app server.\n' "${APP_SERVER_PORT}"
-  print_port_process "${APP_SERVER_PORT}"
-  exit 0
+  kill_port_listener "${APP_SERVER_PORT}"
 fi
 
 if [[ -f "${ENV_FILE}" ]]; then

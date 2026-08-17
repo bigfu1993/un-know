@@ -1,5 +1,5 @@
 import "./index.less";
-import { DemandCard } from "./components/DemandCard";
+import { EduStudentCard } from "./components/EduStudentCard";
 import { ListFilters } from "./components/ListFilters";
 import { parseTutorSubjects } from "@shared/tutorModel";
 
@@ -129,7 +129,7 @@ export function Tutor({ tutorDemands }: { tutorDemands: TutorDemand[] }) {
       />
 
       {visibleTutorStudents.map((demand) => (
-        <DemandCard demand={demand} key={demand.id} />
+        <EduStudentCard demand={demand} key={demand.id} />
       ))}
       {visibleTutorStudents.length === 0 ? (
         <article className="empty-state p-[16px] text-center">

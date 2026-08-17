@@ -34,7 +34,9 @@ declare global {
   const ConfirmAction: typeof import('./components/ConfirmAction/index').ConfirmAction
   const Crosshair: typeof import('lucide-react').Crosshair
   const DemandCard: typeof import('./pages/home/edu/components/DemandCard').DemandCard
-  const EduCard: typeof import('./pages/home/job/components/EduCard').EduCard
+  const EduCard: typeof import('./pages/home/auth/components/OngoingOrders/components/EduCard').EduCard
+  const EduStudentCard: typeof import('./pages/home/edu/components/EduStudentCard').EduStudentCard
+  const EduTaskCard: typeof import('./pages/home/job/components/EduTaskCard').EduTaskCard
   const Featured: typeof import('./pages/home/shop/index').Featured
   const Filter: typeof import('lucide-react').Filter
   const FloatingActions: typeof import('./pages/home/auth/index').FloatingActions
@@ -140,11 +142,14 @@ declare global {
   const TrialScheduleCalendar: typeof import('./components/TrialScheduleCalendar/index').TrialScheduleCalendar
   const Truck: typeof import('lucide-react').Truck
   const Tutor: typeof import('./pages/home/edu/index').Tutor
+  const TutorApplicantStatus: typeof import('./db/tutorStatus').TutorApplicantStatus
   const TutorApplications: typeof import('./pages/home/edu/components/TutorApplications').TutorApplications
   const TutorCalendar: typeof import('./components/TutorCalendar/index').TutorCalendar
   const TutorCard: typeof import('./components/TutorCard/index').TutorCard
   const TutorCertification: typeof import('./pages/home/edu/components/TutorCertification').TutorCertification
   const TutorCertificationInfo: typeof import('./components/TutorCertificationInfo/index').TutorCertificationInfo
+  const TutorDemandStatus: typeof import('./db/tutorStatus').TutorDemandStatus
+  const TutorOrderStatus: typeof import('./db/tutorStatus').TutorOrderStatus
   const TutorQualificationInfo: typeof import('./pages/settings/components/SettingsPanels').TutorQualificationInfo
   const TutorStatus: typeof import('./db/tutorStatus').TutorStatus
   const TutorTrialJobCard: typeof import('./components/PageWidgets/index').TutorTrialJobCard
@@ -360,7 +365,9 @@ declare global {
   const subscribeMessageToast: typeof import('./tools/messageToast').subscribeMessageToast
   const tabIcons: typeof import('./shared/clientPageModel').tabIcons
   const trialSchedulePeriods: typeof import('./components/TutorTrialSchedule/model').trialSchedulePeriods
+  const tutorApplicantStatusLabel: typeof import('./db/tutorStatus').tutorApplicantStatusLabel
   const tutorCertificationStatusLabels: typeof import('./components/TutorCard/model').tutorCertificationStatusLabels
+  const tutorDemandStatusLabel: typeof import('./db/tutorStatus').tutorDemandStatusLabel
   const tutorGradeOptions: typeof import('./components/TutorCard/model').tutorGradeOptions
   const tutorLevelOptions: typeof import('./components/TutorCard/model').tutorLevelOptions
   const tutorServiceAvailabilityDetailMarker: typeof import('./tools/tutorTrial').tutorServiceAvailabilityDetailMarker
@@ -491,7 +498,7 @@ declare global {
   export type { TrialSchedulePeriodKey, TrialSchedulePeriodConfig, TrialSchedulePeriodState, TrialScheduleDraft, TrialSchedulePlan, TrialScheduleValue, TrialScheduleCalendarMarker } from './components/TutorTrialSchedule/model'
   import('./components/TutorTrialSchedule/model')
   // @ts-ignore
-  export type { TutorStatus } from './db/tutorStatus'
+  export type { TutorDemandStatus, TutorApplicantStatus, TutorOrderStatus } from './db/tutorStatus'
   import('./db/tutorStatus')
   // @ts-ignore
   export type { ConfirmActionConfig } from './hooks/useConfirmAction'
@@ -509,11 +516,11 @@ declare global {
   export type { EduCardProps } from './pages/home/auth/components/OngoingOrders/components/EduCard'
   import('./pages/home/auth/components/OngoingOrders/components/EduCard')
   // @ts-ignore
+  export type { OngoingHuntingFulfillmentAction, OngoingOrdersProps } from './pages/home/auth/components/OngoingOrders/index'
+  import('./pages/home/auth/components/OngoingOrders/index')
+  // @ts-ignore
   export type { OngoingOrderFilter, TutorServiceAvailabilityAction, TutorOrderSchedulePreviewConfig, TutorSchedulePreviewSection, OngoingOrderActionHandlers, OngoingOrderLocalActionHandlers } from './pages/home/auth/components/OngoingOrders/model'
   import('./pages/home/auth/components/OngoingOrders/model')
-  // @ts-ignore
-  export type { OngoingHuntingFulfillmentAction, OngoingOrdersModalProps } from './pages/home/auth/components/OngoingOrdersModal'
-  import('./pages/home/auth/components/OngoingOrdersModal')
   // @ts-ignore
   export type { OngoingShortcutProps } from './pages/home/auth/components/OngoingShortcut'
   import('./pages/home/auth/components/OngoingShortcut')

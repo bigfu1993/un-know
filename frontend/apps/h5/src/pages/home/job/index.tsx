@@ -1,5 +1,5 @@
 import "./index.less";
-import { EduCard } from "./components/EduCard";
+import { EduTaskCard } from "./components/EduTaskCard";
 import { PartTimeJobCard } from "./components/PartTimeJobCard";
 
 /** 学生兼职页展开的工具面板。 */
@@ -160,7 +160,7 @@ export function PartTime({
 
       <div className="card-list part-time-list-scroll grid gap-[10px]">
         {visibleTutorJobs.map((job) => (
-          <EduCard job={job} key={job.id} onApplyTrial={onApplyTutorTrial} />
+          <EduTaskCard job={job} key={job.id} onApplyTrial={onApplyTutorTrial} role={role} />
         ))}
         {visibleJobs.map((job) => (
           <PartTimeJobCard job={job} key={job.id} />

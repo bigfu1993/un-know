@@ -221,11 +221,11 @@ export function CalendarPanel({
   return (
     <div className="calendar-panel" aria-label="日期面板日历">
       <div className="calendar-panel__toolbar flex items-center justify-between gap-[10px]">
-        <button className="ghost-button px-[10px] py-[8px]" onClick={() => handleChangeMonth(-1)} type="button">
+        <button className="ghost-button py-[8px]" onClick={() => handleChangeMonth(-1)} type="button">
           上月
         </button>
         <strong>{monthTitle}</strong>
-        <button className="ghost-button px-[10px] py-[8px]" onClick={() => handleChangeMonth(1)} type="button">
+        <button className="ghost-button py-[8px]" onClick={() => handleChangeMonth(1)} type="button">
           下月
         </button>
       </div>

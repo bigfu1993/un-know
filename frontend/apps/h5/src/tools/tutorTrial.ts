@@ -1,127 +1,116 @@
+/** 判断字符串是否是 TutorApplicantStatus 的合法 KEY。 */
+function isTutorApplicantStatusKey(status?: string): status is TutorApplicantStatus {
+  return Boolean(status) && (Object.values(TutorApplicantStatus) as string[]).includes(status as string);
+}
+
+/** 判断字符串是否是 TutorDemandStatus 的合法 KEY。 */
+function isTutorDemandStatusKey(status?: string): status is TutorDemandStatus {
+  return Boolean(status) && (Object.values(TutorDemandStatus) as string[]).includes(status as string);
+}
+
+/**
+ * 以下 isTutorXxxStatus 系列判断函数的入参可能来自三种真实来源（详见
+ * docs/家教状态模型治理建议.md）：学生视角 order.status（TutorApplicantStatus KEY）、
+ * 家长候选人列表 candidate.status（TutorApplicantStatus KEY）、家长聚合卡片 order.status
+ * （TutorDemandStatus KEY）。状态值已经 KEY 化，这里统一用精确匹配，不再需要 `.includes()`
+ * 子串匹配和相应的排除逻辑。
+ */
+
 /** 判断申请是否处于等待家长处理阶段。 */
 export function isTutorApplicationPendingStatus(status?: string) {
-  return Boolean(status?.includes(TutorStatus.ApplicationPending));
+  return status === TutorApplicantStatus.ApplicationPending;
 }
 
 /** 判断家教试课申请是否处于家长已确认日程、等待试课确认的状态。 */
 export function isTutorTrialConfirmingStatus(status?: string) {
-  return Boolean(status?.includes(TutorStatus.TrialConfirming));
+  return status === TutorApplicantStatus.TrialConfirming;
 }
 
 /** 判断家教试课申请是否处于试课中。 */
 export function isTutorTrialingStatus(status?: string) {
-  const normalizedStatus = status ?? "";
-
-  return Boolean(
-    normalizedStatus.includes(TutorStatus.Trialing) &&
-      !isTutorApplicationPendingStatus(normalizedStatus) &&
-      !isTutorTrialConfirmingStatus(normalizedStatus) &&
-      !isTutorTrialEndConfirmingStatus(normalizedStatus)
-  );
+  return status === TutorApplicantStatus.Trialing;
 }
 
 /** 判断家教试课申请是否处于结束试课确认中。 */
 export function isTutorTrialEndConfirmingStatus(status?: string) {
-  return Boolean(status?.includes(TutorStatus.TrialEndConfirming));
+  return status === TutorApplicantStatus.TrialEndConfirming;
 }
 
 /** 判断正式雇佣是否处于学生发起结束、等待家长结算的状态。 */
 export function isTutorServiceEndConfirmingStatus(status?: string) {
-  return Boolean(status?.includes(TutorStatus.ServiceEndConfirming));
+  return status === TutorApplicantStatus.ServiceEndConfirming;
 }
 
-/** 兼容旧数据状态值，统一返回当前产品文案。 */
-export function getTutorTrialStatusLabel(status?: string) {
-  if (isTutorApplicationPendingStatus(status)) {
-    return TutorStatus.ApplicationPending;
+/** 把状态 KEY（申请细分状态或需求主状态）转换成中文展示文案；查不到表时原样返回，
+ *  兼容非家教状态或空值。 */
+export function getTutorTrialStatusLabel(status?: string): string {
+  if (!status) {
+    return "";
   }
-  if (isTutorTrialEndConfirmingStatus(status)) {
-    return TutorStatus.TrialEndConfirming;
+  if (isTutorApplicantStatusKey(status)) {
+    return tutorApplicantStatusLabel[status];
   }
-  if (isTutorTrialingStatus(status)) {
-    return TutorStatus.Trialing;
-  }
-  if (isTutorTrialSettledServicePendingStatus(status)) {
-    return TutorStatus.TrialSettledServicePending;
-  }
-  if (isTutorServiceConfirmingStatus(status)) {
-    return TutorStatus.ServiceConfirming;
-  }
-  if (isTutorServiceSchedulePendingStatus(status)) {
-    return TutorStatus.ServiceSchedulePending;
-  }
-  if (isTutorServiceEndConfirmingStatus(status)) {
-    return TutorStatus.ServiceEndConfirming;
-  }
-  if (status?.includes(TutorStatus.DemandInProgress)) {
-    return TutorStatus.DemandInProgress;
-  }
-  if (isTutorServiceScheduleConfirmingStatus(status) || isTutorFormalServiceStatus(status)) {
-    return TutorStatus.FormalService;
+  if (isTutorDemandStatusKey(status)) {
+    return tutorDemandStatusLabel[status];
   }
 
-  return isTutorTrialConfirmingStatus(status) ? TutorStatus.TrialConfirming : status ?? "";
+  return status;
 }
 
 /** 判断申请是否处于试课结果处理阶段。 */
 export function isTutorTrialResultProcessingStatus(status?: string) {
-  return Boolean(status?.includes(TutorStatus.TrialResultProcessing));
+  return status === TutorApplicantStatus.TrialResultProcessing;
 }
 
 /** 判断申请是否已完成试课费用确认并等待家长处理雇佣结果。 */
 export function isTutorTrialSettledServicePendingStatus(status?: string) {
-  return Boolean(status?.includes(TutorStatus.TrialSettledServicePending));
+  return status === TutorApplicantStatus.TrialSettledServicePending;
 }
 
 /** 判断申请是否处于正式雇佣确认阶段。 */
 export function isTutorServiceConfirmingStatus(status?: string) {
-  return Boolean(status?.includes(TutorStatus.ServiceConfirming));
+  return status === TutorApplicantStatus.ServiceConfirming;
 }
 
 /** 判断申请是否处于正式雇佣日程待家长提交阶段。 */
 export function isTutorServiceSchedulePendingStatus(status?: string) {
-  return Boolean(status?.includes(TutorStatus.ServiceSchedulePending));
+  return status === TutorApplicantStatus.ServiceSchedulePending;
 }
 
-/** 判断申请是否处于旧版兼职日程确认阶段。 */
+/** 判断申请是否处于旧版兼职日程确认阶段，只在历史数据里出现。 */
 export function isTutorServiceScheduleConfirmingStatus(status?: string) {
-  return Boolean(status?.includes(TutorStatus.ServiceScheduleConfirming));
+  return status === TutorApplicantStatus.ServiceScheduleConfirming;
 }
 
-/** 判断申请是否已经进入正式雇佣。 */
+/** 判断申请是否已经进入正式雇佣；家长聚合卡片的需求状态"进行中"（TutorDemandStatus.InProgress）
+ *  也归一到这个节点，跟申请细分状态的正式雇佣是同一个业务含义。 */
 export function isTutorFormalServiceStatus(status?: string) {
-  const normalizedStatus = status ?? "";
-
-  return Boolean(
-    normalizedStatus === TutorStatus.FormalService ||
-      normalizedStatus.includes(TutorStatus.DemandInProgress) ||
-      isTutorServiceScheduleConfirmingStatus(status)
-  );
+  return status === TutorApplicantStatus.FormalService
+    || status === TutorDemandStatus.InProgress
+    || isTutorServiceScheduleConfirmingStatus(status);
 }
 
 /** 判断申请是否处于结算确认或修改阶段。 */
 export function isTutorSettlementStatus(status?: string) {
-  return Boolean(
-    status?.includes(TutorStatus.SettlementConfirming) ||
-      status?.includes(TutorStatus.SettlementRevising) ||
-      status?.includes(TutorStatus.SystemSettling)
-  );
+  return status === TutorApplicantStatus.SettlementConfirming
+    || status === TutorApplicantStatus.SettlementRevising
+    || status === TutorApplicantStatus.SystemSettling;
 }
 
 /** 判断学生是否已拒绝正式雇佣。 */
 export function isTutorServiceInvalidStatus(status?: string) {
-  return Boolean(status?.includes(TutorStatus.ServiceInvalid));
+  return status === TutorApplicantStatus.ServiceInvalid;
 }
 
 /** 判断申请是否处于不可继续操作的终态。 */
 export function isTutorTerminalStatus(status?: string) {
-  return [
-    TutorStatus.Cancelled,
-    TutorStatus.Ended,
-    TutorStatus.TrialEnded,
-    TutorStatus.Rejected,
-    TutorStatus.ServiceInvalid
-  ].some((item) => status?.includes(item));
+  return (
+    status === TutorApplicantStatus.Cancelled ||
+    status === TutorApplicantStatus.Ended ||
+    status === TutorApplicantStatus.TrialEnded ||
+    status === TutorApplicantStatus.Rejected ||
+    status === TutorApplicantStatus.ServiceInvalid
+  );
 }
 
 /** 判断申请是否应进入家长端试课列表。 */

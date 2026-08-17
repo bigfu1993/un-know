@@ -18,13 +18,28 @@ interface UseClientWorkspaceViewModelOptions {
   };
 }
 
+/** 家教品类归档终态：需求主状态和申请细分状态各自的已结束/已取消，加上申请细分状态特有的
+ *  已失效（家长拒绝）、试课已结束——不含正式雇佣失效，那个状态还有"重新发起正式雇佣"操作
+ *  要展示，不能归档。家教已经 KEY 化，这里用精确匹配，不再靠中文子串判断。 */
+const archivedTutorStatusKeys: string[] = [
+  TutorDemandStatus.Ended,
+  TutorDemandStatus.Cancelled,
+  TutorApplicantStatus.Ended,
+  TutorApplicantStatus.Cancelled,
+  TutorApplicantStatus.Rejected,
+  TutorApplicantStatus.TrialEnded
+];
+
 /** 判断接口订单是否应保留在订单历史而不再展示到进行中列表。 */
 function isArchivedClientOrder(order: ClientOrder) {
-  if (order.category === "tutor" && isTutorTrialSettledServicePendingStatus(order.status)) {
-    return false;
+  if (order.category === "tutor") {
+    if (isTutorTrialSettledServicePendingStatus(order.status)) {
+      return false;
+    }
+    return archivedTutorStatusKeys.includes(order.status);
   }
 
-  return ["已取消", "已完成", "已结束", "已结算"].some((status) => order.status.includes(status));
+  return Object.values(TutorOrderStatus).some((status) => order.status.includes(status));
 }
 
 /** 将工作台接口数据转换为 App 和各页面需要的展示模型。 */

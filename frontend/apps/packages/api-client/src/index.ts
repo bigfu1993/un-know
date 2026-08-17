@@ -1,5 +1,4 @@
 import {
-  ApplyTutorTrialRequest,
   ChatConversation,
   ChatMessage,
   ChatQuickAction,
@@ -449,10 +448,10 @@ export async function publishTutorDemand(payload: PublishTutorDemandRequest): Pr
   });
 }
 
-export async function applyTutorTrial(demandId: string, payload: ApplyTutorTrialRequest): Promise<TutorDemand> {
+/** 学生直接提交试课申请，demandId 已经在 URL 里，不需要额外 payload。 */
+export async function applyTutorTrial(demandId: string): Promise<TutorDemand> {
   return requestJson<TutorDemand>(`/api/client/workspace/tutor-demands/${encodeURIComponent(demandId)}/applications`, {
-    method: "POST",
-    body: JSON.stringify(payload)
+    method: "POST"
   });
 }
 

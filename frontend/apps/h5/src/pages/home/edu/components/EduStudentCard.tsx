@@ -1,12 +1,12 @@
 import { getTutorDemandBudgetLabel } from "@tools/tutorDemand";
 
-/** 家长端家教招募列表的单张需求卡片属性。 */
-interface DemandCardProps {
+/** 家长端浏览已开启家教开关的学生档案卡片属性。 */
+interface EduStudentCardProps {
   demand: TutorDemand;
 }
 
-/** 展示家教需求、申请人摘要和卡片级操作。 */
-export function DemandCard({ demand }: DemandCardProps) {
+/** 展示学生档案、申请人摘要和卡片级操作。 */
+export function EduStudentCard({ demand }: EduStudentCardProps) {
   return (
     <article className="flow-card p-[14px]">
       <div className="card-title flex items-center justify-between gap-[10px]">

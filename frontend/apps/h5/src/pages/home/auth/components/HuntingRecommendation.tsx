@@ -13,24 +13,16 @@ export function HuntingRecommendation({ onClose, onDisable, tasks }: HuntingReco
   return (
     <Modal
       ariaLabel="狩猎推荐委托"
+      icon={<RadioTower size={18} />}
       onClose={onClose}
       panelClassName="hunting-recommendation-panel mx-auto grid max-h-[min(74vh,620px)] max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]"
-    >
-      <div className="card-title flex items-center justify-between gap-[10px]">
-        <RadioTower size={18} />
-        <div className="hunting-recommendation-title-copy">
+      title={
+        <>
           <strong>系统推荐委托</strong>
           <span>{tasks.length} 个推荐任务</span>
-        </div>
-        <button
-          aria-label="关闭"
-          className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
-          onClick={onClose}
-          type="button"
-        >
-          <XCircle size={20} />
-        </button>
-      </div>
+        </>
+      }
+    >
       <div className="hunting-recommendation-list grid gap-[10px]">
         {tasks.map((task) => (
           <article className="flow-card compact hunting-recommendation-card grid gap-[8px] p-[12px]" key={task.id}>

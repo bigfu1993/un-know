@@ -1,4 +1,4 @@
-import { Crosshair, ShieldAlert, XCircle } from "lucide-react";
+import { Crosshair, ShieldAlert } from "lucide-react";
 
 /** 狩猎认证提示弹窗属性。 */
 interface HuntingCertificationPromptProps {
@@ -16,25 +16,17 @@ export function HuntingCertificationPrompt({
   return (
     <Modal
       ariaLabel="狩猎认证提醒"
+      icon={<ShieldAlert size={18} />}
       onClose={onClose}
       panelClassName="hunting-certification-prompt mx-auto grid max-w-[420px] gap-[12px] p-[14px]"
       panelElement="div"
-    >
-      <div className="card-title flex items-center justify-between gap-[10px]">
-        <ShieldAlert size={18} />
-        <div className="hunting-certification-prompt-copy">
+      title={
+        <>
           <strong>需要完成狩猎认证</strong>
           <span>当前状态：{huntingCertificationStatusLabels[certificationStatus]}</span>
-        </div>
-        <button
-          aria-label="关闭"
-          className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
-          onClick={onClose}
-          type="button"
-        >
-          <XCircle size={20} />
-        </button>
-      </div>
+        </>
+      }
+    >
       <p className="m-0 text-[13px] leading-[1.55] text-[#657181]">
         联系发布方、接受委托和开启狩猎模式前，需要先完成狩猎认证。
       </p>

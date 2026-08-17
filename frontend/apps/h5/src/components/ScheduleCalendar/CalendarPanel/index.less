@@ -1,6 +1,9 @@
 .calendar-panel {
   display: grid;
   gap: 8px;
+  border: 1px solid #e3e9ee;
+  border-radius: 8px;
+  padding: 10px;
 }
 
 .calendar-panel__toolbar strong {
@@ -8,10 +11,19 @@
   font-size: 14px;
 }
 
+/* 工具栏跟星期行、日期格子行共用同一份居中宽度，保证"上月/下月"按钮的左右边界和格子边界对齐。 */
+.calendar-panel__toolbar {
+  width: min(100%, 310px);
+  justify-self: center;
+  border-radius: 8px;
+  background: #f3f6f9;
+  padding: 4px 8px;
+}
+
 .calendar-panel__weekdays,
 .calendar-panel__grid {
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  width: min(100%, 312px);
+  width: min(100%, 310px);
   justify-self: center;
 }
 
@@ -23,7 +35,7 @@
 }
 
 .calendar-panel__grid {
-  gap: 3px;
+  gap: 5px;
 }
 
 /* 编辑模式下单元格要支持按住滑动选择，关掉浏览器默认的触屏滚动/文字选中手势，避免和滑动手势打架。 */
@@ -35,8 +47,8 @@
 /* 线框是单元格的默认常驻样式，默认灰色；单击查看时才切换成主题色，用来区分"查看中"的单元格。 */
 .calendar-panel__day {
   position: relative;
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   min-width: 0;
   overflow: hidden;
   border: 1px solid #d9e1e8;

@@ -1,5 +1,5 @@
 import "./index.less";
-import { CalendarClock, XCircle } from "lucide-react";
+import { CalendarClock } from "lucide-react";
 import { getTutorDateKey } from "@tools/tutorCalendar";
 import {
   createDefaultDaySchedule,
@@ -347,20 +347,16 @@ export function TutorTrialSchedule({
   return (
     <Modal
       ariaLabel={title}
+      icon={<CalendarClock size={18} />}
       onClose={onClose}
       panelClassName="trial-schedule-sheet mx-auto grid max-h-[min(82vh,700px)] max-w-[540px] gap-[12px] overflow-hidden px-[14px] pb-[calc(14px+env(safe-area-inset-bottom))] pt-[14px]"
+      title={
+        <>
+          <strong>{title}</strong>
+          <span>{subtitle}</span>
+        </>
+      }
     >
-        <div className="card-title flex items-center justify-between gap-[10px]">
-          <CalendarClock size={18} />
-          <div className="trial-schedule-title-copy">
-            <strong>{title}</strong>
-            <span>{subtitle}</span>
-          </div>
-          <button aria-label="关闭" className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button">
-            <XCircle size={20} />
-          </button>
-        </div>
-
         <div className="trial-schedule-body grid gap-[12px] overflow-auto pr-[2px]">
           <TrialScheduleCalendar
             activeDate={selectedDate}

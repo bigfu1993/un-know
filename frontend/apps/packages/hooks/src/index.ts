@@ -44,7 +44,6 @@ import {
   useClientAddress
 } from "@unknown/api-client";
 import {
-  ApplyTutorTrialRequest,
   ChatQuickActionRequest,
   CompleteTutorTrialEndRequest,
   ConfirmTutorTrialRequest,
@@ -301,17 +300,14 @@ export function usePublishTutorDemand() {
   });
 }
 
+/** 学生直接提交试课申请，不需要 payload；申请记录并入进行中列表，成功后只刷新进行中数据。 */
 export function useApplyTutorTrial() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: ApplyTutorTrialRequest & { demandId: string }) => {
-      const { demandId, ...request } = payload;
-      return applyTutorTrial(demandId, request);
-    },
+    mutationFn: (demandId: string) => applyTutorTrial(demandId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });
-      void queryClient.invalidateQueries({ queryKey: clientTutorDemandsQueryKey });
     }
   });
 }

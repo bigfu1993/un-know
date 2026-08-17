@@ -19,52 +19,78 @@ function parseTutorTrialJobBudget(budget: string) {
 }
 
 /**
- * 只读展示家教兼职计划周期的日历弹窗，不支持选中或修改。
- * periodDates 是家长实际选中的完整日期集合（允许不连续），直接喂给日历高亮，
- * 不再用 period（"开始 至 结束"摘要文案）反推日期区间，避免零散选择被误判成连续区间。
+ * 展示家教兼职计划周期的日历弹窗。periodDates 是家长实际选中的完整日期集合（允许不连续），
+ * 直接喂给日历高亮，不再用 period（"开始 至 结束"摘要文案）反推日期区间。
+ * "日程"按钮触发时不传 onConfirmApply，仅供查看；"申请试课"按钮触发时传入 onConfirmApply，
+ * 弹窗底部会出现"取消/申请试课"两个按钮，点击"申请试课"才真正调用接口提交。
  */
-function EduJobScheduleView({ onClose, periodDates }: { onClose: () => void; periodDates: string[] }) {
+function EduJobScheduleView({
+  isApplying = false,
+  onClose,
+  onConfirmApply,
+  periodDates
+}: {
+  isApplying?: boolean;
+  onClose: () => void;
+  onConfirmApply?: () => void;
+  periodDates: string[];
+}) {
   const [activeDate, setActiveDate] = useState(periodDates[0] ?? "");
 
   return (
     <Modal
       ariaLabel="家教日程"
+      icon={<CalendarDays size={18} />}
       onClose={onClose}
       panelClassName="edu-job-schedule-sheet mx-auto grid max-w-[420px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]"
-    >
-      <div className="card-title flex items-center justify-between gap-[10px]">
-        <CalendarDays size={18} />
-        <div className="edu-job-schedule-title-copy">
+      title={
+        <>
           <strong>家教日程</strong>
           <span>{periodDates.length > 0 ? `共 ${periodDates.length} 天` : "家长暂未确定具体日期"}</span>
-        </div>
-        <button aria-label="关闭" className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button">
-          <XCircle size={20} />
-        </button>
-      </div>
+        </>
+      }
+    >
       {periodDates.length > 0 ? (
         <ScheduleCalendar activeDate={activeDate} mode="view" onActiveDateChange={setActiveDate} selectedDates={periodDates} />
       ) : (
         <p className="notice p-[10px] text-[#61420d]">家长暂未确定具体日程，可通过消息与家长确认。</p>
       )}
+      {onConfirmApply ? (
+        <div className="sheet-actions grid grid-cols-2 gap-[8px]">
+          <button className="ghost-button min-h-[38px] px-[10px] py-[8px]" disabled={isApplying} onClick={onClose} type="button">
+            取消
+          </button>
+          <button
+            className="primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+            disabled={isApplying}
+            onClick={onConfirmApply}
+            type="button"
+          >
+            {isApplying ? "提交中" : "申请试课"}
+          </button>
+        </div>
+      ) : null}
     </Modal>
   );
 }
 
 /** 学生端家教兼职卡片，提供试课申请入口。 */
-export function EduCard({
+export function EduTaskCard({
   job,
-  onApplyTrial
+  onApplyTrial,
+  role
 }: {
   job: TutorTrialJob;
   onApplyTrial?: (job: TutorTrialJob) => Promise<unknown> | unknown;
+  role: Role;
 }) {
   const [isApplyingTrial, setIsApplyingTrial] = useState(false);
+  const [isApplyConfirmOpen, setIsApplyConfirmOpen] = useState(false);
   const [isScheduleViewOpen, setIsScheduleViewOpen] = useState(false);
   const { feeLabel, isTrialRequired } = parseTutorTrialJobBudget(job.budget);
   const periodDaysLabel = job.periodDates.length > 0 ? `${job.periodDates.length} 天` : "待定";
 
-  /** 学生端直接提交试课申请，不再弹窗要求先选可试课时间。 */
+  /** 学生在日程确认弹窗里点击"申请试课"才真正提交，成功后关闭弹窗。 */
   async function handleApplyTrial() {
     if (!onApplyTrial || isApplyingTrial) {
       return;
@@ -73,6 +99,7 @@ export function EduCard({
     setIsApplyingTrial(true);
     try {
       await onApplyTrial(job);
+      setIsApplyConfirmOpen(false);
     } finally {
       setIsApplyingTrial(false);
     }
@@ -123,15 +150,23 @@ export function EduCard({
           </button>
           <button
             className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
-            disabled={!onApplyTrial || isApplyingTrial}
-            onClick={() => void handleApplyTrial()}
+            disabled={!onApplyTrial || role !== "student"}
+            onClick={() => setIsApplyConfirmOpen(true)}
             type="button"
           >
-            <CalendarClock size={15} /> {isApplyingTrial ? "提交中" : "申请试课"}
+            <CalendarClock size={15} /> 申请试课
           </button>
         </div>
       </article>
       {isScheduleViewOpen ? <EduJobScheduleView onClose={() => setIsScheduleViewOpen(false)} periodDates={job.periodDates} /> : null}
+      {isApplyConfirmOpen ? (
+        <EduJobScheduleView
+          isApplying={isApplyingTrial}
+          onClose={() => setIsApplyConfirmOpen(false)}
+          onConfirmApply={() => void handleApplyTrial()}
+          periodDates={job.periodDates}
+        />
+      ) : null}
     </>
   );
 }

@@ -1,4 +1,4 @@
-import { Banknote, Clock3, Crosshair, MapPin, MessageCircle, Tags, UserRound, XCircle } from "lucide-react";
+import { Banknote, Clock3, Crosshair, MapPin, MessageCircle, Tags, UserRound } from "lucide-react";
 import { formatCurrency } from "@shared/clientPageModel";
 import {
   getCommissionDestination,
@@ -28,25 +28,17 @@ export function CommissionTaskDetail({
   return (
     <Modal
       ariaLabel="委托详情"
+      icon={<Crosshair size={18} />}
       onClose={onClose}
       panelClassName="commission-detail-modal mx-auto grid max-w-[420px] gap-[12px] p-[14px]"
       panelElement="div"
-    >
-      <div className="card-title flex items-center justify-between gap-[10px]">
-        <Crosshair size={18} />
-        <div className="commission-detail-title-copy">
+      title={
+        <>
           <strong>{task.title}</strong>
           <span>{task.status}</span>
-        </div>
-        <button
-          aria-label="关闭"
-          className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
-          onClick={onClose}
-          type="button"
-        >
-          <XCircle size={20} />
-        </button>
-      </div>
+        </>
+      }
+    >
       <div className="commission-preview grid gap-[9px]">
         <span>
           <Clock3 size={15} />

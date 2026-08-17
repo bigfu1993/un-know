@@ -321,7 +321,7 @@ export function App() {
     handleRequestTutorTrialEnd,
     handleTutorWorkflowAction
   } = useTutorTrialActions({
-    applyTutorTrial: (payload) => applyTutorTrialMutation.mutateAsync(payload),
+    applyTutorTrial: (demandId) => applyTutorTrialMutation.mutateAsync(demandId),
     cancelTutorDemand: (demandId) => cancelTutorDemandMutation.mutateAsync(demandId),
     closeTutorApplications: () => {
       setIsTutorApplicationOpen(false);

@@ -199,6 +199,8 @@ export interface ClientOrder {
   role: Role;
   title: string;
   status: string;
+  /** 家教主卡专用：当前活跃申请的状态 KEY，非家教品类或无活跃申请时为空。 */
+  activeApplicantStatus?: string;
   amount: number;
   amountLabel?: string;
   category?: "delegation" | "featured" | "hunting" | "partTime" | "tutor";

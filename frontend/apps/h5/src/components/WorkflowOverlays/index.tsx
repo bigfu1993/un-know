@@ -32,27 +32,18 @@ export function ProfileCompletion({
   return (
     <Modal
       ariaLabel="补充资料"
+      icon={<BadgeCheck size={18} />}
       onClose={onClose}
       onSubmit={handleSubmit}
       panelClassName="profile-sheet mx-auto grid max-h-[86vh] max-w-[540px] gap-[14px] overflow-auto px-[14px] pb-[calc(18px+env(safe-area-inset-bottom))] pt-[16px]"
       panelElement="form"
-    >
-      <div className="card-title flex items-center justify-between gap-[10px]">
-        <BadgeCheck size={18} />
-        <div className="profile-completion-title-copy">
+      title={
+        <>
           <strong>{template.title}</strong>
           <span>{template.description}</span>
-        </div>
-        <button
-          className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
-          onClick={onClose}
-          type="button"
-          aria-label="关闭"
-        >
-          <XCircle size={20} />
-        </button>
-      </div>
-
+        </>
+      }
+    >
       <AddressInfoForm
         areaOptions={campusAreaOptions}
         draft={profileDraft}
@@ -109,24 +100,16 @@ export function CheckoutSheet({
   return (
     <Modal
       ariaLabel="购买确认"
+      icon={<ShoppingBag size={18} />}
       onClose={onClose}
       panelClassName="mx-auto grid max-h-[86vh] max-w-[540px] gap-[14px] overflow-auto px-[14px] pb-[calc(18px+env(safe-area-inset-bottom))] pt-[16px]"
-    >
-      <div className="card-title flex items-center justify-between gap-[10px]">
-        <ShoppingBag size={18} />
-        <div className="checkout-title-copy">
+      title={
+        <>
           <strong>{checkout.product.title}</strong>
           <span>购买确认 · 产品金额 + 服务费/物流费</span>
-        </div>
-        <button
-          className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
-          onClick={onClose}
-          type="button"
-          aria-label="关闭"
-        >
-          <XCircle size={20} />
-        </button>
-      </div>
+        </>
+      }
+    >
       <div className="sheet-section grid gap-[8px]">
         <span>配送方式</span>
         <div className="segmented-control wrap flex gap-[8px]">

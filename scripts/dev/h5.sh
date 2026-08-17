@@ -22,18 +22,40 @@ is_tcp_listening() {
   return 1
 }
 
-print_port_process() {
+kill_port_listener() {
   local port="$1"
+  local pids
 
-  if command -v lsof >/dev/null 2>&1; then
-    lsof -nP -iTCP:"${port}" -sTCP:LISTEN || true
+  if ! command -v lsof >/dev/null 2>&1; then
+    printf '[h5] command not found: lsof, cannot stop the process on 127.0.0.1:%s automatically.\n' "${port}" >&2
+    return 1
+  fi
+
+  pids="$(lsof -nP -tiTCP:"${port}" -sTCP:LISTEN 2>/dev/null || true)"
+  if [[ -z "${pids}" ]]; then
+    return 0
+  fi
+
+  printf '[h5] 127.0.0.1:%s is already listening (pid: %s); stopping it before restart.\n' "${port}" "${pids}"
+  # shellcheck disable=SC2086
+  kill ${pids} >/dev/null 2>&1 || true
+
+  local waited=0
+  while is_tcp_listening "${port}" && [[ "${waited}" -lt 10 ]]; do
+    sleep 1
+    waited=$((waited + 1))
+  done
+
+  if is_tcp_listening "${port}"; then
+    printf '[h5] 127.0.0.1:%s still listening after SIGTERM; sending SIGKILL.\n' "${port}" >&2
+    # shellcheck disable=SC2086
+    kill -9 ${pids} >/dev/null 2>&1 || true
+    sleep 1
   fi
 }
 
 if is_tcp_listening "${H5_PORT}"; then
-  printf '[h5] 127.0.0.1:%s is already listening; skip starting H5.\n' "${H5_PORT}"
-  print_port_process "${H5_PORT}"
-  exit 0
+  kill_port_listener "${H5_PORT}"
 fi
 
 cd "${FRONTEND_DIR}"

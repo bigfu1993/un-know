@@ -1,5 +1,5 @@
 import "./index.less";
-import { AlertTriangle, XCircle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 /** 二次确认弹窗属性，用于高风险或不可直接撤销的业务动作。 */
 export interface ConfirmActionProps {
@@ -27,20 +27,16 @@ export function ConfirmAction({
   return (
     <Modal
       ariaLabel={title}
+      icon={<AlertTriangle className={tone === "danger" ? "danger" : ""} size={18} />}
       onClose={onClose}
       panelClassName="confirm-action-modal mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]"
-    >
-      <div className="card-title flex items-center justify-between gap-[10px]">
-        <AlertTriangle className={tone === "danger" ? "danger" : ""} size={18} />
-        <div className="confirm-action-title-copy">
+      title={
+        <>
           <strong>{title}</strong>
           <span>{description}</span>
-        </div>
-        <button aria-label="关闭" className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button">
-          <XCircle size={20} />
-        </button>
-      </div>
-
+        </>
+      }
+    >
       <div className="sheet-actions grid grid-cols-2 gap-[8px]">
         <button className="ghost-button min-h-[38px] px-[10px] py-[8px]" disabled={isConfirming} onClick={onClose} type="button">
           {cancelLabel}

@@ -1,4 +1,4 @@
-import { ClipboardCheck, XCircle } from "lucide-react";
+import { ClipboardCheck } from "lucide-react";
 
 /** 发布草稿确认弹窗属性。 */
 export interface PublishDraftConfirmProps {
@@ -29,22 +29,18 @@ export function PublishDraftConfirm({
   onUseDraft
 }: PublishDraftConfirmProps) {
   return (
-    <Modal ariaLabel="使用发布草稿" onClose={onClose} panelClassName="mx-auto grid max-w-[420px] gap-[12px] p-[14px]">
-      <div className="card-title flex items-center justify-between gap-[10px]">
-        <ClipboardCheck size={18} />
-        <div className="publish-draft-confirm-title-copy">
+    <Modal
+      ariaLabel="使用发布草稿"
+      icon={<ClipboardCheck size={18} />}
+      onClose={onClose}
+      panelClassName="mx-auto grid max-w-[420px] gap-[12px] p-[14px]"
+      title={
+        <>
           <strong>检测到本地草稿</strong>
           <span>是否使用上次保存的{publishDraftTypeLabels[draft.type]}草稿？</span>
-        </div>
-        <button
-          aria-label="关闭"
-          className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
-          onClick={onClose}
-          type="button"
-        >
-          <XCircle size={20} />
-        </button>
-      </div>
+        </>
+      }
+    >
       <p className="text-[13px] leading-[1.6] text-[#657181]">
         草稿标题：{draft.title || "未填写标题"}，保存时间：{new Date(draft.createdAt).toLocaleString()}
       </p>

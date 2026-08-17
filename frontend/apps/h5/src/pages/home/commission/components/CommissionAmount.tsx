@@ -1,4 +1,4 @@
-import { Banknote, XCircle } from "lucide-react";
+import { Banknote } from "lucide-react";
 import { useEffect, useState } from "react";
 
 /** 委托报价金额弹窗属性。 */
@@ -39,25 +39,17 @@ export function CommissionAmount({
   return (
     <Modal
       ariaLabel="委托额度确认"
+      icon={<Banknote size={18} />}
       onClose={onClose}
       panelClassName="commission-amount-modal mx-auto grid max-w-[420px] gap-[12px] p-[14px]"
       panelElement="div"
-    >
-      <div className="card-title flex items-center justify-between gap-[10px]">
-        <Banknote size={18} />
-        <div className="commission-amount-title-copy">
+      title={
+        <>
           <strong>委托额度</strong>
           <span>{task.title}</span>
-        </div>
-        <button
-          aria-label="关闭"
-          className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
-          onClick={onClose}
-          type="button"
-        >
-          <XCircle size={20} />
-        </button>
-      </div>
+        </>
+      }
+    >
       <label className="profile-field publish-field grid gap-[7px]">
         <span>输入报价金额</span>
         <input

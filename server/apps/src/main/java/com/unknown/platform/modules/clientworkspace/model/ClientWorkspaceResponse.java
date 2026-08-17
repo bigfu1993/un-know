@@ -23,6 +23,10 @@ public record ClientWorkspaceResponse(
       ClientRole role,
       String title,
       String status,
+      /** 家教主卡专用：当前活跃申请的状态 KEY，非家教品类或无活跃申请时为 null；
+       *  跟 {@code status}（需求主状态 KEY）分开返回，不再由后端拼成复合展示串，
+       *  由前端按需组合展示，详见 docs/家教状态模型治理建议.md。 */
+      String activeApplicantStatus,
       BigDecimal amount,
       String contact,
       String detail,
@@ -73,6 +77,7 @@ public record ClientWorkspaceResponse(
       private ClientRole role;
       private String title;
       private String status;
+      private String activeApplicantStatus;
       private BigDecimal amount;
       private String contact;
       private String detail;
@@ -123,6 +128,11 @@ public record ClientWorkspaceResponse(
 
       public Builder status(String status) {
         this.status = status;
+        return this;
+      }
+
+      public Builder activeApplicantStatus(String activeApplicantStatus) {
+        this.activeApplicantStatus = activeApplicantStatus;
         return this;
       }
 
@@ -274,7 +284,7 @@ public record ClientWorkspaceResponse(
       /** 按当前已赋值的字段构造 {@link ClientOrder}，未设置字段保持 {@code null}。 */
       public ClientOrder build() {
         return new ClientOrder(
-            id, role, title, status, amount, contact, detail, risk, amountLabel, category,
+            id, role, title, status, activeApplicantStatus, amount, contact, detail, risk, amountLabel, category,
             phoneNumber, subject, address, periodDates, quoteAmount, quoteCount, trialCount, quoteActionLabel, quoteId,
             canCall, canMessage, canRequestCancel, canRequestComplete, canConfirmCancel,
             canConfirmComplete, canRepublish, canAgreeTrial, canOpenTrialResult, canOpenTrialSchedule,

@@ -1,12 +1,12 @@
 import "./index.less";
 import { HuntingShortcut } from "./components/HuntingShortcut";
 import { MineShortcut } from "./components/MineShortcut";
-import { OngoingOrdersModal } from "./components/OngoingOrdersModal";
+import { OngoingOrders } from "./components/OngoingOrders";
 import { OngoingShortcut } from "./components/OngoingShortcut";
 import { QuickActionDock } from "./components/QuickActionDock";
 
 /** 首页进行中入口属性，按钮状态和弹窗业务动作在模块内拆分。 */
-interface FloatingOngoingProps extends OngoingOrdersModalProps {
+interface FloatingOngoingProps extends OngoingOrdersProps {
   hasPaymentRisk: boolean;
   isOpen: boolean;
   onOpen: () => void;
@@ -37,7 +37,7 @@ export function FloatingActions({ hunting, isQuickDockExpanded, mine, ongoing, r
         {role === "student" ? <HuntingShortcut {...hunting} /> : null}
       </QuickActionDock>
       <MineShortcut {...mine} />
-      {isOpen ? <OngoingOrdersModal orders={orders} {...ongoingOrdersProps} /> : null}
+      {isOpen ? <OngoingOrders orders={orders} {...ongoingOrdersProps} /> : null}
     </>
   );
 }

@@ -1,11 +1,5 @@
 import { getErrorMessage } from "@tools/messageToast";
 
-/** 家教试课申请载荷。 */
-interface ApplyTutorTrialPayload {
-  demandId: string;
-  message?: string;
-}
-
 /** 家长端确认试课安排载荷。 */
 interface ConfirmTutorTrialPayload {
   applicationId: string;
@@ -32,7 +26,7 @@ interface TutorWorkflowActionPayload extends TutorWorkflowActionRequest {
 
 /** 家教试课动作 hook 入参。 */
 interface UseTutorTrialActionsOptions {
-  applyTutorTrial: (payload: ApplyTutorTrialPayload) => Promise<unknown>;
+  applyTutorTrial: (demandId: string) => Promise<unknown>;
   cancelTutorDemand: (demandId: string) => Promise<unknown>;
   closeTutorApplications: () => void;
   closeTutorTrialList: () => void;
@@ -73,13 +67,16 @@ export function useTutorTrialActions({
   requestTutorTrialEnd,
   showMessage
 }: UseTutorTrialActionsOptions) {
-  /** 学生端直接提交家教试课申请，不再要求先选可试课时间，申请记录由服务端进入进行中列表。 */
+  /**
+   * 学生端直接提交家教试课申请，不再要求先选可试课时间，也不需要额外 payload。
+   * 申请记录由服务端并入进行中列表，mutation 自己的 onSuccess 已经会刷新进行中数据，
+   * 这里不再重复调用 refetchWorkspace，避免多打一次接口。
+   */
   async function handleApplyTutorTrial(job: TutorTrialJob) {
     try {
-      await applyTutorTrial({ demandId: job.id, message: "申请试课" });
+      await applyTutorTrial(job.id);
       openOngoingOrders();
       showMessage("试课申请已提交，可在进行中查看状态。", { type: "success" });
-      refetchWorkspace();
       return true;
     } catch (error) {
       showMessage(getErrorMessage(error, "试课申请提交失败，请稍后重试。"), { type: "error" });

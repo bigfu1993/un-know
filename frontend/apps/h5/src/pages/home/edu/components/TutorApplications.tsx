@@ -292,25 +292,16 @@ export function TutorApplications({ candidates, isConfirming = false, onCancelTr
     <>
       <Modal
         ariaLabel="试课申请列表"
+        icon={<CalendarClock size={18} />}
         onClose={onClose}
         panelClassName="tutor-applications-panel mx-auto grid max-h-[min(76vh,620px)] max-w-[540px] gap-[12px] overflow-hidden px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]"
-      >
-        <div className="card-title flex items-center justify-between gap-[10px]">
-          <CalendarClock size={18} />
-          <div className="tutor-applications-title-copy">
+        title={
+          <>
             <strong>试课申请列表</strong>
             <span>选择家教并确认试课安排</span>
-          </div>
-          <button
-            aria-label="关闭"
-            className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
-            onClick={onClose}
-            type="button"
-          >
-            <XCircle size={20} />
-          </button>
-        </div>
-
+          </>
+        }
+      >
         <div className="tutor-application-list grid gap-[10px] overflow-auto pr-[2px]">
           {visibleCandidates.map((candidate) => {
             const candidateTask = createTutorTaskModel({ candidate, role: "parent" });
@@ -781,20 +772,16 @@ export function TutorTrialList({
     <>
       <Modal
         ariaLabel="试课中的家教列表"
+        icon={<CalendarClock size={18} />}
         onClose={onClose}
         panelClassName="tutor-applications-panel tutor-trial-list-panel mx-auto grid max-h-[min(76vh,620px)] max-w-[540px] gap-[12px] overflow-hidden px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]"
-      >
-        <div className="card-title flex items-center justify-between gap-[10px]">
-          <CalendarClock size={18} />
-          <div className="tutor-trial-list-title-copy">
+        title={
+          <>
             <strong>{isCourseMode ? "课程" : "试课列表"}</strong>
             <span>{isCourseMode ? `共 ${trialCandidates.length} 位，处理正式雇佣课程和结束` : `共 ${trialCandidates.length} 位，按流程处理试课、正式雇佣和日程`}</span>
-          </div>
-          <button aria-label="关闭" className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button">
-            <XCircle size={20} />
-          </button>
-        </div>
-
+          </>
+        }
+      >
         <div className="tutor-application-list grid gap-[10px] overflow-auto pr-[2px]">
           {trialCandidates.map((candidate) => {
             const isCandidateSelected = selectedCandidateId === candidate.id;
@@ -983,20 +970,16 @@ function TutorSchedulePreview({
   return (
     <Modal
       ariaLabel={title}
+      icon={<CalendarClock size={18} />}
       onClose={onClose}
       panelClassName="tutor-schedule-preview-panel mx-auto grid max-w-[540px] gap-[12px] overflow-hidden px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]"
+      title={
+        <>
+          <strong>{title}</strong>
+          <span>{subtitle}</span>
+        </>
+      }
     >
-        <div className="card-title flex items-center justify-between gap-[10px]">
-          <CalendarClock size={18} />
-          <div className="tutor-schedule-preview-title-copy">
-            <strong>{title}</strong>
-            <span>{subtitle}</span>
-          </div>
-          <button aria-label="关闭" className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button">
-            <XCircle size={20} />
-          </button>
-        </div>
-
         {scheduleItems.length > 0 ? (
           <div className="tutor-schedule-preview-body grid gap-[12px] overflow-auto pr-[2px]">
             <TrialScheduleCalendar
@@ -1063,20 +1046,16 @@ function TutorTrialSettlement({ candidate, isSubmitting = false, mode = "trial",
   return (
     <Modal
       ariaLabel={isServiceMode ? "正式服务结算" : "试课结算"}
+      icon={<ReceiptText size={18} />}
       onClose={onClose}
       panelClassName="tutor-trial-settlement-panel mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]"
+      title={
+        <>
+          <strong>{isServiceMode ? "正式服务结算" : "试课结算"}</strong>
+          <span>{isServiceMode ? "确认金额后结束家教主任务" : "确认金额后等待学生确认费用"}</span>
+        </>
+      }
     >
-        <div className="card-title flex items-center justify-between gap-[10px]">
-          <ReceiptText size={18} />
-          <div className="tutor-trial-settlement-title-copy">
-            <strong>{isServiceMode ? "正式服务结算" : "试课结算"}</strong>
-            <span>{isServiceMode ? "确认金额后结束家教主任务" : "确认金额后等待学生确认费用"}</span>
-          </div>
-          <button aria-label="关闭" className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button">
-            <XCircle size={20} />
-          </button>
-        </div>
-
         <div className="tutor-trial-settlement-summary grid gap-[8px]">
           <div className="flex items-center justify-between gap-[10px]">
             <span>{isServiceMode ? "家教学生" : "试课学生"}</span>
@@ -1158,19 +1137,16 @@ function TutorApplicantDetail({ candidate, onClose }: TutorApplicantDetailProps)
   return (
     <Modal
       ariaLabel="家教信息详情"
+      icon={<Info size={18} />}
       onClose={onClose}
       panelClassName="tutor-applicant-detail-panel mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]"
+      title={
+        <>
+          <strong>{candidate.nickname}</strong>
+          <span>家教信息</span>
+        </>
+      }
     >
-        <div className="card-title flex items-center justify-between gap-[10px]">
-          <Info size={18} />
-          <div className="tutor-applicant-detail-title-copy">
-            <strong>{candidate.nickname}</strong>
-            <span>家教信息</span>
-          </div>
-          <button aria-label="关闭" className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button">
-            <XCircle size={20} />
-          </button>
-        </div>
         <div className="tutor-applicant-detail-list grid gap-[8px]">
           {detailItems.map((item) => (
             <div className="tutor-applicant-detail-item flex items-start justify-between gap-[12px]" key={item.label}>

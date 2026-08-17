@@ -140,19 +140,16 @@ function TrialSchedulePreview({
     <>
       <Modal
         ariaLabel={previewConfig?.title ?? "时间安排详情"}
+        icon={<CalendarClock size={18} />}
         onClose={onClose}
         panelClassName="trial-schedule-preview-sheet mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]"
-      >
-        <div className="card-title flex items-center justify-between gap-[10px]">
-          <CalendarClock size={18} />
-          <div className="trial-schedule-preview-title-copy">
+        title={
+          <>
             <strong>{previewConfig?.title ?? "时间安排"}</strong>
             <span>{previewConfig?.subtitle ?? order.title}</span>
-          </div>
-          <button aria-label="关闭" className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button">
-            <XCircle size={20} />
-          </button>
-        </div>
+          </>
+        }
+      >
         <em className={`ongoing-status-badge ${tutorTask.statusToneClassName}`}>{tutorTask.statusLabel}</em>
         {scheduleItems.length > 0 ? (
           <div className="trial-schedule-preview-content grid gap-[12px]">
@@ -242,7 +239,9 @@ function TrialSettlementConfirm({
   order: ClientOrder;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const isServiceSettlement = order.detail.includes(TutorStatus.FormalService);
+  // order.detail 是后端拼的自由文本摘要，不是状态 KEY，前缀固定是中文"正式雇佣 · "/"试课申请 · "，
+  // 跟已经 KEY 化的 order.status 是两回事，这里继续匹配中文字面量。
+  const isServiceSettlement = order.detail.includes("正式雇佣");
   const feeSummary = getTutorTrialFeeSummaryFromOrderDetail(order.detail) || order.amountLabel || formatCurrency(order.amount);
   const scheduleSummary = isServiceSettlement
     ? getTutorServiceScheduleSummaryFromOrderDetail(order.detail)
@@ -270,20 +269,16 @@ function TrialSettlementConfirm({
   return (
     <Modal
       ariaLabel="结算确认"
+      icon={<CircleDollarSign size={18} />}
       onClose={onClose}
       panelClassName="trial-settlement-confirm-sheet mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]"
+      title={
+        <>
+          <strong>结算确认</strong>
+          <span>{order.title}</span>
+        </>
+      }
     >
-        <div className="card-title flex items-center justify-between gap-[10px]">
-          <CircleDollarSign size={18} />
-          <div className="trial-settlement-confirm-title-copy">
-            <strong>结算确认</strong>
-            <span>{order.title}</span>
-          </div>
-          <button aria-label="关闭" className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button">
-            <XCircle size={20} />
-          </button>
-        </div>
-
         <div className="trial-settlement-confirm-content grid gap-[8px]">
           <div className="trial-settlement-confirm-item flex items-center justify-between gap-[12px]">
             <span>{isServiceSettlement ? "结算金额" : "试课费用"}</span>
@@ -352,20 +347,16 @@ function ServiceSettlement({
   return (
     <Modal
       ariaLabel="正式服务结算"
+      icon={<CircleDollarSign size={18} />}
       onClose={onClose}
       panelClassName="trial-settlement-confirm-sheet mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]"
+      title={
+        <>
+          <strong>正式服务结算</strong>
+          <span>{order.title}</span>
+        </>
+      }
     >
-        <div className="card-title flex items-center justify-between gap-[10px]">
-          <CircleDollarSign size={18} />
-          <div className="service-settlement-title-copy">
-            <strong>正式服务结算</strong>
-            <span>{order.title}</span>
-          </div>
-          <button aria-label="关闭" className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button">
-            <XCircle size={20} />
-          </button>
-        </div>
-
         <div className="trial-settlement-confirm-content grid gap-[8px]">
           <label className="tutor-trial-settlement-field grid gap-[6px]">
             <span>结算金额</span>

@@ -96,25 +96,17 @@ export function OngoingQuote({
   return (
     <Modal
       ariaLabel="报价列表"
+      icon={<Banknote size={18} />}
       onClose={onClose}
       panelClassName="commission-quote-modal mx-auto grid max-w-[420px] gap-[12px] p-[14px]"
       panelElement="div"
-    >
-      <div className="card-title flex items-center justify-between gap-[10px]">
-        <Banknote size={18} />
-        <div className="ongoing-quote-title-copy">
+      title={
+        <>
           <strong>报价列表</strong>
           <span>{task.title}</span>
-        </div>
-        <button
-          aria-label="关闭"
-          className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
-          onClick={onClose}
-          type="button"
-        >
-          <XCircle size={20} />
-        </button>
-      </div>
+        </>
+      }
+    >
       <div className="commission-quote-list grid gap-[8px]">
         {quotes.map((quote) => {
           const isLockedQuote = isQuoteLockedForPublisher(task, quote);

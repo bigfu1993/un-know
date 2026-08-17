@@ -18,8 +18,7 @@ import {
   QrCode,
   ShieldCheck,
   UserRound,
-  WalletCards,
-  XCircle
+  WalletCards
 } from "lucide-react";
 import { formatTutorSubjects, parseTutorSubjects, tutorSubjectOptions } from "@shared/tutorModel";
 import {
@@ -339,26 +338,14 @@ export function PublishInfo({
   return (
     <Modal
       ariaLabel="发布信息"
+      headerClassName="publish-info-header"
+      icon={<SelectedIcon size={18} />}
       onClose={onClose}
       onSubmit={handleSubmit}
       panelClassName="publish-info-sheet mx-auto grid max-h-[78vh] max-w-[540px] gap-[12px] overflow-hidden px-[14px] pb-[calc(14px+env(safe-area-inset-bottom))] pt-[14px]"
       panelElement="form"
+      title={<strong>{selectedType.label}发布</strong>}
     >
-        <div className="card-title publish-info-header flex items-center justify-between gap-[10px]">
-          <SelectedIcon size={18} />
-          <div className="publish-info-title-copy">
-            <strong>{selectedType.label}发布</strong>
-          </div>
-          <button
-            className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
-            onClick={onClose}
-            type="button"
-            aria-label="关闭"
-          >
-            <XCircle size={20} />
-          </button>
-        </div>
-
         <div className="publish-info-body grid gap-[12px]">
           <div className="sheet-section grid gap-[8px]">
             <FieldLabel icon={ListChecks} label="类型" />
@@ -890,20 +877,16 @@ function TutorPlanPeriodPicker({
   return (
     <Modal
       ariaLabel="选择计划周期"
+      icon={<CalendarDays size={18} />}
       onClose={onClose}
       panelClassName="tutor-plan-period-modal mx-auto grid max-w-[540px] gap-[12px] px-[14px] pb-[calc(16px+env(safe-area-inset-bottom))] pt-[16px]"
+      title={
+        <>
+          <strong>计划周期</strong>
+          <span>{formatPublishPeriodRange(periodStartDate, periodEndDate)}</span>
+        </>
+      }
     >
-        <div className="card-title flex items-center justify-between gap-[10px]">
-          <CalendarDays size={18} />
-          <div className="tutor-plan-period-title-copy">
-            <strong>计划周期</strong>
-            <span>{formatPublishPeriodRange(periodStartDate, periodEndDate)}</span>
-          </div>
-          <button aria-label="关闭" className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button">
-            <XCircle size={20} />
-          </button>
-        </div>
-
         <ScheduleCalendar
           activeDate={activeDate}
           maxSelectedDates={null}

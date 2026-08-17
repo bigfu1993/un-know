@@ -1,5 +1,5 @@
 import "./index.less";
-import { ArrowDownUp, CheckCircle2, GripVertical, Plus, RadioTower, XCircle } from "lucide-react";
+import { ArrowDownUp, CheckCircle2, GripVertical, Plus, RadioTower } from "lucide-react";
 
 /** 创建默认下一站区域，保持表单始终有一项可编辑目的地。 */
 function createDefaultStop(areaOptions: string[]): HuntingProjectStop {
@@ -87,27 +87,18 @@ export function HuntingProject({
   return (
     <Modal
       ariaLabel="创建狩猎项目"
+      icon={<RadioTower size={18} />}
       onClose={onClose}
       onSubmit={handleSubmit}
       panelClassName="hunting-project-panel mx-auto grid max-h-[78vh] max-w-[540px] gap-[12px] overflow-hidden px-[14px] pb-[calc(14px+env(safe-area-inset-bottom))] pt-[14px]"
       panelElement="form"
-    >
-      <div className="card-title flex items-center justify-between gap-[10px]">
-        <RadioTower size={18} />
-        <div className="hunting-project-title-copy">
+      title={
+        <>
           <strong>创建狩猎项目</strong>
           <span>系统将按动线匹配推荐委托</span>
-        </div>
-        <button
-          aria-label="关闭"
-          className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
-          onClick={onClose}
-          type="button"
-        >
-          <XCircle size={20} />
-        </button>
-      </div>
-
+        </>
+      }
+    >
       <div className="hunting-project-body grid gap-[12px] overflow-auto pr-[2px]">
         <label className={`profile-field publish-field grid gap-[7px] ${hasValidCurrentArea ? "" : "missing"}`}>
           <span>目前所在区域</span>

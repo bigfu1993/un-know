@@ -60,27 +60,18 @@ export function NicknameEditor({
   return (
     <Modal
       ariaLabel="修改昵称"
+      icon={<UserRound size={18} />}
       onClose={onClose}
       onSubmit={handleSubmit}
       panelClassName="security-editor-sheet mx-auto grid max-h-[86vh] max-w-[540px] gap-[14px] overflow-auto px-[14px] pb-[calc(18px+env(safe-area-inset-bottom))] pt-[16px]"
       panelElement="form"
+      title={
+        <>
+          <strong>修改昵称</strong>
+          <span>昵称会同步到头像弹窗和我的页面。</span>
+        </>
+      }
     >
-        <div className="card-title flex items-center justify-between gap-[10px]">
-          <UserRound size={18} />
-          <div className="nickname-editor-title">
-            <strong>修改昵称</strong>
-            <span>昵称会同步到头像弹窗和我的页面。</span>
-          </div>
-          <button
-            className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
-            onClick={onClose}
-            type="button"
-            aria-label="关闭"
-          >
-            <XCircle size={20} />
-          </button>
-        </div>
-
         <label className={`login-field grid min-w-0 gap-[7px] ${isNicknameInvalid ? "missing" : ""}`}>
           <span>昵称</span>
           <div className="nickname-editor-input">
@@ -142,26 +133,17 @@ export function TutorQualificationInfo({
   return (
     <Modal
       ariaLabel="家教资格申请信息"
+      icon={<GraduationCap size={18} />}
       onClose={onClose}
       panelClassName="tutor-qualification-sheet mx-auto grid max-h-[86vh] max-w-[540px] gap-[14px] overflow-auto px-[14px] pb-[calc(18px+env(safe-area-inset-bottom))] pt-[16px]"
       panelElement="div"
+      title={
+        <>
+          <strong>家教资格申请信息</strong>
+          <span>当前状态：{tutorCertificationStatusLabels[certificationStatus]}</span>
+        </>
+      }
     >
-        <div className="card-title flex items-center justify-between gap-[10px]">
-          <GraduationCap size={18} />
-          <div className="tutor-qualification-title">
-            <strong>家教资格申请信息</strong>
-            <span>当前状态：{tutorCertificationStatusLabels[certificationStatus]}</span>
-          </div>
-          <button
-            className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
-            onClick={onClose}
-            type="button"
-            aria-label="关闭"
-          >
-            <XCircle size={20} />
-          </button>
-        </div>
-
         <div className="tutor-subject-section grid gap-[8px]">
           <strong>可授课学科</strong>
           <div className="tutor-subject-tags flex flex-wrap gap-[8px]" aria-label="编辑可授课学科">
@@ -248,27 +230,18 @@ export function AddressEditor({
   return (
     <Modal
       ariaLabel={mode === "create" ? "新增地址" : "编辑地址"}
+      icon={<BadgeCheck size={18} />}
       onClose={onClose}
       onSubmit={handleSubmit}
       panelClassName="address-editor-sheet mx-auto grid max-h-[86vh] max-w-[540px] gap-[14px] overflow-auto px-[14px] pb-[calc(18px+env(safe-area-inset-bottom))] pt-[16px]"
       panelElement="form"
+      title={
+        <>
+          <strong>{mode === "create" ? "新增地址" : "编辑地址"}</strong>
+          <span>保存后可作为当前使用地址。</span>
+        </>
+      }
     >
-        <div className="card-title flex items-center justify-between gap-[10px]">
-          <BadgeCheck size={18} />
-          <div className="address-editor-title">
-            <strong>{mode === "create" ? "新增地址" : "编辑地址"}</strong>
-            <span>保存后可作为当前使用地址。</span>
-          </div>
-          <button
-            className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
-            onClick={onClose}
-            type="button"
-            aria-label="关闭"
-          >
-            <XCircle size={20} />
-          </button>
-        </div>
-
         <AddressInfoForm areaOptions={areaOptions} draft={draft} fields={fields} onChange={handleAddressChange} />
 
         <div className="sheet-actions grid gap-[8px]">
@@ -325,27 +298,18 @@ export function PhoneChange({
   return (
     <Modal
       ariaLabel="变更手机号"
+      icon={<Smartphone size={18} />}
       onClose={onClose}
       onSubmit={handleSubmit}
       panelClassName="security-editor-sheet mx-auto grid max-h-[86vh] max-w-[540px] gap-[14px] overflow-auto px-[14px] pb-[calc(18px+env(safe-area-inset-bottom))] pt-[16px]"
       panelElement="form"
+      title={
+        <>
+          <strong>变更手机号</strong>
+          <span>验证码校验通过后更新本地登录手机号。</span>
+        </>
+      }
     >
-        <div className="card-title flex items-center justify-between gap-[10px]">
-          <Smartphone size={18} />
-          <div className="phone-change-title">
-            <strong>变更手机号</strong>
-            <span>验证码校验通过后更新本地登录手机号。</span>
-          </div>
-          <button
-            className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
-            onClick={onClose}
-            type="button"
-            aria-label="关闭"
-          >
-            <XCircle size={20} />
-          </button>
-        </div>
-
         <label className={`login-field grid min-w-0 gap-[7px] ${draft.phone && !phoneValidation.isValid ? "missing" : ""}`}>
           <span>新手机号</span>
           <div className="phone-change-phone-input">
@@ -435,27 +399,18 @@ export function PasswordReset({
   return (
     <Modal
       ariaLabel="重置密码"
+      icon={<ShieldCheck size={18} />}
       onClose={onClose}
       onSubmit={handleSubmit}
       panelClassName="security-editor-sheet mx-auto grid max-h-[86vh] max-w-[540px] gap-[14px] overflow-auto px-[14px] pb-[calc(18px+env(safe-area-inset-bottom))] pt-[16px]"
       panelElement="form"
+      title={
+        <>
+          <strong>重置密码</strong>
+          <span>通过手机号验证码校验后设置新密码。</span>
+        </>
+      }
     >
-        <div className="card-title flex items-center justify-between gap-[10px]">
-          <ShieldCheck size={18} />
-          <div className="settings-password-reset-title">
-            <strong>重置密码</strong>
-            <span>通过手机号验证码校验后设置新密码。</span>
-          </div>
-          <button
-            className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
-            onClick={onClose}
-            type="button"
-            aria-label="关闭"
-          >
-            <XCircle size={20} />
-          </button>
-        </div>
-
         <label className={`login-field grid min-w-0 gap-[7px] ${draft.phone && !phoneValidation.isValid ? "missing" : ""}`}>
           <span>手机号</span>
           <div className="settings-password-reset-phone-input">

@@ -44,21 +44,17 @@ export function TutorCalendar({ initialDate, onClose, tasks }: TutorCalendarProp
   return (
     <Modal
       ariaLabel="家教课程日历"
+      icon={<CalendarClock size={18} />}
       onClose={onClose}
       panelClassName="tutor-calendar-sheet mx-auto grid max-h-[90vh] max-w-[540px] gap-[14px] overflow-auto px-[14px] pb-[calc(18px+env(safe-area-inset-bottom))] pt-[16px]"
       panelElement="div"
-    >
-      <div className="card-title flex items-center justify-between gap-[10px]">
-        <CalendarClock size={18} />
-        <div className="tutor-calendar-title-copy">
+      title={
+        <>
           <strong>课程日历</strong>
           <span>按上午、下午半天展示家教任务。</span>
-        </div>
-        <button className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]" onClick={onClose} type="button" aria-label="关闭">
-          <XCircle size={20} />
-        </button>
-      </div>
-
+        </>
+      }
+    >
       <div className="tutor-calendar-toolbar flex items-center justify-between gap-[10px]">
         <button className="ghost-button px-[10px] py-[8px]" onClick={() => handleChangeMonth(-1)} type="button">
           上月
