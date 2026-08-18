@@ -1,9 +1,7 @@
 import "./index.less";
-import { EduTaskCard } from "./components/EduTaskCard";
+import { EduJobBudget, EduTaskCard, EduTrialApplyAction } from "./components/EduTaskCard";
 import { PartTimeJobCard } from "./components/PartTimeJobCard";
-
-/** 学生兼职页展开的工具面板。 */
-type PartTimeToolbarPanel = "area" | "sort" | null;
+import { SearchToolbar } from "./components/SearchToolbar";
 
 /** 从兼职地点中提取适合做快速筛选的区域文案。 */
 function getPartTimeArea(location: string) {
@@ -42,7 +40,6 @@ export function PartTime({
   onApplyTutorTrial?: (job: TutorTrialJob) => Promise<unknown> | unknown;
 }) {
   const [keyword, setKeyword] = useState("");
-  const [activePanel, setActivePanel] = useState<PartTimeToolbarPanel>(null);
   const [selectedArea, setSelectedArea] = useState("");
   const [jobFilter, setJobFilter] = useState<JobFilter>("latest");
   const areaOptions = useMemo(
@@ -73,7 +70,6 @@ export function PartTime({
       return keywordMatched && areaMatched;
     });
   }, [keyword, selectedArea, tutorJobs]);
-  const selectedSortLabel = jobFilters.find((item) => item.key === jobFilter)?.label ?? "最新发布";
   const totalVisibleCount = visibleJobs.length + visibleTutorJobs.length;
 
   if (role === "merchant") {
@@ -84,83 +80,24 @@ export function PartTime({
     <section className="module-stack part-time-list-page grid gap-[10px]">
       <SectionHeader countText={`${totalVisibleCount} 个`} eyebrow="中长期兼职、短期任务、家教兼职" title="兼职列表与报名" />
 
-      <div className="delegation-toolbar grid gap-[8px]">
-        <div className="delegation-toolbar-row flex items-center gap-[8px]">
-          <label className="delegation-search min-w-0 flex-1">
-            <span className="sr-only">搜索兼职</span>
-            <input
-              onChange={(event) => setKeyword(event.target.value)}
-              placeholder="搜索兼职、发布方或地点"
-              type="search"
-              value={keyword}
-            />
-          </label>
-          <button
-            aria-expanded={activePanel === "area"}
-            aria-label={`地点筛选，当前${selectedArea || "全部地点"}`}
-            className={`delegation-icon-button ${activePanel === "area" ? "active" : ""}`}
-            onClick={() => setActivePanel((panel) => (panel === "area" ? null : "area"))}
-            type="button"
-          >
-            <Filter size={17} />
-          </button>
-          <button
-            aria-expanded={activePanel === "sort"}
-            aria-label={`排序，当前${selectedSortLabel}`}
-            className={`delegation-icon-button ${activePanel === "sort" ? "active" : ""}`}
-            onClick={() => setActivePanel((panel) => (panel === "sort" ? null : "sort"))}
-            type="button"
-          >
-            <ArrowDownUp size={17} />
-          </button>
-        </div>
-
-        {activePanel === "area" ? (
-          <div className="delegation-option-panel flex flex-wrap gap-[8px]" aria-label="兼职地点筛选">
-            {["", ...areaOptions].map((area) => (
-              <button
-                className={selectedArea === area ? "active" : ""}
-                key={area || "all"}
-                onClick={() => {
-                  setSelectedArea(area);
-                  setActivePanel(null);
-                }}
-                type="button"
-              >
-                {area || "全部地点"}
-              </button>
-            ))}
-          </div>
-        ) : null}
-
-        {activePanel === "sort" ? (
-          <div className="delegation-option-panel flex flex-wrap gap-[8px]" aria-label="兼职排序">
-            {jobFilters.map((item) => (
-              <button
-                className={item.key === jobFilter ? "active" : ""}
-                key={item.key}
-                onClick={() => {
-                  setJobFilter(item.key);
-                  setActivePanel(null);
-                }}
-                type="button"
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        ) : null}
-
-        <div className="delegation-live-status">
-          <span>
-            当前筛选：{selectedArea || "全部地点"} · {selectedSortLabel}
-          </span>
-        </div>
-      </div>
+      <SearchToolbar
+        areaOptions={areaOptions}
+        jobFilter={jobFilter}
+        keyword={keyword}
+        onJobFilterChange={setJobFilter}
+        onKeywordChange={setKeyword}
+        onSelectedAreaChange={setSelectedArea}
+        selectedArea={selectedArea}
+      />
 
       <div className="card-list part-time-list-scroll grid gap-[10px]">
         {visibleTutorJobs.map((job) => (
-          <EduTaskCard job={job} key={job.id} onApplyTrial={onApplyTutorTrial} role={role} />
+          <EduTaskCard
+            budgetSlot={<EduJobBudget job={job} />}
+            footer={<EduTrialApplyAction job={job} onApplyTrial={onApplyTutorTrial} role={role} />}
+            job={job}
+            key={job.id}
+          />
         ))}
         {visibleJobs.map((job) => (
           <PartTimeJobCard job={job} key={job.id} />

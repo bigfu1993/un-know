@@ -20,6 +20,18 @@ function parseTutorTrialJobBudget(budget: string) {
   };
 }
 
+/** 家教兼职默认预算展示：需要试课标记 + 收费文案，供 EduTaskCard 的 budgetSlot 调用方直接组装。 */
+export function EduJobBudget({ job }: { job: TutorTrialJob }) {
+  const { feeLabel, isTrialRequired } = parseTutorTrialJobBudget(job.budget);
+
+  return (
+    <>
+      {isTrialRequired ? <span className="edu-job-trial-badge">需要试课</span> : null}
+      <em>{feeLabel}</em>
+    </>
+  );
+}
+
 /**
  * 展示家教兼职计划周期的日历弹窗。periodDates 是家长实际选中的完整日期集合（允许不连续），
  * 直接喂给日历高亮，不再用 period（"开始 至 结束"摘要文案）反推日期区间。
@@ -76,8 +88,11 @@ function EduJobScheduleView({
   );
 }
 
-/** 学生端家教兼职卡片，提供试课申请入口。 */
-export function EduTaskCard({
+/**
+ * 家教兼职试课申请按钮及确认弹窗，从 EduTaskCard 抽离，作为 footer 插槽内容由调用方装配，
+ * 使 EduTaskCard 能被非"试课申请"语义的家教兼职场景（如仅查看、其它操作）复用。
+ */
+export function EduTrialApplyAction({
   job,
   onApplyTrial,
   role
@@ -88,9 +103,6 @@ export function EduTaskCard({
 }) {
   const [isApplyingTrial, setIsApplyingTrial] = useState(false);
   const [isApplyConfirmOpen, setIsApplyConfirmOpen] = useState(false);
-  const [isScheduleViewOpen, setIsScheduleViewOpen] = useState(false);
-  const { feeLabel, isTrialRequired } = parseTutorTrialJobBudget(job.budget);
-  const periodDaysLabel = job.periodDates.length > 0 ? `${job.periodDates.length} 天` : "待定";
 
   /** 学生在日程确认弹窗里点击"申请试课"才真正提交，成功后关闭弹窗。 */
   async function handleApplyTrial() {
@@ -109,6 +121,45 @@ export function EduTaskCard({
 
   return (
     <>
+      <button
+        className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+        disabled={!onApplyTrial || role !== "student"}
+        onClick={() => setIsApplyConfirmOpen(true)}
+        type="button"
+      >
+        <CalendarClock size={15} /> 申请试课
+      </button>
+      {isApplyConfirmOpen ? (
+        <EduJobScheduleView
+          isApplying={isApplyingTrial}
+          onClose={() => setIsApplyConfirmOpen(false)}
+          onConfirmApply={() => void handleApplyTrial()}
+          periodDates={job.periodDates}
+        />
+      ) : null}
+    </>
+  );
+}
+
+/**
+ * 学生端家教兼职卡片，头部预算区域和底部操作区域均为插槽：日程/消息按钮固定内置在 footer，
+ * `budgetSlot`（预算展示内容，默认用 `EduJobBudget`）/`footer`（追加操作按钮，如试课申请）
+ * 由调用方按具体业务场景装配，保持卡片壳可复用。
+ */
+export function EduTaskCard({
+  budgetSlot,
+  footer,
+  job
+}: {
+  budgetSlot?: ReactNode;
+  footer?: ReactNode;
+  job: TutorTrialJob;
+}) {
+  const [isScheduleViewOpen, setIsScheduleViewOpen] = useState(false);
+  const periodDaysLabel = job.periodDates.length > 0 ? `${job.periodDates.length} 天` : "待定";
+
+  return (
+    <>
       <article className="flow-card edu-job-card-container grid gap-[6px] p-[14px]">
         <div className="edu-job-card-header card-title flex items-center justify-between gap-[10px]">
           <GraduationCap size={18} />
@@ -116,10 +167,7 @@ export function EduTaskCard({
             <strong>{job.title}</strong>
             <span>{job.publisher.nickname}</span>
           </div>
-          <div className="edu-job-budget grid gap-[2px] text-right">
-            {isTrialRequired ? <span className="edu-job-trial-badge">需要试课</span> : null}
-            <em>{feeLabel}</em>
-          </div>
+          <div className="edu-job-budget grid gap-[2px] text-right">{budgetSlot}</div>
         </div>
         <div className="edu-job-card-content job-task-fields grid gap-[7px]">
           <div className="grid grid-cols-2 gap-[7px]">
@@ -143,37 +191,22 @@ export function EduTaskCard({
         </div>
         <div className="edu-job-card-footer flex flex-wrap items-center gap-[8px]">
           <button
-            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
-            onClick={() => setIsScheduleViewOpen(true)}
-            type="button"
-          >
-            <CalendarDays size={15} /> 日程
-          </button>
-          <button
-            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+            className="secondary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
             type="button"
           >
             <MessageCircle size={15} /> 消息
           </button>
           <button
-            className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
-            disabled={!onApplyTrial || role !== "student"}
-            onClick={() => setIsApplyConfirmOpen(true)}
+            className="secondary-button accent-text inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+            onClick={() => setIsScheduleViewOpen(true)}
             type="button"
           >
-            <CalendarClock size={15} /> 申请试课
+            <CalendarDays size={15} /> 日程
           </button>
+          {footer}
         </div>
       </article>
       {isScheduleViewOpen ? <EduJobScheduleView onClose={() => setIsScheduleViewOpen(false)} periodDates={job.periodDates} /> : null}
-      {isApplyConfirmOpen ? (
-        <EduJobScheduleView
-          isApplying={isApplyingTrial}
-          onClose={() => setIsApplyConfirmOpen(false)}
-          onConfirmApply={() => void handleApplyTrial()}
-          periodDates={job.periodDates}
-        />
-      ) : null}
     </>
   );
 }

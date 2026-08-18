@@ -141,7 +141,7 @@ export function OrderActions({
           ) : null}
           {!showParentTutorServiceScheduleAction && (tutorSchedulePreviewConfig || showParentTutorCourseAction || (!tutorTask && order.canOpenTrialSchedule)) ? (
             <button
-              className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+              className="secondary-button accent-text inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
               onClick={() => handlers.onOpenTrialSchedule?.(order)}
               type="button"
             >

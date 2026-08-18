@@ -91,7 +91,7 @@ export function Tutor({ tutorDemands }: { tutorDemands: Array<TutorDemand | Tuto
           footer={
             <>
               <button
-                className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+                className="secondary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
                 onClick={() => showMessage(`${student.tutor_certification.real_name} 的消息能力后续接入。`, { type: "warning" })}
                 type="button"
               >

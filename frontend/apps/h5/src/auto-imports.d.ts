@@ -35,7 +35,9 @@ declare global {
   const Crosshair: typeof import('lucide-react').Crosshair
   const DemandCard: typeof import('./pages/home/edu/components/DemandCard').DemandCard
   const EduCard: typeof import('./pages/home/auth/components/OngoingOrders/components/EduCard').EduCard
+  const EduJobBudget: typeof import('./pages/home/job/components/EduTaskCard').EduJobBudget
   const EduTaskCard: typeof import('./pages/home/job/components/EduTaskCard').EduTaskCard
+  const EduTrialApplyAction: typeof import('./pages/home/job/components/EduTaskCard').EduTrialApplyAction
   const Featured: typeof import('./pages/home/shop/index').Featured
   const Filter: typeof import('lucide-react').Filter
   const FilterTags: typeof import('./pages/home/auth/components/OngoingOrders/components/FilterTags').FilterTags
@@ -106,6 +108,7 @@ declare global {
   const Routes: typeof import('react-router-dom').Routes
   const ScheduleCalendar: typeof import('./components/ScheduleCalendar/index').ScheduleCalendar
   const ScrollingTicker: typeof import('./components/ScrollingTicker/index').ScrollingTicker
+  const SearchToolbar: typeof import('./pages/home/job/components/SearchToolbar').SearchToolbar
   const SectionHeader: typeof import('./components/PageWidgets/index').SectionHeader
   const Settings: typeof import('lucide-react').Settings
   const SettingsView: typeof import('./pages/settings/index').SettingsView
