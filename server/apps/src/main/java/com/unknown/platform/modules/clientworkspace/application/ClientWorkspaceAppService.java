@@ -61,8 +61,8 @@ public class ClientWorkspaceAppService {
         partTimeJobs(),
         huntingTaskAppService.huntingSummary(),
         huntingTaskAppService.huntingTasks(currentUserId),
-        // 家教需求列表已改由独立的 /workspace/edu/tutors 接口提供（家长角色返回原始学生数据、
-        // 学生角色返回 TutorDemand），前端也已改为消费该独立接口，这里不再重复查询。
+        // 家教需求列表已改由独立接口提供：学生角色的招募中需求并入 /workspace/jobs，家长角色的
+        // 认证学生列表改由 /workspace/tutors 提供，前端已消费这两个独立接口，这里不再重复查询。
         List.of(),
         merchantDashboard(),
         merchantProducts(),
@@ -95,12 +95,17 @@ public class ClientWorkspaceAppService {
 
 
   /**
-   * 获取兼职列表独立数据。
+   * 获取兼职列表独立数据：聚合兼职岗位（part_time_job 表）和招募中的家教需求（tutor_demand 表，
+   * 家教是兼职的一种类型，仅学生角色可见），两类数据字段结构完全不同，各自维护在不同表，
+   * 统一以 Object 承载后由前端按结构判断类型。
    *
-   * @return 兼职卡片列表
+   * @param role 当前角色
+   * @return 兼职列表（含家教兼职）
    */
-  public List<PartTimeJob> listPartTimeJobs() {
-    return partTimeJobs();
+  public List<Object> listPartTimeJobs(ClientRole role) {
+    List<Object> jobs = new ArrayList<>(partTimeJobs());
+    jobs.addAll(tutorWorkspaceAppService.recruitingTutorDemandsForJobs(role));
+    return jobs;
   }
 
 

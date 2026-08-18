@@ -34,7 +34,6 @@ declare global {
   const ConfirmAction: typeof import('./components/ConfirmAction/index').ConfirmAction
   const Crosshair: typeof import('lucide-react').Crosshair
   const DemandCard: typeof import('./pages/home/edu/components/DemandCard').DemandCard
-  const EduCard: typeof import('./pages/home/auth/components/OngoingOrders/components/EduCard').EduCard
   const EduJobBudget: typeof import('./pages/home/job/components/EduTaskCard').EduJobBudget
   const EduTaskCard: typeof import('./pages/home/job/components/EduTaskCard').EduTaskCard
   const EduTrialApplyAction: typeof import('./pages/home/job/components/EduTaskCard').EduTrialApplyAction
@@ -73,7 +72,6 @@ declare global {
   const Modal: typeof import('./ui/Modal/index').Modal
   const Navigate: typeof import('react-router-dom').Navigate
   const NicknameEditor: typeof import('./pages/settings/components/SettingsPanels').NicknameEditor
-  const OngoingEduCard: typeof import('./pages/home/auth/components/OngoingOrders/components/EduCard').OngoingEduCard
   const OngoingHuntings: typeof import('./pages/home/auth/components/OngoingHuntings/index').OngoingHuntings
   const OngoingOrderActions: typeof import('./pages/home/auth/components/OngoingOrders/components/OrderActions').OngoingOrderActions
   const OngoingOrderStatus: typeof import('./pages/home/auth/components/OngoingOrders/components/OrderActions').OngoingOrderStatus
@@ -110,6 +108,7 @@ declare global {
   const ScrollingTicker: typeof import('./components/ScrollingTicker/index').ScrollingTicker
   const SearchToolbar: typeof import('./pages/home/job/components/SearchToolbar').SearchToolbar
   const SectionHeader: typeof import('./components/PageWidgets/index').SectionHeader
+  const ServiceSettlement: typeof import('./pages/home/auth/components/OngoingOrders/components/TutorWorkflowModals').ServiceSettlement
   const Settings: typeof import('lucide-react').Settings
   const SettingsView: typeof import('./pages/settings/index').SettingsView
   const ShieldCheck: typeof import('lucide-react').ShieldCheck
@@ -144,6 +143,8 @@ declare global {
   const TUTOR_TRIAL_SETTLED_SERVICE_PENDING_LEGACY_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_SETTLED_SERVICE_PENDING_LEGACY_STATUS
   const TUTOR_TRIAL_SETTLED_SERVICE_PENDING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_SETTLED_SERVICE_PENDING_STATUS
   const TrialScheduleCalendar: typeof import('./components/TrialScheduleCalendar/index').TrialScheduleCalendar
+  const TrialSchedulePreview: typeof import('./pages/home/auth/components/OngoingOrders/components/TutorWorkflowModals').TrialSchedulePreview
+  const TrialSettlementConfirm: typeof import('./pages/home/auth/components/OngoingOrders/components/TutorWorkflowModals').TrialSettlementConfirm
   const Truck: typeof import('lucide-react').Truck
   const Tutor: typeof import('./pages/home/edu/index').Tutor
   const TutorApplicantStatus: typeof import('./db/tutorStatus').TutorApplicantStatus
@@ -312,7 +313,7 @@ declare global {
   const isQuoteLockedForPublisher: typeof import('./pages/home/commission/model').isQuoteLockedForPublisher
   const isTutorApplicationListStatus: typeof import('./tools/tutorTrial').isTutorApplicationListStatus
   const isTutorApplicationPendingStatus: typeof import('./tools/tutorTrial').isTutorApplicationPendingStatus
-  const isTutorCertifiedStudent: typeof import('./hooks/useClientWorkspaceViewModel').isTutorCertifiedStudent
+  const isTutorDemand: typeof import('./hooks/useClientWorkspaceViewModel').isTutorDemand
   const isTutorFormalServiceStatus: typeof import('./tools/tutorTrial').isTutorFormalServiceStatus
   const isTutorPublishType: typeof import('./tools/publishInfo').isTutorPublishType
   const isTutorServiceConfirmingStatus: typeof import('./tools/tutorTrial').isTutorServiceConfirmingStatus
@@ -369,7 +370,6 @@ declare global {
   const setStoredPendingRegistration: typeof import('./shared/clientPageModel').setStoredPendingRegistration
   const setStoredProfileDraft: typeof import('./shared/clientPageModel').setStoredProfileDraft
   const showMessage: typeof import('./tools/messageToast').showMessage
-  const showOngoingOrderMessagePlaceholder: typeof import('./pages/home/auth/components/OngoingOrders/model').showOngoingOrderMessagePlaceholder
   const startTransition: typeof import('react').startTransition
   const stringifyTutorSubjectLevelItems: typeof import('./components/TutorCertificationCard/model').stringifyTutorSubjectLevelItems
   const subscribeMessageToast: typeof import('./tools/messageToast').subscribeMessageToast
@@ -526,13 +526,10 @@ declare global {
   export type { MineShortcutProps } from './pages/home/auth/components/MineShortcut'
   import('./pages/home/auth/components/MineShortcut')
   // @ts-ignore
-  export type { EduCardProps } from './pages/home/auth/components/OngoingOrders/components/EduCard'
-  import('./pages/home/auth/components/OngoingOrders/components/EduCard')
-  // @ts-ignore
   export type { OngoingHuntingFulfillmentAction, OngoingOrdersProps } from './pages/home/auth/components/OngoingOrders/index'
   import('./pages/home/auth/components/OngoingOrders/index')
   // @ts-ignore
-  export type { OngoingOrderFilter, TutorServiceAvailabilityAction, TutorOrderSchedulePreviewConfig, TutorSchedulePreviewSection, OngoingOrderActionHandlers, OngoingOrderLocalActionHandlers } from './pages/home/auth/components/OngoingOrders/model'
+  export type { OngoingOrderFilter, TutorServiceAvailabilityAction, TutorOrderSchedulePreviewConfig, TutorSchedulePreviewSection, OngoingOrderActionHandlers } from './pages/home/auth/components/OngoingOrders/model'
   import('./pages/home/auth/components/OngoingOrders/model')
   // @ts-ignore
   export type { OngoingShortcutProps } from './pages/home/auth/components/OngoingShortcut'
@@ -543,6 +540,9 @@ declare global {
   // @ts-ignore
   export type { CommissionSortMode, CommissionToolbarPanel } from './pages/home/commission/model'
   import('./pages/home/commission/model')
+  // @ts-ignore
+  export type { EduTaskCardJob } from './pages/home/job/components/EduTaskCard'
+  import('./pages/home/job/components/EduTaskCard')
   // @ts-ignore
   export type { AddressEditorMode, PhoneChangeDraft, PasswordResetDraft } from './pages/settings/components/SettingsPanels'
   import('./pages/settings/components/SettingsPanels')

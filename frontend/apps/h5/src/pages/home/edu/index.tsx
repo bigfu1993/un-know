@@ -1,6 +1,5 @@
 import "./index.less";
 import { BookOpen, MessageCircle, School, Tags } from "lucide-react";
-import { isTutorCertifiedStudent } from "@h5/hooks/useClientWorkspaceViewModel";
 import { TutorCard } from "./components/TutorCard";
 import { ListFilters } from "./components/ListFilters";
 import { formatTutorSubjectLabels, parseTutorSubjects } from "@shared/tutorModel";
@@ -52,13 +51,12 @@ function getTutorStudentDetailItems(student: TutorCertifiedStudent) {
 }
 
 /** 家长家教招募页面，浏览已认证并开启家教开关的学生档案。 */
-export function Tutor({ tutorDemands }: { tutorDemands: Array<TutorDemand | TutorCertifiedStudent> }) {
+export function Tutor({ students }: { students: TutorCertifiedStudent[] }) {
   const [selectedSchool, setSelectedSchool] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
-  const tutorStudents = useMemo(() => tutorDemands.filter(isTutorCertifiedStudent), [tutorDemands]);
   const visibleTutorStudents = useMemo(
-    () => getVisibleTutorStudents(tutorStudents, selectedSchool, selectedSubject),
-    [selectedSchool, selectedSubject, tutorStudents]
+    () => getVisibleTutorStudents(students, selectedSchool, selectedSubject),
+    [selectedSchool, selectedSubject, students]
   );
   return (
     <section className="module-stack tutor-list-page grid gap-[10px]">
@@ -69,7 +67,7 @@ export function Tutor({ tutorDemands }: { tutorDemands: Array<TutorDemand | Tuto
         onSubjectChange={setSelectedSubject}
         selectedSchool={selectedSchool}
         selectedSubject={selectedSubject}
-        students={tutorStudents}
+        students={students}
       />
 
       {visibleTutorStudents.map((student) => (

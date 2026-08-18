@@ -251,6 +251,9 @@ export interface ClientOrder {
   canRejectTrial?: boolean;
   canCancelTutorApplication?: boolean;
   risk?: "payment" | "refund";
+  /** 家教卡片专用：展示所需的完整需求结构（含发布方昵称、原始描述等），非家教品类为空；
+   *  不含申请人列表（applicants 恒为空数组），申请人详情走独立的 /workspace/ongoing/tutor 接口。 */
+  tutorDemand?: TutorDemand;
 }
 
 export interface PartTimeJob {

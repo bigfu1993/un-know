@@ -2,6 +2,7 @@ package com.unknown.platform.modules.clientworkspace.controller.client;
 
 import com.unknown.platform.common.api.ApiResponse;
 import com.unknown.platform.common.realtime.ClientRealtimeService;
+import com.unknown.platform.common.security.ClientRequestContext;
 import com.unknown.platform.common.security.ClientSessionService;
 import com.unknown.platform.modules.auth.model.ClientRole;
 import com.unknown.platform.modules.clientworkspace.application.ClientWorkspaceAppService;
@@ -9,7 +10,6 @@ import com.unknown.platform.modules.clientworkspace.application.HuntingTaskAppSe
 import com.unknown.platform.modules.clientworkspace.application.TutorWorkspaceAppService;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.HuntingTask;
-import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.PartTimeJob;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorDemand;
 import com.unknown.platform.modules.clientworkspace.model.ApplyTutorTrialRequest;
 import com.unknown.platform.modules.clientworkspace.model.CompleteTutorTrialEndRequest;
@@ -89,10 +89,11 @@ public class ClientWorkspaceController {
     return ApiResponse.ok(clientWorkspaceAppService.ongoingOrders(role, authorization));
   }
 
-  /** 获取兼职列表独立接口，避免兼职页依赖完整工作台聚合响应。 */
+  /** 获取兼职列表独立接口，避免兼职页依赖完整工作台聚合响应；家教是兼职的一种类型，
+   *  学生角色下会与兼职岗位聚合在同一个列表返回，两类数据字段结构不同，前端按结构判断类型。 */
   @GetMapping("/workspace/jobs")
-  public ApiResponse<List<PartTimeJob>> partTimeJobs() {
-    return ApiResponse.ok(clientWorkspaceAppService.listPartTimeJobs());
+  public ApiResponse<List<Object>> partTimeJobs(ClientRequestContext context) {
+    return ApiResponse.ok(clientWorkspaceAppService.listPartTimeJobs(context.role()));
   }
 
   /** 获取委托/狩猎任务列表独立接口，保留登录用户视角下的报价和履约状态。 */
@@ -103,25 +104,16 @@ public class ClientWorkspaceController {
     return ApiResponse.ok(huntingTaskAppService.listHuntingTasks(authorization));
   }
 
-  /** 获取家教列表独立接口，按当前角色返回家长或学生视角可浏览数据（不含进行中申请人详情）。
-   *  家长角色返回 app_user 合并 tutor_certification 的原始学生数据；学生角色仍返回 TutorDemand 需求列表。 */
-  @GetMapping("/workspace/edu/tutors")
-  public ApiResponse<List<Object>> tutorDemands(
-      @RequestHeader(value = "Authorization", required = false) String authorization,
-      @RequestHeader(value = ClientSessionService.CLIENT_USER_ROLE_HEADER, required = false) String clientRoleHeader
-  ) {
-    ClientRole role = clientSessionService.resolveClientRole(authorization, clientRoleHeader);
-    return ApiResponse.ok(tutorWorkspaceAppService.listTutorDemands(role, authorization));
+  /** 获取家长端可浏览的认证学生列表独立接口，返回 app_user 合并 tutor_certification 的原始数据，仅家长角色可见。 */
+  @GetMapping("/workspace/tutors")
+  public ApiResponse<List<Object>> tutorCertifiedStudents(ClientRequestContext context) {
+    return ApiResponse.ok(tutorWorkspaceAppService.listTutorCertifiedStudents(context.role()));
   }
 
   /** 获取家长自己发布的家教需求及申请人独立接口，只服务进行中弹窗，跟页面浏览列表分开。 */
-  @GetMapping("/workspace/tutor/ongoing")
-  public ApiResponse<List<TutorDemand>> tutorApplications(
-      @RequestHeader(value = "Authorization", required = false) String authorization,
-      @RequestHeader(value = ClientSessionService.CLIENT_USER_ROLE_HEADER, required = false) String clientRoleHeader
-  ) {
-    ClientRole role = clientSessionService.resolveClientRole(authorization, clientRoleHeader);
-    return ApiResponse.ok(tutorWorkspaceAppService.listTutorApplications(role, authorization));
+  @GetMapping("/workspace/ongoing/tutor")
+  public ApiResponse<List<TutorDemand>> tutorApplications(ClientRequestContext context) {
+    return ApiResponse.ok(tutorWorkspaceAppService.listTutorApplications(context.role(), context.authorization()));
   }
 
   /** 发布委托或回收任务，返回列表可直接展示的任务卡片数据。 */

@@ -1,6 +1,4 @@
-import { MapPin, Tags } from "lucide-react";
-import { useCancelTutorApplication } from "@unknown/hooks";
-import { getErrorMessage, showMessage } from "@tools/messageToast";
+import { showMessage } from "@tools/messageToast";
 import {
   getTutorTrialAvailabilitySummaryFromOrderDetail,
   getTutorTrialFeeSummaryFromOrderDetail,
@@ -9,19 +7,7 @@ import {
   parseTutorTrialSchedule
 } from "@tools/tutorTrial";
 import { createTutorTaskModel } from "@tools/tutorTaskWorkflow";
-import { OrderActions, OrderStatus } from "./OrderActions";
-import {
-  getTutorOrderSchedulePreviewConfig,
-  getTutorWorkflowTargetOrder,
-  showOngoingOrderMessagePlaceholder
-} from "../model";
-
-/** 进行中家教卡片组件入参，家长端/学生端共用，role 显式区分当前卡片的查看角色。 */
-export interface EduCardProps extends OngoingOrderActionHandlers {
-  onOpenCancelConfirmation: (config: ConfirmActionConfig) => void;
-  order: ClientOrder;
-  role: Role;
-}
+import { getTutorOrderSchedulePreviewConfig } from "../model";
 
 /** 根据时间段归类到试课日历三段展示。 */
 function getTrialSchedulePreviewPeriod(timeRange: string): TrialScheduleCalendarPeriod {
@@ -87,7 +73,7 @@ function getActiveScheduleSections(sections: TutorSchedulePreviewSection[], acti
 }
 
 /** 学生端查看家长提交的试课日程弹窗，卡片自身持有开关状态。 */
-function TrialSchedulePreview({
+export function TrialSchedulePreview({
   onClose,
   onConfirmTrial,
   onTutorWorkflowAction,
@@ -230,7 +216,7 @@ function TrialSchedulePreview({
 }
 
 /** 学生确认试课费用的弹窗，确认后流程进入家长雇佣决策。 */
-function TrialSettlementConfirm({
+export function TrialSettlementConfirm({
   onClose,
   onTutorWorkflowAction,
   order
@@ -312,7 +298,7 @@ function TrialSettlementConfirm({
 }
 
 /** 家长端结束正式雇佣前提交结算金额，提交后主任务进入已结束并等待学生确认结算。 */
-function ServiceSettlement({
+export function ServiceSettlement({
   onClose,
   onConfirm,
   order
@@ -393,225 +379,5 @@ function ServiceSettlement({
           </button>
         </div>
     </Modal>
-  );
-}
-
-/**
- * OngoingOrders 列表里的家教卡片：标题、多状态徽标、正文详情、金额联系方式和履约动作。
- * 家长端/学生端共用同一份 UI，role 由调用方显式传入区分角色；试课日程、正式雇佣日程、
- * 结算确认等家教专属弹窗和取消申请动作完全由卡片自己承接状态，不再向上层列表借状态。
- */
-export function EduCard({ onOpenCancelConfirmation, order, role, ...handlers }: EduCardProps) {
-  const cancelTutorApplicationMutation = useCancelTutorApplication();
-  const [isServiceScheduleOpen, setIsServiceScheduleOpen] = useState(false);
-  const [isServiceSettlementOpen, setIsServiceSettlementOpen] = useState(false);
-  const [isTrialResultOpen, setIsTrialResultOpen] = useState(false);
-  const [isTrialScheduleOpen, setIsTrialScheduleOpen] = useState(false);
-  const [isSubmittingServiceAvailability, setIsSubmittingServiceAvailability] = useState(false);
-  const [isSubmittingServiceSchedule, setIsSubmittingServiceSchedule] = useState(false);
-  const [serviceAvailabilityAction, setServiceAvailabilityAction] = useState<TutorServiceAvailabilityAction | null>(null);
-  const tutorTask = createTutorTaskModel({ order, role });
-  /** 计划周期实际天数，用真实选中的日期集合计算，不用开始至结束摘要反推（可能是不连续的零散日期）。 */
-  const periodDaysLabel = order.periodDates && order.periodDates.length > 0 ? `${order.periodDates.length} 天` : "待定";
-  /** 家长端主任务动作需要落到当前正式雇佣的申请子任务，正式雇佣日程和结算都基于这个目标订单提交。 */
-  const tutorWorkflowTargetOrder = getTutorWorkflowTargetOrder(order);
-  /** 正式家教可用时间弹窗的初始值；首次同意正式雇佣时不回填试课申请阶段的可试课时间。 */
-  const serviceAvailabilityInitialValue = useMemo(
-    () =>
-      serviceAvailabilityAction === "request_service_schedule_change"
-        ? getTrialScheduleValueFromSummary(getTutorTrialAvailabilitySummaryFromOrderDetail(order.detail))
-        : null,
-    [order.detail, serviceAvailabilityAction]
-  );
-  /** 学生同意正式雇佣时以真实试课日程作为只读标记，已试课时段不可再次选择。 */
-  const serviceAvailabilityBlockedSummary =
-    serviceAvailabilityAction === "accept_service_offer" ? getTutorTrialScheduleSummaryFromOrderDetail(order.detail) : "";
-  /** 父端正式雇佣日程必须落在学生提交的可家教时间内。 */
-  const serviceScheduleAvailabilitySummary = getTutorTrialAvailabilitySummaryFromOrderDetail(tutorWorkflowTargetOrder.detail);
-  /** 父端制定正式日程时，试课历史以只读日程展示并禁止重复选择。 */
-  const serviceScheduleBlockedSummary = getTutorTrialScheduleSummaryFromOrderDetail(tutorWorkflowTargetOrder.detail);
-
-  /** 学生取消申请，成功后由查询缓存失效刷新服务端状态。 */
-  async function handleCancelTutorApplication(targetOrder: ClientOrder) {
-    if (cancelTutorApplicationMutation.isPending) {
-      return;
-    }
-
-    try {
-      await cancelTutorApplicationMutation.mutateAsync(targetOrder.id);
-      showMessage("试课申请已取消。", { type: "success" });
-    } catch (error) {
-      showMessage(getErrorMessage(error, "取消申请失败，请稍后重试。"), { type: "error" });
-    }
-  }
-
-  /** 打开学生端可家教日期弹窗，确认后再推进正式雇佣或日程修改流程。 */
-  function handleOpenServiceAvailability(_targetOrder: ClientOrder, action: TutorServiceAvailabilityAction) {
-    if (!handlers.onTutorWorkflowAction) {
-      showMessage("家教流程接口暂不可用，请稍后重试。", { type: "warning" });
-      return;
-    }
-
-    setServiceAvailabilityAction(action);
-  }
-
-  /** 打开家长端正式雇佣日程弹窗，提交目标为当前正式雇佣申请子任务。 */
-  function handleOpenServiceSchedule() {
-    if (!handlers.onTutorWorkflowAction) {
-      showMessage("家教流程接口暂不可用，请稍后重试。", { type: "warning" });
-      return;
-    }
-
-    setIsServiceScheduleOpen(true);
-  }
-
-  /** 学生提交可家教日期后，调用真实流程接口推进正式雇佣日程节点。 */
-  async function handleConfirmServiceAvailability(value: TrialScheduleValue) {
-    if (!serviceAvailabilityAction || !handlers.onTutorWorkflowAction || isSubmittingServiceAvailability) {
-      return;
-    }
-
-    setIsSubmittingServiceAvailability(true);
-    try {
-      const result = await handlers.onTutorWorkflowAction(order, serviceAvailabilityAction, {
-        availability: value.plan.summary
-      });
-
-      if (result !== false) {
-        setServiceAvailabilityAction(null);
-      }
-    } finally {
-      setIsSubmittingServiceAvailability(false);
-    }
-  }
-
-  /** 家长提交正式雇佣日程后，当前申请进入正式雇佣。 */
-  async function handleConfirmServiceSchedule(value: TrialScheduleValue) {
-    if (!handlers.onTutorWorkflowAction || isSubmittingServiceSchedule) {
-      return;
-    }
-
-    setIsSubmittingServiceSchedule(true);
-    try {
-      const result = await handlers.onTutorWorkflowAction(tutorWorkflowTargetOrder, "submit_service_schedule", {
-        tutorSchedule: value.plan.summary
-      });
-
-      if (result !== false) {
-        setIsServiceScheduleOpen(false);
-      }
-    } finally {
-      setIsSubmittingServiceSchedule(false);
-    }
-  }
-
-  /** 家长端提交正式服务结算金额，服务端负责结束主任务并等待学生确认结算。 */
-  async function handleConfirmServiceSettlement(settlementOrder: ClientOrder, trialFee: number) {
-    if (!handlers.onTutorWorkflowAction) {
-      showMessage("家教流程接口暂不可用，请稍后重试。", { type: "warning" });
-      return false;
-    }
-
-    return await handlers.onTutorWorkflowAction(settlementOrder, "request_service_end", { trialFee });
-  }
-
-  return (
-    <>
-      <article className={`flow-card compact edu-order-card-container grid gap-[6px] p-[12px] ${order.risk ? "risk-card" : ""}`}>
-        <div className="edu-order-card-header card-title flex items-center justify-between gap-[10px]">
-          <GraduationCap size={18} />
-          <div className="ongoing-order-title-copy min-w-0 flex-1">
-            <strong className="card-title-chip">{order.title}</strong>
-          </div>
-          <OrderStatus order={order} tutorTask={tutorTask} />
-        </div>
-        <div className="edu-order-card-content job-task-fields grid gap-[7px]">
-          <div className="grid grid-cols-2 gap-[7px]">
-            <span>
-              <Tags size={14} />
-              学科：{order.subject}
-            </span>
-            <span>
-              <CalendarClock size={14} />
-              时间：{periodDaysLabel}
-            </span>
-          </div>
-          <span>
-            <MapPin size={14} />
-            位置：{order.address}
-          </span>
-        </div>
-        <div className="edu-order-card-footer">
-          <OrderActions
-            isCancellingTutorApplication={cancelTutorApplicationMutation.isPending}
-            order={order}
-            {...handlers}
-            onCancelTutorApplication={handleCancelTutorApplication}
-            onMessageOrder={showOngoingOrderMessagePlaceholder}
-            onOpenCancelConfirmation={onOpenCancelConfirmation}
-            onOpenServiceAvailability={handleOpenServiceAvailability}
-            onOpenServiceSchedule={handleOpenServiceSchedule}
-            onOpenServiceSettlement={() => setIsServiceSettlementOpen(true)}
-            onOpenTrialResult={() => setIsTrialResultOpen(true)}
-            onOpenTrialSchedule={() => setIsTrialScheduleOpen(true)}
-          />
-        </div>
-      </article>
-      {isTrialScheduleOpen ? (
-        <TrialSchedulePreview
-          onClose={() => setIsTrialScheduleOpen(false)}
-          onConfirmTrial={handlers.onConfirmTutorTrialStart}
-          onTutorWorkflowAction={handlers.onTutorWorkflowAction}
-          order={order}
-          role={role}
-        />
-      ) : null}
-      {isTrialResultOpen ? (
-        <TrialSettlementConfirm onClose={() => setIsTrialResultOpen(false)} onTutorWorkflowAction={handlers.onTutorWorkflowAction} order={order} />
-      ) : null}
-      {isServiceSettlementOpen ? (
-        <ServiceSettlement
-          onClose={() => setIsServiceSettlementOpen(false)}
-          onConfirm={handleConfirmServiceSettlement}
-          order={tutorWorkflowTargetOrder}
-        />
-      ) : null}
-      {isServiceScheduleOpen ? (
-        <TutorTrialSchedule
-          availableScheduleSummary={serviceScheduleAvailabilitySummary}
-          blockedScheduleLabel="试"
-          blockedScheduleSummary={serviceScheduleBlockedSummary}
-          confirmLabel={isSubmittingServiceSchedule ? "提交中" : "提交日程"}
-          initialValue={null}
-          isConfirming={isSubmittingServiceSchedule}
-          maxSelectedDates={null}
-          onClose={() => setIsServiceScheduleOpen(false)}
-          onConfirm={handleConfirmServiceSchedule}
-          scheduleLabel="课"
-          subtitle="请在学生提交的可家教时间内制定正式雇佣日程，提交后直接进入正式雇佣。"
-          title="正式雇佣日程"
-        />
-      ) : null}
-      {serviceAvailabilityAction ? (
-        <TutorTrialSchedule
-          blockedScheduleLabel="试"
-          blockedScheduleSummary={serviceAvailabilityBlockedSummary}
-          confirmLabel={
-            isSubmittingServiceAvailability ? "提交中" : serviceAvailabilityAction === "accept_service_offer" ? "同意并提交" : "提交修改"
-          }
-          initialValue={serviceAvailabilityInitialValue}
-          isConfirming={isSubmittingServiceAvailability}
-          maxSelectedDates={null}
-          onClose={() => setServiceAvailabilityAction(null)}
-          onConfirm={handleConfirmServiceAvailability}
-          subtitle={
-            serviceAvailabilityAction === "accept_service_offer"
-              ? "请基于已完成的试课日程选择可正式家教的日期和时间，标记为“试”的时段不可再次选择。"
-              : "请重新选择可进行正式家教的日期和时间，提交后等待家长重新制定正式雇佣日程。"
-          }
-          title={serviceAvailabilityAction === "accept_service_offer" ? "可家教日期" : "修改可家教日期"}
-        />
-      ) : null}
-    </>
   );
 }

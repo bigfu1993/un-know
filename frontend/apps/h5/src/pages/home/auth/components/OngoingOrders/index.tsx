@@ -1,8 +1,9 @@
 import { useConfirmAction } from "@h5/hooks/useConfirmAction";
-import { EduCard } from "./components/EduCard";
+import { createTutorTaskModel } from "@tools/tutorTaskWorkflow";
+import { EduTaskCard, type EduTaskCardJob } from "@h5/pages/home/job/components/EduTaskCard";
 import { FilterTags } from "./components/FilterTags";
 import { OrderActions, OrderStatus } from "./components/OrderActions";
-import { getOngoingOrderCategory, getOngoingOrderDisplayDetail, showOngoingOrderMessagePlaceholder } from "./model";
+import { getOngoingOrderCategory, getOngoingOrderDisplayDetail } from "./model";
 
 /** 委托履约动作由进行中弹窗按按钮语义映射到真实业务 action。 */
 export type OngoingHuntingFulfillmentAction = HuntingTaskFulfillmentActionRequest["action"];
@@ -32,9 +33,10 @@ export interface OngoingOrdersProps {
 }
 
 /**
- * 进行中事项弹窗，负责分类筛选、空状态和卡片展示，家教卡片委托给 EduCard 自己承接状态和弹窗，
- * 这里只保留跨卡片共用的取消确认弹窗（同一时间只需要一个实例）；同时把上层传入的委托履约/
- * 家教流程动作统一转换成卡片消费的扁平 handler。
+ * 进行中事项弹窗，负责分类筛选、空状态和卡片展示。家教卡片直接用 EduTaskCard 卡片壳组装
+ * OrderStatus/OrderActions；家教流程内部的全部状态、弹窗和取消申请动作都收敛在 OrderActions
+ * 组件自己内部（跟单张卡片一一对应），这里只保留跨卡片共用的取消确认弹窗（同一时间只需要一个
+ * 实例）；同时把上层传入的委托履约/家教流程动作统一转换成卡片消费的扁平 handler。
  */
 export function OngoingOrders({
   maxHeight = "min(72vh, 620px)",
@@ -141,13 +143,26 @@ export function OngoingOrders({
       <div className="ongoing-list grid gap-[10px]">
         {filteredOrders.map((order) => {
           if (getOngoingOrderCategory(order) === "tutor") {
+            const tutorTask = createTutorTaskModel({ order, role: order.role });
+            /** 后端已把完整需求结构挂在 order.tutorDemand 上，这里只是把需求字段名对齐到
+             *  EduTaskCard 的展示字段名（addressLabel/school → address），不再拼假数据。 */
+            const demand = order.tutorDemand;
+            const taskCardJob: EduTaskCardJob = {
+              address: demand?.addressLabel ?? demand?.school ?? "",
+              description: demand?.description ?? "暂无描述",
+              periodDates: demand?.periodDates ?? order.periodDates ?? [],
+              publisher: demand?.publisher ?? { nickname: "" },
+              subject: demand?.subject ?? order.subject ?? "",
+              title: demand?.title ?? order.title
+            };
+
             return (
-              <EduCard
+              <EduTaskCard
+                budgetSlot={<OrderStatus order={order} tutorTask={tutorTask} />}
+                className={order.risk ? "risk-card" : ""}
+                footer={<OrderActions onOpenCancelConfirmation={openCancelConfirmation} order={order} {...handlers} />}
+                job={taskCardJob}
                 key={order.id}
-                onOpenCancelConfirmation={openCancelConfirmation}
-                order={order}
-                role={order.role}
-                {...handlers}
               />
             );
           }
@@ -166,12 +181,9 @@ export function OngoingOrders({
                 <span>{order.amountLabel ?? formatCurrency(order.amount)}</span>
                 <span>{order.contact}</span>
               </div>
-              <OrderActions
-                order={order}
-                {...handlers}
-                onMessageOrder={showOngoingOrderMessagePlaceholder}
-                onOpenCancelConfirmation={openCancelConfirmation}
-              />
+              <div className="ongoing-card-actions mt-[10px] flex flex-wrap gap-[8px]">
+                <OrderActions onOpenCancelConfirmation={openCancelConfirmation} order={order} {...handlers} />
+              </div>
             </article>
           );
         })}

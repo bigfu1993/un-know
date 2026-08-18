@@ -322,22 +322,23 @@ export async function getOngoingOrders(): Promise<ClientOrder[]> {
   return requestJson<ClientOrder[]>("/client/workspace/ongoing");
 }
 
-export async function getPartTimeJobs(): Promise<PartTimeJob[]> {
-  return requestJson<PartTimeJob[]>("/client/workspace/jobs");
+/** 兼职列表：家教是兼职的一种类型，学生角色下会与兼职岗位聚合在同一个数组里返回，字段结构不同，调用方按结构判断类型。 */
+export async function getPartTimeJobs(): Promise<Array<PartTimeJob | TutorDemand>> {
+  return requestJson<Array<PartTimeJob | TutorDemand>>("/client/workspace/jobs");
 }
 
 export async function getHuntingTasks(): Promise<HuntingTask[]> {
   return requestJson<HuntingTask[]>("/client/workspace/commission");
 }
 
-/** 家教列表独立接口：学生角色返回 TutorDemand 需求列表，家长角色返回原始认证学生数据。 */
-export async function getTutorDemands(): Promise<Array<TutorDemand | TutorCertifiedStudent>> {
-  return requestJson<Array<TutorDemand | TutorCertifiedStudent>>("/client/workspace/edu/tutors");
+/** 家长端可浏览的认证学生列表独立接口，仅家长角色可见。 */
+export async function getTutorCertifiedStudents(): Promise<TutorCertifiedStudent[]> {
+  return requestJson<TutorCertifiedStudent[]>("/client/workspace/tutors");
 }
 
 /** 获取家长自己发布的家教需求及申请人，只服务进行中弹窗，跟页面浏览列表分开请求。 */
 export async function getTutorApplications(): Promise<TutorDemand[]> {
-  return requestJson<TutorDemand[]>("/client/workspace/tutor/ongoing");
+  return requestJson<TutorDemand[]>("/client/workspace/ongoing/tutor");
 }
 
 export async function getClientAddresses(): Promise<ClientAddress[]> {

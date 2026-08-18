@@ -15,8 +15,8 @@ export const clientPartTimeJobsQueryKey = ["client-part-time-jobs"] as const;
 /** 客户端委托/狩猎列表查询键。 */
 export const clientHuntingTasksQueryKey = ["client-hunting-tasks"] as const;
 
-/** 客户端家教列表查询键（页面浏览用，不含进行中申请人详情）。 */
-export const clientTutorDemandsQueryKey = ["client-tutor-demands"] as const;
+/** 客户端家长可浏览的认证学生列表查询键。 */
+export const clientTutorCertifiedStudentsQueryKey = ["client-tutor-certified-students"] as const;
 
 /** 客户端家教进行中申请列表查询键（家长自己发布的需求 + 申请人，只服务进行中弹窗）。 */
 export const clientTutorApplicationsQueryKey = ["client-tutor-applications"] as const;

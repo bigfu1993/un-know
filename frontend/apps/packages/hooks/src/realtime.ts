@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { createClientRealtimeConnection } from "@unknown/api-client/realtime";
 import type { ClientRealtimeEvent } from "@unknown/api-client/realtime";
-import { clientHuntingTasksQueryKey, clientTutorDemandsQueryKey, clientWorkspaceQueryKey } from "./queryKeys";
+import { clientHuntingTasksQueryKey, clientPartTimeJobsQueryKey, clientWorkspaceQueryKey } from "./queryKeys";
 
 /** 进行中模块实时刷新配置。 */
 interface UseOngoingOrdersRealtimeOptions {
@@ -34,7 +34,7 @@ export function useOngoingOrdersRealtime({ enabled, sessionKey }: UseOngoingOrde
         void queryClient.invalidateQueries({ queryKey: clientHuntingTasksQueryKey });
       }
       if (event.bizType === "tutor") {
-        void queryClient.invalidateQueries({ queryKey: clientTutorDemandsQueryKey });
+        void queryClient.invalidateQueries({ queryKey: clientPartTimeJobsQueryKey });
       }
     }
 

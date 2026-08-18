@@ -96,7 +96,7 @@ export function App() {
     isHomeLoading,
     isHuntingTasksFetching,
     isPartTimeJobsFetching,
-    isTutorDemandsFetching,
+    isTutorCertifiedStudentsFetching,
     isWorkspaceFetching,
     ongoingOrdersError,
     ongoingOrdersResponse,
@@ -107,12 +107,12 @@ export function App() {
     refetchOngoingOrders,
     refetchPartTimeJobs,
     refetchTutorApplications,
-    refetchTutorDemands,
+    refetchTutorCertifiedStudents,
     refetchWorkspace,
     tutorApplicationsError,
     tutorApplicationsResponse,
-    tutorDemandsError,
-    tutorDemandsResponse,
+    tutorCertifiedStudentsError,
+    tutorCertifiedStudentsResponse,
     workspaceError,
     workspaceResponse
   } = useClientDataQueries({
@@ -122,11 +122,12 @@ export function App() {
       activeTab === "hunting" || isHuntingRecommendationOpen || isHuntingProjectOpen || isHuntingShortcutEnabled,
     // 进行中：只在悬浮"进行中"弹窗打开时才需要，弹窗徽标数字在首次打开前不准确（已知体验取舍）。
     isOngoingOrdersNeeded: isOngoingOpen,
+    // 兼职：家教是兼职的一种类型，兼职 tab 激活时学生角色会连带查到招募中的家教需求。
     isPartTimeTabActive: activeTab === "partTime",
     // 家教申请候选：进行中弹窗或其派生的申请列表/试课列表子弹窗任一打开时才需要。
     isTutorApplicationsNeeded: isOngoingOpen || isTutorApplicationOpen || isTutorTrialListOpen,
-    // 家教需求：家教 tab 或兼职 tab（兼职页同时展示试课兼职卡片）激活时才需要。
-    isTutorDemandsNeeded: activeTab === "tutor" || activeTab === "partTime",
+    // 家长可浏览认证学生列表：家教 tab 激活时才需要。
+    isTutorCertifiedStudentsNeeded: activeTab === "tutor",
     // 工作台聚合（钱包/商户看板/商户商品）：我的弹窗、钱包页、兼职 tab（商户看板）或商户经营 tab 任一激活时才需要。
     isWorkspaceNeeded:
       isMineOpen || activePage === "wallet" || activeTab === "partTime" || activeTab === "merchantSales",
@@ -160,14 +161,14 @@ export function App() {
     void refetchOngoingOrders();
     void refetchPartTimeJobs();
     void refetchHuntingTasks();
-    void refetchTutorDemands();
+    void refetchTutorCertifiedStudents();
     void refetchTutorApplications();
   }, [
     refetchHuntingTasks,
     refetchOngoingOrders,
     refetchPartTimeJobs,
     refetchTutorApplications,
-    refetchTutorDemands,
+    refetchTutorCertifiedStudents,
     refetchWorkspace
   ]);
   /** 仅刷新委托/狩猎列表，用于接单、报价和狩猎轮询。 */
@@ -187,12 +188,12 @@ export function App() {
     }
 
     if (activeTab === "tutor") {
-      void refetchTutorDemands();
+      void refetchTutorCertifiedStudents();
       return;
     }
 
     void refetchWorkspace();
-  }, [activeTab, refetchHuntingTasks, refetchPartTimeJobs, refetchTutorDemands, refetchWorkspace]);
+  }, [activeTab, refetchHuntingTasks, refetchPartTimeJobs, refetchTutorCertifiedStudents, refetchWorkspace]);
   const {
     changeProfileDraft: handleProfileDraftChange,
     currentAddressDraft,
@@ -278,6 +279,7 @@ export function App() {
     mergedHuntingTasks,
     ongoingOrders,
     orderDetailOrders,
+    partTimeJobs,
     recommendedHuntingTasks,
     roleOrders,
     tutorApplicationCandidates,
@@ -289,8 +291,8 @@ export function App() {
     workspaceData: {
       huntingTasks: huntingTasksResponse,
       orders: ongoingOrdersResponse,
-      tutorApplications: tutorApplicationsResponse,
-      tutorDemands: tutorDemandsResponse
+      partTimeJobs: partTimeJobsResponse,
+      tutorApplications: tutorApplicationsResponse
     }
   });
   const activeTutorApplicationCandidates = useMemo(
@@ -366,7 +368,7 @@ export function App() {
     ongoingOrdersError ??
     partTimeJobsError ??
     huntingTasksError ??
-    tutorDemandsError ??
+    tutorCertifiedStudentsError ??
     tutorApplicationsError ??
     addressError;
   // 进行中/兼职/委托-狩猎/家教/家教申请/工作台这 6 类业务查询已改为按 tab、弹窗等真实消费场景按需加载，
@@ -383,7 +385,7 @@ export function App() {
     isAuthenticated,
     isMineRoute,
     isSettingsRoute,
-    isWorkspaceFetching: isWorkspaceFetching || isPartTimeJobsFetching || isHuntingTasksFetching || isTutorDemandsFetching,
+    isWorkspaceFetching: isWorkspaceFetching || isPartTimeJobsFetching || isHuntingTasksFetching || isTutorCertifiedStudentsFetching,
     refetchWorkspace: refetchPrimaryTabData
   });
 
@@ -624,7 +626,7 @@ export function App() {
           type: "success"
         });
         void refetchHome();
-        void refetchTutorDemands();
+        void refetchTutorCertifiedStudents();
       },
       onError: (error) => {
         showMessage(getErrorMessage(error, "家教开关切换失败，请稍后重试。"), { type: "error" });
@@ -792,8 +794,7 @@ export function App() {
   const workspaceData = {
     ...workspaceResponse,
     huntingTasks: huntingTasksResponse,
-    partTimeJobs: partTimeJobsResponse,
-    tutorDemands: tutorDemandsResponse
+    partTimeJobs
   };
   const hasPrimaryContextCard = Boolean(profileRequirement) && !activePage && !isSettingsRoute && !isMineRoute;
   const isPrimaryListShell =
@@ -896,7 +897,7 @@ export function App() {
               }
             />
             <Route path="/marketing" element={<Marketing />} />
-            <Route path="/edu" element={<Tutor tutorDemands={workspaceData.tutorDemands} />} />
+            <Route path="/edu" element={<Tutor students={tutorCertifiedStudentsResponse} />} />
             <Route path="*" element={<Navigate replace to={getDefaultRouteForRole(role)} />} />
           </Routes>
 

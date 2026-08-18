@@ -108,23 +108,39 @@ public class TutorWorkspaceAppService {
     this.support = support;
   }
 
-  /**
-   * 获取当前角色视角下的家教列表。
-   *
-   * @param role 当前角色
-   * @param authorization 登录访问令牌，可为空
-   * @return 家教需求或可公开家教学生列表
-   */
-  public List<Object> listTutorDemands(ClientRole role, String authorization) {
-    Long currentUserId = clientSessionService.userIdOrNull(authorization);
-    return tutorDemands(role, currentUserId);
-  }
-
-
   /** {@link #tutorApplications} 的接口层入口，从登录态解析当前用户 ID。 */
   public List<TutorDemand> listTutorApplications(ClientRole role, String authorization) {
     Long currentUserId = clientSessionService.userIdOrNull(authorization);
     return tutorApplications(role, currentUserId);
+  }
+
+  /**
+   * 学生端招募中的家教需求，作为兼职列表聚合的一种类型，供 {@code /workspace/jobs} 拼装展示；
+   * 仅学生角色可见，其它角色返回空列表。
+   *
+   * @param role 当前角色
+   * @return 招募中的家教需求列表
+   */
+  public List<TutorDemand> recruitingTutorDemandsForJobs(ClientRole role) {
+    if (role != ClientRole.student) {
+      return List.of();
+    }
+
+    return publishedTutorDemands();
+  }
+
+  /**
+   * 家长端可浏览的认证学生列表，仅家长角色可见，其它角色返回空列表。
+   *
+   * @param role 当前角色
+   * @return 已开启家教曝光、认证通过的学生原始数据列表
+   */
+  public List<Object> listTutorCertifiedStudents(ClientRole role) {
+    if (role != ClientRole.parent) {
+      return List.of();
+    }
+
+    return new ArrayList<>(tutorExposedStudents());
   }
 
 
@@ -698,8 +714,8 @@ public class TutorWorkspaceAppService {
     if (role == ClientRole.parent) {
       return jdbcTemplate.query(
           """
-              SELECT td.public_id, td.title, td.child, td.subject, td.budget, td.status, td.address_label,
-                     td.period_start, td.period_end, td.period_dates,
+              SELECT td.public_id, td.title, td.child, td.subject, td.school, td.budget, td.status, td.address_label,
+                     td.description, td.period_start, td.period_end, td.period_dates,
                      (
                        SELECT COUNT(*)
                        FROM tutor_applicant ta
@@ -869,6 +885,23 @@ public class TutorWorkspaceAppService {
                 .canOpenTutorApplications(canManageRecruitingDemand && applicantCount > 0)
                 .canRejectTrial(false)
                 .canCancelTutorApplication(false)
+                .tutorDemand(new TutorDemand(
+                    rs.getString("public_id"),
+                    rs.getString("child"),
+                    rs.getString("subject"),
+                    rs.getString("school"),
+                    rs.getString("budget"),
+                    tutorDemandStatusLabel(status),
+                    support.defaultText(rs.getString("title"), rs.getString("child") + rs.getString("subject") + "家教"),
+                    support.defaultText(rs.getString("description"), "暂无描述"),
+                    support.defaultText(rs.getString("address_label"), rs.getString("school")),
+                    tutorPeriod(rs.getString("period_start"), rs.getString("period_end")),
+                    support.splitTags(rs.getString("period_dates")),
+                    // 家长自己发布的需求，发布方就是自己，卡片不展示这个信息，昵称留空即可。
+                    new UserNickname("", ""),
+                    "tutorDemand",
+                    List.of()
+                ))
                 .build();
           },
           currentUserId
@@ -880,7 +913,8 @@ public class TutorWorkspaceAppService {
             SELECT ta.public_id, ta.status, ta.availability, ta.trial_fee_cents,
                    COALESCE(NULLIF(trial_schedule.schedule_summary, ''), '') AS trial_schedule,
                    COALESCE(NULLIF(service_schedule.schedule_summary, ''), '') AS service_schedule,
-                   td.title, td.subject, td.budget, td.status AS demand_status, td.address_label, td.period_start, td.period_end, td.period_dates,
+                   td.public_id AS demand_public_id, td.title, td.child, td.subject, td.school, td.budget,
+                   td.status AS demand_status, td.address_label, td.description, td.period_start, td.period_end, td.period_dates,
                    COALESCE(NULLIF(parent.nickname, ''), '未设置昵称') AS parent_nickname,
                    COALESCE(parent.phone, '') AS parent_phone
             FROM tutor_applicant ta
@@ -954,6 +988,22 @@ public class TutorWorkspaceAppService {
               .canOpenTutorApplications(false)
               .canRejectTrial(false)
               .canCancelTutorApplication(canCancelTutorApplication)
+              .tutorDemand(new TutorDemand(
+                  rs.getString("demand_public_id"),
+                  rs.getString("child"),
+                  rs.getString("subject"),
+                  rs.getString("school"),
+                  rs.getString("budget"),
+                  tutorDemandStatusLabel(rs.getString("demand_status")),
+                  support.defaultText(rs.getString("title"), rs.getString("child") + rs.getString("subject") + "家教"),
+                  support.defaultText(rs.getString("description"), "暂无描述"),
+                  support.defaultText(rs.getString("address_label"), rs.getString("school")),
+                  tutorPeriod(rs.getString("period_start"), rs.getString("period_end")),
+                  support.splitTags(rs.getString("period_dates")),
+                  new UserNickname(rs.getString("parent_nickname"), support.maskPhone(rs.getString("parent_phone"))),
+                  "tutorDemand",
+                  List.of()
+              ))
               .build();
         },
         currentUserId,
@@ -965,14 +1015,6 @@ public class TutorWorkspaceAppService {
     );
   }
 
-
-  public List<Object> tutorDemands(ClientRole role, Long currentUserId) {
-    if (role == ClientRole.parent) {
-      return new ArrayList<>(tutorExposedStudents());
-    }
-
-    return new ArrayList<>(publishedTutorDemands());
-  }
 
 
   /**

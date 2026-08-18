@@ -20,7 +20,7 @@ import {
   getHuntingTasks,
   getOngoingOrders,
   getTutorApplications,
-  getTutorDemands,
+  getTutorCertifiedStudents,
   getChatConversations,
   getChatMessages,
   getChatQuickActions,
@@ -77,7 +77,7 @@ import {
   clientOngoingOrdersQueryKey,
   clientPartTimeJobsQueryKey,
   clientTutorApplicationsQueryKey,
-  clientTutorDemandsQueryKey,
+  clientTutorCertifiedStudentsQueryKey,
   clientWorkspaceQueryKey,
   getRoleQueryKey
 } from "./queryKeys";
@@ -88,7 +88,7 @@ export {
   clientOngoingOrdersQueryKey,
   clientPartTimeJobsQueryKey,
   clientTutorApplicationsQueryKey,
-  clientTutorDemandsQueryKey,
+  clientTutorCertifiedStudentsQueryKey,
   clientWorkspaceQueryKey
 } from "./queryKeys";
 export { useOngoingOrdersRealtime } from "./realtime";
@@ -147,10 +147,11 @@ export function useHuntingTasks(role: Role, enabled = true) {
   });
 }
 
-export function useTutorDemands(role: Role, enabled = true) {
+/** 家长端可浏览的认证学生列表，仅家长角色调用。 */
+export function useTutorCertifiedStudents(role: Role, enabled = true) {
   return useQuery({
-    queryKey: getRoleQueryKey(clientTutorDemandsQueryKey, role),
-    queryFn: getTutorDemands,
+    queryKey: getRoleQueryKey(clientTutorCertifiedStudentsQueryKey, role),
+    queryFn: getTutorCertifiedStudents,
     enabled
   });
 }
@@ -329,7 +330,7 @@ export function usePublishTutorDemand() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });
       void queryClient.invalidateQueries({ queryKey: clientOngoingOrdersQueryKey });
-      void queryClient.invalidateQueries({ queryKey: clientTutorDemandsQueryKey });
+      void queryClient.invalidateQueries({ queryKey: clientPartTimeJobsQueryKey });
       void queryClient.invalidateQueries({ queryKey: clientTutorApplicationsQueryKey });
     }
   });
@@ -357,7 +358,7 @@ export function useCancelTutorApplication() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });
       void queryClient.invalidateQueries({ queryKey: clientOngoingOrdersQueryKey });
-      void queryClient.invalidateQueries({ queryKey: clientTutorDemandsQueryKey });
+      void queryClient.invalidateQueries({ queryKey: clientPartTimeJobsQueryKey });
       void queryClient.invalidateQueries({ queryKey: clientTutorApplicationsQueryKey });
     }
   });
@@ -374,7 +375,7 @@ export function useConfirmTutorTrial() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });
       void queryClient.invalidateQueries({ queryKey: clientOngoingOrdersQueryKey });
-      void queryClient.invalidateQueries({ queryKey: clientTutorDemandsQueryKey });
+      void queryClient.invalidateQueries({ queryKey: clientPartTimeJobsQueryKey });
       void queryClient.invalidateQueries({ queryKey: clientTutorApplicationsQueryKey });
     }
   });
@@ -388,7 +389,7 @@ export function useConfirmTutorTrialStart() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });
       void queryClient.invalidateQueries({ queryKey: clientOngoingOrdersQueryKey });
-      void queryClient.invalidateQueries({ queryKey: clientTutorDemandsQueryKey });
+      void queryClient.invalidateQueries({ queryKey: clientPartTimeJobsQueryKey });
       void queryClient.invalidateQueries({ queryKey: clientTutorApplicationsQueryKey });
     }
   });
@@ -402,7 +403,7 @@ export function useRequestTutorTrialEnd() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });
       void queryClient.invalidateQueries({ queryKey: clientOngoingOrdersQueryKey });
-      void queryClient.invalidateQueries({ queryKey: clientTutorDemandsQueryKey });
+      void queryClient.invalidateQueries({ queryKey: clientPartTimeJobsQueryKey });
       void queryClient.invalidateQueries({ queryKey: clientTutorApplicationsQueryKey });
     }
   });
@@ -419,7 +420,7 @@ export function useCompleteTutorTrialEnd() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });
       void queryClient.invalidateQueries({ queryKey: clientOngoingOrdersQueryKey });
-      void queryClient.invalidateQueries({ queryKey: clientTutorDemandsQueryKey });
+      void queryClient.invalidateQueries({ queryKey: clientPartTimeJobsQueryKey });
       void queryClient.invalidateQueries({ queryKey: clientTutorApplicationsQueryKey });
     }
   });
@@ -436,7 +437,7 @@ export function useHandleTutorWorkflowAction() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });
       void queryClient.invalidateQueries({ queryKey: clientOngoingOrdersQueryKey });
-      void queryClient.invalidateQueries({ queryKey: clientTutorDemandsQueryKey });
+      void queryClient.invalidateQueries({ queryKey: clientPartTimeJobsQueryKey });
       void queryClient.invalidateQueries({ queryKey: clientTutorApplicationsQueryKey });
     }
   });
@@ -450,7 +451,7 @@ export function useCancelTutorDemand() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });
       void queryClient.invalidateQueries({ queryKey: clientOngoingOrdersQueryKey });
-      void queryClient.invalidateQueries({ queryKey: clientTutorDemandsQueryKey });
+      void queryClient.invalidateQueries({ queryKey: clientPartTimeJobsQueryKey });
       void queryClient.invalidateQueries({ queryKey: clientTutorApplicationsQueryKey });
     }
   });
@@ -465,7 +466,7 @@ export function useUpdateTutorExposure() {
       void queryClient.invalidateQueries({ queryKey: ["client-home"] });
       void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });
       void queryClient.invalidateQueries({ queryKey: clientOngoingOrdersQueryKey });
-      void queryClient.invalidateQueries({ queryKey: clientTutorDemandsQueryKey });
+      void queryClient.invalidateQueries({ queryKey: clientTutorCertifiedStudentsQueryKey });
     }
   });
 }

@@ -5,7 +5,6 @@ import {
   getTutorTrialScheduleSummaryFromOrderDetail
 } from "@tools/tutorTrial";
 import { createTutorTaskModel } from "@tools/tutorTaskWorkflow";
-import { showMessage } from "@tools/messageToast";
 
 /** 进行中列表筛选类型。 */
 export type OngoingOrderFilter = "all" | "delegation" | "featured" | "hunting" | "tutor";
@@ -46,22 +45,6 @@ export interface OngoingOrderActionHandlers {
   onRequestComplete?: (order: ClientOrder) => void;
 }
 
-/**
- * 进行中列表内部即可闭环的提示类动作。
- * 家教专属的 6 个 handler（试课/正式雇佣日程、结算、取消申请）由 EduCard 自己承接，
- * 通用行只在渲染家教卡片时才会用到，因此在类型上标为可选，非家教行可以不传。
- */
-export interface OngoingOrderLocalActionHandlers {
-  onCancelTutorApplication?: (order: ClientOrder) => void;
-  onMessageOrder: (order: ClientOrder) => void;
-  onOpenServiceSchedule?: (order: ClientOrder) => void;
-  onOpenServiceSettlement?: (order: ClientOrder) => void;
-  onOpenServiceAvailability?: (order: ClientOrder, action: TutorServiceAvailabilityAction) => void;
-  onOpenCancelConfirmation: (config: ConfirmActionConfig) => void;
-  onOpenTrialResult?: (order: ClientOrder) => void;
-  onOpenTrialSchedule?: (order: ClientOrder) => void;
-}
-
 /** 获取进行中事项分类，未标记的订单默认归入优选。 */
 export function getOngoingOrderCategory(order: ClientOrder): Exclude<OngoingOrderFilter, "all"> {
   return order.category === "delegation" || order.category === "hunting" || order.category === "tutor"
@@ -72,11 +55,6 @@ export function getOngoingOrderCategory(order: ClientOrder): Exclude<OngoingOrde
 /** 获取进行中卡片正文详情，家教试课卡片隐藏流程说明。 */
 export function getOngoingOrderDisplayDetail(order: ClientOrder) {
   return getOngoingOrderCategory(order) === "tutor" ? getTutorTrialOrderDisplayDetail(order.detail) : order.detail;
-}
-
-/** 消息入口当前仅展示后续沟通能力提示，真实聊天接口接入后再替换为业务回调，两种卡片共用。 */
-export function showOngoingOrderMessagePlaceholder(order: ClientOrder) {
-  showMessage(`${order.title} 的消息能力后续接入。`, { type: "warning" });
 }
 
 /** 父端主任务动作需要落到当前正式雇佣的申请子任务。 */

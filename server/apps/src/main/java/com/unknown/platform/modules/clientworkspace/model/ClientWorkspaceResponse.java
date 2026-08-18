@@ -62,7 +62,11 @@ public record ClientWorkspaceResponse(
       Boolean canOpenTutorTrialList,
       Boolean canOpenTutorApplications,
       Boolean canRejectTrial,
-      Boolean canCancelTutorApplication
+      Boolean canCancelTutorApplication,
+      /** 家教卡片专用：展示所需的完整需求结构（含发布方昵称、原始描述等），非家教品类为 null；
+       *  不含申请人列表（{@code applicants} 恒为空），申请人详情由独立的
+       *  {@code GET /workspace/ongoing/tutor} 按需查询，避免进行中列表一次性预加载。 */
+      TutorDemand tutorDemand
   ) {
     /**
      * 创建 {@link ClientOrder} 构造器。
@@ -111,6 +115,7 @@ public record ClientWorkspaceResponse(
       private Boolean canOpenTutorApplications;
       private Boolean canRejectTrial;
       private Boolean canCancelTutorApplication;
+      private TutorDemand tutorDemand;
 
       private Builder() {
       }
@@ -285,6 +290,11 @@ public record ClientWorkspaceResponse(
         return this;
       }
 
+      public Builder tutorDemand(TutorDemand tutorDemand) {
+        this.tutorDemand = tutorDemand;
+        return this;
+      }
+
       /** 按当前已赋值的字段构造 {@link ClientOrder}，未设置字段保持 {@code null}。 */
       public ClientOrder build() {
         return new ClientOrder(
@@ -292,7 +302,7 @@ public record ClientWorkspaceResponse(
             phoneNumber, subject, address, periodDates, quoteAmount, quoteCount, trialCount, quoteActionLabel, quoteId,
             canCall, canMessage, canRequestCancel, canRequestComplete, canConfirmCancel,
             canConfirmComplete, canRepublish, canAgreeTrial, canOpenTrialResult, canOpenTrialSchedule,
-            canOpenTutorTrialList, canOpenTutorApplications, canRejectTrial, canCancelTutorApplication
+            canOpenTutorTrialList, canOpenTutorApplications, canRejectTrial, canCancelTutorApplication, tutorDemand
         );
       }
     }

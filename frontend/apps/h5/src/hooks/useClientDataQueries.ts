@@ -6,20 +6,20 @@ import {
   useOngoingOrders,
   usePartTimeJobs,
   useTutorApplications,
-  useTutorDemands
+  useTutorCertifiedStudents
 } from "@unknown/hooks";
 
 /** React Query 首次返回数据前使用的稳定空地址，避免 effect 因默认数组反复触发。 */
 const emptyClientAddresses: ClientAddress[] = [];
 
-/** React Query 首次返回兼职列表前使用的稳定空数组。 */
-const emptyPartTimeJobs: PartTimeJob[] = [];
+/** React Query 首次返回兼职列表前使用的稳定空数组：家教是兼职的一种类型，学生角色下会跟兼职岗位聚合在同一个数组返回。 */
+const emptyPartTimeJobs: Array<PartTimeJob | TutorDemand> = [];
 
 /** React Query 首次返回委托/狩猎列表前使用的稳定空数组。 */
 const emptyHuntingTasks: HuntingTask[] = [];
 
-/** React Query 首次返回家教列表前使用的稳定空数组。 */
-const emptyTutorDemands: Array<TutorDemand | TutorCertifiedStudent> = [];
+/** React Query 首次返回家长可浏览认证学生列表前使用的稳定空数组。 */
+const emptyTutorCertifiedStudents: TutorCertifiedStudent[] = [];
 
 /** React Query 首次返回家教进行中申请列表前使用的稳定空数组。 */
 const emptyTutorApplications: TutorDemand[] = [];
@@ -61,12 +61,12 @@ interface UseClientDataQueriesOptions {
   isHuntingDataNeeded: boolean;
   /** 进行中列表是否被当前 UI 需要：只在悬浮"进行中"弹窗打开时才查询，弹窗徽标数字随之延迟到首次打开后才准确。 */
   isOngoingOrdersNeeded: boolean;
-  /** 兼职列表是否被当前 UI 需要：只在兼职 tab 激活时查询。 */
+  /** 兼职列表是否被当前 UI 需要：只在兼职 tab 激活时查询；家教是兼职的一种类型，学生角色下家教需求也随这个查询一起返回。 */
   isPartTimeTabActive: boolean;
+  /** 家长可浏览认证学生列表是否被当前 UI 需要：家教 tab 激活时查询。 */
+  isTutorCertifiedStudentsNeeded: boolean;
   /** 家教申请候选列表是否被当前 UI 需要：进行中弹窗或其派生的申请/试课列表子弹窗任一打开时查询。 */
   isTutorApplicationsNeeded: boolean;
-  /** 家教需求列表是否被当前 UI 需要：家教 tab 或兼职 tab（兼职页同时展示试课兼职卡片）激活时查询。 */
-  isTutorDemandsNeeded: boolean;
   /** 工作台聚合数据（钱包、商户看板/商品）是否被当前 UI 需要：我的弹窗、钱包页、兼职 tab（商户看板）或商户经营 tab 任一激活时查询。 */
   isWorkspaceNeeded: boolean;
   /** 当前用户角色，用于区分角色级缓存。 */
@@ -84,7 +84,7 @@ export function useClientDataQueries({
   isOngoingOrdersNeeded,
   isPartTimeTabActive,
   isTutorApplicationsNeeded,
-  isTutorDemandsNeeded,
+  isTutorCertifiedStudentsNeeded,
   isWorkspaceNeeded,
   role,
   sessionKey
@@ -124,12 +124,12 @@ export function useClientDataQueries({
     refetch: refetchHuntingTasks
   } = useHuntingTasks(role, isAuthenticated && isHuntingDataNeeded);
   const {
-    data: tutorDemandsResponse = emptyTutorDemands,
-    error: tutorDemandsError,
-    isFetching: isTutorDemandsFetching,
-    isLoading: isTutorDemandsLoading,
-    refetch: refetchTutorDemands
-  } = useTutorDemands(role, isAuthenticated && isTutorDemandsNeeded);
+    data: tutorCertifiedStudentsResponse = emptyTutorCertifiedStudents,
+    error: tutorCertifiedStudentsError,
+    isFetching: isTutorCertifiedStudentsFetching,
+    isLoading: isTutorCertifiedStudentsLoading,
+    refetch: refetchTutorCertifiedStudents
+  } = useTutorCertifiedStudents(role, isAuthenticated && isTutorCertifiedStudentsNeeded);
   const {
     data: tutorApplicationsResponse = emptyTutorApplications,
     error: tutorApplicationsError,
@@ -160,8 +160,8 @@ export function useClientDataQueries({
     isPartTimeJobsLoading,
     isTutorApplicationsFetching,
     isTutorApplicationsLoading,
-    isTutorDemandsFetching,
-    isTutorDemandsLoading,
+    isTutorCertifiedStudentsFetching,
+    isTutorCertifiedStudentsLoading,
     isWorkspaceFetching,
     isWorkspaceLoading,
     ongoingOrdersError,
@@ -173,12 +173,12 @@ export function useClientDataQueries({
     refetchOngoingOrders,
     refetchPartTimeJobs,
     refetchTutorApplications,
-    refetchTutorDemands,
+    refetchTutorCertifiedStudents,
     refetchWorkspace,
     tutorApplicationsError,
     tutorApplicationsResponse,
-    tutorDemandsError,
-    tutorDemandsResponse,
+    tutorCertifiedStudentsError,
+    tutorCertifiedStudentsResponse,
     workspaceError,
     workspaceResponse
   };

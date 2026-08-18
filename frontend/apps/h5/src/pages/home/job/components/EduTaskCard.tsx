@@ -1,5 +1,18 @@
 import { FileText, MapPin, Tags } from "lucide-react";
 
+/**
+ * EduTaskCard 展示实际用到的最小字段集合：job 列表场景用 TutorTrialJob（字段更全）天然满足；
+ * 被其它家教场景（如进行中家教卡片）复用时，按这个更窄的形状适配真实数据即可，不需要凑出完整 TutorTrialJob。
+ */
+export interface EduTaskCardJob {
+  address: string;
+  description: string;
+  periodDates: string[];
+  publisher: { nickname: string };
+  subject: string;
+  title: string;
+}
+
 /** 试课标记片段，跟后端 tutorWageBudgetLabel 拼接格式保持一致。 */
 const TRIAL_REQUIRED_SEGMENT = "需要试课";
 
@@ -142,25 +155,29 @@ export function EduTrialApplyAction({
 }
 
 /**
- * 学生端家教兼职卡片，头部预算区域和底部操作区域均为插槽：日程/消息按钮固定内置在 footer，
+ * 家教场景通用卡片壳，头部预算区域和底部操作区域均为插槽：日程/消息按钮固定内置在 footer，
  * `budgetSlot`（预算展示内容，默认用 `EduJobBudget`）/`footer`（追加操作按钮，如试课申请）
- * 由调用方按具体业务场景装配，保持卡片壳可复用。
+ * 由调用方按具体业务场景装配；`job` 只需满足 `EduTaskCardJob` 的最小字段集合，
+ * 兼职列表用完整 TutorTrialJob，其它家教场景（如进行中家教卡片）按需适配真实数据传入即可。
  */
 export function EduTaskCard({
   budgetSlot,
+  className,
   footer,
   job
 }: {
   budgetSlot?: ReactNode;
+  className?: string;
   footer?: ReactNode;
-  job: TutorTrialJob;
+  job: EduTaskCardJob;
 }) {
   const [isScheduleViewOpen, setIsScheduleViewOpen] = useState(false);
   const periodDaysLabel = job.periodDates.length > 0 ? `${job.periodDates.length} 天` : "待定";
+  const rootClassName = ["flow-card", "edu-job-card-container", "grid", "gap-[6px]", "p-[14px]", className].filter(Boolean).join(" ");
 
   return (
     <>
-      <article className="flow-card edu-job-card-container grid gap-[6px] p-[14px]">
+      <article className={rootClassName}>
         <div className="edu-job-card-header card-title flex items-center justify-between gap-[10px]">
           <GraduationCap size={18} />
           <div className="edu-job-title-copy min-w-0 flex-1">

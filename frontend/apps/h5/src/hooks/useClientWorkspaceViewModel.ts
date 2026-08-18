@@ -10,16 +10,16 @@ interface UseClientWorkspaceViewModelOptions {
   workspaceData: {
     huntingTasks: HuntingTask[];
     orders: ClientOrder[];
-    /** 家长自己发布的家教需求 + 申请人，只服务进行中弹窗，跟页面浏览列表 tutorDemands 分开请求。 */
+    /** 兼职列表：家教是兼职的一种类型，学生角色下会跟兼职岗位聚合在同一个数组返回，字段结构不同。 */
+    partTimeJobs: Array<PartTimeJob | TutorDemand>;
+    /** 家长自己发布的家教需求 + 申请人，只服务进行中弹窗，跟页面浏览列表 partTimeJobs 分开请求。 */
     tutorApplications: TutorDemand[];
-    /** 家教列表浏览：学生角色是 TutorDemand 需求，家长角色是 TutorCertifiedStudent 原始学生数据。 */
-    tutorDemands: Array<TutorDemand | TutorCertifiedStudent>;
   };
 }
 
-/** 判断家教列表条目是否是家长端浏览的原始认证学生数据，而不是家教需求。 */
-export function isTutorCertifiedStudent(demand: TutorDemand | TutorCertifiedStudent): demand is TutorCertifiedStudent {
-  return "tutor_certification" in demand;
+/** 判断兼职列表条目是否是家教需求，而不是普通兼职岗位。 */
+export function isTutorDemand(job: PartTimeJob | TutorDemand): job is TutorDemand {
+  return "applicants" in job;
 }
 
 /** 家教品类归档终态：需求主状态和申请细分状态各自的已结束/已取消，加上申请细分状态特有的
@@ -67,10 +67,14 @@ export function useClientWorkspaceViewModel({
     ],
     [publishedHuntingTasks, workspaceData.huntingTasks]
   );
+  const partTimeJobs: PartTimeJob[] = useMemo(
+    () => workspaceData.partTimeJobs.filter((job): job is PartTimeJob => !isTutorDemand(job)),
+    [workspaceData.partTimeJobs]
+  );
   const tutorTrialJobs: TutorTrialJob[] = useMemo(
     () =>
-      workspaceData.tutorDemands
-        .filter((demand): demand is TutorDemand => !isTutorCertifiedStudent(demand) && demand.sourceType !== "tutorStudent")
+      workspaceData.partTimeJobs
+        .filter((job): job is TutorDemand => isTutorDemand(job) && job.sourceType !== "tutorStudent")
         .map((demand) => ({
           address: demand.addressLabel ?? demand.school,
           budget: getTutorDemandBudgetLabel(demand.budget),
@@ -85,7 +89,7 @@ export function useClientWorkspaceViewModel({
           subject: demand.subject,
           title: demand.title ?? `${demand.child}${demand.subject}家教`
         })),
-    [workspaceData.tutorDemands]
+    [workspaceData.partTimeJobs]
   );
   const tutorApplicationCandidates: TutorApplicationCandidate[] = useMemo(
     () =>
@@ -125,6 +129,7 @@ export function useClientWorkspaceViewModel({
     mergedHuntingTasks,
     ongoingOrders,
     orderDetailOrders,
+    partTimeJobs,
     recommendedHuntingTasks,
     roleOrders,
     tutorApplicationCandidates,
