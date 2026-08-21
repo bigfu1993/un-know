@@ -5,7 +5,7 @@ import { getRouteForTab } from "@h5/router/paths";
 /**
  * 狩猎快捷推荐流程入参。isHuntingShortcutEnabled/huntingShortcutProject 这两个状态需要在
  * useClientDataQueries（判断是否要连带查委托/狩猎数据）之前就绪，所以状态本身仍由调用方
- * （App.tsx）持有，这个 hook 只接收受控状态 + setter，只负责行为编排，不拥有状态。
+ * （HomeProvider）持有，这个 hook 只接收受控状态 + setter，只负责行为编排，不拥有状态。
  */
 interface UseHuntingShortcutFlowOptions {
   createHuntingProjectMutation: ReturnType<typeof useCreateHuntingProject>;

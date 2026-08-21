@@ -6,6 +6,7 @@ declare global {
   type CSSProperties = import("react").CSSProperties;
   type LucideIcon = import("lucide-react").LucideIcon;
   type StoreApi<T> = import("zustand/vanilla").StoreApi<T>;
+  type RouteObject = import("react-router-dom").RouteObject;
 
   type ClientOrder = import("@unknown/domain").ClientOrder;
   type ClientModuleKey = import("@unknown/domain").ClientModuleKey;
@@ -72,7 +73,6 @@ declare global {
   type PublishOverlayHostContextValue = import("@app-types/publish").PublishOverlayHostContextValue;
   type PublishOverlayProviderProps = import("@app-types/publish").PublishOverlayProviderProps;
   type PublishOverlayType = import("@app-types/overlay").PublishOverlayType;
-  type ClientRoutesProps = import("@app-types/routes").ClientRoutesProps;
   type ClientAddress = import("@unknown/domain").ClientAddress;
   type ClientAddressRequest = import("@unknown/domain").ClientAddressRequest;
 

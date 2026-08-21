@@ -83,7 +83,7 @@ interface UseClientDataQueriesOptions {
 
 /** 聚合 H5 根组件需要的真实接口查询，避免根组件直接维护多组查询默认值。业务列表查询默认按需懒加载，
  *  只在真正消费该数据的 tab/弹窗激活时才 enabled，不再统一靠登录态一个开关全量预加载；具体触发条件
- *  见各 enabled 参数注释，由调用方（App 根组件）按真实 UI 状态计算。 */
+ *  见各 enabled 参数注释，由调用方（HomeProvider）按真实 UI 状态计算。 */
 export function useClientDataQueries({
   isAuthenticated,
   isHuntingDataNeeded,

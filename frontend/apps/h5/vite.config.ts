@@ -8,6 +8,7 @@ export default defineConfig({
     react(),
     AutoImport({
       dts: path.resolve(__dirname, "src/auto-imports.d.ts"),
+      dtsMode: "overwrite",
       dirs: [
         "src/components/**",
         "src/db/*.ts",

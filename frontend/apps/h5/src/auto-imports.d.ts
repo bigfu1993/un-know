@@ -29,12 +29,13 @@ declare global {
   const ClipboardCheck: typeof import('lucide-react').ClipboardCheck
   const Commission: typeof import('./pages/home/commission/index').Commission
   const CommissionAmount: typeof import('./pages/home/commission/components/CommissionAmount').CommissionAmount
+  const CommissionRoute: typeof import('./pages/home/components/RouteEntries').CommissionRoute
   const CommissionTaskCard: typeof import('./pages/home/commission/components/CommissionTaskCard').CommissionTaskCard
   const CommissionTaskDetail: typeof import('./pages/home/commission/components/CommissionTaskDetail').CommissionTaskDetail
   const ConfirmAction: typeof import('./components/ConfirmAction/index').ConfirmAction
   const Crosshair: typeof import('lucide-react').Crosshair
   const DataErrorScreen: typeof import('./pages/home/auth/components/AppStateScreens/index').DataErrorScreen
-  const DemandCard: typeof import('./pages/home/edu/components/DemandCard').DemandCard
+  const DefaultRoute: typeof import('./pages/home/components/RouteEntries').DefaultRoute
   const EduJobBudget: typeof import('./pages/home/job/components/EduTaskCard').EduJobBudget
   const EduTaskCard: typeof import('./pages/home/job/components/EduTaskCard').EduTaskCard
   const EduTrialApplyAction: typeof import('./pages/home/job/components/EduTaskCard').EduTrialApplyAction
@@ -49,37 +50,37 @@ declare global {
   const Header: typeof import('./components/AppShell/index').Header
   const Heart: typeof import('lucide-react').Heart
   const Home: typeof import('lucide-react').Home
+  const HomePage: typeof import('./pages/home/index').HomePage
+  const HomeProvider: typeof import('./pages/home/provider').HomeProvider
   const HuntingCertification: typeof import('./pages/home/auth/components/Mine/components/HuntingCertification').HuntingCertification
   const HuntingCertificationCard: typeof import('./components/HuntingCertificationCard/index').HuntingCertificationCard
   const HuntingCertificationPrompt: typeof import('./pages/home/commission/components/HuntingCertificationPrompt').HuntingCertificationPrompt
   const HuntingProject: typeof import('./components/HuntingProject/index').HuntingProject
-  const HuntingRecommendation: typeof import('./pages/home/auth/components/HuntingRecommendation').HuntingRecommendation
   const HuntingShortcut: typeof import('./pages/home/auth/components/HuntingShortcut').HuntingShortcut
   const InitialLoadingScreen: typeof import('./pages/home/auth/components/AppStateScreens/index').InitialLoadingScreen
+  const JobRoute: typeof import('./pages/home/components/RouteEntries').JobRoute
   const KeyRound: typeof import('lucide-react').KeyRound
   const ListFilters: typeof import('./pages/home/edu/components/ListFilters').ListFilters
   const LogOut: typeof import('lucide-react').LogOut
   const Login: typeof import('./pages/login/index').Login
   const LoginForm: typeof import('./pages/login/components/LoginForm').LoginForm
   const LoginRegisterCard: typeof import('./pages/login/components/LoginRegisterCard').LoginRegisterCard
+  const LoginRoute: typeof import('./pages/home/auth/routes').LoginRoute
   const Marketing: typeof import('./pages/marketing/index').Marketing
   const Megaphone: typeof import('lucide-react').Megaphone
   const MerchantSales: typeof import('./pages/merchant-sales/index').MerchantSales
+  const MerchantSalesRoute: typeof import('./pages/home/components/RouteEntries').MerchantSalesRoute
   const MessageCircle: typeof import('lucide-react').MessageCircle
   const MessageToast: typeof import('./ui/MessageToast/index').MessageToast
   const Metric: typeof import('./components/PageWidgets/index').Metric
   const Mine: typeof import('./pages/mine/index').Mine
-  const MinePopover: typeof import('./pages/home/auth/components/MinePopover').MinePopover
+  const MineRoute: typeof import('./pages/home/auth/routes').MineRoute
   const MineShortcut: typeof import('./pages/home/auth/components/MineShortcut').MineShortcut
   const Modal: typeof import('./ui/Modal/index').Modal
   const Navigate: typeof import('react-router-dom').Navigate
   const NicknameEditor: typeof import('./pages/settings/components/SettingsPanels').NicknameEditor
   const OngoingHuntings: typeof import('./pages/home/auth/components/OngoingHuntings/index').OngoingHuntings
-  const OngoingOrderActions: typeof import('./pages/home/auth/components/OngoingOrders/components/OrderActions').OngoingOrderActions
-  const OngoingOrderStatus: typeof import('./pages/home/auth/components/OngoingOrders/components/OrderActions').OngoingOrderStatus
   const OngoingOrders: typeof import('./pages/home/auth/components/OngoingOrders/index').OngoingOrders
-  const OngoingOrdersList: typeof import('./pages/home/auth/components/OngoingOrders/index').OngoingOrdersList
-  const OngoingOrdersModal: typeof import('./pages/home/auth/components/OngoingOrdersModal').OngoingOrdersModal
   const OngoingQuote: typeof import('./pages/home/commission/components/OngoingQuote').OngoingQuote
   const OngoingShortcut: typeof import('./pages/home/auth/components/OngoingShortcut').OngoingShortcut
   const OrderActions: typeof import('./pages/home/auth/components/OngoingOrders/components/OrderActions').OrderActions
@@ -112,38 +113,15 @@ declare global {
   const SectionHeader: typeof import('./components/PageWidgets/index').SectionHeader
   const ServiceSettlement: typeof import('./pages/home/auth/components/OngoingOrders/components/TutorWorkflowModals').ServiceSettlement
   const Settings: typeof import('lucide-react').Settings
+  const SettingsRoute: typeof import('./pages/home/auth/routes').SettingsRoute
   const SettingsView: typeof import('./pages/settings/index').SettingsView
   const ShieldCheck: typeof import('lucide-react').ShieldCheck
+  const ShopRoute: typeof import('./pages/home/components/RouteEntries').ShopRoute
   const ShoppingBag: typeof import('lucide-react').ShoppingBag
   const Smartphone: typeof import('lucide-react').Smartphone
   const Store: typeof import('lucide-react').Store
   const StrictMode: typeof import('react').StrictMode
   const Suspense: typeof import('react').Suspense
-  const TUTOR_APPLICATION_PENDING_STATUS: typeof import('./tools/tutorTrial').TUTOR_APPLICATION_PENDING_STATUS
-  const TUTOR_DEMAND_IN_PROGRESS_STATUS: typeof import('./tools/tutorTrial').TUTOR_DEMAND_IN_PROGRESS_STATUS
-  const TUTOR_FORMAL_SERVICE_LEGACY_STATUS: typeof import('./tools/tutorTrial').TUTOR_FORMAL_SERVICE_LEGACY_STATUS
-  const TUTOR_FORMAL_SERVICE_RUNNING_LEGACY_STATUS: typeof import('./tools/tutorTrial').TUTOR_FORMAL_SERVICE_RUNNING_LEGACY_STATUS
-  const TUTOR_FORMAL_SERVICE_STATUS: typeof import('./tools/tutorTrial').TUTOR_FORMAL_SERVICE_STATUS
-  const TUTOR_REJECTED_LEGACY_STATUS: typeof import('./tools/tutorTrial').TUTOR_REJECTED_LEGACY_STATUS
-  const TUTOR_REJECTED_STATUS: typeof import('./tools/tutorTrial').TUTOR_REJECTED_STATUS
-  const TUTOR_SERVICE_CONFIRMING_LEGACY_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_CONFIRMING_LEGACY_STATUS
-  const TUTOR_SERVICE_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_CONFIRMING_STATUS
-  const TUTOR_SERVICE_END_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_END_CONFIRMING_STATUS
-  const TUTOR_SERVICE_INVALID_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_INVALID_STATUS
-  const TUTOR_SERVICE_SCHEDULE_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_SCHEDULE_CONFIRMING_STATUS
-  const TUTOR_SERVICE_SCHEDULE_PENDING_LEGACY_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_SCHEDULE_PENDING_LEGACY_STATUS
-  const TUTOR_SERVICE_SCHEDULE_PENDING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SERVICE_SCHEDULE_PENDING_STATUS
-  const TUTOR_SETTLEMENT_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SETTLEMENT_CONFIRMING_STATUS
-  const TUTOR_SETTLEMENT_REVISING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SETTLEMENT_REVISING_STATUS
-  const TUTOR_SYSTEM_SETTLING_STATUS: typeof import('./tools/tutorTrial').TUTOR_SYSTEM_SETTLING_STATUS
-  const TUTOR_TRIALING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIALING_STATUS
-  const TUTOR_TRIAL_CONFIRMING_LEGACY_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_CONFIRMING_LEGACY_STATUS
-  const TUTOR_TRIAL_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_CONFIRMING_STATUS
-  const TUTOR_TRIAL_ENDED_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_ENDED_STATUS
-  const TUTOR_TRIAL_END_CONFIRMING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_END_CONFIRMING_STATUS
-  const TUTOR_TRIAL_RESULT_PROCESSING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_RESULT_PROCESSING_STATUS
-  const TUTOR_TRIAL_SETTLED_SERVICE_PENDING_LEGACY_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_SETTLED_SERVICE_PENDING_LEGACY_STATUS
-  const TUTOR_TRIAL_SETTLED_SERVICE_PENDING_STATUS: typeof import('./tools/tutorTrial').TUTOR_TRIAL_SETTLED_SERVICE_PENDING_STATUS
   const TrialScheduleCalendar: typeof import('./components/TrialScheduleCalendar/index').TrialScheduleCalendar
   const TrialSchedulePreview: typeof import('./pages/home/auth/components/OngoingOrders/components/TutorWorkflowModals').TrialSchedulePreview
   const TrialSettlementConfirm: typeof import('./pages/home/auth/components/OngoingOrders/components/TutorWorkflowModals').TrialSettlementConfirm
@@ -158,9 +136,8 @@ declare global {
   const TutorCertificationInfo: typeof import('./components/TutorCertificationInfo/index').TutorCertificationInfo
   const TutorDemandStatus: typeof import('./db/tutorStatus').TutorDemandStatus
   const TutorQualificationInfo: typeof import('./pages/settings/components/SettingsPanels').TutorQualificationInfo
-  const TutorStatus: typeof import('./db/tutorStatus').TutorStatus
+  const TutorRoute: typeof import('./pages/home/components/RouteEntries').TutorRoute
   const TutorSubject: typeof import('./db/tutorSubject').TutorSubject
-  const TutorTrialJobCard: typeof import('./components/PageWidgets/index').TutorTrialJobCard
   const TutorTrialList: typeof import('./pages/home/edu/components/TutorApplications').TutorTrialList
   const TutorTrialSchedule: typeof import('./components/TutorTrialSchedule/index').TutorTrialSchedule
   const UnauthenticatedScreen: typeof import('./pages/home/auth/components/AppStateScreens/index').UnauthenticatedScreen
@@ -231,10 +208,6 @@ declare global {
   const getHuntingCertificationDataFromDraft: typeof import('./components/HuntingCertificationCard/model').getHuntingCertificationDataFromDraft
   const getHuntingFulfillmentContact: typeof import('./pages/home/commission/model').getHuntingFulfillmentContact
   const getHuntingHistoryOrders: typeof import('./pages/home/commission/model').getHuntingHistoryOrders
-  const getHuntingOngoingAmountLabel: typeof import('./pages/home/commission/model').getHuntingOngoingAmountLabel
-  const getHuntingOngoingOrders: typeof import('./pages/home/commission/model').getHuntingOngoingOrders
-  const getHuntingOngoingStatus: typeof import('./pages/home/commission/model').getHuntingOngoingStatus
-  const getHuntingQuoteActionLabel: typeof import('./pages/home/commission/model').getHuntingQuoteActionLabel
   const getHuntingTaskAmountText: typeof import('./pages/home/commission/model').getHuntingTaskAmountText
   const getHuntingTaskPublishTimeText: typeof import('./pages/home/commission/model').getHuntingTaskPublishTimeText
   const getLatestLocalPublishInfoDraft: typeof import('./tools/publishInfo').getLatestLocalPublishInfoDraft
@@ -295,6 +268,7 @@ declare global {
   const hasStoredPendingRegistration: typeof import('./shared/clientPageModel').hasStoredPendingRegistration
   const hasValidCounterQuoteAmount: typeof import('./pages/home/commission/model').hasValidCounterQuoteAmount
   const hideMessage: typeof import('./tools/messageToast').hideMessage
+  const homeRoute: typeof import('./pages/home/routes').homeRoute
   const huntingCertificationStatusLabels: typeof import('./components/HuntingCertificationCard/model').huntingCertificationStatusLabels
   const isCommissionListVisible: typeof import('./pages/home/commission/model').isCommissionListVisible
   const isCommissionTaskLocked: typeof import('./pages/home/commission/model').isCommissionTaskLocked
@@ -359,7 +333,6 @@ declare global {
   const profileDraftToClientAddressRequest: typeof import('./shared/clientPageModel').profileDraftToClientAddressRequest
   const profileRequirementTemplates: typeof import('./shared/clientPageModel').profileRequirementTemplates
   const registrationProfileTemplates: typeof import('./shared/clientPageModel').registrationProfileTemplates
-  const renderOngoingOrderStatus: typeof import('./components/OngoingOrdersList/index').renderOngoingOrderStatus
   const roleLabels: typeof import('@unknown/domain').roleLabels
   const roles: typeof import('./shared/clientPageModel').roles
   const saveLocalPasswordCredential: typeof import('./tools/localAuth').saveLocalPasswordCredential
@@ -423,6 +396,8 @@ declare global {
   const useFloatingActionsProps: typeof import('./pages/home/auth/hooks/useFloatingActionsProps').useFloatingActionsProps
   const useGlobalStore: typeof import('./store/global').useGlobalStore
   const useGlobalUser: typeof import('./store/global').useGlobalUser
+  const useHomeRuntime: typeof import('./pages/home/runtime').useHomeRuntime
+  const useHomeRuntimeContext: typeof import('./pages/home/provider').useHomeRuntimeContext
   const useHuntingShortcutFlow: typeof import('./hooks/useHuntingShortcutFlow').useHuntingShortcutFlow
   const useHuntingTaskActions: typeof import('./pages/home/commission/hooks/useHuntingTaskActions').useHuntingTaskActions
   const useId: typeof import('react').useId
@@ -579,9 +554,6 @@ declare global {
   // @ts-ignore
   export type { PublishOverlayDraftState, PublishOverlayDraftAction, PublishOverlayActions, PublishOverlayHostContextValue, PublishOverlayProviderProps } from './types/publish'
   import('./types/publish')
-  // @ts-ignore
-  export type { ClientRoutesProps } from './types/routes'
-  import('./types/routes')
   // @ts-ignore
   export type { ChildProfileOption, TutorTrialJob, TutorApplicationCandidate, ConfirmTutorTrialPayload, CompleteTutorTrialEndPayload, TutorWorkflowActionPayload, TutorWorkflowAction, TutorWorkflowActionRequest } from './types/tutor-workflow'
   import('./types/tutor-workflow')

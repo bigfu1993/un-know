@@ -1,11 +1,6 @@
-/** 未登录时的根路由：只暴露登录页，其它路径统一重定向到登录页。 */
+/** 未登录一级页面；路由匹配和兜底重定向统一由 App 负责。 */
 export function UnauthenticatedScreen({ onLoginSuccess }: { onLoginSuccess: (session: LoginResponse) => void }) {
-  return (
-    <Routes>
-      <Route path="/login" element={<Login onLoginSuccess={onLoginSuccess} />} />
-      <Route path="*" element={<Navigate replace to="/login" />} />
-    </Routes>
-  );
+  return <Login onLoginSuccess={onLoginSuccess} />;
 }
 
 /** 真实接口连接失败时的整屏替代页，提供退出重登入口。 */

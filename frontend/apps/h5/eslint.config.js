@@ -47,6 +47,12 @@ export default tseslint.config(
     }
   },
   {
+    files: ["src/**/provider.tsx"],
+    rules: {
+      "react-refresh/only-export-components": "off"
+    }
+  },
+  {
     files: ["*.config.{js,cjs,mjs,ts}", "postcss.config.cjs", "tailwind.config.cjs"],
     languageOptions: {
       globals: {
