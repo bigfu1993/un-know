@@ -1,4 +1,4 @@
-import { useGlobalUser } from "@h5/store/global";
+import { useGlobalUser } from "@h5/globalProvider";
 import { useSubmitHuntingCertification } from "@unknown/hooks";
 import { getFilledProfileDraft } from "@shared/clientPageModel";
 import { normalizeByKey, validateByKey } from "@tools/validation";

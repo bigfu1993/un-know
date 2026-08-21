@@ -1,4 +1,4 @@
-import { useGlobalUser } from "@h5/store/global";
+import { useGlobalUser } from "@h5/globalProvider";
 import { getChildProfileOptions } from "@shared/clientPageModel";
 import { showMessage } from "@tools/messageToast";
 import {

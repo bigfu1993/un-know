@@ -1,4 +1,4 @@
-import { useGlobalUser } from "@h5/store/global";
+import { useGlobalUser } from "@h5/globalProvider";
 import { usePublishOverlayActions } from "@h5/overlays/publish/context";
 import { useTutorOverlayActions } from "@h5/overlays/tutor/context";
 

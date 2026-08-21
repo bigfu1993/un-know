@@ -1,5 +1,5 @@
 import "./index.less";
-import { useGlobalStore, useGlobalUser } from "@h5/store/global";
+import { useGlobalUser, useGlobalUserActions } from "@h5/globalProvider";
 import {
   AddressEditor,
   NicknameEditor,
@@ -33,9 +33,7 @@ const emptyClientAddresses: ClientAddress[] = [];
 
 export function SettingsView({ onBack }: { onBack: () => void }) {
   const { phone, profileDraft, nickname, role, session } = useGlobalUser();
-  const setUserNickname = useGlobalStore((state) => state.setUserNickname);
-  const setUserProfileDraft = useGlobalStore((state) => state.setUserProfileDraft);
-  const setUserPhone = useGlobalStore((state) => state.setUserPhone);
+  const { setUserNickname, setUserPhone, setUserProfileDraft } = useGlobalUserActions();
   const addressTemplate = registrationProfileTemplates[role];
   const { data: clientAddresses = emptyClientAddresses, error: addressError, isLoading: isAddressLoading } = useClientAddresses(true, session?.accessToken);
   const createAddressMutation = useCreateClientAddress();

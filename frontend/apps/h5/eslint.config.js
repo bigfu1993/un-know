@@ -47,7 +47,7 @@ export default tseslint.config(
     }
   },
   {
-    files: ["src/**/provider.tsx"],
+    files: ["src/**/provider.tsx", "src/**/*Provider.tsx"],
     rules: {
       "react-refresh/only-export-components": "off"
     }

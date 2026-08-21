@@ -1,6 +1,6 @@
 import "./index.less";
 import { useTutorOverlayActions } from "@h5/overlays/tutor/context";
-import { useGlobalUser } from "@h5/store/global";
+import { useGlobalUser } from "@h5/globalProvider";
 
 /** 所有角色共用的账户中心页面，跨页面跳转由 App 统一承接。 */
 export function Mine({

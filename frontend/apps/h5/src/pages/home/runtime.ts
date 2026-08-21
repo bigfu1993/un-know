@@ -1,4 +1,4 @@
-import { useGlobalStore, useGlobalUser } from "@h5/store/global";
+import { useGlobalUser, useGlobalUserActions } from "@h5/globalProvider";
 import { isAuthSessionExpiredError } from "@unknown/api-client";
 import { useOngoingOrdersRealtime } from "@unknown/hooks";
 import { useAuthSessionFlow } from "@h5/hooks/useAuthSessionFlow";
@@ -24,10 +24,7 @@ export function useHomeRuntime() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useGlobalUser();
-  const setUserSession = useGlobalStore((state) => state.setUserSession);
-  const syncUserProfile = useGlobalStore((state) => state.syncUserProfile);
-  const setUserProfileDraft = useGlobalStore((state) => state.setUserProfileDraft);
-  const clearUser = useGlobalStore((state) => state.clearUser);
+  const { clearUser, setUserProfileDraft, syncUserProfile } = useGlobalUserActions();
   const role = user.role;
   const isAuthenticated = user.isAuthenticated;
   useOngoingOrdersRealtime({
@@ -178,7 +175,6 @@ export function useHomeRuntime() {
     profileCompletionTemplate,
     profileDraft,
     profileRequirement,
-    resetProfileDraftForPhone,
     saveProfileDraft: handleSaveProfileDraft,
     setIsProfileCompletionOpen,
     syncProfileDraft
@@ -284,16 +280,14 @@ export function useHomeRuntime() {
       setPageStack,
       showMessage
     });
-  const { handleLoginSuccess, handleLogout, resetAuthenticatedSession } = useAuthSessionFlow({
+  const { handleLogout, resetAuthenticatedSession } = useAuthSessionFlow({
     clearUser,
     closeRouteOverlays,
     hideMessage,
     navigate,
     resetForRole,
     resetHuntingShortcut,
-    resetProfileDraftForPhone,
     setIsProfileCompletionOpen,
-    setUserSession,
     showMessage
   });
   const { handleHuntingCertificationSubmitted, handleToggleTutorExposure, handleTutorCertificationSubmitted } =
@@ -514,7 +508,6 @@ export function useHomeRuntime() {
     },
     session: {
       dataError,
-      handleLoginSuccess,
       handleLogout,
       homeData,
       isAuthenticated,

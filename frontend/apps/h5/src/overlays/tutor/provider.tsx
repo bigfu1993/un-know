@@ -1,4 +1,4 @@
-import { useGlobalUser } from "@h5/store/global";
+import { useGlobalUser } from "@h5/globalProvider";
 import { getTutorWorkflowSuccessMessage } from "@pages/home/edu/model";
 import { showMessage } from "@tools/messageToast";
 import { getTutorCalendarTasks } from "@tools/tutorCalendar";

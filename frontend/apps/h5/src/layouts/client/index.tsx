@@ -1,14 +1,26 @@
+import { GlobalProvider } from "@h5/globalProvider";
 import { CheckoutProvider } from "@h5/overlays/checkout/provider";
 import { GlobalOverlayHost } from "@h5/overlays/host";
 import { PublishOverlayProvider } from "@h5/overlays/publish/provider";
 import { TutorOverlayProvider } from "@h5/overlays/tutor/provider";
-import { useHomeRuntimeContext } from "@pages/home/provider";
+import { HomeProvider, useHomeRuntimeContext } from "@pages/home/provider";
 import { OngoingQuote } from "@pages/home/commission/components/OngoingQuote";
 import { DataErrorScreen, InitialLoadingScreen } from "@pages/home/auth/components/AppStateScreens";
 import { Navigate, Outlet } from "react-router-dom";
 
 /** 登录后的 H5 公共布局，统一承载页面区域、全局 Overlay 和跨一级路由共享的业务 Provider。 */
 export function ClientLayout() {
+  return (
+    <GlobalProvider>
+      <HomeProvider>
+        <ClientLayoutContent />
+      </HomeProvider>
+    </GlobalProvider>
+  );
+}
+
+/** 登录后公共布局内容，消费已经完成装配的全局用户与 Home 运行时。 */
+function ClientLayoutContent() {
   const { home, layout, navigation, session } = useHomeRuntimeContext();
 
   if (!session.isAuthenticated) {

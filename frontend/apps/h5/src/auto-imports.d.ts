@@ -44,8 +44,6 @@ declare global {
   const FilterTags: typeof import('./pages/home/auth/components/OngoingOrders/components/FilterTags').FilterTags
   const FloatingActions: typeof import('./pages/home/auth/index').FloatingActions
   const Fragment: typeof import('react').Fragment
-  const GlobalStoreContext: typeof import('./store/global').GlobalStoreContext
-  const GlobalStoreProvider: typeof import('./store/GlobalStoreProvider').GlobalStoreProvider
   const GraduationCap: typeof import('lucide-react').GraduationCap
   const Header: typeof import('./components/AppShell/index').Header
   const Heart: typeof import('lucide-react').Heart
@@ -171,7 +169,6 @@ declare global {
   const createAddressBookItem: typeof import('./shared/clientPageModel').createAddressBookItem
   const createContext: typeof import('react').createContext
   const createDefaultDaySchedule: typeof import('./components/TutorTrialSchedule/model').createDefaultDaySchedule
-  const createGlobalStore: typeof import('./store/global').createGlobalStore
   const createRef: typeof import('react').createRef
   const createRoot: typeof import('react-dom/client').createRoot
   const createTutorTaskModel: typeof import('./tools/tutorTaskWorkflow').createTutorTaskModel
@@ -394,8 +391,6 @@ declare global {
   const useEffect: typeof import('react').useEffect
   const useEffectEvent: typeof import('react').useEffectEvent
   const useFloatingActionsProps: typeof import('./pages/home/auth/hooks/useFloatingActionsProps').useFloatingActionsProps
-  const useGlobalStore: typeof import('./store/global').useGlobalStore
-  const useGlobalUser: typeof import('./store/global').useGlobalUser
   const useHomeRuntime: typeof import('./pages/home/runtime').useHomeRuntime
   const useHomeRuntimeContext: typeof import('./pages/home/provider').useHomeRuntimeContext
   const useHuntingShortcutFlow: typeof import('./hooks/useHuntingShortcutFlow').useHuntingShortcutFlow
@@ -509,9 +504,6 @@ declare global {
   // @ts-ignore
   export type { StoredPasswordCredential, PasswordCredentialStore, PendingRegistrationRecord, PendingRegistrationStore } from './shared/clientPageModel'
   import('./shared/clientPageModel')
-  // @ts-ignore
-  export type { GlobalUser, GlobalStoreState, GlobalStoreApi } from './store/global'
-  import('./store/global')
   // @ts-ignore
   export type { PublishInfoType, DelegationAmountMode, PublishInfoDraft, LocalPublishInfoDraft } from './tools/publishInfo'
   import('./tools/publishInfo')

@@ -1,6 +1,5 @@
 import "./styles.less";
 import { OverlayProvider } from "@h5/overlays/provider";
-import { GlobalStoreProvider } from "@h5/store/GlobalStoreProvider";
 
 const queryClient = new QueryClient();
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
@@ -61,15 +60,13 @@ installViewportInteractionGuards();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <GlobalStoreProvider>
-      <QueryClientProvider client={queryClient}>
-        <MessageToast />
-        <OverlayProvider>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
-        </OverlayProvider>
-      </QueryClientProvider>
-    </GlobalStoreProvider>
+    <QueryClientProvider client={queryClient}>
+      <MessageToast />
+      <OverlayProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </OverlayProvider>
+    </QueryClientProvider>
   </StrictMode>
 );

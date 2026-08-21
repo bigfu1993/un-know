@@ -1,4 +1,4 @@
-import { useGlobalUser } from "@h5/store/global";
+import { useGlobalUser } from "@h5/globalProvider";
 import { useSubmitTutorCertification } from "@unknown/hooks";
 import { getFilledProfileDraft } from "@shared/clientPageModel";
 import { getTutorSubjectLabel, parseTutorSubjects, tutorSubjectOptions } from "@shared/tutorModel";

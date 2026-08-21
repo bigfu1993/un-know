@@ -5,7 +5,6 @@ declare global {
   type ReactNode = import("react").ReactNode;
   type CSSProperties = import("react").CSSProperties;
   type LucideIcon = import("lucide-react").LucideIcon;
-  type StoreApi<T> = import("zustand/vanilla").StoreApi<T>;
   type RouteObject = import("react-router-dom").RouteObject;
 
   type ClientOrder = import("@unknown/domain").ClientOrder;

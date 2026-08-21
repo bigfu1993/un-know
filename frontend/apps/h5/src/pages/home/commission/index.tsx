@@ -1,7 +1,7 @@
 import "./index.less";
 import { ArrowDownUp, Filter, RadioTower, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useGlobalUser } from "@h5/store/global";
+import { useGlobalUser } from "@h5/globalProvider";
 import { useHuntingTasks } from "@unknown/hooks";
 import { CommissionAmount } from "@pages/home/commission/components/CommissionAmount";
 import { CommissionTaskCard } from "@pages/home/commission/components/CommissionTaskCard";
