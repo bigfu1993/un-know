@@ -1,4 +1,5 @@
 import "./styles.less";
+import { OverlayProvider } from "@h5/overlays/provider";
 import { GlobalStoreProvider } from "@h5/store/GlobalStoreProvider";
 
 const queryClient = new QueryClient();
@@ -63,9 +64,11 @@ createRoot(document.getElementById("root")!).render(
     <GlobalStoreProvider>
       <QueryClientProvider client={queryClient}>
         <MessageToast />
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
+        <OverlayProvider>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </OverlayProvider>
       </QueryClientProvider>
     </GlobalStoreProvider>
   </StrictMode>

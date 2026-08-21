@@ -78,13 +78,23 @@ function EduJobScheduleView({
       }
     >
       {periodDates.length > 0 ? (
-        <ScheduleCalendar activeDate={activeDate} mode="view" onActiveDateChange={setActiveDate} selectedDates={periodDates} />
+        <ScheduleCalendar
+          activeDate={activeDate}
+          mode="view"
+          onActiveDateChange={setActiveDate}
+          selectedDates={periodDates}
+        />
       ) : (
         <p className="notice p-[10px] text-[#61420d]">家长暂未确定具体日程，可通过消息与家长确认。</p>
       )}
       {onConfirmApply ? (
         <div className="sheet-actions grid grid-cols-2 gap-[8px]">
-          <button className="ghost-button min-h-[38px] px-[10px] py-[8px]" disabled={isApplying} onClick={onClose} type="button">
+          <button
+            className="ghost-button min-h-[38px] px-[10px] py-[8px]"
+            disabled={isApplying}
+            onClick={onClose}
+            type="button"
+          >
             取消
           </button>
           <button
@@ -140,7 +150,7 @@ export function EduTrialApplyAction({
         onClick={() => setIsApplyConfirmOpen(true)}
         type="button"
       >
-        <CalendarClock size={15} /> 申请试课
+        申请试课
       </button>
       {isApplyConfirmOpen ? (
         <EduJobScheduleView
@@ -173,7 +183,9 @@ export function EduTaskCard({
 }) {
   const [isScheduleViewOpen, setIsScheduleViewOpen] = useState(false);
   const periodDaysLabel = job.periodDates.length > 0 ? `${job.periodDates.length} 天` : "待定";
-  const rootClassName = ["flow-card", "edu-job-card-container", "grid", "gap-[6px]", "p-[14px]", className].filter(Boolean).join(" ");
+  const rootClassName = ["flow-card", "edu-job-card-container", "grid", "gap-[6px]", "p-[14px]", className]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <>
@@ -223,7 +235,9 @@ export function EduTaskCard({
           {footer}
         </div>
       </article>
-      {isScheduleViewOpen ? <EduJobScheduleView onClose={() => setIsScheduleViewOpen(false)} periodDates={job.periodDates} /> : null}
+      {isScheduleViewOpen ? (
+        <EduJobScheduleView onClose={() => setIsScheduleViewOpen(false)} periodDates={job.periodDates} />
+      ) : null}
     </>
   );
 }

@@ -1,4 +1,5 @@
 import "./index.less";
+import { useCheckoutTrigger } from "@h5/overlays/checkout/context";
 
 /** 优选商品排序方式。 */
 type ProductSortMode = "default" | "priceAsc" | "priceDesc" | "stock";
@@ -25,15 +26,8 @@ function getProductSearchText(product: ProductSummary) {
 }
 
 /** 优选商品页面，维护商品筛选、排序和购买确认入口。 */
-export function Featured({
-  role,
-  purchasePending = false,
-  onOpenCheckout
-}: {
-  role: Role;
-  purchasePending?: boolean;
-  onOpenCheckout: (product: ProductSummary) => void;
-}) {
+export function Featured({ role }: { role: Role }) {
+  const { openCheckout, purchasePending } = useCheckoutTrigger();
   const [keyword, setKeyword] = useState("");
   const [activePanel, setActivePanel] = useState<ProductToolbarPanel>(null);
   const [productFilter, setProductFilter] = useState<ProductFilter>("selfRun");
@@ -153,7 +147,7 @@ export function Featured({
         {visibleProducts.map((product) => (
           <ProductListCard
             key={product.id}
-            onOpenCheckout={onOpenCheckout}
+            onOpenCheckout={openCheckout}
             product={product}
             purchasePending={purchasePending}
             role={role}

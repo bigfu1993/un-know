@@ -1,22 +1,13 @@
-import { Mine } from "./Mine";
-
-/** 我的悬浮头像入口属性，外部只负责控制开合和业务动作。 */
-export interface MineShortcutProps extends MineProps {
-  isOpen: boolean;
-  isQuickDockExpanded: boolean;
-  onTrigger: () => void;
-}
-
 /** 我的悬浮头像入口，封装头像按钮和对应弹窗。 */
 export function MineShortcut({
+  children,
   isOpen,
   isQuickDockExpanded,
-  onTrigger,
-  ...popoverProps
+  onTrigger
 }: MineShortcutProps) {
   return (
     <>
-      {isOpen ? <Mine {...popoverProps} /> : null}
+      {isOpen ? children : null}
 
       <button
         className="floating-avatar grid h-[54px] w-[54px] place-items-center text-[#17212b]"

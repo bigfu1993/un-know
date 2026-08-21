@@ -3,8 +3,6 @@ package com.unknown.platform.modules.clientworkspace.controller.client;
 import com.unknown.platform.common.api.ApiResponse;
 import com.unknown.platform.common.realtime.ClientRealtimeService;
 import com.unknown.platform.common.security.ClientRequestContext;
-import com.unknown.platform.common.security.ClientSessionService;
-import com.unknown.platform.modules.auth.model.ClientRole;
 import com.unknown.platform.modules.clientworkspace.application.ClientWorkspaceAppService;
 import com.unknown.platform.modules.clientworkspace.application.HuntingTaskAppService;
 import com.unknown.platform.modules.clientworkspace.application.TutorWorkspaceAppService;
@@ -28,7 +26,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -39,54 +36,55 @@ public class ClientWorkspaceController {
   private final ClientWorkspaceAppService clientWorkspaceAppService;
   private final HuntingTaskAppService huntingTaskAppService;
   private final TutorWorkspaceAppService tutorWorkspaceAppService;
-  private final ClientSessionService clientSessionService;
   private final ClientRealtimeService clientRealtimeService;
 
   public ClientWorkspaceController(
       ClientWorkspaceAppService clientWorkspaceAppService,
       HuntingTaskAppService huntingTaskAppService,
       TutorWorkspaceAppService tutorWorkspaceAppService,
-      ClientSessionService clientSessionService,
       ClientRealtimeService clientRealtimeService
   ) {
     this.clientWorkspaceAppService = clientWorkspaceAppService;
     this.huntingTaskAppService = huntingTaskAppService;
     this.tutorWorkspaceAppService = tutorWorkspaceAppService;
-    this.clientSessionService = clientSessionService;
     this.clientRealtimeService = clientRealtimeService;
   }
 
   /**
    * 获取客户端工作台聚合数据。
    *
-   * @param authorization 登录访问令牌，可为空
-   * @param clientRoleHeader 登录用户角色请求头
+   * @param context 客户端请求上下文（角色 + 登录令牌）
    * @return 工作台聚合数据
    */
   @GetMapping("/workspace")
-  public ApiResponse<ClientWorkspaceResponse> workspace(
-      @RequestHeader(value = "Authorization", required = false) String authorization,
-      @RequestHeader(value = ClientSessionService.CLIENT_USER_ROLE_HEADER, required = false) String clientRoleHeader
-  ) {
-    ClientRole role = clientSessionService.resolveClientRole(authorization, clientRoleHeader);
-    return ApiResponse.ok(clientWorkspaceAppService.getWorkspace(role, authorization));
+  public ApiResponse<ClientWorkspaceResponse> workspace(ClientRequestContext context) {
+    return ApiResponse.ok(clientWorkspaceAppService.getWorkspace(context.role(), context.authorization()));
   }
 
   /**
    * 获取当前账号"进行中"列表独立接口，不管什么角色都查这同一个接口，后端按请求头解析出的
    * 角色和登录态聚合不同业务域数据：学生角色含优选/委托/狩猎/家教，家长角色含优选/家教。
+   * 只返回真正进行中的记录，已完成/已取消/已结束等归档状态已在服务端过滤掉；完整订单历史
+   * 见 {@link #orderHistory}。
    *
-   * @param authorization 登录访问令牌，可为空
-   * @param clientRoleHeader 登录用户角色请求头
+   * @param context 客户端请求上下文（角色 + 登录令牌）
    * @return 当前角色进行中订单列表
    */
   @GetMapping("/workspace/ongoing")
-  public ApiResponse<List<ClientWorkspaceResponse.ClientOrder>> ongoingOrders(
-      @RequestHeader(value = "Authorization", required = false) String authorization,
-      @RequestHeader(value = ClientSessionService.CLIENT_USER_ROLE_HEADER, required = false) String clientRoleHeader
-  ) {
-    ClientRole role = clientSessionService.resolveClientRole(authorization, clientRoleHeader);
-    return ApiResponse.ok(clientWorkspaceAppService.ongoingOrders(role, authorization));
+  public ApiResponse<List<ClientWorkspaceResponse.ClientOrder>> ongoingOrders(ClientRequestContext context) {
+    return ApiResponse.ok(clientWorkspaceAppService.ongoingOrders(context.role(), context.authorization()));
+  }
+
+  /**
+   * 获取当前账号订单历史独立接口，跟 {@code /workspace/ongoing} 使用同一套底层查询，但不做归档
+   * 过滤，供订单历史页展示全部订单（含已完成/已取消/已结束）。
+   *
+   * @param context 客户端请求上下文（角色 + 登录令牌）
+   * @return 当前角色全部订单列表
+   */
+  @GetMapping("/workspace/orders")
+  public ApiResponse<List<ClientWorkspaceResponse.ClientOrder>> orderHistory(ClientRequestContext context) {
+    return ApiResponse.ok(clientWorkspaceAppService.orderHistory(context.role(), context.authorization()));
   }
 
   /** 获取兼职列表独立接口，避免兼职页依赖完整工作台聚合响应；家教是兼职的一种类型，
@@ -98,10 +96,8 @@ public class ClientWorkspaceController {
 
   /** 获取委托/狩猎任务列表独立接口，保留登录用户视角下的报价和履约状态。 */
   @GetMapping("/workspace/commission")
-  public ApiResponse<List<HuntingTask>> huntingTasks(
-      @RequestHeader(value = "Authorization", required = false) String authorization
-  ) {
-    return ApiResponse.ok(huntingTaskAppService.listHuntingTasks(authorization));
+  public ApiResponse<List<HuntingTask>> huntingTasks(ClientRequestContext context) {
+    return ApiResponse.ok(huntingTaskAppService.listHuntingTasks(context.authorization()));
   }
 
   /** 获取家长端可浏览的认证学生列表独立接口，返回 app_user 合并 tutor_certification 的原始数据，仅家长角色可见。 */
@@ -120,9 +116,9 @@ public class ClientWorkspaceController {
   @PostMapping("/workspace/commission")
   public ApiResponse<HuntingTask> publishHuntingTask(
       @Valid @RequestBody PublishHuntingTaskRequest request,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      ClientRequestContext context
   ) {
-    HuntingTask response = huntingTaskAppService.publishHuntingTask(request, authorization);
+    HuntingTask response = huntingTaskAppService.publishHuntingTask(request, context.authorization());
     publishOngoingOrdersChanged("hunting", response.id(), "hunting_task_published");
     return ApiResponse.ok(response);
   }
@@ -131,18 +127,18 @@ public class ClientWorkspaceController {
   @PostMapping("/workspace/hunting-projects")
   public ApiResponse<HuntingProjectResponse> createHuntingProject(
       @Valid @RequestBody CreateHuntingProjectRequest request,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      ClientRequestContext context
   ) {
-    return ApiResponse.ok(huntingTaskAppService.createHuntingProject(request, authorization));
+    return ApiResponse.ok(huntingTaskAppService.createHuntingProject(request, context.authorization()));
   }
 
   /** 家长发布家教需求，发布后进入进行中列表。 */
   @PostMapping("/workspace/tutor-demands")
   public ApiResponse<TutorDemand> publishTutorDemand(
       @Valid @RequestBody PublishTutorDemandRequest request,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      ClientRequestContext context
   ) {
-    TutorDemand response = tutorWorkspaceAppService.publishTutorDemand(request, authorization);
+    TutorDemand response = tutorWorkspaceAppService.publishTutorDemand(request, context.authorization());
     publishOngoingOrdersChanged("tutor", response.id(), "tutor_demand_published");
     return ApiResponse.ok(response);
   }
@@ -152,9 +148,9 @@ public class ClientWorkspaceController {
   public ApiResponse<TutorDemand> applyTutorTrial(
       @PathVariable String demandId,
       @RequestBody(required = false) ApplyTutorTrialRequest request,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      ClientRequestContext context
   ) {
-    TutorDemand response = tutorWorkspaceAppService.applyTutorTrial(demandId, request, authorization);
+    TutorDemand response = tutorWorkspaceAppService.applyTutorTrial(demandId, request, context.authorization());
     publishOngoingOrdersChanged("tutor", response.id(), "tutor_trial_applied");
     return ApiResponse.ok(response);
   }
@@ -163,9 +159,9 @@ public class ClientWorkspaceController {
   @PostMapping("/workspace/tutor-applications/{applicationId}/cancel")
   public ApiResponse<TutorDemand> cancelTutorApplication(
       @PathVariable String applicationId,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      ClientRequestContext context
   ) {
-    TutorDemand response = tutorWorkspaceAppService.cancelTutorApplication(applicationId, authorization);
+    TutorDemand response = tutorWorkspaceAppService.cancelTutorApplication(applicationId, context.authorization());
     publishOngoingOrdersChanged("tutor", response.id(), "tutor_application_cancelled");
     return ApiResponse.ok(response);
   }
@@ -176,9 +172,10 @@ public class ClientWorkspaceController {
       @PathVariable String demandId,
       @PathVariable String applicationId,
       @Valid @RequestBody ConfirmTutorTrialRequest request,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      ClientRequestContext context
   ) {
-    TutorDemand response = tutorWorkspaceAppService.confirmTutorTrial(demandId, applicationId, request, authorization);
+    TutorDemand response =
+        tutorWorkspaceAppService.confirmTutorTrial(demandId, applicationId, request, context.authorization());
     publishOngoingOrdersChanged("tutor", response.id(), "tutor_trial_schedule_confirmed");
     return ApiResponse.ok(response);
   }
@@ -187,9 +184,9 @@ public class ClientWorkspaceController {
   @PostMapping("/workspace/tutor-applications/{applicationId}/trial/confirm")
   public ApiResponse<TutorDemand> confirmTutorTrialStart(
       @PathVariable String applicationId,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      ClientRequestContext context
   ) {
-    TutorDemand response = tutorWorkspaceAppService.confirmTutorTrialStart(applicationId, authorization);
+    TutorDemand response = tutorWorkspaceAppService.confirmTutorTrialStart(applicationId, context.authorization());
     publishOngoingOrdersChanged("tutor", response.id(), "tutor_trial_started");
     return ApiResponse.ok(response);
   }
@@ -198,9 +195,9 @@ public class ClientWorkspaceController {
   @PostMapping("/workspace/tutor-applications/{applicationId}/trial/end-request")
   public ApiResponse<TutorDemand> requestTutorTrialEnd(
       @PathVariable String applicationId,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      ClientRequestContext context
   ) {
-    TutorDemand response = tutorWorkspaceAppService.requestTutorTrialEnd(applicationId, authorization);
+    TutorDemand response = tutorWorkspaceAppService.requestTutorTrialEnd(applicationId, context.authorization());
     publishOngoingOrdersChanged("tutor", response.id(), "tutor_trial_end_requested");
     return ApiResponse.ok(response);
   }
@@ -211,9 +208,10 @@ public class ClientWorkspaceController {
       @PathVariable String demandId,
       @PathVariable String applicationId,
       @RequestBody(required = false) CompleteTutorTrialEndRequest request,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      ClientRequestContext context
   ) {
-    TutorDemand response = tutorWorkspaceAppService.completeTutorTrialEnd(demandId, applicationId, request, authorization);
+    TutorDemand response =
+        tutorWorkspaceAppService.completeTutorTrialEnd(demandId, applicationId, request, context.authorization());
     publishOngoingOrdersChanged("tutor", response.id(), "tutor_trial_end_completed");
     return ApiResponse.ok(response);
   }
@@ -223,9 +221,9 @@ public class ClientWorkspaceController {
   public ApiResponse<TutorDemand> handleTutorWorkflowAction(
       @PathVariable String applicationId,
       @RequestBody(required = false) TutorWorkflowActionRequest request,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      ClientRequestContext context
   ) {
-    TutorDemand response = tutorWorkspaceAppService.handleTutorWorkflowAction(applicationId, request, authorization);
+    TutorDemand response = tutorWorkspaceAppService.handleTutorWorkflowAction(applicationId, request, context.authorization());
     publishOngoingOrdersChanged("tutor", response.id(), "tutor_workflow_changed");
     return ApiResponse.ok(response);
   }
@@ -234,9 +232,9 @@ public class ClientWorkspaceController {
   @PostMapping("/workspace/tutor-demands/{demandId}/cancel")
   public ApiResponse<TutorDemand> cancelTutorDemand(
       @PathVariable String demandId,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      ClientRequestContext context
   ) {
-    TutorDemand response = tutorWorkspaceAppService.cancelTutorDemand(demandId, authorization);
+    TutorDemand response = tutorWorkspaceAppService.cancelTutorDemand(demandId, context.authorization());
     publishOngoingOrdersChanged("tutor", response.id(), "tutor_demand_cancelled");
     return ApiResponse.ok(response);
   }
@@ -245,9 +243,9 @@ public class ClientWorkspaceController {
   @PostMapping("/workspace/commission/{taskId}/accept")
   public ApiResponse<HuntingTask> acceptHuntingTask(
       @PathVariable String taskId,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      ClientRequestContext context
   ) {
-    HuntingTask response = huntingTaskAppService.acceptHuntingTask(taskId, authorization);
+    HuntingTask response = huntingTaskAppService.acceptHuntingTask(taskId, context.authorization());
     publishOngoingOrdersChanged("hunting", response.id(), "hunting_task_accepted");
     return ApiResponse.ok(response);
   }
@@ -257,9 +255,9 @@ public class ClientWorkspaceController {
   public ApiResponse<HuntingTask> quoteHuntingTask(
       @PathVariable String taskId,
       @Valid @RequestBody QuoteHuntingTaskRequest request,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      ClientRequestContext context
   ) {
-    HuntingTask response = huntingTaskAppService.quoteHuntingTask(taskId, request, authorization);
+    HuntingTask response = huntingTaskAppService.quoteHuntingTask(taskId, request, context.authorization());
     publishOngoingOrdersChanged("hunting", response.id(), "hunting_task_quoted");
     return ApiResponse.ok(response);
   }
@@ -269,9 +267,9 @@ public class ClientWorkspaceController {
   public ApiResponse<HuntingTask> confirmHuntingQuote(
       @PathVariable String taskId,
       @PathVariable String quoteId,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      ClientRequestContext context
   ) {
-    HuntingTask response = huntingTaskAppService.confirmHuntingQuote(taskId, quoteId, authorization);
+    HuntingTask response = huntingTaskAppService.confirmHuntingQuote(taskId, quoteId, context.authorization());
     publishOngoingOrdersChanged("hunting", response.id(), "hunting_quote_confirmed");
     return ApiResponse.ok(response);
   }
@@ -282,9 +280,9 @@ public class ClientWorkspaceController {
       @PathVariable String taskId,
       @PathVariable String quoteId,
       @RequestBody HuntingQuoteDecisionRequest request,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      ClientRequestContext context
   ) {
-    HuntingTask response = huntingTaskAppService.decideHuntingQuote(taskId, quoteId, request, authorization);
+    HuntingTask response = huntingTaskAppService.decideHuntingQuote(taskId, quoteId, request, context.authorization());
     publishOngoingOrdersChanged("hunting", response.id(), "hunting_quote_decided");
     return ApiResponse.ok(response);
   }
@@ -294,9 +292,9 @@ public class ClientWorkspaceController {
   public ApiResponse<HuntingTask> handleHuntingTaskFulfillmentAction(
       @PathVariable String taskId,
       @RequestBody HuntingTaskFulfillmentActionRequest request,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      ClientRequestContext context
   ) {
-    HuntingTask response = huntingTaskAppService.handleHuntingTaskFulfillmentAction(taskId, request, authorization);
+    HuntingTask response = huntingTaskAppService.handleHuntingTaskFulfillmentAction(taskId, request, context.authorization());
     publishOngoingOrdersChanged("hunting", response.id(), "hunting_fulfillment_changed");
     return ApiResponse.ok(response);
   }

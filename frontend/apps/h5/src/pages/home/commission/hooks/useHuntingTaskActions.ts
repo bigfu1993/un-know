@@ -1,77 +1,17 @@
 import { getErrorMessage } from "@tools/messageToast";
-import { formatCurrency } from "@shared/clientPageModel";
 
-/** 委托报价提交载荷。 */
-interface QuoteHuntingTaskPayload {
-  amount: number;
-  taskId: string;
-}
-
-/** 委托报价决策载荷。 */
-interface DecideHuntingTaskQuotePayload {
-  action: "confirm" | "counter" | "reject";
-  amount?: number;
-  quoteId: string;
-  taskId: string;
-}
-
-/** 委托履约动作载荷。 */
-interface HuntingTaskFulfillmentActionPayload {
-  action: HuntingTaskFulfillmentActionRequest["action"];
-  taskId: string;
-}
-
-/** 委托任务动作 hook 入参。 */
-interface UseHuntingTaskActionsOptions {
-  acceptTask: (taskId: string) => Promise<unknown>;
-  decideQuote: (payload: DecideHuntingTaskQuotePayload) => Promise<unknown>;
-  fulfillmentAction: (payload: HuntingTaskFulfillmentActionPayload) => Promise<unknown>;
-  mergedHuntingTasks: HuntingTask[];
-  quoteTask: (payload: QuoteHuntingTaskPayload) => Promise<unknown>;
-  refetchWorkspace: () => void;
-  showMessage: (content: string, options?: MessageToastOptions) => void;
-}
-
-/** 委托领取、报价协商和履约动作，集中承接服务端 mutation 与全局提示。 */
+/** 进行中委托的报价决策和履约动作，集中承接服务端 mutation 与全局提示。 */
 export function useHuntingTaskActions({
-  acceptTask,
   decideQuote,
   fulfillmentAction,
-  mergedHuntingTasks,
-  quoteTask,
-  refetchWorkspace,
+  huntingTasks,
   showMessage
 }: UseHuntingTaskActionsOptions) {
-  /** 接受固定金额委托，服务端负责锁单和押金冻结校验。 */
-  async function handleAcceptHuntingTask(task: HuntingTask) {
-    try {
-      await acceptTask(task.id);
-      showMessage("已接受委托，任务已进入履约中。", { type: "success" });
-      refetchWorkspace();
-    } catch (error) {
-      showMessage(getErrorMessage(error, "接受委托失败，请稍后重试。"), { type: "error" });
-      throw error;
-    }
-  }
-
-  /** 提交协商金额报价，发布方确认后才会进入履约。 */
-  async function handleQuoteHuntingTask(task: HuntingTask, amount: number) {
-    try {
-      await quoteTask({ amount, taskId: task.id });
-      showMessage(`报价 ${formatCurrency(amount)} 已提交，等待发布方确认。`, { type: "success" });
-      refetchWorkspace();
-    } catch (error) {
-      showMessage(getErrorMessage(error, "提交报价失败，请稍后重试。"), { type: "error" });
-      throw error;
-    }
-  }
-
   /** 发布方确认报价，确认成功后委托进入履约中。 */
   async function handleConfirmHuntingQuote(task: HuntingTask, quote: HuntingQuote) {
     try {
       await decideQuote({ action: "confirm", quoteId: quote.id, taskId: task.id });
       showMessage(`已确认 ${quote.bidder.nickname} 的报价，委托进入履约中。`, { type: "success" });
-      refetchWorkspace();
     } catch (error) {
       showMessage(getErrorMessage(error, "确认报价失败，请稍后重试。"), { type: "error" });
       throw error;
@@ -83,7 +23,6 @@ export function useHuntingTaskActions({
     try {
       await decideQuote({ action: "reject", quoteId: quote.id, taskId: task.id });
       showMessage("已拒绝报价，委托将继续等待其他报价。", { type: "success" });
-      refetchWorkspace();
     } catch (error) {
       showMessage(getErrorMessage(error, "拒绝报价失败，请稍后重试。"), { type: "error" });
       throw error;
@@ -100,7 +39,6 @@ export function useHuntingTaskActions({
         taskId: task.id
       });
       showMessage("已提交修改后的报价，等待对方确认。", { type: "success" });
-      refetchWorkspace();
     } catch (error) {
       showMessage(getErrorMessage(error, "提交修改报价失败，请稍后重试。"), { type: "error" });
       throw error;
@@ -121,19 +59,17 @@ export function useHuntingTaskActions({
     };
 
     try {
-      const task = mergedHuntingTasks.find((item) => item.id === order.id);
+      const task = huntingTasks.find((item) => item.id === order.id);
 
       if (action === "republish" && task?.fulfillmentAction === "取消待确认") {
         await fulfillmentAction({ action: "confirm_cancel", taskId: order.id });
         await fulfillmentAction({ action: "republish", taskId: order.id });
         showMessage("已取消原委托并重新发布。", { type: "success" });
-        refetchWorkspace();
         return;
       }
 
       await fulfillmentAction({ action, taskId: order.id });
       showMessage(actionMessages[action], { type: "success" });
-      refetchWorkspace();
     } catch (error) {
       showMessage(getErrorMessage(error, "委托履约操作失败，请稍后重试。"), { type: "error" });
       throw error;
@@ -141,11 +77,9 @@ export function useHuntingTaskActions({
   }
 
   return {
-    handleAcceptHuntingTask,
     handleConfirmHuntingQuote,
     handleCounterHuntingQuote,
     handleHuntingTaskFulfillmentAction,
-    handleQuoteHuntingTask,
     handleRejectHuntingQuote
   };
 }

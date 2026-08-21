@@ -9,6 +9,9 @@ export const clientWorkspaceQueryKey = ["client-workspace"] as const;
 /** 客户端进行中列表查询键，不管什么角色都用这一个 key，后端按登录态区分角色数据。 */
 export const clientOngoingOrdersQueryKey = ["client-ongoing-orders"] as const;
 
+/** 客户端订单历史查询键，跟进行中列表同一套底层数据但不做归档过滤，只服务订单历史页。 */
+export const clientOrderHistoryQueryKey = ["client-order-history"] as const;
+
 /** 客户端兼职列表查询键。 */
 export const clientPartTimeJobsQueryKey = ["client-part-time-jobs"] as const;
 

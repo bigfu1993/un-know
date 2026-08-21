@@ -1,4 +1,6 @@
 import { useGlobalUser } from "@h5/store/global";
+import { usePublishOverlayActions } from "@h5/overlays/publish/context";
+import { useTutorOverlayActions } from "@h5/overlays/tutor/context";
 
 /** 头像弹窗快捷入口的视觉强调类型。 */
 type MineActionTone = "default" | "publish" | "recycle";
@@ -11,31 +13,10 @@ interface MineAction {
   tone?: MineActionTone;
 }
 
-/** 悬浮头像弹窗属性。 */
-export interface MineProps {
-  onClose: () => void;
-  onLogout: () => void;
-  onNavigate: (surface: PageSurface) => void;
-  onOpenPublish: () => void;
-  onOpenRecycle: () => void;
-  onOpenTab: (tab: ClientModuleKey) => void;
-  onOpenTutorCalendar: () => void;
-  onToggleTutorExposure: () => void;
-  walletSummary: WalletSummary;
-}
-
 /** 悬浮头像弹窗，承接账户概览、认证入口和快捷操作。 */
-export function Mine({
-  walletSummary,
-  onClose,
-  onLogout,
-  onOpenPublish,
-  onOpenRecycle,
-  onOpenTutorCalendar,
-  onOpenTab,
-  onToggleTutorExposure,
-  onNavigate
-}: MineProps) {
+export function Mine({ walletSummary, onClose, onLogout, onOpenTab, onToggleTutorExposure, onNavigate }: MineProps) {
+  const { openDefaultPublishInfo, openRecycleInfo } = usePublishOverlayActions();
+  const { openCalendar } = useTutorOverlayActions();
   const { accountStatusText, creditScore, phone, profileDraft, nickname, role } = useGlobalUser();
   const tutorCardData = getTutorCardDataFromDraft(profileDraft);
   const tutorCardMode = getTutorCardMode(tutorCardData.certificationStatus, "simple");
@@ -53,13 +34,13 @@ export function Mine({
     tutorCardMode === "entry" && huntingCertificationMode === "entry" && shouldShowHuntingCertificationCard;
   const certifiedTutorActions: MineAction[] =
     tutorCardData.certificationStatus === "normal"
-      ? [{ label: "家教日程", icon: CalendarClock, action: onOpenTutorCalendar }]
+      ? [{ label: "家教日程", icon: CalendarClock, action: openCalendar }]
       : [];
   const actions: MineAction[] =
     role === "student"
       ? [
-          { label: "发布", icon: Plus, action: onOpenPublish, tone: "publish" },
-          { label: "回收", icon: PackageCheck, action: onOpenRecycle, tone: "recycle" },
+          { label: "发布", icon: Plus, action: openDefaultPublishInfo, tone: "publish" },
+          { label: "回收", icon: PackageCheck, action: openRecycleInfo, tone: "recycle" },
           ...certifiedTutorActions,
           { label: "消息", icon: MessageCircle, action: () => onNavigate("mine") },
           { label: "建议/投诉", icon: ClipboardCheck, action: () => onNavigate("mine") },
@@ -73,8 +54,8 @@ export function Mine({
             { label: "更多", icon: UserRound, action: () => onNavigate("mine") }
           ]
         : [
-            { label: "发布", icon: Plus, action: onOpenPublish, tone: "publish" },
-            { label: "家教日程", icon: CalendarClock, action: onOpenTutorCalendar },
+            { label: "发布", icon: Plus, action: openDefaultPublishInfo, tone: "publish" },
+            { label: "家教日程", icon: CalendarClock, action: openCalendar },
             { label: "孩子", icon: UserRound, action: () => onNavigate("settings") },
             { label: "消息", icon: MessageCircle, action: () => onNavigate("mine") },
             { label: "建议/投诉", icon: ClipboardCheck, action: () => onNavigate("mine") },
@@ -134,11 +115,7 @@ export function Mine({
       />
 
       {shouldShowTutorCertificationCard || shouldShowHuntingCertificationCard ? (
-        <div
-          className={`popover-certification-cards grid gap-[8px] ${
-            isCompactCertificationRow ? "compact-row" : ""
-          }`}
-        >
+        <div className={`popover-certification-cards grid gap-[8px] ${isCompactCertificationRow ? "compact-row" : ""}`}>
           {shouldShowTutorCertificationCard ? (
             <TutorCertificationCard
               {...tutorCardData}

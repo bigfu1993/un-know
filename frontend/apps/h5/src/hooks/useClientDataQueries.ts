@@ -4,8 +4,8 @@ import {
   useClientWorkspace,
   useHuntingTasks,
   useOngoingOrders,
+  useOrderHistory,
   usePartTimeJobs,
-  useTutorApplications,
   useTutorCertifiedStudents
 } from "@unknown/hooks";
 
@@ -21,16 +21,22 @@ const emptyHuntingTasks: HuntingTask[] = [];
 /** React Query 首次返回家长可浏览认证学生列表前使用的稳定空数组。 */
 const emptyTutorCertifiedStudents: TutorCertifiedStudent[] = [];
 
-/** React Query 首次返回家教进行中申请列表前使用的稳定空数组。 */
-const emptyTutorApplications: TutorDemand[] = [];
-
 /** React Query 首次返回进行中列表前使用的稳定空数组。 */
 const emptyOngoingOrders: ClientOrder[] = [];
+
+/** React Query 首次返回订单历史前使用的稳定空数组。 */
+const emptyOrderHistory: ClientOrder[] = [];
 
 /** React Query 首次返回工作台聚合数据前使用的稳定空值，各字段展示态各自兜底空数组/零值文案。 */
 const emptyClientWorkspace: ClientWorkspacePayload = {
   partTimeJobs: [],
-  huntingSummary: { studentCertification: "", secondVerification: "", depositText: "", creditText: "", onlineStatus: "" },
+  huntingSummary: {
+    studentCertification: "",
+    secondVerification: "",
+    depositText: "",
+    creditText: "",
+    onlineStatus: ""
+  },
   huntingTasks: [],
   tutorDemands: [],
   merchantDashboard: {
@@ -57,16 +63,16 @@ const emptyClientWorkspace: ClientWorkspacePayload = {
 interface UseClientDataQueriesOptions {
   /** 是否允许发起登录后才能访问的数据查询。 */
   isAuthenticated: boolean;
-  /** 委托/狩猎列表是否被当前 UI 需要：狩猎 tab 激活，或狩猎快捷面板/推荐/开关任一处于打开状态。 */
+  /** 委托/狩猎列表是否被跨页消费者需要：悬浮推荐、进行中或订单历史。委托页自己订阅同一查询缓存。 */
   isHuntingDataNeeded: boolean;
   /** 进行中列表是否被当前 UI 需要：只在悬浮"进行中"弹窗打开时才查询，弹窗徽标数字随之延迟到首次打开后才准确。 */
   isOngoingOrdersNeeded: boolean;
+  /** 订单历史是否被当前 UI 需要：只在订单历史页激活时查询。 */
+  isOrderHistoryNeeded: boolean;
   /** 兼职列表是否被当前 UI 需要：只在兼职 tab 激活时查询；家教是兼职的一种类型，学生角色下家教需求也随这个查询一起返回。 */
   isPartTimeTabActive: boolean;
   /** 家长可浏览认证学生列表是否被当前 UI 需要：家教 tab 激活时查询。 */
   isTutorCertifiedStudentsNeeded: boolean;
-  /** 家教申请候选列表是否被当前 UI 需要：进行中弹窗或其派生的申请/试课列表子弹窗任一打开时查询。 */
-  isTutorApplicationsNeeded: boolean;
   /** 工作台聚合数据（钱包、商户看板/商品）是否被当前 UI 需要：我的弹窗、钱包页、兼职 tab（商户看板）或商户经营 tab 任一激活时查询。 */
   isWorkspaceNeeded: boolean;
   /** 当前用户角色，用于区分角色级缓存。 */
@@ -82,8 +88,8 @@ export function useClientDataQueries({
   isAuthenticated,
   isHuntingDataNeeded,
   isOngoingOrdersNeeded,
+  isOrderHistoryNeeded,
   isPartTimeTabActive,
-  isTutorApplicationsNeeded,
   isTutorCertifiedStudentsNeeded,
   isWorkspaceNeeded,
   role,
@@ -110,6 +116,13 @@ export function useClientDataQueries({
     refetch: refetchOngoingOrders
   } = useOngoingOrders(role, isAuthenticated && isOngoingOrdersNeeded);
   const {
+    data: orderHistoryResponse = emptyOrderHistory,
+    error: orderHistoryError,
+    isFetching: isOrderHistoryFetching,
+    isLoading: isOrderHistoryLoading,
+    refetch: refetchOrderHistory
+  } = useOrderHistory(role, isAuthenticated && isOrderHistoryNeeded);
+  const {
     data: partTimeJobsResponse = emptyPartTimeJobs,
     error: partTimeJobsError,
     isFetching: isPartTimeJobsFetching,
@@ -131,13 +144,6 @@ export function useClientDataQueries({
     refetch: refetchTutorCertifiedStudents
   } = useTutorCertifiedStudents(role, isAuthenticated && isTutorCertifiedStudentsNeeded);
   const {
-    data: tutorApplicationsResponse = emptyTutorApplications,
-    error: tutorApplicationsError,
-    isFetching: isTutorApplicationsFetching,
-    isLoading: isTutorApplicationsLoading,
-    refetch: refetchTutorApplications
-  } = useTutorApplications(role, isAuthenticated && isTutorApplicationsNeeded);
-  const {
     data: clientAddresses = emptyClientAddresses,
     error: addressError,
     isLoading: isAddressLoading
@@ -156,27 +162,27 @@ export function useClientDataQueries({
     isHuntingTasksLoading,
     isOngoingOrdersFetching,
     isOngoingOrdersLoading,
+    isOrderHistoryFetching,
+    isOrderHistoryLoading,
     isPartTimeJobsFetching,
     isPartTimeJobsLoading,
-    isTutorApplicationsFetching,
-    isTutorApplicationsLoading,
     isTutorCertifiedStudentsFetching,
     isTutorCertifiedStudentsLoading,
     isWorkspaceFetching,
     isWorkspaceLoading,
     ongoingOrdersError,
     ongoingOrdersResponse,
+    orderHistoryError,
+    orderHistoryResponse,
     partTimeJobsError,
     partTimeJobsResponse,
     refetchHome,
     refetchHuntingTasks,
     refetchOngoingOrders,
+    refetchOrderHistory,
     refetchPartTimeJobs,
-    refetchTutorApplications,
     refetchTutorCertifiedStudents,
     refetchWorkspace,
-    tutorApplicationsError,
-    tutorApplicationsResponse,
     tutorCertifiedStudentsError,
     tutorCertifiedStudentsResponse,
     workspaceError,

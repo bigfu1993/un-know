@@ -19,6 +19,7 @@ import {
   getPartTimeJobs,
   getHuntingTasks,
   getOngoingOrders,
+  getOrderHistory,
   getTutorApplications,
   getTutorCertifiedStudents,
   getChatConversations,
@@ -75,6 +76,7 @@ import {
   clientAddressQueryKey,
   clientHuntingTasksQueryKey,
   clientOngoingOrdersQueryKey,
+  clientOrderHistoryQueryKey,
   clientPartTimeJobsQueryKey,
   clientTutorApplicationsQueryKey,
   clientTutorCertifiedStudentsQueryKey,
@@ -86,6 +88,7 @@ export {
   clientAddressQueryKey,
   clientHuntingTasksQueryKey,
   clientOngoingOrdersQueryKey,
+  clientOrderHistoryQueryKey,
   clientPartTimeJobsQueryKey,
   clientTutorApplicationsQueryKey,
   clientTutorCertifiedStudentsQueryKey,
@@ -122,11 +125,21 @@ export function useClientWorkspace(role: Role, enabled = true) {
   });
 }
 
-/** 当前账号进行中列表，不管什么角色都查这个接口，后端按登录态聚合角色对应的业务域数据。 */
+/** 当前账号进行中列表，不管什么角色都查这个接口，后端按登录态聚合角色对应的业务域数据；
+ *  只返回真正进行中的记录，完整订单历史见 {@link useOrderHistory}。 */
 export function useOngoingOrders(role: Role, enabled = true) {
   return useQuery({
     queryKey: getRoleQueryKey(clientOngoingOrdersQueryKey, role),
     queryFn: getOngoingOrders,
+    enabled
+  });
+}
+
+/** 当前账号订单历史，跟 useOngoingOrders 同一套底层数据但不做归档过滤，只服务订单历史页。 */
+export function useOrderHistory(role: Role, enabled = true) {
+  return useQuery({
+    queryKey: getRoleQueryKey(clientOrderHistoryQueryKey, role),
+    queryFn: getOrderHistory,
     enabled
   });
 }

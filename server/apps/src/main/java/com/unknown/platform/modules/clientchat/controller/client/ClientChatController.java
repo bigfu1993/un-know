@@ -1,6 +1,7 @@
 package com.unknown.platform.modules.clientchat.controller.client;
 
 import com.unknown.platform.common.api.ApiResponse;
+import com.unknown.platform.common.security.ClientRequestContext;
 import com.unknown.platform.modules.clientchat.application.ClientChatAppService;
 import com.unknown.platform.modules.clientchat.model.ChatConversationResponse;
 import com.unknown.platform.modules.clientchat.model.ChatMessageResponse;
@@ -14,7 +15,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,28 +30,26 @@ public class ClientChatController {
 
   /** 查询当前账号聊天会话。 */
   @GetMapping("/conversations")
-  public ApiResponse<List<ChatConversationResponse>> conversations(
-      @RequestHeader(value = "Authorization", required = false) String authorization
-  ) {
-    return ApiResponse.ok(clientChatAppService.conversations(authorization));
+  public ApiResponse<List<ChatConversationResponse>> conversations(ClientRequestContext context) {
+    return ApiResponse.ok(clientChatAppService.conversations(context.authorization()));
   }
 
   /** 创建或复用聊天会话。 */
   @PostMapping("/conversations")
   public ApiResponse<ChatConversationResponse> createConversation(
       @Valid @RequestBody CreateChatConversationRequest request,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      ClientRequestContext context
   ) {
-    return ApiResponse.ok(clientChatAppService.createConversation(request, authorization));
+    return ApiResponse.ok(clientChatAppService.createConversation(request, context.authorization()));
   }
 
   /** 查询会话内消息。 */
   @GetMapping("/conversations/{conversationId}/messages")
   public ApiResponse<List<ChatMessageResponse>> messages(
       @PathVariable String conversationId,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      ClientRequestContext context
   ) {
-    return ApiResponse.ok(clientChatAppService.messages(conversationId, authorization));
+    return ApiResponse.ok(clientChatAppService.messages(conversationId, context.authorization()));
   }
 
   /** 发送会话消息。 */
@@ -59,25 +57,23 @@ public class ClientChatController {
   public ApiResponse<ChatMessageResponse> sendMessage(
       @PathVariable String conversationId,
       @Valid @RequestBody SendChatMessageRequest request,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      ClientRequestContext context
   ) {
-    return ApiResponse.ok(clientChatAppService.sendMessage(conversationId, request, authorization));
+    return ApiResponse.ok(clientChatAppService.sendMessage(conversationId, request, context.authorization()));
   }
 
   /** 查询当前账号快捷按钮。 */
   @GetMapping("/quick-actions")
-  public ApiResponse<List<ChatQuickActionResponse>> quickActions(
-      @RequestHeader(value = "Authorization", required = false) String authorization
-  ) {
-    return ApiResponse.ok(clientChatAppService.quickActions(authorization));
+  public ApiResponse<List<ChatQuickActionResponse>> quickActions(ClientRequestContext context) {
+    return ApiResponse.ok(clientChatAppService.quickActions(context.authorization()));
   }
 
   /** 新增聊天快捷按钮。 */
   @PostMapping("/quick-actions")
   public ApiResponse<ChatQuickActionResponse> createQuickAction(
       @Valid @RequestBody ChatQuickActionRequest request,
-      @RequestHeader(value = "Authorization", required = false) String authorization
+      ClientRequestContext context
   ) {
-    return ApiResponse.ok(clientChatAppService.createQuickAction(request, authorization));
+    return ApiResponse.ok(clientChatAppService.createQuickAction(request, context.authorization()));
   }
 }

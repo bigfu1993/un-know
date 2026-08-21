@@ -40,5 +40,29 @@ export interface TutorApplicationCandidate {
   trialSchedule: string;
 }
 
+/** 家长端确认试课安排载荷。 */
+export interface ConfirmTutorTrialPayload {
+  applicationId: string;
+  demandId: string;
+  trialEnd: string;
+  trialHalfDay: string;
+  trialStart: string;
+}
+
+/** 家长端确认试课结束载荷。 */
+export interface CompleteTutorTrialEndPayload {
+  applicationId: string;
+  demandId: string;
+  hireTutor?: boolean;
+  trialFee: number;
+  tutorSchedule?: string;
+}
+
+/** 家教流程动作载荷，由业务按钮补充当前申请 ID。 */
+export type TutorWorkflowActionPayload = import("@unknown/domain").TutorWorkflowActionRequest & {
+  applicationId: string;
+  demandId?: string;
+};
+
 /** 家教流程动作类型，实际定义来自 domain 包，H5 通过 types 目录自动导入。 */
 export type { TutorWorkflowAction, TutorWorkflowActionRequest } from "@unknown/domain";

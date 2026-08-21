@@ -10,7 +10,10 @@ import { createTutorTaskModel } from "@tools/tutorTaskWorkflow";
 export type OngoingOrderFilter = "all" | "delegation" | "featured" | "hunting" | "tutor";
 
 /** 学生端提交正式家教可用时间时的流程动作。 */
-export type TutorServiceAvailabilityAction = Extract<TutorWorkflowAction, "accept_service_offer" | "request_service_schedule_change">;
+export type TutorServiceAvailabilityAction = Extract<
+  TutorWorkflowAction,
+  "accept_service_offer" | "request_service_schedule_change"
+>;
 
 /** 学生端进行中家教卡片时间预览配置。 */
 export interface TutorOrderSchedulePreviewConfig {
@@ -37,10 +40,12 @@ export interface OngoingOrderActionHandlers {
   onConfirmComplete?: (order: ClientOrder) => void;
   onConfirmTutorTrialStart?: (order: ClientOrder) => void;
   onOpenQuoteList?: (order: ClientOrder) => void;
-  onOpenTutorApplications?: (order: ClientOrder) => void;
-  onOpenTutorTrialList?: (order: ClientOrder) => void;
   onRepublish?: (order: ClientOrder) => void;
-  onTutorWorkflowAction?: (order: ClientOrder, action: TutorWorkflowAction, payload?: Partial<TutorWorkflowActionRequest>) => Promise<boolean> | boolean | void;
+  onTutorWorkflowAction?: (
+    order: ClientOrder,
+    action: TutorWorkflowAction,
+    payload?: Partial<TutorWorkflowActionRequest>
+  ) => Promise<boolean> | boolean | void;
   onRequestCancel?: (order: ClientOrder) => void;
   onRequestComplete?: (order: ClientOrder) => void;
 }
@@ -182,16 +187,16 @@ export function hasOngoingOrderActions(order: ClientOrder): boolean {
 
   return Boolean(
     order.canMessage ||
-      order.canOpenTutorApplications ||
-      order.canOpenTrialSchedule ||
-      order.canRejectTrial ||
-      order.canAgreeTrial ||
-      order.canOpenTrialResult ||
-      order.canRequestCancel ||
-      order.canRequestComplete ||
-      order.canOpenTutorTrialList ||
-      order.canConfirmCancel ||
-      order.canConfirmComplete ||
-      order.canRepublish
+    order.canOpenTutorApplications ||
+    order.canOpenTrialSchedule ||
+    order.canRejectTrial ||
+    order.canAgreeTrial ||
+    order.canOpenTrialResult ||
+    order.canRequestCancel ||
+    order.canRequestComplete ||
+    order.canOpenTutorTrialList ||
+    order.canConfirmCancel ||
+    order.canConfirmComplete ||
+    order.canRepublish
   );
 }

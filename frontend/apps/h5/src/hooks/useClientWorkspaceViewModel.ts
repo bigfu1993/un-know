@@ -1,19 +1,18 @@
 import { getHuntingHistoryOrders, getRecommendedHuntingTasks } from "@pages/home/commission/model";
 import { getTutorDemandBudgetLabel } from "@tools/tutorDemand";
-import { isTutorTrialSettledServicePendingStatus } from "@tools/tutorTrial";
 
 /** 用户端工作台派生数据入参。 */
 interface UseClientWorkspaceViewModelOptions {
   huntingShortcutProject: HuntingProject | null;
-  publishedHuntingTasks: HuntingTask[];
   role: Role;
   workspaceData: {
     huntingTasks: HuntingTask[];
+    /** 进行中订单，后端已按角色聚合且只返回真正进行中的记录（归档状态已在服务端过滤）。 */
     orders: ClientOrder[];
+    /** 订单历史，跟 orders 同一套底层数据但不做归档过滤，只服务订单历史页。 */
+    orderHistory: ClientOrder[];
     /** 兼职列表：家教是兼职的一种类型，学生角色下会跟兼职岗位聚合在同一个数组返回，字段结构不同。 */
     partTimeJobs: Array<PartTimeJob | TutorDemand>;
-    /** 家长自己发布的家教需求 + 申请人，只服务进行中弹窗，跟页面浏览列表 partTimeJobs 分开请求。 */
-    tutorApplications: TutorDemand[];
   };
 }
 
@@ -22,34 +21,9 @@ export function isTutorDemand(job: PartTimeJob | TutorDemand): job is TutorDeman
   return "applicants" in job;
 }
 
-/** 家教品类归档终态：需求主状态和申请细分状态各自的已结束/已取消，加上申请细分状态特有的
- *  已失效（家长拒绝）、试课已结束——不含正式雇佣失效，那个状态还有"重新发起正式雇佣"操作
- *  要展示，不能归档。家教已经 KEY 化，这里用精确匹配，不再靠中文子串判断。 */
-const archivedTutorStatusKeys: string[] = [
-  TutorDemandStatus.Ended,
-  TutorDemandStatus.Cancelled,
-  TutorApplicantStatus.Ended,
-  TutorApplicantStatus.Cancelled,
-  TutorApplicantStatus.Rejected,
-  TutorApplicantStatus.TrialEnded
-];
-
-/** 判断接口订单是否应保留在订单历史而不再展示到进行中列表。 */
-function isArchivedClientOrder(order: ClientOrder) {
-  if (order.category === "tutor") {
-    if (isTutorTrialSettledServicePendingStatus(order.status)) {
-      return false;
-    }
-    return archivedTutorStatusKeys.includes(order.status);
-  }
-
-  return Object.values(TutorOrderStatus).some((status) => order.status.includes(status));
-}
-
 /** 将工作台接口数据转换为 App 和各页面需要的展示模型。 */
 export function useClientWorkspaceViewModel({
   huntingShortcutProject,
-  publishedHuntingTasks,
   role,
   workspaceData
 }: UseClientWorkspaceViewModelOptions) {
@@ -57,15 +31,9 @@ export function useClientWorkspaceViewModel({
     () => (workspaceData.orders ?? []).filter((order) => order.role === role),
     [workspaceData.orders, role]
   );
-  const ongoingRoleOrders = useMemo(() => roleOrders.filter((order) => !isArchivedClientOrder(order)), [roleOrders]);
-  const mergedHuntingTasks = useMemo(
-    () => [
-      ...publishedHuntingTasks,
-      ...workspaceData.huntingTasks.filter(
-        (task) => !publishedHuntingTasks.some((publishedTask) => publishedTask.id === task.id)
-      )
-    ],
-    [publishedHuntingTasks, workspaceData.huntingTasks]
+  const roleOrderHistory = useMemo(
+    () => (workspaceData.orderHistory ?? []).filter((order) => order.role === role),
+    [workspaceData.orderHistory, role]
   );
   const partTimeJobs: PartTimeJob[] = useMemo(
     () => workspaceData.partTimeJobs.filter((job): job is PartTimeJob => !isTutorDemand(job)),
@@ -91,48 +59,26 @@ export function useClientWorkspaceViewModel({
         })),
     [workspaceData.partTimeJobs]
   );
-  const tutorApplicationCandidates: TutorApplicationCandidate[] = useMemo(
-    () =>
-      workspaceData.tutorApplications.flatMap((demand) =>
-        demand.applicants.map((applicant) => ({
-          availability: applicant.availability,
-          demandId: demand.id,
-          gpa: applicant.gpa,
-          hiredTimes: applicant.hiredTimes,
-          id: applicant.id,
-          major: applicant.major,
-          nickname: applicant.nickname,
-          school: applicant.school,
-          serviceConfirmationCancelledBy: applicant.serviceConfirmationCancelledBy,
-          serviceSchedule: applicant.serviceSchedule,
-          status: applicant.status,
-          trialFee: applicant.trialFee,
-          trialSchedule: applicant.trialSchedule
-        }))
-      ),
-    [workspaceData.tutorApplications]
-  );
   // 进行中列表现在由后端 /workspace/ongoing 接口按角色直接聚合返回（学生角色已包含委托/狩猎），
-  // 不再需要前端用 getHuntingOngoingOrders 从 huntingTasksResponse 现算拼接。
-  const ongoingOrders = ongoingRoleOrders;
+  // 且已在服务端过滤掉归档状态，不再需要前端用 getHuntingOngoingOrders 现算拼接或二次过滤。
+  const ongoingOrders = roleOrders;
   const orderDetailOrders = useMemo(
-    () => [...getHuntingHistoryOrders(mergedHuntingTasks, role), ...roleOrders],
-    [mergedHuntingTasks, role, roleOrders]
+    () => [...getHuntingHistoryOrders(workspaceData.huntingTasks, role), ...roleOrderHistory],
+    [role, roleOrderHistory, workspaceData.huntingTasks]
   );
   const recommendedHuntingTasks = useMemo(
-    () => getRecommendedHuntingTasks(mergedHuntingTasks, huntingShortcutProject),
-    [huntingShortcutProject, mergedHuntingTasks]
+    () => getRecommendedHuntingTasks(workspaceData.huntingTasks, huntingShortcutProject),
+    [huntingShortcutProject, workspaceData.huntingTasks]
   );
 
   return {
     hasPaymentRisk: roleOrders.some((order) => order.risk === "payment"),
-    mergedHuntingTasks,
+    huntingTasks: workspaceData.huntingTasks,
     ongoingOrders,
     orderDetailOrders,
     partTimeJobs,
     recommendedHuntingTasks,
     roleOrders,
-    tutorApplicationCandidates,
     tutorTrialJobs
   };
 }

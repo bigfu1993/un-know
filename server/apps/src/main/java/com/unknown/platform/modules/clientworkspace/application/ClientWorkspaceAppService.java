@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,9 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class ClientWorkspaceAppService {
+  /** 商城购买订单归档关键词，命中即视为已脱离"进行中"，见 {@link #isArchivedPurchaseClientOrder}。 */
+  private static final Set<String> ARCHIVED_PURCHASE_ORDER_STATUS_KEYWORDS = Set.of("已取消", "已完成", "已结束", "已结算");
+
   private final JdbcTemplate jdbcTemplate;
   private final ClientSessionService clientSessionService;
   private final ClientWorkspaceSupport support;
@@ -75,15 +79,33 @@ public class ClientWorkspaceAppService {
   /**
    * 获取当前账号"进行中"列表，取代原来嵌在工作台聚合响应里的 orders 字段，不管什么角色
    * 都查这同一个接口，按角色聚合不同业务域：学生角色含优选/委托/狩猎/家教，家长角色含
-   * 优选/家教，商户角色只有优选（店铺全部购买订单）。
+   * 优选/家教，商户角色只有优选（店铺全部购买订单）。只返回真正进行中的记录，已完成/已取消/
+   * 已结束等归档状态在这一层就过滤掉，不需要前端再二次过滤；完整历史见 {@link #orderHistory}。
    *
    * @param role 当前角色
    * @param authorization 登录访问令牌，可为空
    * @return 当前角色进行中订单列表
    */
   public List<ClientOrder> ongoingOrders(ClientRole role, String authorization) {
+    return allOrders(role, authorization).stream().filter((order) -> !isArchivedClientOrder(order)).toList();
+  }
+
+  /**
+   * 获取当前账号订单历史独立列表，跟 {@link #ongoingOrders} 用同一套底层查询，但不做归档过滤，
+   * 供订单历史页展示全部订单（含已完成/已取消/已结束）。
+   *
+   * @param role 当前角色
+   * @param authorization 登录访问令牌，可为空
+   * @return 当前角色全部订单列表
+   */
+  public List<ClientOrder> orderHistory(ClientRole role, String authorization) {
+    return allOrders(role, authorization);
+  }
+
+  /** {@link #ongoingOrders}/{@link #orderHistory} 共用的底层聚合查询，不含归档过滤。 */
+  private List<ClientOrder> allOrders(ClientRole role, String authorization) {
     Long currentUserId = clientSessionService.userIdOrNull(authorization);
-    List<ClientOrder> orders = new ArrayList<>(purchaseOrders(role));
+    List<ClientOrder> orders = new ArrayList<>(purchaseOrders(role, currentUserId));
     orders.addAll(tutorWorkspaceAppService.tutorOrders(role, currentUserId));
 
     if (role == ClientRole.student) {
@@ -91,6 +113,16 @@ public class ClientWorkspaceAppService {
     }
 
     return orders;
+  }
+
+  /** 进行中列表归档判断：家教品类委托给 {@link TutorWorkspaceAppService#isArchivedTutorOrder}
+   *  精确匹配 KEY 状态；其余品类（优选/委托/狩猎）状态仍是中文自由文本，命中归档关键词即视为归档。 */
+  private boolean isArchivedClientOrder(ClientOrder order) {
+    if ("tutor".equals(order.category())) {
+      return tutorWorkspaceAppService.isArchivedTutorOrder(order);
+    }
+
+    return ARCHIVED_PURCHASE_ORDER_STATUS_KEYWORDS.stream().anyMatch((keyword) -> order.status().contains(keyword));
   }
 
 
@@ -109,8 +141,16 @@ public class ClientWorkspaceAppService {
   }
 
 
-  /** 商城购买订单，按角色返回：商户看店铺全部订单，其余角色只看自己角色下单的订单。 */
-  private List<ClientOrder> purchaseOrders(ClientRole role) {
+  /**
+   * 商城购买订单：商户看店铺全部订单（当前平台只有一个店铺，product 表没有归属商户字段，
+   * 商户角色天然只有"全部"这一种视角）；其余角色只能看自己账号下的订单，按 buyer_user_id
+   * 精确定位到当前登录用户，不能只按角色泛化查询（否则会把同角色所有用户的订单都查出来）。
+   */
+  private List<ClientOrder> purchaseOrders(ClientRole role, Long currentUserId) {
+    if (role != ClientRole.merchant && currentUserId == null) {
+      return List.of();
+    }
+
     String sql = role == ClientRole.merchant
         ? """
             SELECT po.order_no, p.title, po.status, po.total_amount_cents,
@@ -125,8 +165,7 @@ public class ClientWorkspaceAppService {
                    po.contact_phone, po.detail, po.risk
             FROM purchase_order po
             JOIN product p ON p.id = po.product_id
-            JOIN app_user u ON u.id = po.buyer_user_id
-            WHERE u.role = ?
+            WHERE po.buyer_user_id = ?
             ORDER BY po.created_at DESC
             LIMIT 20
             """;
@@ -137,7 +176,7 @@ public class ClientWorkspaceAppService {
             rs.getString("contact_phone"), rs.getString("detail"), rs.getString("risk"))))
         : new ArrayList<>(jdbcTemplate.query(sql, (rs, rowNum) -> mapOrder(role, rs.getString("order_no"),
             rs.getString("title"), rs.getString("status"), rs.getLong("total_amount_cents"),
-            rs.getString("contact_phone"), rs.getString("detail"), rs.getString("risk")), role.name()));
+            rs.getString("contact_phone"), rs.getString("detail"), rs.getString("risk")), currentUserId));
   }
 
 

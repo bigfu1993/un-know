@@ -1,6 +1,10 @@
 import { useCancelTutorApplication } from "@unknown/hooks";
+import { useTutorOverlayActions } from "@h5/overlays/tutor/context";
 import { getErrorMessage, showMessage } from "@tools/messageToast";
-import { getTutorTrialAvailabilitySummaryFromOrderDetail, getTutorTrialScheduleSummaryFromOrderDetail } from "@tools/tutorTrial";
+import {
+  getTutorTrialAvailabilitySummaryFromOrderDetail,
+  getTutorTrialScheduleSummaryFromOrderDetail
+} from "@tools/tutorTrial";
 import { createTutorTaskModel } from "@tools/tutorTaskWorkflow";
 import {
   getOngoingOrderCategory,
@@ -25,7 +29,8 @@ export function OrderStatus({
     return <em className="ongoing-status-badge">{order.status}</em>;
   }
 
-  const statusLabels = tutorTask.statusLabels.length > 0 ? tutorTask.statusLabels : [tutorTask.statusLabel].filter(Boolean);
+  const statusLabels =
+    tutorTask.statusLabels.length > 0 ? tutorTask.statusLabels : [tutorTask.statusLabel].filter(Boolean);
 
   return (
     <span className={`ongoing-status-stack ${statusLabels.length > 1 ? "multi" : ""}`}>
@@ -52,12 +57,15 @@ export function OrderActions({
   onOpenCancelConfirmation: (config: ConfirmActionConfig) => void;
   order: ClientOrder;
 } & OngoingOrderActionHandlers) {
+  const { openApplications, openTrialList } = useTutorOverlayActions();
   const cancelTutorApplicationMutation = useCancelTutorApplication();
   const [isTrialScheduleOpen, setIsTrialScheduleOpen] = useState(false);
   const [isTrialResultOpen, setIsTrialResultOpen] = useState(false);
   const [isServiceSettlementOpen, setIsServiceSettlementOpen] = useState(false);
   const [isServiceScheduleOpen, setIsServiceScheduleOpen] = useState(false);
-  const [serviceAvailabilityAction, setServiceAvailabilityAction] = useState<TutorServiceAvailabilityAction | null>(null);
+  const [serviceAvailabilityAction, setServiceAvailabilityAction] = useState<TutorServiceAvailabilityAction | null>(
+    null
+  );
   const [isSubmittingServiceAvailability, setIsSubmittingServiceAvailability] = useState(false);
   const [isSubmittingServiceSchedule, setIsSubmittingServiceSchedule] = useState(false);
   /** 当前卡片所属业务分类，用于隔离委托报价和狩猎报价入口。 */
@@ -202,8 +210,8 @@ export function OrderActions({
         <>
           {(tutorTask ? tutorTask.can("openApplications") : order.canOpenTutorApplications) ? (
             <button
-              className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-              onClick={() => handlers.onOpenTutorApplications?.(order)}
+              className="primary-button ongoing-action-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+              onClick={() => openApplications(order.id)}
               type="button"
             >
               申请列表
@@ -222,20 +230,22 @@ export function OrderActions({
               提交日程
             </button>
           ) : null}
-          {!showParentTutorServiceScheduleAction && (tutorSchedulePreviewConfig || showParentTutorCourseAction || (!tutorTask && order.canOpenTrialSchedule)) ? (
+          {!showParentTutorServiceScheduleAction &&
+          (tutorSchedulePreviewConfig || showParentTutorCourseAction || (!tutorTask && order.canOpenTrialSchedule)) ? (
             <button
               className="secondary-button accent-text inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
               onClick={() => setIsTrialScheduleOpen(true)}
               type="button"
             >
               <CalendarClock size={15} />
-              {showParentTutorCourseAction ? "课程" : tutorSchedulePreviewConfig?.buttonLabel ?? "日程"}
+              {showParentTutorCourseAction ? "课程" : (tutorSchedulePreviewConfig?.buttonLabel ?? "日程")}
             </button>
           ) : null}
-          {!showParentTutorCourseAction && (tutorTask ? tutorTask.can("openTrialList") : order.canOpenTutorTrialList) ? (
+          {!showParentTutorCourseAction &&
+          (tutorTask ? tutorTask.can("openTrialList") : order.canOpenTutorTrialList) ? (
             <button
-              className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-              onClick={() => handlers.onOpenTutorTrialList?.(order)}
+              className="primary-button ongoing-action-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+              onClick={() => openTrialList(order.id)}
               type="button"
             >
               <CalendarClock size={15} />
@@ -423,7 +433,11 @@ export function OrderActions({
         />
       ) : null}
       {isTrialResultOpen ? (
-        <TrialSettlementConfirm onClose={() => setIsTrialResultOpen(false)} onTutorWorkflowAction={handlers.onTutorWorkflowAction} order={order} />
+        <TrialSettlementConfirm
+          onClose={() => setIsTrialResultOpen(false)}
+          onTutorWorkflowAction={handlers.onTutorWorkflowAction}
+          order={order}
+        />
       ) : null}
       {isServiceSettlementOpen ? (
         <ServiceSettlement
@@ -452,9 +466,17 @@ export function OrderActions({
         <TutorTrialSchedule
           blockedScheduleLabel="试"
           blockedScheduleSummary={
-            serviceAvailabilityAction === "accept_service_offer" ? getTutorTrialScheduleSummaryFromOrderDetail(order.detail) : ""
+            serviceAvailabilityAction === "accept_service_offer"
+              ? getTutorTrialScheduleSummaryFromOrderDetail(order.detail)
+              : ""
           }
-          confirmLabel={isSubmittingServiceAvailability ? "提交中" : serviceAvailabilityAction === "accept_service_offer" ? "同意并提交" : "提交修改"}
+          confirmLabel={
+            isSubmittingServiceAvailability
+              ? "提交中"
+              : serviceAvailabilityAction === "accept_service_offer"
+                ? "同意并提交"
+                : "提交修改"
+          }
           initialValue={
             serviceAvailabilityAction === "request_service_schedule_change"
               ? getTrialScheduleValueFromSummary(getTutorTrialAvailabilitySummaryFromOrderDetail(order.detail))

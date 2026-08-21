@@ -57,16 +57,6 @@ export const jobFilters: Array<{ key: JobFilter; label: string }> = [
   { key: "hourly", label: "时薪优先" }
 ];
 
-// 底部导航路由和默认重定向的唯一来源。
-export const moduleRoutePaths: Partial<Record<ClientModuleKey, string>> = {
-  featured: "/shop",
-  partTime: "/job",
-  hunting: "/commission",
-  merchantSales: "/merchant-sales",
-  marketing: "/marketing",
-  tutor: "/edu"
-};
-
 /** 注册资料、场景资料补充和设置页预览共用的地址字段。 */
 export const addressInfoFields: ProfileRequirementField[] = [
   { key: "contactName", label: "姓名", placeholder: "请输入姓名" },
@@ -401,19 +391,6 @@ export function getProfileRequirement(
 
 export function getProfileRequirementTemplate(role: Role, activeTab: ClientModuleKey) {
   return profileRequirementTemplates[role][activeTab] ?? null;
-}
-
-export function getDefaultRouteForRole(role: Role) {
-  return moduleRoutePaths[getDefaultPrimaryTab(role)] ?? "/shop";
-}
-
-export function getRouteForTab(tab: ClientModuleKey) {
-  return moduleRoutePaths[tab] ?? "/shop";
-}
-
-export function getTabFromRoute(pathname: string): ClientModuleKey | null {
-  const match = Object.entries(moduleRoutePaths).find(([, routePath]) => routePath === pathname);
-  return match ? (match[0] as ClientModuleKey) : null;
 }
 
 export function formatCurrency(value: number) {

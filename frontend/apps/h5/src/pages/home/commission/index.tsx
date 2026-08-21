@@ -1,36 +1,33 @@
 import "./index.less";
 import { ArrowDownUp, Filter, RadioTower, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useGlobalUser } from "@h5/store/global";
+import { useHuntingTasks } from "@unknown/hooks";
 import { CommissionAmount } from "@pages/home/commission/components/CommissionAmount";
 import { CommissionTaskCard } from "@pages/home/commission/components/CommissionTaskCard";
 import { CommissionTaskDetail } from "@pages/home/commission/components/CommissionTaskDetail";
 import { HuntingCertificationPrompt } from "@pages/home/commission/components/HuntingCertificationPrompt";
 import { commissionRuleTickerItems, commissionSortOptions } from "@pages/home/commission/model";
+import { useCommissionActions } from "@pages/home/commission/hooks/useCommissionActions";
 import { useCommissionList } from "@pages/home/commission/hooks/useCommissionList";
 import { useCommissionTaskFlow } from "@pages/home/commission/hooks/useCommissionTaskFlow";
 import { showMessage } from "@tools/messageToast";
 
-/** 委托页属性。 */
-export interface CommissionProps {
-  huntingCertificationStatus: HuntingCertificationStatus;
-  huntingTasks: HuntingTask[];
-  isRefreshing?: boolean;
-  onAcceptTask: (task: HuntingTask) => Promise<void> | void;
-  onOpenHuntingCertification: () => void;
-  onQuoteTask: (task: HuntingTask, amount: number) => Promise<void> | void;
-  onRefreshTasks: () => void;
-}
+/** 委托查询首次返回前使用的稳定空列表。 */
+const emptyHuntingTasks: HuntingTask[] = [];
 
 /** 委托/狩猎页面，负责工具条编排、任务列表组合和页面级弹窗挂载。 */
-export function Commission({
-  huntingCertificationStatus,
-  huntingTasks,
-  isRefreshing = false,
-  onAcceptTask,
-  onOpenHuntingCertification,
-  onQuoteTask,
-  onRefreshTasks
-}: CommissionProps) {
+export function Commission({ onOpenHuntingCertification }: CommissionProps) {
+  const user = useGlobalUser();
+  const { data: huntingTasks = emptyHuntingTasks, isFetching: isRefreshing, refetch } = useHuntingTasks(user.role);
+  const huntingCertificationStatus = useMemo(
+    () => getHuntingCertificationDataFromDraft(user.profileDraft).certificationStatus,
+    [user.profileDraft]
+  );
+  const onRefreshTasks = useCallback(() => {
+    void refetch();
+  }, [refetch]);
+  const { handleAcceptTask: onAcceptTask, handleQuoteTask: onQuoteTask } = useCommissionActions();
   const [isHuntingModeEnabled, setIsHuntingModeEnabled] = useState(false);
   const {
     activePanel,
@@ -174,9 +171,7 @@ export function Commission({
 
         <div className={`commission-live-status ${isHuntingModeEnabled ? "live" : ""}`}>
           <span>
-            {isHuntingModeEnabled
-              ? "狩猎模式已开启，委托列表实时推送中。"
-              : "狩猎模式未开启，委托列表需要手动刷新。"}
+            {isHuntingModeEnabled ? "狩猎模式已开启，委托列表实时推送中。" : "狩猎模式未开启，委托列表需要手动刷新。"}
           </span>
           {!isHuntingModeEnabled ? (
             <button disabled={isRefreshing} onClick={onRefreshTasks} type="button">
@@ -214,13 +209,7 @@ export function Commission({
         />
       ) : null}
 
-      {amountTask ? (
-        <CommissionAmount
-          onClose={closeAmountPanel}
-          onSubmit={submitAmount}
-          task={amountTask}
-        />
-      ) : null}
+      {amountTask ? <CommissionAmount onClose={closeAmountPanel} onSubmit={submitAmount} task={amountTask} /> : null}
 
       {isCertificationPromptOpen ? (
         <HuntingCertificationPrompt

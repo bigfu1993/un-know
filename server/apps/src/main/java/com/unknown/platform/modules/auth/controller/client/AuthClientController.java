@@ -1,6 +1,7 @@
 package com.unknown.platform.modules.auth.controller.client;
 
 import com.unknown.platform.common.api.ApiResponse;
+import com.unknown.platform.common.security.ClientRequestContext;
 import com.unknown.platform.modules.auth.application.AuthAppService;
 import com.unknown.platform.modules.auth.model.LoginRequest;
 import com.unknown.platform.modules.auth.model.LoginResponse;
@@ -10,7 +11,6 @@ import com.unknown.platform.modules.auth.model.ResetPasswordRequest;
 import com.unknown.platform.modules.auth.model.ResetPasswordResponse;
 import com.unknown.platform.modules.auth.model.SelectRoleRequest;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -62,16 +62,13 @@ public class AuthClientController {
   /**
    * 注册后确认最终角色。
    *
-   * @param authorization 登录访问令牌
+   * @param context 客户端请求上下文（角色 + 登录令牌）
    * @param request 角色确认请求
    * @return 更新角色后的客户端会话
    */
   @PostMapping("/select-role")
-  public ApiResponse<LoginResponse> selectRole(
-      @RequestHeader(value = "Authorization", required = false) String authorization,
-      @Valid @RequestBody SelectRoleRequest request
-  ) {
-    return ApiResponse.ok(authAppService.selectRole(authorization, request));
+  public ApiResponse<LoginResponse> selectRole(ClientRequestContext context, @Valid @RequestBody SelectRoleRequest request) {
+    return ApiResponse.ok(authAppService.selectRole(context.authorization(), request));
   }
 
   /**

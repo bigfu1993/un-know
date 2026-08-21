@@ -26,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -93,6 +94,18 @@ public class TutorWorkspaceAppService {
   private static final String TUTOR_SERVICE_CONFIRMATION_CANCELLED_BY_STUDENT = "student";
   private static final String TUTOR_APPLICATION_SCHEDULE_STAGE_SERVICE = "service";
   private static final String TUTOR_APPLICATION_SCHEDULE_STAGE_TRIAL = "trial";
+  /** 家教进行中列表归档终态：需求主状态和申请细分状态各自的已结束/已取消，加上申请细分状态特有的
+   *  已失效（家长拒绝）、试课已结束——不含正式雇佣失效，那个状态还有"重新发起正式雇佣"操作要展示，
+   *  不能归档。原逻辑曾放在前端 isArchivedClientOrder 里，现收敛到接口源头，返回的就是真实进行中数据。 */
+  // TUTOR_DEMAND_STATUS_ENDED/TUTOR_APPLICANT_STATUS_ENDED、TUTOR_DEMAND_STATUS_CANCELLED/
+  // TUTOR_APPLICANT_STATUS_CANCELLED 两两同值（都是 "ENDED"/"CANCELLED"），Set.of 遇重复元素会抛
+  // IllegalArgumentException，这里只保留互不相同的 4 个 KEY，语义上已经覆盖需求和申请两类状态。
+  private static final Set<String> ARCHIVED_TUTOR_CLIENT_ORDER_STATUS_KEYS = Set.of(
+      TUTOR_DEMAND_STATUS_ENDED,
+      TUTOR_DEMAND_STATUS_CANCELLED,
+      TUTOR_APPLICANT_STATUS_REJECTED,
+      TUTOR_APPLICANT_STATUS_TRIAL_ENDED
+  );
 
   private final JdbcTemplate jdbcTemplate;
   private final ClientSessionService clientSessionService;
@@ -1013,6 +1026,19 @@ public class TutorWorkspaceAppService {
         TUTOR_APPLICANT_STATUS_CANCELLED,
         TUTOR_APPLICANT_STATUS_FORMAL_SERVICE_INVALID
     );
+  }
+
+  /**
+   * 家教进行中列表归档判断：试课已结算但正式雇佣待确认时不归档（还有"重新发起正式雇佣"操作要展示），
+   * 其余命中 {@link #ARCHIVED_TUTOR_CLIENT_ORDER_STATUS_KEYS} 的一律视为归档。{@link #tutorOrders}
+   * 本身不做归档过滤（返回全量，供订单历史接口复用），由调用方（{@code /workspace/ongoing} 聚合层）
+   * 决定是否用这个方法过滤成"进行中"视图。
+   */
+  public boolean isArchivedTutorOrder(ClientOrder order) {
+    if (TUTOR_APPLICANT_STATUS_TRIAL_SETTLED_SERVICE_PENDING.equals(order.status())) {
+      return false;
+    }
+    return ARCHIVED_TUTOR_CLIENT_ORDER_STATUS_KEYS.contains(order.status());
   }
 
 

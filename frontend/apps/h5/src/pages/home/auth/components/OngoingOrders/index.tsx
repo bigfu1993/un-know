@@ -5,33 +5,6 @@ import { FilterTags } from "./components/FilterTags";
 import { OrderActions, OrderStatus } from "./components/OrderActions";
 import { getOngoingOrderCategory, getOngoingOrderDisplayDetail } from "./model";
 
-/** 委托履约动作由进行中弹窗按按钮语义映射到真实业务 action。 */
-export type OngoingHuntingFulfillmentAction = HuntingTaskFulfillmentActionRequest["action"];
-
-/** 进行中事项弹窗属性，调用方提供真实业务动作。 */
-export interface OngoingOrdersProps {
-  maxHeight?: string;
-  orders: ClientOrder[];
-  onCancelTutorDemand?: (order: ClientOrder) => void;
-  onClose: () => void;
-  /** 测试用：点击弹窗标题手动触发一次进行中列表查询，不做真实业务用途，验证完可移除。 */
-  onDebugRefetch?: () => void;
-  onConfirmTutorTrialStart?: (order: ClientOrder) => void;
-  onHuntingFulfillmentAction?: (
-    order: ClientOrder,
-    action: OngoingHuntingFulfillmentAction
-  ) => Promise<unknown> | unknown;
-  onOpenQuoteList?: (order: ClientOrder) => void;
-  onOpenTutorApplications?: (order: ClientOrder) => void;
-  onOpenTutorTrialList?: (order: ClientOrder) => void;
-  onRequestTutorTrialEnd?: (order: ClientOrder) => void;
-  onSubmitTutorWorkflowAction?: (
-    payload: TutorWorkflowActionRequest & {
-      applicationId: string;
-    }
-  ) => Promise<boolean> | boolean | void;
-}
-
 /**
  * 进行中事项弹窗，负责分类筛选、空状态和卡片展示。家教卡片直接用 EduTaskCard 卡片壳组装
  * OrderStatus/OrderActions；家教流程内部的全部状态、弹窗和取消申请动作都收敛在 OrderActions
@@ -44,11 +17,8 @@ export function OngoingOrders({
   onCancelTutorDemand,
   onClose,
   onConfirmTutorTrialStart,
-  onDebugRefetch,
   onHuntingFulfillmentAction,
   onOpenQuoteList,
-  onOpenTutorApplications,
-  onOpenTutorTrialList,
   onRequestTutorTrialEnd,
   onSubmitTutorWorkflowAction
 }: OngoingOrdersProps) {
@@ -103,8 +73,6 @@ export function OngoingOrders({
     onConfirmComplete: (order) => handleHuntingFulfillmentAction(order, "confirm_complete"),
     onConfirmTutorTrialStart,
     onOpenQuoteList,
-    onOpenTutorApplications,
-    onOpenTutorTrialList,
     onRepublish: (order) => handleHuntingFulfillmentAction(order, "republish"),
     onTutorWorkflowAction: onSubmitTutorWorkflowAction ? handleTutorWorkflowAction : undefined,
     onRequestCancel: handleRequestCancel,
@@ -128,13 +96,7 @@ export function OngoingOrders({
       surfaceClassName="ongoing-panel"
       title={
         <>
-          <strong
-            onClick={onDebugRefetch}
-            style={onDebugRefetch ? { cursor: "pointer" } : undefined}
-            title={onDebugRefetch ? "点击手动查询进行中列表（测试用）" : undefined}
-          >
-            进行中的列表卡片
-          </strong>
+          <strong>进行中的列表卡片</strong>
           <span>{orders.length} 个进行中事项</span>
         </>
       }

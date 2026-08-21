@@ -1,5 +1,13 @@
 import { formatCurrency } from "@shared/clientPageModel";
 
+/** 合并服务端委托和发布成功后的本地快照，同一任务以新发布结果为准。 */
+export function mergeHuntingTasks(tasks: HuntingTask[], publishedTasks: HuntingTask[]) {
+  return [
+    ...publishedTasks,
+    ...tasks.filter((task) => !publishedTasks.some((publishedTask) => publishedTask.id === task.id))
+  ];
+}
+
 /** 判断委托是否处在报价阶段，兼容迁移前旧状态文案。 */
 export function isHuntingQuoteStatus(task: HuntingTask) {
   return task.status.includes("报价");

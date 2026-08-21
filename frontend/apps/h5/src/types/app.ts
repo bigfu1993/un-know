@@ -4,9 +4,3 @@ export type AuthMode = "login" | "register";
 export type LoginCredentialMode = "code" | "password";
 export type ProductFilter = "selfRun" | "stock" | "hourly" | "latest";
 export type JobFilter = "latest" | "hourly";
-
-export interface CheckoutState {
-  product: import("@unknown/domain").ProductSummary;
-  deliveryMode: import("@unknown/domain").DeliveryMode;
-  paymentMethod: import("@unknown/domain").PaymentMethod;
-}

@@ -1,3 +1,5 @@
+import { getRouteForTab } from "@h5/router/paths";
+
 /** 获取栈式次级页面的标题信息。 */
 function getPageMeta(page: PageSurface, role: Role) {
   if (page === "mine") {

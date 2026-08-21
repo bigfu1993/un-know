@@ -317,9 +317,15 @@ export async function getClientWorkspace(): Promise<ClientWorkspacePayload> {
 }
 
 /** 获取当前账号"进行中"列表，不管什么角色都查这同一个接口，后端按登录态解析角色和用户 ID
- *  聚合不同业务域：学生角色含优选/委托/狩猎/家教，家长角色含优选/家教。 */
+ *  聚合不同业务域：学生角色含优选/委托/狩猎/家教，家长角色含优选/家教。只返回真正进行中的记录，
+ *  已完成/已取消/已结束等归档状态已在服务端过滤掉；完整历史见 {@link getOrderHistory}。 */
 export async function getOngoingOrders(): Promise<ClientOrder[]> {
   return requestJson<ClientOrder[]>("/client/workspace/ongoing");
+}
+
+/** 获取当前账号订单历史独立接口，跟 getOngoingOrders 同一套底层数据，但不做归档过滤，供订单历史页展示全部订单。 */
+export async function getOrderHistory(): Promise<ClientOrder[]> {
+  return requestJson<ClientOrder[]>("/client/workspace/orders");
 }
 
 /** 兼职列表：家教是兼职的一种类型，学生角色下会与兼职岗位聚合在同一个数组里返回，字段结构不同，调用方按结构判断类型。 */

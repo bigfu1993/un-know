@@ -1,12 +1,10 @@
 package com.unknown.platform.modules.clienthome.controller.client;
 
 import com.unknown.platform.common.api.ApiResponse;
-import com.unknown.platform.common.security.ClientSessionService;
-import com.unknown.platform.modules.auth.model.ClientRole;
+import com.unknown.platform.common.security.ClientRequestContext;
 import com.unknown.platform.modules.clienthome.application.ClientHomeAppService;
 import com.unknown.platform.modules.clienthome.model.ClientHomeResponse;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,26 +13,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/client")
 public class ClientHomeController {
   private final ClientHomeAppService clientHomeAppService;
-  private final ClientSessionService clientSessionService;
 
-  public ClientHomeController(ClientHomeAppService clientHomeAppService, ClientSessionService clientSessionService) {
+  public ClientHomeController(ClientHomeAppService clientHomeAppService) {
     this.clientHomeAppService = clientHomeAppService;
-    this.clientSessionService = clientSessionService;
   }
 
   /**
    * 获取当前角色首页聚合数据。
    *
-   * @param authorization 登录访问令牌，可为空
-   * @param clientRoleHeader 登录用户角色请求头
+   * @param context 客户端请求上下文（角色 + 登录令牌）
    * @return 首页聚合数据
    */
   @GetMapping("/home")
-  public ApiResponse<ClientHomeResponse> home(
-      @RequestHeader(value = "Authorization", required = false) String authorization,
-      @RequestHeader(value = ClientSessionService.CLIENT_USER_ROLE_HEADER, required = false) String clientRoleHeader
-  ) {
-    ClientRole role = clientSessionService.resolveClientRole(authorization, clientRoleHeader);
-    return ApiResponse.ok(clientHomeAppService.getHome(role, authorization));
+  public ApiResponse<ClientHomeResponse> home(ClientRequestContext context) {
+    return ApiResponse.ok(clientHomeAppService.getHome(context.role(), context.authorization()));
   }
 }

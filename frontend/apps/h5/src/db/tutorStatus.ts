@@ -106,19 +106,3 @@ export const tutorApplicantStatusLabel: Record<TutorApplicantStatus, string> = {
   [TutorApplicantStatus.ServiceInvalid]: "正式雇佣失效",
   [TutorApplicantStatus.Cancelled]: "已取消"
 };
-
-/**
- * 跨类目订单归档状态的唯一标准，只覆盖委托/狩猎/商城这类仍然用中文文案作为状态值的品类。
- * 家教品类（category === "tutor"）已经 KEY 化，归档判断改用 TutorDemandStatus/
- * TutorApplicantStatus 精确匹配，不在这张表里，见 useClientWorkspaceViewModel.ts。
- */
-export enum TutorOrderStatus {
-  /** 已取消（委托/家教需求等取消场景）。 */
-  Cancelled = "已取消",
-  /** 已完成（委托履约完成等场景）。 */
-  Completed = "已完成",
-  /** 已结束（家教需求/试课申请通用终态）。 */
-  Ended = "已结束",
-  /** 已结算（家教结算完成）。 */
-  Settled = "已结算"
-}

@@ -1,20 +1,5 @@
 import { OngoingHuntings } from "./OngoingHuntings";
 
-/** 狩猎快捷入口属性，调用方只提供开合状态和真实业务动作。 */
-export interface HuntingShortcutProps {
-  areaOptions: string[];
-  initialProject: HuntingProject | null;
-  isEnabled: boolean;
-  isProjectOpen: boolean;
-  isRecommendationOpen: boolean;
-  onCloseProject: () => void;
-  onCloseRecommendation: () => void;
-  onDisable: () => void;
-  onOpen: () => void;
-  onSubmitProject: (draft: HuntingProjectDraft) => void;
-  recommendedTasks: HuntingTask[];
-}
-
 /** 狩猎快捷入口，封装右下角按钮、创建项目弹窗和推荐委托弹窗。 */
 export function HuntingShortcut({
   areaOptions,

@@ -1,4 +1,5 @@
 import "./index.less";
+import { useTutorOverlayActions } from "@h5/overlays/tutor/context";
 import { useGlobalUser } from "@h5/store/global";
 
 /** 所有角色共用的账户中心页面，跨页面跳转由 App 统一承接。 */
@@ -6,17 +7,16 @@ export function Mine({
   onBack,
   onLogout,
   onNavigate,
-  onOpenTutorCertificationInfo,
   orders,
   walletSummary
 }: {
   onBack: () => void;
   onLogout: () => void;
   onNavigate: (surface: PageSurface) => void;
-  onOpenTutorCertificationInfo: () => void;
   orders: ClientOrder[];
   walletSummary: WalletSummary;
 }) {
+  const { openCertificationInfo } = useTutorOverlayActions();
   const { accountStatusText, creditScore, phone, profileDraft, nickname, role } = useGlobalUser();
   const tutorCardData = getTutorCardDataFromDraft(profileDraft);
   const tutorCardMode = getTutorCardMode(tutorCardData.certificationStatus, "default");
@@ -71,14 +71,10 @@ export function Mine({
           {...tutorCardData}
           className="mine-tutor-card p-[14px]"
           mode={tutorCardMode}
-          onOpenInfo={onOpenTutorCertificationInfo}
+          onOpenInfo={openCertificationInfo}
           onStartCertification={() => onNavigate("tutorCertification")}
         />
-        <OrderModuleCard
-          className="mine-order-card p-[14px]"
-          onOpen={() => onNavigate("orders")}
-          orders={orders}
-        />
+        <OrderModuleCard className="mine-order-card p-[14px]" onOpen={() => onNavigate("orders")} orders={orders} />
         <div className="mine-grid grid gap-[10px]">
           <MineCard title="我的记录" items={recordItems} />
           <MineCard title="投诉建议" items={feedbackItems} />

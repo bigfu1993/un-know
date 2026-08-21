@@ -1,4 +1,5 @@
 import "./index.less";
+import { usePublishOverlayActions } from "@h5/overlays/publish/context";
 import { useGlobalUser } from "@h5/store/global";
 
 /** App 外壳组件集合，负责导航、资料提示和次级页壳。 */
@@ -88,13 +89,12 @@ export function PageShell({
 /** 底部主导航，所有角色共用，我的入口固定由悬浮头像承接。 */
 export function BottomTabs({
   activeTab,
-  onChange,
-  onOpenTutorPublish
+  onChange
 }: {
   activeTab: ClientModuleKey;
   onChange: (tab: ClientModuleKey) => void;
-  onOpenTutorPublish?: () => void;
 }) {
+  const { openDefaultPublishInfo } = usePublishOverlayActions();
   const { role } = useGlobalUser();
 
   return (
@@ -113,8 +113,8 @@ export function BottomTabs({
               .join(" ")}
             key={tab.key}
             onClick={() => {
-              if (isActiveTutorTab && onOpenTutorPublish) {
-                onOpenTutorPublish();
+              if (isActiveTutorTab) {
+                openDefaultPublishInfo();
                 return;
               }
 

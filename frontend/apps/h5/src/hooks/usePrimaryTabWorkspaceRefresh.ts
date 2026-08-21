@@ -9,8 +9,8 @@ interface UsePrimaryTabWorkspaceRefreshOptions {
   refetchWorkspace: () => void;
 }
 
-/** 切换进入后需要刷新服务端列表或工作台数据的主模块。 */
-const workspaceBackedPrimaryTabs: ClientModuleKey[] = ["partTime", "hunting", "merchantSales", "tutor"];
+/** 切换进入后由根层刷新数据的主模块；委托页由页面查询 owner 自行加载。 */
+const workspaceBackedPrimaryTabs: ClientModuleKey[] = ["partTime", "merchantSales", "tutor"];
 
 /** 判断当前主模块是否需要刷新服务端数据。 */
 function isWorkspaceBackedPrimaryTab(tab: ClientModuleKey) {
