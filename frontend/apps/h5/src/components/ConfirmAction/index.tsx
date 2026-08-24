@@ -42,7 +42,7 @@ export function ConfirmAction({
           {cancelLabel}
         </button>
         <button
-          className={`primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[#748092] ${
+          className={`primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)] ${
             tone === "danger" ? "danger" : ""
           }`}
           disabled={isConfirming}

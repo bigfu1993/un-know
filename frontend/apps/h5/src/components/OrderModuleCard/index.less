@@ -1,12 +1,12 @@
 .order-module-card {
   box-sizing: border-box;
   width: 100%;
-  border: 1px solid #e3e8ee;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.94);
-  color: #17212b;
+  background: var(--h5-surface-solid);
+  color: var(--h5-text);
   text-align: left;
-  box-shadow: 0 8px 24px rgba(23, 33, 43, 0.06);
+  box-shadow: var(--h5-shadow-soft);
 }
 
 .order-module-head {
@@ -15,7 +15,7 @@
 
   > svg {
     align-self: center;
-    color: #8b96a5;
+    color: var(--h5-subtle);
   }
 }
 
@@ -29,7 +29,7 @@
   strong {
     display: block;
     overflow: hidden;
-    color: #17212b;
+    color: var(--h5-text);
     font-size: 15px;
     line-height: 1.25;
     text-overflow: ellipsis;
@@ -39,7 +39,7 @@
   p {
     margin: 2px 0 0;
     overflow: hidden;
-    color: #8b96a5;
+    color: var(--h5-subtle);
     font-size: 12px;
     line-height: 1.25;
     text-overflow: ellipsis;
@@ -49,8 +49,8 @@
 
 .order-module-icon {
   border-radius: 8px;
-  background: #dceef3;
-  color: #175e75;
+  background: var(--h5-accent-soft);
+  color: var(--h5-accent);
   width: 36px;
   height: 36px;
 }
@@ -65,12 +65,12 @@
   gap: 4px;
   padding: 7px;
   border-radius: 8px;
-  background: #fff;
+  background: var(--h5-surface-solid);
 }
 
 .order-module-grid em {
   overflow: hidden;
-  color: #657181;
+  color: var(--h5-muted);
   font-size: 12px;
   font-style: normal;
   text-overflow: ellipsis;
@@ -78,6 +78,6 @@
 }
 
 .order-module-grid strong {
-  color: #17212b;
+  color: var(--h5-text);
   font-size: 14px;
 }

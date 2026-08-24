@@ -126,7 +126,7 @@ export function ChatModule({
             <div className="quick-entry-grid grid gap-[8px]">
               {quickActions.map((action) => (
                 <button
-                  className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+                  className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
                   key={action.id}
                   onClick={() => setMessageDraft(action.content)}
                   type="button"
@@ -163,7 +163,7 @@ export function ChatModule({
               value={messageDraft}
             />
             <button
-              className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+              className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
               disabled={!messageDraft.trim() || sending}
               onClick={handleSendMessage}
               type="button"

@@ -7,20 +7,20 @@
 }
 
 .trial-schedule-editor {
-  border: 1px solid rgba(112, 128, 148, 0.16);
+  border: 1px solid color-mix(in srgb, var(--h5-subtle) 20%, transparent);
   border-radius: 8px;
-  background: #fff;
+  background: var(--h5-surface-solid);
   padding: 8px;
 }
 
 .trial-schedule-editor-header strong {
-  color: #17212b;
+  color: var(--h5-text);
   font-size: 14px;
 }
 
 .trial-schedule-editor-header span,
 .trial-schedule-editor-header button {
-  color: #657181;
+  color: var(--h5-muted);
   font-size: 12px;
   font-weight: 800;
 }
@@ -37,10 +37,10 @@
   min-height: 36px;
   align-items: center;
   justify-content: center;
-  border: 1px solid #d9e1e8;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: #f8fafc;
-  color: #475466;
+  background: var(--h5-surface-muted);
+  color: var(--h5-muted);
   padding: 6px 7px;
   text-align: center;
 }
@@ -50,15 +50,15 @@
 }
 
 .trial-schedule-row.selected .trial-schedule-toggle {
-  border-color: rgba(29, 111, 85, 0.36);
-  background: #eef7f3;
-  color: #1d6f55;
+  border-color: color-mix(in srgb, var(--h5-success) 36%, transparent);
+  background: var(--h5-success-soft);
+  color: var(--h5-success);
   opacity: 1;
 }
 
 .trial-schedule-row.unavailable .trial-schedule-toggle {
-  background: #f4f6f8;
-  color: #9aa3ad;
+  background: var(--h5-surface-muted);
+  color: var(--h5-subtle);
 }
 
 .trial-schedule-toggle strong {
@@ -74,28 +74,28 @@
 
 .trial-schedule-time-fields input {
   min-width: 0;
-  border: 1px solid #d9e1e8;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--h5-surface-solid);
   padding: 7px 6px;
-  color: #17212b;
+  color: var(--h5-text);
   font-size: 12px;
   font-weight: 800;
 }
 
 .trial-schedule-time-fields input:disabled {
-  background: #f4f6f8;
-  color: #9aa3ad;
+  background: var(--h5-surface-muted);
+  color: var(--h5-subtle);
 }
 
 .trial-schedule-row.selected .trial-schedule-time-fields input:disabled {
-  border-color: rgba(29, 111, 85, 0.22);
-  background: #f7fbf9;
-  color: #1d6f55;
+  border-color: color-mix(in srgb, var(--h5-success) 22%, transparent);
+  background: var(--h5-success-soft);
+  color: var(--h5-success);
 }
 
 .trial-schedule-time-fields span {
-  color: #657181;
+  color: var(--h5-muted);
   font-size: 12px;
   font-weight: 800;
 }
@@ -105,13 +105,13 @@
   border: 0;
   appearance: none;
   background: transparent;
-  color: #657181;
+  color: var(--h5-muted);
   font-size: 12px;
   font-weight: 900;
 }
 
 .trial-schedule-clear-button:disabled {
-  color: #bac2cc;
+  color: var(--h5-subtle);
 }
 
 @media (max-width: 420px) {

@@ -69,7 +69,7 @@ export function PageShell({
     <section className="page-view grid gap-[12px]">
       <header className="page-header grid items-center gap-[10px] p-[12px]">
         <button
-          className="back-button grid h-[38px] w-[38px] place-items-center text-[#17212b]"
+          className="back-button grid h-[38px] w-[38px] place-items-center text-[var(--h5-text)]"
           onClick={onBack}
           type="button"
           aria-label="返回"

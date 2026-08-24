@@ -1,18 +1,18 @@
 .login-shell {
   gap: 10px;
-  background: #f5f6f8;
+  background: var(--h5-page-bg);
   padding: 20px 12px;
 }
 
 .login-brand,
 .login-card {
-  border: 1px solid #d9e1e8;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
 }
 
 .login-brand {
-  background: linear-gradient(180deg, #1a6a80 0%, #124f63 100%);
-  box-shadow: 0 10px 24px rgba(18, 79, 99, 0.12);
+  background: linear-gradient(135deg, var(--h5-top-gradient-start) 0%, var(--h5-top-gradient-end) 100%);
+  box-shadow: 0 10px 24px rgba(31, 77, 52, 0.16);
 
   h1,
   p {
@@ -28,15 +28,15 @@
 
   p,
   span {
-    color: #d8edf3;
+    color: #d9f0e2;
   }
 }
 
 .login-card {
   gap: 10px;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 8px 24px rgba(23, 33, 43, 0.06);
+  background: var(--h5-surface);
+  box-shadow: var(--h5-shadow-soft);
 }
 
 .login-card form,
@@ -65,7 +65,7 @@
 .login-mode-tabs,
 .login-method-tabs,
 .login-role-tabs button {
-  background: #f3f6f9;
+  background: var(--h5-surface-muted);
 }
 
 .login-mode-tabs button,
@@ -77,18 +77,18 @@
 .login-mode-tabs button.active,
 .login-method-tabs button.active,
 .login-role-tabs button.active {
-  background: #dceef3;
+  background: var(--h5-accent-soft);
 }
 
 .login-mode-tabs button,
 .login-method-tabs button {
   flex: 1;
   padding: 7px 6px;
-  color: #475466;
+  color: var(--h5-muted);
   font-size: 12px;
 
   &.active {
-    color: #175e75;
+    color: var(--h5-accent);
     font-weight: 800;
   }
 }
@@ -99,11 +99,11 @@
 
 .login-role-tabs button {
   padding: 7px 6px;
-  color: #475466;
+  color: var(--h5-muted);
   font-size: 12px;
 
   &.active {
-    color: #175e75;
+    color: var(--h5-accent);
     font-weight: 800;
   }
 }
@@ -115,21 +115,21 @@
     align-items: center;
     gap: 6px;
     padding: 8px;
-    border: 1px solid #d9e1e8;
+    border: 1px solid var(--h5-border);
     border-radius: 8px;
-    background: #f8fafc;
+    background: var(--h5-surface-muted);
   }
 
   > span {
-    color: #657181;
+    color: var(--h5-muted);
     font-size: 12px;
   }
 
   button {
     padding: 5px 7px;
     border-radius: 7px;
-    background: #e7f2ef;
-    color: #1d6f55;
+    background: var(--h5-success-soft);
+    color: var(--h5-success);
     font-size: 12px;
   }
 
@@ -139,7 +139,7 @@
     border: 0;
     border-radius: 0;
     background: transparent;
-    color: #175e75;
+    color: var(--h5-accent);
     font-size: 13px;
     font-weight: 800;
     line-height: 1.2;
@@ -149,18 +149,18 @@
   input {
     min-width: 0;
     border: 0;
-    color: #17212b;
+    color: var(--h5-text);
     font: inherit;
     font-size: 12px;
     outline: 0;
   }
 
   svg {
-    color: #1d6f55;
+    color: var(--h5-success);
   }
 
   em {
-    color: #b26a11;
+    color: var(--h5-warning);
     font-size: 12px;
     font-style: normal;
     font-weight: 700;
@@ -168,7 +168,7 @@
   }
 
   &.missing > div {
-    border-color: #f4d59d;
+    border-color: var(--h5-warning-border);
   }
 }
 
@@ -177,9 +177,9 @@
   grid-template-columns: auto minmax(0, 1fr);
   gap: 8px;
   padding: 10px;
-  border: 1px solid #d9e1e8;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: #f8fafc;
+  background: var(--h5-surface-muted);
 
   &:disabled {
     cursor: default;
@@ -192,12 +192,12 @@
   }
 
   strong {
-    color: #17212b;
+    color: var(--h5-text);
   }
 
   em {
     margin-top: 3px;
-    color: #657181;
+    color: var(--h5-muted);
     font-size: 12px;
     font-style: normal;
     line-height: 1.38;
@@ -207,8 +207,8 @@
 
 .registration-role-icon {
   border-radius: 50%;
-  background: #dceef3;
-  color: #175e75;
+  background: var(--h5-accent-soft);
+  color: var(--h5-accent);
 }
 
 .registration-guide-card {
@@ -253,14 +253,14 @@
 
 .registration-profile-extra-card {
   box-sizing: border-box;
-  border: 1px solid #d9e1e8;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: #f8fafc;
+  background: var(--h5-surface-muted);
   padding: 8px;
 
   &.expanded {
-    background: #fff;
-    border-color: #cfe1e7;
+    background: var(--h5-surface-solid);
+    border-color: var(--h5-border-strong);
   }
 }
 
@@ -271,14 +271,14 @@
   }
 
   strong {
-    color: #17212b;
+    color: var(--h5-text);
     font-size: 14px;
     line-height: 1.35;
   }
 
   span {
     margin-top: 3px;
-    color: #657181;
+    color: var(--h5-muted);
     font-size: 12px;
     line-height: 1.45;
     overflow-wrap: anywhere;
@@ -287,13 +287,13 @@
 
 .registration-profile-extra-body {
   padding-top: 8px;
-  border-top: 1px solid #edf1f5;
+  border-top: 1px solid var(--h5-border);
 }
 
 .registration-profile-footer {
   padding-top: 8px;
-  border-top: 1px solid #edf1f5;
-  background: #fff;
+  border-top: 1px solid var(--h5-border);
+  background: var(--h5-surface-solid);
 }
 
 .registration-profile-field {
@@ -303,40 +303,40 @@
     min-width: 0;
     min-height: 34px;
     padding: 6px 9px;
-    border: 1px solid #d9e1e8;
+    border: 1px solid var(--h5-border);
     border-radius: 8px;
-    background: #fff;
-    color: #17212b;
+    background: var(--h5-surface-solid);
+    color: var(--h5-text);
     font: inherit;
     font-size: 12px;
     outline: 0;
 
     &:focus {
-      border-color: #175e75;
-      box-shadow: 0 0 0 3px rgba(23, 94, 117, 0.12);
+      border-color: var(--h5-accent);
+      box-shadow: 0 0 0 3px rgba(47, 110, 74, 0.18);
     }
   }
 
   &.missing input {
-    border-color: #f4d59d;
-    background: #fffaf0;
+    border-color: var(--h5-warning-border);
+    background: var(--h5-warning-soft);
   }
 
   span {
-    color: #475466;
+    color: var(--h5-muted);
     font-size: 13px;
     font-weight: 700;
   }
 
   small {
     margin-left: 6px;
-    color: #8b96a5;
+    color: var(--h5-subtle);
     font-size: 12px;
     font-weight: 600;
   }
 
   em {
-    color: #b26a11;
+    color: var(--h5-warning);
     font-size: 12px;
     font-style: normal;
     font-weight: 700;
@@ -357,7 +357,7 @@
   min-height: 26px;
   padding: 0;
   background: transparent;
-  color: #175e75;
+  color: var(--h5-accent);
   font-size: 12px;
   font-weight: 700;
 }

@@ -59,7 +59,7 @@ function MerchantProductCard({ product }: { product: MerchantProduct }) {
         </div>
         <em>{formatCurrency(product.price)}</em>
       </div>
-      <div className="meta-line mt-[10px] flex flex-wrap items-center gap-[6px] text-[13px] leading-[1.45] text-[#657181]">
+      <div className="meta-line mt-[10px] flex flex-wrap items-center gap-[6px] text-[13px] leading-[1.45] text-[var(--h5-muted)]">
         <span>{product.category}</span>
         <span>库存 {product.stock}</span>
         <span>限购 {product.purchaseLimit}</span>
@@ -70,19 +70,19 @@ function MerchantProductCard({ product }: { product: MerchantProduct }) {
         <span>商户发布商品交易责任边界为商户自售。</span>
         <div className="merchant-product-actions">
           <button
-            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             type="button"
           >
             上下架
           </button>
           <button
-            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             type="button"
           >
             隐藏
           </button>
           <button
-            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             type="button"
           >
             编辑

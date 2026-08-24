@@ -148,7 +148,7 @@ export function ProductListCard({
 
   return (
     <article className="product-row grid gap-[12px] p-[12px]">
-      <div className="product-thumb grid min-h-[76px] place-items-center text-center text-[#1d6f55] max-[430px]:min-h-[64px]">
+      <div className="product-thumb grid min-h-[76px] place-items-center text-center text-[var(--h5-success)] max-[430px]:min-h-[64px]">
         <ShoppingBag size={24} />
         <span>{product.category.slice(0, 4)}</span>
       </div>
@@ -160,7 +160,7 @@ export function ProductListCard({
           </div>
           <strong>{formatCurrency(product.price)}</strong>
         </div>
-        <div className="meta-line mt-[10px] flex flex-wrap items-center gap-[6px] text-[13px] leading-[1.45] text-[#657181]">
+        <div className="meta-line mt-[10px] flex flex-wrap items-center gap-[6px] text-[13px] leading-[1.45] text-[var(--h5-muted)]">
           <span>{product.source}</span>
           <span>{deliveryModeLabels[deliveryMode]}</span>
           <span>库存 {product.stock}</span>
@@ -171,19 +171,19 @@ export function ProductListCard({
           <span>合计 {formatCurrency(payableAmount)}</span>
           <div className="product-card-action-buttons">
             <button
-              className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+              className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
               type="button"
             >
               <Heart size={15} /> 收藏
             </button>
             <button
-              className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+              className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
               type="button"
             >
               <AlertCircle size={15} /> 举报
             </button>
             <button
-              className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+              className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
               disabled={role === "merchant" || purchasePending}
               onClick={() => onOpenCheckout(product)}
               type="button"

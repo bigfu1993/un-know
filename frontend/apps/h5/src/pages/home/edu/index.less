@@ -18,41 +18,41 @@
   align-items: center;
   justify-content: center;
   gap: 5px;
-  border: 1px solid #d9e1e8;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
   padding: 6px 8px;
-  background: #fff;
-  color: #475466;
+  background: var(--h5-surface-solid);
+  color: var(--h5-muted);
   font-size: 12px;
   font-weight: 800;
 }
 
 .tutor-toolbar-button.active {
-  border-color: #b8dbe4;
-  background: #dceef3;
-  color: #175e75;
+  border-color: color-mix(in srgb, var(--h5-accent) 45%, transparent);
+  background: var(--h5-accent-soft);
+  color: var(--h5-accent);
 }
 
 .tutor-option-panel {
   padding: 6px;
-  border: 1px solid #d9e1e8;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--h5-surface-solid);
 }
 
 .tutor-option-panel button {
   min-height: 28px;
   border-radius: 999px;
   padding: 4px 8px;
-  background: #f3f6f9;
-  color: #475466;
+  background: var(--h5-surface-muted);
+  color: var(--h5-muted);
   font-size: 12px;
   font-weight: 800;
 }
 
 .tutor-option-panel button.active {
-  background: #dceef3;
-  color: #175e75;
+  background: var(--h5-accent-soft);
+  color: var(--h5-accent);
 }
 
 .tutor-live-status {
@@ -61,8 +61,8 @@
   align-items: center;
   border-radius: 8px;
   padding: 5px 8px;
-  background: #f7fafc;
-  color: #657181;
+  background: var(--h5-surface-muted);
+  color: var(--h5-muted);
   font-size: 12px;
   font-weight: 800;
 }
@@ -91,22 +91,22 @@
 
 .tutor-application-card,
 .tutor-card-container {
-  border: 1px solid rgba(112, 128, 148, 0.18);
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.94);
-  color: #17212b;
+  background: var(--h5-surface-solid);
+  color: var(--h5-text);
 }
 
 .tutor-application-card.active,
 .tutor-card-container.selected {
-  border-color: #1d6f55;
-  box-shadow: 0 0 0 3px rgba(29, 111, 85, 0.12);
+  border-color: var(--h5-success);
+  box-shadow: 0 0 0 3px rgba(29, 122, 92, 0.16);
 }
 
 .tutor-application-card.trial-confirming,
 .tutor-card-container.trial-confirming {
-  border-color: rgba(217, 45, 32, 0.24);
-  background: #fff8f7;
+  border-color: color-mix(in srgb, var(--h5-danger) 24%, transparent);
+  background: var(--h5-danger-soft);
 }
 
 /** footer 插槽里如果是一个操作按钮组（如 TutorApplications 的拒绝/取消试课按钮），沿用原 .product-actions 的右对齐效果。 */
@@ -122,8 +122,8 @@
 }
 
 .tutor-application-card.trialing {
-  border-color: rgba(22, 138, 87, 0.24);
-  background: #f1fbf6;
+  border-color: color-mix(in srgb, var(--h5-success) 24%, transparent);
+  background: var(--h5-success-soft);
 }
 
 .tutor-profile-title-copy {
@@ -153,8 +153,8 @@
 .tutor-application-status {
   flex: 0 0 auto;
   border-radius: 999px;
-  background: #fff1f0;
-  color: #d92d20;
+  background: var(--h5-danger-soft);
+  color: var(--h5-danger);
   padding: 3px 7px;
   font-size: 11px;
   font-style: normal;
@@ -192,8 +192,8 @@
 }
 
 .tutor-application-card.trialing .tutor-application-status {
-  background: #e8f7ef;
-  color: #168a57;
+  background: var(--h5-success-soft);
+  color: var(--h5-success);
 }
 
 .tutor-trial-list-card {
@@ -208,18 +208,18 @@
 
 .tutor-time-preview-button {
   justify-self: start;
-  border: 1px solid rgba(23, 94, 117, 0.18);
+  border: 1px solid color-mix(in srgb, var(--h5-accent) 18%, transparent);
   border-radius: 999px;
-  background: #eef7f3;
-  color: #175e75;
+  background: var(--h5-success-soft);
+  color: var(--h5-accent);
   font-size: 12px;
   font-weight: 900;
 }
 
 .tutor-time-preview-button.empty {
-  border-color: rgba(112, 128, 148, 0.18);
-  background: #f3f6f9;
-  color: #748092;
+  border-color: color-mix(in srgb, var(--h5-subtle) 24%, transparent);
+  background: var(--h5-surface-muted);
+  color: var(--h5-subtle);
 }
 
 .tutor-time-preview-button:disabled {
@@ -238,19 +238,19 @@
 }
 
 .tutor-schedule-preview-detail {
-  border: 1px solid rgba(112, 128, 148, 0.16);
+  border: 1px solid color-mix(in srgb, var(--h5-subtle) 20%, transparent);
   border-radius: 8px;
-  background: #f8fafc;
+  background: var(--h5-surface-muted);
   padding: 8px;
 }
 
 .tutor-schedule-preview-detail strong {
-  color: #17212b;
+  color: var(--h5-text);
   font-size: 13px;
 }
 
 .tutor-schedule-preview-detail span {
-  color: #657181;
+  color: var(--h5-muted);
   font-size: 12px;
   font-weight: 800;
 }
@@ -269,20 +269,20 @@
 }
 
 .tutor-applicant-detail-item {
-  border: 1px solid rgba(112, 128, 148, 0.16);
+  border: 1px solid color-mix(in srgb, var(--h5-subtle) 20%, transparent);
   border-radius: 8px;
-  background: #fff;
+  background: var(--h5-surface-solid);
   padding: 7px 8px;
 }
 
 .tutor-applicant-detail-item span {
-  color: #657181;
+  color: var(--h5-muted);
   font-size: 12px;
   font-weight: 800;
 }
 
 .tutor-applicant-detail-item strong {
-  color: #17212b;
+  color: var(--h5-text);
   font-size: 13px;
   text-align: right;
 }
@@ -298,18 +298,18 @@
   align-items: center;
   justify-content: center;
   gap: 5px;
-  border: 1px solid #cfd8e3;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: #fff;
-  color: #175e75;
+  background: var(--h5-surface-solid);
+  color: var(--h5-accent);
   font-size: 12px;
   font-weight: 900;
 }
 
 .tutor-trial-schedule-button.filled {
-  border-color: rgba(29, 111, 85, 0.28);
-  background: #eef7f3;
-  color: #1d6f55;
+  border-color: color-mix(in srgb, var(--h5-success) 28%, transparent);
+  background: var(--h5-success-soft);
+  color: var(--h5-success);
 }
 
 .tutor-trial-schedule-summary {
@@ -323,8 +323,8 @@
 }
 
 .tutor-trial-schedule-summary {
-  background: #fff7ed;
-  color: #9a3412;
+  background: var(--h5-warning-soft);
+  color: var(--h5-warning);
   font-weight: 800;
 }
 
@@ -333,29 +333,29 @@
 }
 
 .tutor-trial-settlement-summary {
-  border: 1px solid rgba(112, 128, 148, 0.16);
+  border: 1px solid color-mix(in srgb, var(--h5-subtle) 20%, transparent);
   border-radius: 8px;
-  background: #f8fafc;
+  background: var(--h5-surface-muted);
   padding: 8px;
-  color: #475466;
+  color: var(--h5-muted);
   font-size: 12px;
   font-weight: 800;
 }
 
 .tutor-trial-settlement-summary strong {
-  color: #17212b;
+  color: var(--h5-text);
   font-size: 14px;
 }
 
 .tutor-trial-settlement-summary p {
   margin: 0;
-  color: #17212b;
+  color: var(--h5-text);
   font-size: 13px;
   line-height: 1.5;
 }
 
 .tutor-trial-settlement-field span {
-  color: #475466;
+  color: var(--h5-muted);
   font-size: 12px;
   font-weight: 900;
 }
@@ -363,10 +363,10 @@
 .tutor-trial-settlement-field input {
   min-height: 34px;
   width: 100%;
-  border: 1px solid #cfd8e3;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: #fff;
-  color: #17212b;
+  background: var(--h5-surface-solid);
+  color: var(--h5-text);
   font-size: 12px;
   font-weight: 900;
   outline: none;
@@ -374,30 +374,30 @@
 }
 
 .tutor-trial-settlement-field input:focus {
-  border-color: #1d6f55;
-  box-shadow: 0 0 0 3px rgba(29, 111, 85, 0.12);
+  border-color: var(--h5-success);
+  box-shadow: 0 0 0 3px rgba(29, 122, 92, 0.16);
 }
 
 .tutor-trial-settlement-error {
-  color: #d92d20;
+  color: var(--h5-danger);
   font-size: 12px;
   font-weight: 800;
 }
 
 .tutor-trial-hire-decision {
-  border: 1px solid rgba(112, 128, 148, 0.16);
+  border: 1px solid color-mix(in srgb, var(--h5-subtle) 20%, transparent);
   border-radius: 8px;
-  background: #fff;
+  background: var(--h5-surface-solid);
   padding: 8px;
 }
 
 .tutor-trial-hire-decision__header strong {
-  color: #17212b;
+  color: var(--h5-text);
   font-size: 13px;
 }
 
 .tutor-trial-hire-decision__header span {
-  color: #657181;
+  color: var(--h5-muted);
   font-size: 12px;
   font-weight: 800;
   line-height: 1.45;
@@ -405,22 +405,22 @@
 
 .tutor-trial-hire-decision__option {
   min-height: 34px;
-  border: 1px solid #cfd8e3;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: #f8fafc;
-  color: #475466;
+  background: var(--h5-surface-muted);
+  color: var(--h5-muted);
   font-size: 12px;
   font-weight: 900;
 }
 
 .tutor-trial-hire-decision__option.active {
-  border-color: rgba(29, 111, 85, 0.32);
-  background: #eef7f3;
-  color: #1d6f55;
+  border-color: color-mix(in srgb, var(--h5-success) 32%, transparent);
+  background: var(--h5-success-soft);
+  color: var(--h5-success);
 }
 
 .tutor-trial-hire-decision__option.active.danger {
-  border-color: rgba(217, 45, 32, 0.28);
-  background: #fff1f0;
-  color: #d92d20;
+  border-color: color-mix(in srgb, var(--h5-danger) 28%, transparent);
+  background: var(--h5-danger-soft);
+  color: var(--h5-danger);
 }

@@ -85,7 +85,7 @@ function EduJobScheduleView({
           selectedDates={periodDates}
         />
       ) : (
-        <p className="notice p-[10px] text-[#61420d]">家长暂未确定具体日程，可通过消息与家长确认。</p>
+        <p className="notice p-[10px] text-[var(--h5-warning)]">家长暂未确定具体日程，可通过消息与家长确认。</p>
       )}
       {onConfirmApply ? (
         <div className="sheet-actions grid grid-cols-2 gap-[8px]">
@@ -98,7 +98,7 @@ function EduJobScheduleView({
             取消
           </button>
           <button
-            className="primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+            className="primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
             disabled={isApplying}
             onClick={onConfirmApply}
             type="button"
@@ -145,7 +145,7 @@ export function EduTrialApplyAction({
   return (
     <>
       <button
-        className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+        className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
         disabled={!onApplyTrial || role !== "student"}
         onClick={() => setIsApplyConfirmOpen(true)}
         type="button"

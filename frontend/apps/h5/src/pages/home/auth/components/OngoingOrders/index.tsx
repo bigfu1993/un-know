@@ -139,7 +139,7 @@ export function OngoingOrders({
                 <OrderStatus order={order} tutorTask={null} />
               </div>
               <p>{getOngoingOrderDisplayDetail(order)}</p>
-              <div className="meta-line mt-[10px] flex flex-wrap items-center gap-[6px] text-[13px] leading-[1.45] text-[#657181]">
+              <div className="meta-line mt-[10px] flex flex-wrap items-center gap-[6px] text-[13px] leading-[1.45] text-[var(--h5-muted)]">
                 <span>{order.amountLabel ?? formatCurrency(order.amount)}</span>
                 <span>{order.contact}</span>
               </div>

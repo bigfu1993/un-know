@@ -4,12 +4,12 @@
   display: grid;
   width: 100%;
   gap: 9px;
-  border: 1px solid #e3e8ee;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.94);
-  color: #17212b;
+  background: var(--h5-surface-solid);
+  color: var(--h5-text);
   text-align: left;
-  box-shadow: 0 8px 24px rgba(23, 33, 43, 0.06);
+  box-shadow: var(--h5-shadow-soft);
 }
 
 .wallet-summary-card {
@@ -18,7 +18,7 @@
 
 .account-summary-card--simple,
 .wallet-summary-card--simple {
-  background: #f8fafc;
+  background: var(--h5-surface-muted);
 }
 
 .summary-card-head {
@@ -28,8 +28,8 @@
 
 .summary-card-icon {
   border-radius: 8px;
-  background: #dceef3;
-  color: #175e75;
+  background: var(--h5-accent-soft);
+  color: var(--h5-accent);
   width: 36px;
   height: 36px;
 }
@@ -47,7 +47,7 @@
     align-items: center;
     gap: 6px;
     overflow: hidden;
-    color: #17212b;
+    color: var(--h5-text);
     font-size: 15px;
     line-height: 1.25;
     text-overflow: ellipsis;
@@ -57,7 +57,7 @@
   p {
     margin: 2px 0 0;
     overflow: hidden;
-    color: #8b96a5;
+    color: var(--h5-subtle);
     font-size: 12px;
     line-height: 1.25;
     text-overflow: ellipsis;
@@ -66,7 +66,7 @@
 }
 
 .summary-card-title .summary-card-status-text {
-  color: #8b96a5;
+  color: var(--h5-subtle);
   font-size: 12px;
   font-weight: 400;
   line-height: 1.25;
@@ -80,8 +80,8 @@
   em {
     padding: 2px 6px;
     border-radius: 999px;
-    background: #dceef3;
-    color: #175e75;
+    background: var(--h5-accent-soft);
+    color: var(--h5-accent);
     font-size: 11px;
     font-style: normal;
     font-weight: 800;
@@ -103,12 +103,12 @@
   gap: 4px;
   padding: 7px;
   border-radius: 8px;
-  background: #f8f9fb;
+  background: var(--h5-surface-muted);
 }
 
 .summary-card-fields em {
   overflow: hidden;
-  color: #657181;
+  color: var(--h5-muted);
   font-size: 12px;
   font-style: normal;
   text-overflow: ellipsis;
@@ -117,7 +117,7 @@
 
 .summary-card-fields strong {
   overflow-wrap: anywhere;
-  color: #17212b;
+  color: var(--h5-text);
   font-size: 13px;
 }
 
@@ -130,7 +130,7 @@
 }
 
 .summary-card-chevron {
-  color: #8b96a5;
+  color: var(--h5-subtle);
 }
 
 .wallet-recharge-action {
@@ -139,8 +139,8 @@
   place-items: center;
   padding: 7px;
   border-radius: 8px;
-  background: #f8f9fb;
-  color: #17212b;
+  background: var(--h5-surface-muted);
+  color: var(--h5-text);
   font-size: 12px;
   font-weight: 900;
 }
@@ -153,5 +153,5 @@
 .account-summary-card--simple .summary-card-fields span,
 .wallet-summary-card--simple .summary-card-fields span {
   padding: 6px;
-  background: #fff;
+  background: var(--h5-surface-solid);
 }

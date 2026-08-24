@@ -1,7 +1,7 @@
 .settings-row {
-  border: 1px solid #e3e8ee;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--h5-surface-solid);
 
   span {
     min-width: 0;
@@ -13,54 +13,54 @@
   }
 
   em {
-    color: #657181;
+    color: var(--h5-muted);
     font-size: 12px;
     line-height: 1.38;
   }
 }
 
 .settings-profile-list .settings-row {
-  background: #f8fafc;
+  background: var(--h5-surface-muted);
 }
 
 .settings-profile-list .settings-row.missing {
-  border-color: #f4d59d;
-  background: #fffaf0;
+  border-color: var(--h5-warning-border);
+  background: var(--h5-warning-soft);
 }
 
 .address-info-card,
 .address-add-button {
   width: 100%;
-  border: 1px solid #e3e8ee;
-  background: rgba(255, 255, 255, 0.94);
-  color: #17212b;
+  border: 1px solid var(--h5-border);
+  background: var(--h5-surface-solid);
+  color: var(--h5-text);
 }
 
 .address-info-card.current {
-  border-color: #9bd4c1;
-  background: #f7fffb;
+  border-color: color-mix(in srgb, var(--h5-success) 45%, transparent);
+  background: var(--h5-success-soft);
 }
 
 .address-card-head {
   strong {
     display: block;
     overflow-wrap: anywhere;
-    color: #17212b;
+    color: var(--h5-text);
     font-size: 14px;
   }
 
   span {
     display: block;
     margin-top: 2px;
-    color: #657181;
+    color: var(--h5-muted);
     font-size: 12px;
   }
 
   em {
     flex: 0 0 auto;
     border-radius: 999px;
-    background: #eef3f7;
-    color: #657181;
+    background: var(--h5-surface-muted);
+    color: var(--h5-muted);
     font-size: 12px;
     font-style: normal;
     font-weight: 800;
@@ -69,14 +69,14 @@
   }
 
   em.active {
-    background: #dff6ea;
-    color: #1d6f55;
+    background: var(--h5-success-soft);
+    color: var(--h5-success);
   }
 }
 
 .address-info-card p {
   margin: 8px 0 0;
-  color: #17212b;
+  color: var(--h5-text);
   font-size: 13px;
   line-height: 1.38;
   overflow-wrap: anywhere;
@@ -87,8 +87,8 @@
 
   span {
     border-radius: 8px;
-    background: #edf2f6;
-    color: #475466;
+    background: var(--h5-surface-muted);
+    color: var(--h5-muted);
     font-size: 12px;
     font-weight: 800;
     line-height: 1;
@@ -106,6 +106,6 @@
 }
 
 .address-add-button:hover {
-  border-color: #9bd4c1;
-  background: #f7fffb;
+  border-color: color-mix(in srgb, var(--h5-success) 45%, transparent);
+  background: var(--h5-success-soft);
 }

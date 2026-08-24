@@ -75,14 +75,14 @@ export function CommissionTaskCard({ onAccept, onContact, onOpen, task }: Commis
       {!task.isMine ? (
         <div className="commission-card-footer flex flex-wrap items-center gap-[8px]" onClick={(event) => event.stopPropagation()}>
           <button
-            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466] disabled:text-[#748092]"
+            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)] disabled:text-[var(--h5-subtle)]"
             onClick={() => onContact(task)}
             type="button"
           >
             <MessageCircle size={15} /> 联系
           </button>
           <button
-            className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+            className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
             disabled={isCommissionTaskLocked(task)}
             onClick={() => onAccept(task)}
             type="button"

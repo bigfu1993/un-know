@@ -34,7 +34,7 @@ function ModalHeader({ headerClassName, icon, onClose, title }: Pick<ModalProps,
       <div className="modal-title-copy min-w-0 flex-1">{title}</div>
       <button
         aria-label="关闭"
-        className="icon-only grid h-[34px] w-[34px] place-items-center text-[#475466]"
+        className="icon-only grid h-[34px] w-[34px] place-items-center text-[var(--h5-muted)]"
         onClick={onClose}
         type="button"
       >

@@ -395,7 +395,7 @@ export function TutorApplications({ candidates, isConfirming = false, onCancelTr
         </div>
 
         <button
-          className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+          className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
           disabled={!canConfirm}
           onClick={handleConfirm}
           type="button"
@@ -601,7 +601,7 @@ export function TutorTrialList({
       return (
         <div className="tutor-application-actions flex flex-wrap gap-[8px]">
           <button
-            className="ghost-button min-h-[30px] px-[9px] py-[6px] text-[12px] text-[#475466]"
+            className="ghost-button min-h-[30px] px-[9px] py-[6px] text-[12px] text-[var(--h5-muted)]"
             disabled={isSubmitting}
             onClick={() => void submitCandidateWorkflowAction(candidate, "remove_rejected_service_offer")}
             type="button"
@@ -628,7 +628,7 @@ export function TutorTrialList({
     if (!selectedCandidate || !selectedCandidateTask) {
       return (
         <button
-          className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+          className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
           disabled
           type="button"
         >
@@ -751,7 +751,7 @@ export function TutorTrialList({
 
     return (
       <button
-        className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+        className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
         disabled
         type="button"
       >
@@ -1105,7 +1105,7 @@ function TutorTrialSettlement({ candidate, isSubmitting = false, mode = "trial",
             取消
           </button>
           <button
-            className="primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+            className="primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
             disabled={!isTrialFeeValid || isSubmitting}
             onClick={handleConfirm}
             type="button"

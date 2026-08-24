@@ -84,17 +84,17 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
           </div>
         </label>
 
-        <p className="login-tip m-0 text-[13px] leading-[1.5] text-[#657181]">
+        <p className="login-tip m-0 text-[13px] leading-[1.5] text-[var(--h5-muted)]">
           本地联调验证码固定为 {localAuthCode}；注册成功后 token 会写入本地存储，后续请求自动携带。
         </p>
 
-        <p className="login-tip m-0 text-[13px] leading-[1.5] text-[#657181]">
+        <p className="login-tip m-0 text-[13px] leading-[1.5] text-[var(--h5-muted)]">
           注册成功后需要先选择角色，再补充基础信息后进入。
         </p>
 
         <button
           aria-label={submitLabel}
-          className="primary-button auth-submit-button register-mode full inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+          className="primary-button auth-submit-button register-mode full inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
           disabled={registerMutation.isPending}
           type="submit"
         >

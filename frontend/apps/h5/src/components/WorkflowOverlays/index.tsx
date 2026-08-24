@@ -53,14 +53,14 @@ export function ProfileCompletion({
 
       <div className="sheet-actions grid gap-[8px]">
         <button
-          className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+          className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
           onClick={onClose}
           type="button"
         >
           取消
         </button>
         <button
-          className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+          className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
           disabled={hasInvalidFields || isSaving}
           type="submit"
         >
@@ -147,7 +147,7 @@ export function CheckoutSheet({
         <strong>合计 {formatCurrency(total)}</strong>
       </div>
       <button
-        className="primary-button full inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+        className="primary-button full inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
         disabled={purchasePending}
         onClick={onSubmit}
         type="button"

@@ -72,7 +72,7 @@ export function Login({ onLoginSuccess }: LoginProps) {
   }
 
   return (
-    <main className="login-shell mx-auto grid min-h-screen w-full max-w-[540px] content-center gap-[14px] overflow-hidden px-[14px] py-[28px] text-[#17212b]">
+    <main className="login-shell mx-auto grid min-h-screen w-full max-w-[540px] content-center gap-[14px] overflow-hidden px-[14px] py-[28px] text-[var(--h5-text)]">
       {isPasswordResetOpen ? (
         <PasswordResetCard
           initialPhone={passwordResetInitialPhone}

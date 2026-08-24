@@ -88,14 +88,14 @@ export function NicknameEditor({
 
         <div className="sheet-actions grid gap-[8px]">
           <button
-            className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+            className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             onClick={onClose}
             type="button"
           >
             取消
           </button>
           <button
-            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
             disabled={isNicknameInvalid || isSubmitting}
             type="submit"
           >
@@ -171,14 +171,14 @@ export function TutorQualificationInfo({
 
         <div className="sheet-actions grid gap-[8px]">
           <button
-            className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+            className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             onClick={onClose}
             type="button"
           >
             取消
           </button>
           <button
-            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
             disabled={isSaveDisabled}
             onClick={onSave}
             type="button"
@@ -246,14 +246,14 @@ export function AddressEditor({
 
         <div className="sheet-actions grid gap-[8px]">
           <button
-            className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+            className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             onClick={onClose}
             type="button"
           >
             取消
           </button>
           <button
-            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
             disabled={hasInvalidFields || isSubmitting}
             type="submit"
           >
@@ -344,14 +344,14 @@ export function PhoneChange({
 
         <div className="sheet-actions grid gap-[8px]">
           <button
-            className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+            className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             onClick={onClose}
             type="button"
           >
             取消
           </button>
           <button
-            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
             disabled={isSaveDisabled}
             type="submit"
           >
@@ -474,14 +474,14 @@ export function PasswordReset({
 
         <div className="sheet-actions grid gap-[8px]">
           <button
-            className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+            className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             onClick={onClose}
             type="button"
           >
             取消
           </button>
           <button
-            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
             disabled={isSaveDisabled}
             type="submit"
           >

@@ -1,6 +1,6 @@
 .tutor-calendar-toolbar {
   strong {
-    color: #17212b;
+    color: var(--h5-text);
     font-size: 14px;
   }
 }
@@ -11,7 +11,7 @@
 }
 
 .tutor-calendar-weekdays span {
-  color: #657181;
+  color: var(--h5-muted);
   font-size: 12px;
   font-weight: 800;
   text-align: center;
@@ -26,11 +26,11 @@
   aspect-ratio: 1;
   min-width: 0;
   overflow: hidden;
-  border: 1px solid #d9e1e8;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
   appearance: none;
-  background: #fff;
-  color: #17212b;
+  background: var(--h5-surface-solid);
+  color: var(--h5-text);
   font-weight: 800;
 }
 
@@ -38,7 +38,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, transparent calc(50% - 0.5px), #d9e1e8 50%, transparent calc(50% + 0.5px));
+  background: linear-gradient(135deg, transparent calc(50% - 0.5px), var(--h5-border) 50%, transparent calc(50% + 0.5px));
   pointer-events: none;
 }
 
@@ -52,13 +52,13 @@
 }
 
 .tutor-calendar-day.selected {
-  border-color: #175e75;
-  box-shadow: 0 0 0 2px rgba(23, 94, 117, 0.12);
+  border-color: var(--h5-accent);
+  box-shadow: 0 0 0 2px rgba(47, 110, 74, 0.18);
 }
 
 .tutor-calendar-day.today strong {
-  background: #17212b;
-  color: #fff;
+  background: var(--h5-text);
+  color: var(--h5-surface-solid);
 }
 
 .tutor-calendar-day strong {
@@ -76,7 +76,7 @@
   position: absolute;
   inset: 0;
   opacity: 0;
-  background: rgba(238, 133, 38, 0.72);
+  background: color-mix(in srgb, var(--h5-accent) 72%, transparent);
 }
 
 .tutor-calendar-half.am {
@@ -95,17 +95,17 @@
 .tutor-calendar-task {
   display: grid;
   gap: 4px;
-  border: 1px solid #e3e8ee;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--h5-surface-solid);
 
   strong {
-    color: #17212b;
+    color: var(--h5-text);
     font-size: 13px;
   }
 
   span {
-    color: #657181;
+    color: var(--h5-muted);
     font-size: 12px;
     line-height: 1.38;
   }

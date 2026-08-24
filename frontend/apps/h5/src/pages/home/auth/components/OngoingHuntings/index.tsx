@@ -33,7 +33,7 @@ export function OngoingHuntings({ onClose, onDisable, tasks }: OngoingHuntingsPr
               </div>
               <em>{task.status}</em>
             </div>
-            <div className="meta-line flex flex-wrap items-center gap-[6px] text-[13px] leading-[1.45] text-[#657181]">
+            <div className="meta-line flex flex-wrap items-center gap-[6px] text-[13px] leading-[1.45] text-[var(--h5-muted)]">
               <span>
                 <MapPin size={13} />
                 {task.destination || task.location}

@@ -34,7 +34,7 @@
 .delegation-search,
 .delegation-filter {
   span {
-    color: #657181;
+    color: var(--h5-muted);
     font-size: 12px;
     font-weight: 800;
   }
@@ -44,8 +44,8 @@
     width: 100%;
     min-height: 34px;
     padding: 6px 8px;
-    background: #fff;
-    color: #17212b;
+    background: var(--h5-surface-solid);
+    color: var(--h5-text);
     font-size: 12px;
   }
 }
@@ -53,7 +53,7 @@
 .delegation-search input,
 .delegation-filter select {
   box-sizing: border-box;
-  border: 1px solid #d9e1e8;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
   font: inherit;
   outline: 0;
@@ -61,8 +61,8 @@
 
 .delegation-search input:focus,
 .delegation-filter select:focus {
-  border-color: #175e75;
-  box-shadow: 0 0 0 3px rgba(23, 94, 117, 0.12);
+  border-color: var(--h5-accent);
+  box-shadow: 0 0 0 3px rgba(47, 110, 74, 0.18);
 }
 
 .delegation-icon-button {
@@ -71,37 +71,37 @@
   height: 36px;
   flex: 0 0 36px;
   place-items: center;
-  border: 1px solid #d9e1e8;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: #fff;
-  color: #475466;
+  background: var(--h5-surface-solid);
+  color: var(--h5-muted);
 }
 
 .delegation-icon-button.active {
-  border-color: #b8dbe4;
-  background: #dceef3;
-  color: #175e75;
+  border-color: color-mix(in srgb, var(--h5-accent) 45%, transparent);
+  background: var(--h5-accent-soft);
+  color: var(--h5-accent);
 }
 
 .delegation-option-panel {
   padding: 6px;
-  border: 1px solid #d9e1e8;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--h5-surface-solid);
 
   button {
     min-height: 28px;
     border-radius: 999px;
     padding: 4px 8px;
-    background: #f3f6f9;
-    color: #475466;
+    background: var(--h5-surface-muted);
+    color: var(--h5-muted);
     font-size: 12px;
     font-weight: 800;
   }
 
   button.active {
-    background: #dceef3;
-    color: #175e75;
+    background: var(--h5-accent-soft);
+    color: var(--h5-accent);
   }
 }
 
@@ -113,8 +113,8 @@
   gap: 6px;
   border-radius: 8px;
   padding: 5px 8px;
-  background: #f7fafc;
-  color: #657181;
+  background: var(--h5-surface-muted);
+  color: var(--h5-muted);
   font-size: 12px;
   font-weight: 800;
 

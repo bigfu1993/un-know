@@ -271,7 +271,7 @@ export function TutorCertificationInfo({
           {mode === "preview" ? (
             <>
               <button
-                className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+                className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
                 onClick={(event) => {
                   event.preventDefault();
                   handleEnterMode("edit");
@@ -296,7 +296,7 @@ export function TutorCertificationInfo({
           ) : (
             <>
               <button
-                className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+                className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
                 onClick={(event) => {
                   event.preventDefault();
                   setMode("preview");
@@ -306,7 +306,7 @@ export function TutorCertificationInfo({
                 取消
               </button>
               <button
-                className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+                className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
                 disabled={!isFormValid}
                 type="submit"
               >
@@ -395,7 +395,7 @@ function SubjectLevelEditor({
             </select>
           </label>
           <button
-            className="icon-only tutor-subject-level-remove grid h-[38px] w-[38px] place-items-center text-[#dc2626]"
+            className="icon-only tutor-subject-level-remove grid h-[38px] w-[38px] place-items-center text-[var(--h5-danger)]"
             onClick={() => onRemove(index)}
             type="button"
             aria-label="删除学科"

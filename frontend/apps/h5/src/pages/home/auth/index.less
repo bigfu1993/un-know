@@ -8,11 +8,11 @@
   border: 1px solid var(--h5-border);
   border-radius: 8px;
   background: var(--h5-surface);
-  box-shadow: 0 16px 36px rgba(23, 33, 43, 0.14);
+  box-shadow: 0 16px 36px rgba(30, 26, 22, 0.14);
 
   p {
     margin: 0;
-    color: #657181;
+    color: var(--h5-muted);
     font-size: 12px;
   }
 
@@ -35,8 +35,8 @@
 }
 
 .account-logout-button {
-  background: #fff1f2;
-  color: #dc2626;
+  background: var(--h5-danger-soft);
+  color: var(--h5-danger);
 }
 
 .tutor-exposure-switch {
@@ -47,8 +47,8 @@
   gap: 8px;
   padding: 6px 8px;
   border-radius: 8px;
-  background: #f8f9fb;
-  color: #475466;
+  background: var(--h5-surface-muted);
+  color: var(--h5-muted);
 
   span {
     font-size: 12px;
@@ -57,17 +57,17 @@
 
   strong {
     flex: 0 0 auto;
-    color: #8b96a5;
+    color: var(--h5-subtle);
     font-size: 12px;
     font-weight: 400;
   }
 
   &.active {
-    background: #eefaf4;
-    color: #1d6f55;
+    background: var(--h5-success-soft);
+    color: var(--h5-success);
 
     strong {
-      color: #1d6f55;
+      color: var(--h5-success);
     }
   }
 }
@@ -98,12 +98,12 @@
 .popover-account {
   grid-template-columns: minmax(0, 1fr);
   border-radius: 8px;
-  background: #eef6f4;
+  background: var(--h5-surface-muted);
 }
 
 .popover-account p {
   display: block;
-  color: #657181;
+  color: var(--h5-muted);
   font-size: 12px;
 }
 
@@ -112,7 +112,7 @@
   border: 1px solid var(--h5-border);
   border-radius: 8px;
   background: var(--h5-surface);
-  border-color: #dbe5ed;
+  border-color: var(--h5-border);
 
   em {
     font-style: normal;
@@ -120,7 +120,7 @@
 
   > em {
     grid-column: 1 / -1;
-    color: #657181;
+    color: var(--h5-muted);
     font-size: 12px;
   }
 
@@ -128,12 +128,12 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    color: #657181;
+    color: var(--h5-muted);
     font-size: 12px;
   }
 
   > strong {
-    color: #175e75;
+    color: var(--h5-accent);
     font-size: 15px;
   }
 
@@ -141,7 +141,7 @@
     position: absolute;
     top: 50%;
     right: 10px;
-    color: #8b96a5;
+    color: var(--h5-subtle);
     transform: translateY(-50%);
   }
 }
@@ -156,14 +156,14 @@
   justify-items: center;
   gap: 4px;
   padding: 7px 6px;
-  background: #f7fafc;
-  color: #475466;
+  background: var(--h5-surface-muted);
+  color: var(--h5-muted);
   font-size: 12px;
 }
 
 .popover-action--publish {
-  background: #eefaf4;
-  color: #1d6f55;
+  background: var(--h5-success-soft);
+  color: var(--h5-success);
   font-weight: 800;
 }
 
@@ -191,9 +191,9 @@
 .floating-avatar {
   width: 46px;
   height: 46px;
-  border: 3px solid #fff;
+  border: 3px solid var(--h5-surface-solid);
   border-radius: 50%;
-  box-shadow: 0 10px 24px rgba(23, 33, 43, 0.18);
+  box-shadow: 0 10px 24px rgba(30, 26, 22, 0.18);
 }
 
 .quick-action-button {
@@ -228,19 +228,19 @@
 }
 
 .order-shortcut {
-  background: #1d6f55;
+  background: var(--h5-success);
 }
 
 .order-shortcut.danger {
-  background: #d9344e;
+  background: var(--h5-danger);
 }
 
 .hunting-shortcut {
-  background: #175e75;
+  background: var(--h5-accent);
 }
 
 .hunting-shortcut.active {
-  background: #1d6f55;
+  background: var(--h5-success);
   animation: hunting-live-pulse 1.7s ease-in-out infinite;
 }
 
@@ -252,7 +252,7 @@
 
 .hunting-ecg-icon polyline {
   fill: none;
-  stroke: #fff;
+  stroke: var(--h5-surface-solid);
   stroke-width: 2.4;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -263,7 +263,7 @@
 .floating-avatar {
   right: max(14px, calc((100vw - 540px) / 2 + 14px));
   bottom: calc(66px + env(safe-area-inset-bottom));
-  background: #d69023;
+  background: var(--h5-text);
 }
 
 .quick-action-badge {
@@ -272,10 +272,10 @@
   right: -7px;
   min-width: 18px;
   padding: 1px 5px;
-  border: 2px solid #fff;
+  border: 2px solid var(--h5-surface-solid);
   border-radius: 999px;
-  background: #d9344e;
-  color: #fff;
+  background: var(--h5-danger);
+  color: var(--h5-surface-solid);
   font-size: 11px;
   font-weight: 800;
   line-height: 1.35;
@@ -323,7 +323,7 @@
   0%,
   100% {
     box-shadow:
-      0 10px 26px rgba(23, 33, 43, 0.22),
+      0 10px 26px rgba(30, 26, 22, 0.22),
       0 0 0 0 rgba(29, 111, 85, 0.35);
   }
 
@@ -357,15 +357,15 @@
   min-height: 28px;
   border-radius: 999px;
   padding: 5px 8px;
-  background: #f3f6f9;
-  color: #475466;
+  background: var(--h5-surface-muted);
+  color: var(--h5-muted);
   font-size: 12px;
   font-weight: 800;
 }
 
 .ongoing-filter-tags button.active {
-  background: #dceef3;
-  color: #175e75;
+  background: var(--h5-accent-soft);
+  color: var(--h5-accent);
 }
 
 /** 承载 .ongoing-action-badge 角标定位的按钮，角标绝对定位悬浮在按钮右上角，不再挤占按钮内部文字排版。 */
@@ -382,17 +382,17 @@
   height: 18px;
   padding: 0 4px;
   place-items: center;
-  border: 1px solid #fff;
+  border: 1px solid var(--h5-surface-solid);
   border-radius: 999px;
-  background: #d92d20;
-  color: #fff;
+  background: var(--h5-danger);
+  color: var(--h5-surface-solid);
   font-size: 11px;
   font-weight: 800;
   line-height: 1;
 }
 
 .ongoing-status-badge {
-  color: #475466;
+  color: var(--h5-muted);
   font-style: normal;
   font-weight: 900;
 }
@@ -410,11 +410,11 @@
 }
 
 .ongoing-status-badge.trial-confirming {
-  color: #d92d20;
+  color: var(--h5-danger);
 }
 
 .ongoing-status-badge.trialing {
-  color: #168a57;
+  color: var(--h5-success);
 }
 
 .trial-schedule-preview-sheet {
@@ -424,7 +424,7 @@
 .trial-schedule-preview-sheet .ongoing-status-badge {
   justify-self: start;
   border-radius: 999px;
-  background: #fff1f0;
+  background: var(--h5-danger-soft);
   padding: 5px 9px;
   font-size: 12px;
 }
@@ -434,9 +434,9 @@
 }
 
 .trial-schedule-preview-list {
-  border: 1px solid rgba(23, 33, 43, 0.08);
+  border: 1px solid rgba(30, 26, 22, 0.08);
   border-radius: 8px;
-  background: #fff;
+  background: var(--h5-surface-solid);
   padding: 8px;
 }
 
@@ -445,10 +445,10 @@
   grid-template-columns: 72px minmax(0, 1fr);
   align-items: center;
   gap: 6px;
-  border: 1px solid #d9e1e8;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: #f8fafc;
-  color: #17212b;
+  background: var(--h5-surface-muted);
+  color: var(--h5-text);
   padding: 7px 8px;
   font-size: 12px;
   line-height: 1.45;
@@ -456,16 +456,16 @@
 
 .trial-schedule-preview-period.selected {
   border-color: rgba(29, 111, 85, 0.24);
-  background: #eef7f3;
+  background: var(--h5-success-soft);
 }
 
 .trial-schedule-preview-period strong {
-  color: #17212b;
+  color: var(--h5-text);
   font-weight: 900;
 }
 
 .trial-schedule-preview-period span {
-  color: #475466;
+  color: var(--h5-muted);
   font-weight: 800;
 }
 
@@ -474,43 +474,43 @@
 }
 
 .trial-settlement-confirm-content {
-  color: #475466;
+  color: var(--h5-muted);
   font-size: 12px;
   font-weight: 800;
 }
 
 .trial-settlement-confirm-item {
-  border: 1px solid rgba(112, 128, 148, 0.16);
+  border: 1px solid color-mix(in srgb, var(--h5-subtle) 20%, transparent);
   border-radius: 8px;
-  background: #fff;
+  background: var(--h5-surface-solid);
   padding: 8px;
 }
 
 .trial-settlement-confirm-item strong {
-  color: #d92d20;
+  color: var(--h5-danger);
   font-size: 16px;
   font-weight: 900;
 }
 
 .trial-settlement-confirm-item p {
   margin: 0;
-  color: #17212b;
+  color: var(--h5-text);
   font-size: 13px;
   line-height: 1.55;
 }
 
 .tutor-trial-settlement-field span {
-  color: #475466;
+  color: var(--h5-muted);
   font-size: 12px;
   font-weight: 900;
 }
 
 .tutor-trial-settlement-field input {
   min-height: 34px;
-  border: 1px solid rgba(112, 128, 148, 0.2);
+  border: 1px solid color-mix(in srgb, var(--h5-subtle) 26%, transparent);
   border-radius: 8px;
-  background: #fff;
-  color: #17212b;
+  background: var(--h5-surface-solid);
+  color: var(--h5-text);
   font-size: 12px;
   font-weight: 900;
   outline: none;
@@ -518,12 +518,12 @@
 }
 
 .tutor-trial-settlement-field input:focus {
-  border-color: #2f7df6;
-  box-shadow: 0 0 0 3px rgba(47, 125, 246, 0.12);
+  border-color: var(--h5-accent);
+  box-shadow: 0 0 0 3px rgba(47, 110, 74, 0.18);
 }
 
 .tutor-trial-settlement-error {
-  color: #d92d20;
+  color: var(--h5-danger);
   font-size: 12px;
   font-weight: 800;
 }

@@ -180,7 +180,7 @@ export function PasswordResetCard({ initialPhone = "", onBack, onCompleted }: Pa
         </div>
       </label>
 
-      <p className="login-tip m-0 text-[13px] leading-[1.5] text-[#657181]">
+      <p className="login-tip m-0 text-[13px] leading-[1.5] text-[var(--h5-muted)]">
         {verifyMode === "code"
           ? `短信发送暂未接入，本地联调验证码固定为 ${localAuthCode}。`
           : "旧密码会提交到真实接口校验，通过后再保存新密码。"}
@@ -188,7 +188,7 @@ export function PasswordResetCard({ initialPhone = "", onBack, onCompleted }: Pa
 
       <div className="password-reset-actions grid gap-[8px]">
         <button
-          className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+          className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
           disabled={isSubmitting}
           onClick={onBack}
           type="button"
@@ -196,7 +196,7 @@ export function PasswordResetCard({ initialPhone = "", onBack, onCompleted }: Pa
           返回登录
         </button>
         <button
-          className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+          className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
           disabled={isSubmitting}
           type="submit"
         >

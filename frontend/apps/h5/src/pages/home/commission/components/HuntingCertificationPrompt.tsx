@@ -27,7 +27,7 @@ export function HuntingCertificationPrompt({
         </>
       }
     >
-      <p className="m-0 text-[13px] leading-[1.55] text-[#657181]">
+      <p className="m-0 text-[13px] leading-[1.55] text-[var(--h5-muted)]">
         联系发布方、接受委托和开启狩猎模式前，需要先完成狩猎认证。
       </p>
       <button

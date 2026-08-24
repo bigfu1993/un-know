@@ -4,7 +4,7 @@
 }
 
 .trial-schedule-calendar__toolbar strong {
-  color: #17212b;
+  color: var(--h5-text);
   font-size: 14px;
 }
 
@@ -16,7 +16,7 @@
 }
 
 .trial-schedule-calendar__weekdays span {
-  color: #657181;
+  color: var(--h5-muted);
   font-size: 12px;
   font-weight: 800;
   text-align: center;
@@ -32,11 +32,11 @@
   aspect-ratio: 1;
   min-width: 0;
   overflow: hidden;
-  border: 1px solid #175e75;
+  border: 1px solid var(--h5-accent);
   border-radius: 6px;
   appearance: none;
-  background: #fff;
-  color: #17212b;
+  background: var(--h5-surface-solid);
+  color: var(--h5-text);
   font-weight: 800;
   transition:
     border-color 160ms ease,
@@ -56,42 +56,42 @@
 }
 
 .trial-schedule-calendar__day.selected strong {
-  color: #175e75;
-  box-shadow: inset 0 0 0 1.5px #175e75;
+  color: var(--h5-accent);
+  box-shadow: inset 0 0 0 1.5px var(--h5-accent);
 }
 
 /*
- * 待确认的范围起点（由调用方自行维护"连续两次单击确定区间"流程）：改用琥珀色系，
- * 和"查看"的青色描边、"选中"的青色圆形徽标完全不同色系，避免动画循环到浅色阶段时和其它状态混淆。
+ * 待确认的范围起点（由调用方自行维护"连续两次单击确定区间"流程）：改用蓝色系，
+ * 和"查看"/"选中"共用的强调色（暖阳金）描边、圆形徽标完全不同色系，避免动画循环到浅色阶段时和其它状态混淆。
  */
 .trial-schedule-calendar__day.range-start:not(.selected) {
-  border-color: #b45309;
-  box-shadow: inset 0 0 0 2px rgba(180, 83, 9, 0.65);
+  border-color: #2f6fed;
+  box-shadow: inset 0 0 0 2px rgba(47, 111, 237, 0.65);
   animation: trial-schedule-range-start-pulse 1.1s ease-in-out infinite;
 }
 
 @keyframes trial-schedule-range-start-pulse {
   0%,
   100% {
-    background: #fff7e6;
-    color: #b45309;
+    background: #eaf1fe;
+    color: #2f6fed;
   }
 
   50% {
-    background: #f59e0b;
-    color: #fff;
+    background: #2f6fed;
+    color: var(--h5-surface-solid);
   }
 }
 
 /* 当天日期保持不变：不管是否选中、是否范围起点，数字徽标始终是实心深色圆。 */
 .trial-schedule-calendar__day.today strong {
-  background: #17212b;
-  color: #fff;
+  background: var(--h5-text);
+  color: var(--h5-surface-solid);
   box-shadow: none;
 }
 
 .trial-schedule-calendar__day.limited:not(.selected) {
-  background: #f7f9fb;
+  background: var(--h5-surface-muted);
 }
 
 .trial-schedule-calendar__day:disabled {

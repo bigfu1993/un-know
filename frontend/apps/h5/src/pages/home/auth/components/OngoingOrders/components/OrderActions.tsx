@@ -309,7 +309,7 @@ export function OrderActions({
           ) : null}
           {tutorTask?.can("requestServiceScheduleChange") ? (
             <button
-              className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+              className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
               onClick={() => handleOpenServiceAvailability("request_service_schedule_change")}
               type="button"
             >

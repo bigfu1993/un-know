@@ -3,12 +3,12 @@
   display: grid;
   width: 100%;
   gap: 9px;
-  border: 1px solid #e3e8ee;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.94);
-  color: #17212b;
+  background: var(--h5-surface-solid);
+  color: var(--h5-text);
   text-align: left;
-  box-shadow: 0 8px 24px rgba(23, 33, 43, 0.06);
+  box-shadow: var(--h5-shadow-soft);
 }
 
 .tutor-card:is(button) {
@@ -19,21 +19,21 @@
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   appearance: none;
-  background: #f8fafc;
+  background: var(--h5-surface-muted);
 }
 
 .tutor-card--simple {
-  background: #f8fafc;
+  background: var(--h5-surface-muted);
 }
 
 .tutor-card--status {
-  background: #fffaf0;
+  background: var(--h5-warning-soft);
 }
 
 .tutor-card-icon {
   border-radius: 8px;
-  background: #dceef3;
-  color: #175e75;
+  background: var(--h5-accent-soft);
+  color: var(--h5-accent);
   width: 36px;
   height: 36px;
 }
@@ -57,7 +57,7 @@
 
   strong {
     overflow: hidden;
-    color: #17212b;
+    color: var(--h5-text);
     font-size: 15px;
     line-height: 1.25;
     text-overflow: ellipsis;
@@ -67,7 +67,7 @@
   em {
     margin-top: 2px;
     overflow: hidden;
-    color: #8b96a5;
+    color: var(--h5-subtle);
     font-size: 12px;
     font-style: normal;
     line-height: 1.25;
@@ -80,21 +80,21 @@
   flex: 0 0 auto;
   padding: 3px 7px;
   border-radius: 999px;
-  background: #eef6f4;
-  color: #175e75;
+  background: var(--h5-accent-soft);
+  color: var(--h5-accent);
   font-size: 12px;
   font-weight: 800;
 }
 
 .tutor-status--pending,
 .tutor-status--reviewing {
-  background: #fff7e8;
-  color: #9a5b10;
+  background: var(--h5-warning-soft);
+  color: var(--h5-warning);
 }
 
 .tutor-status--frozen {
-  background: #fff0f2;
-  color: #8a2534;
+  background: var(--h5-danger-soft);
+  color: var(--h5-danger);
 }
 
 .tutor-card-meta {
@@ -114,7 +114,7 @@
   border: 0;
   border-radius: 8px;
   appearance: none;
-  background: #f3f6f9;
+  background: var(--h5-surface-muted);
   text-align: left;
 }
 
@@ -129,7 +129,7 @@
 .tutor-card-meta em,
 .tutor-card-meta .tutor-subject-edit em {
   overflow: hidden;
-  color: #657181;
+  color: var(--h5-muted);
   font-size: 12px;
   font-style: normal;
   text-overflow: ellipsis;
@@ -139,7 +139,7 @@
 .tutor-card-meta strong,
 .tutor-card-meta .tutor-subject-edit strong {
   overflow-wrap: anywhere;
-  color: #17212b;
+  color: var(--h5-text);
   font-size: 13px;
 }
 
@@ -154,7 +154,7 @@
   justify-content: center;
   gap: 5px;
   padding: 6px 8px;
-  color: #475466;
+  color: var(--h5-muted);
   font-size: 12px;
 }
 
@@ -168,7 +168,7 @@
   align-items: center;
   gap: 5px;
   margin: 0;
-  color: #8a2534;
+  color: var(--h5-danger);
   font-size: 12px;
   font-weight: 700;
 }

@@ -115,7 +115,7 @@ export function TutorCalendar({ initialDate, onClose, tasks }: TutorCalendarProp
             </article>
           ))
         ) : (
-          <p className="notice p-[10px] text-[#61420d]">当天暂无家教任务。</p>
+          <p className="notice p-[10px] text-[var(--h5-warning)]">当天暂无家教任务。</p>
         )}
       </div>
     </Modal>

@@ -96,7 +96,7 @@ export function Tutor({ students }: { students: TutorCertifiedStudent[] }) {
                 <MessageCircle size={15} /> 消息
               </button>
               <button
-                className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+                className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
                 type="button"
               >
                 <Heart size={15} /> 收藏学生

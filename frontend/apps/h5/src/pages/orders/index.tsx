@@ -103,7 +103,7 @@ export function Orders({
               <em>{order.status}</em>
             </div>
             <p>{order.detail}</p>
-            <div className="meta-line mt-[10px] flex flex-wrap items-center gap-[6px] text-[13px] leading-[1.45] text-[#657181]">
+            <div className="meta-line mt-[10px] flex flex-wrap items-center gap-[6px] text-[13px] leading-[1.45] text-[var(--h5-muted)]">
               <span>{order.amountLabel ?? formatCurrency(order.amount)}</span>
               <span>{order.contact}</span>
             </div>
@@ -124,7 +124,7 @@ export function Orders({
                   </button>
                 ) : null}
                 <button
-                  className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+                  className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
                   type="button"
                 >
                   售后/投诉

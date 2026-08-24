@@ -15,9 +15,9 @@ const listeners = new Set<MessageToastListener>();
 
 /** 消息类型对应的默认标题、强调色和图标。 */
 export const messageToastMeta: Record<MessageToastType, { label: string; color: string; icon: LucideIcon }> = {
-  success: { label: "成功", color: "#176b50", icon: CheckCircle2 },
-  warning: { label: "提醒", color: "#b7791f", icon: AlertCircle },
-  error: { label: "失败", color: "#d92d20", icon: XCircle }
+  success: { label: "成功", color: "var(--h5-success)", icon: CheckCircle2 },
+  warning: { label: "提醒", color: "var(--h5-warning)", icon: AlertCircle },
+  error: { label: "失败", color: "var(--h5-danger)", icon: XCircle }
 };
 
 /** 将未知异常转换为用户可读错误文案。 */

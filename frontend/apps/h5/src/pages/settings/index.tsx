@@ -299,7 +299,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
     <section className="page-view grid gap-[12px]">
       <header className="page-header grid items-center gap-[10px] p-[12px]">
         <button
-          className="back-button grid h-[38px] w-[38px] place-items-center text-[#17212b]"
+          className="back-button grid h-[38px] w-[38px] place-items-center text-[var(--h5-text)]"
           onClick={onBack}
           type="button"
           aria-label="返回"
@@ -321,10 +321,10 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
             <span>用于头像弹窗、我的页面和登录后展示。</span>
           </div>
         </div>
-        {nicknameFeedback ? <p className="notice mt-[10px] p-[10px] text-[#61420d]">{nicknameFeedback}</p> : null}
+        {nicknameFeedback ? <p className="notice mt-[10px] p-[10px] text-[var(--h5-warning)]">{nicknameFeedback}</p> : null}
         <div className="settings-security-actions mt-[10px] grid gap-[8px]">
           <button
-            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             onClick={handleOpenNicknameChange}
             type="button"
           >
@@ -343,10 +343,10 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
             <span>用于登录、验证码校验和本地密码凭据。</span>
           </div>
         </div>
-        {securityFeedback ? <p className="notice mt-[10px] p-[10px] text-[#61420d]">{securityFeedback}</p> : null}
+        {securityFeedback ? <p className="notice mt-[10px] p-[10px] text-[var(--h5-warning)]">{securityFeedback}</p> : null}
         <div className="settings-security-actions mt-[10px] grid gap-[8px]">
           <button
-            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             onClick={handleOpenPhoneChange}
             type="button"
           >
@@ -354,7 +354,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
             变更手机号
           </button>
           <button
-            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             onClick={handleOpenPasswordReset}
             type="button"
           >
@@ -379,7 +379,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
                 <span>查看资格申请信息，学科可在审批后继续补充。</span>
               </div>
               <button
-                className="ghost-button inline-flex min-h-[34px] shrink-0 items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+                className="ghost-button inline-flex min-h-[34px] shrink-0 items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
                 onClick={handleOpenTutorInfo}
                 type="button"
               >

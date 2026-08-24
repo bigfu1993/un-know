@@ -146,13 +146,13 @@ export function LoginForm({ onAuthenticated, onForgotPassword }: LoginFormProps)
           </label>
         ) : null}
 
-        <p className="login-tip m-0 text-[13px] leading-[1.5] text-[#657181]">
+        <p className="login-tip m-0 text-[13px] leading-[1.5] text-[var(--h5-muted)]">
           {credentialMode === "password"
             ? "密码会先在本地校验，测试环境继续使用现有登录接口进入。"
             : `本地联调验证码固定为 ${localAuthCode}；登录成功后 token 会写入本地存储，后续请求自动携带。`}
         </p>
 
-        <p className="login-tip m-0 text-[13px] leading-[1.5] text-[#657181]">
+        <p className="login-tip m-0 text-[13px] leading-[1.5] text-[var(--h5-muted)]">
           {credentialMode === "password"
             ? "未设置密码时可切换验证码登录，或注册后在补充页设置密码。"
             : "未注册手机号需要先切换到注册入口完成开户。"}
@@ -164,7 +164,7 @@ export function LoginForm({ onAuthenticated, onForgotPassword }: LoginFormProps)
 
         <button
           aria-label={submitLabel}
-          className="primary-button auth-submit-button full inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+          className="primary-button auth-submit-button full inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
           disabled={loginMutation.isPending}
           type="submit"
         >

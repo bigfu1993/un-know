@@ -122,7 +122,7 @@ export function HuntingProject({
               <span>可拖拽调整系统匹配顺序</span>
             </div>
             <button
-              className="ghost-button inline-flex min-h-[32px] items-center justify-center gap-[5px] px-[9px] py-[6px] text-[#475466]"
+              className="ghost-button inline-flex min-h-[32px] items-center justify-center gap-[5px] px-[9px] py-[6px] text-[var(--h5-muted)]"
               onClick={handleAddStop}
               type="button"
             >
@@ -150,14 +150,14 @@ export function HuntingProject({
                 }}
               >
                 <div className="hunting-stop-head flex items-center justify-between gap-[8px]">
-                    <span className="inline-flex items-center gap-[5px] text-[13px] font-bold text-[#475466]">
+                    <span className="inline-flex items-center gap-[5px] text-[13px] font-bold text-[var(--h5-muted)]">
                       <GripVertical size={15} />
                       第 {index + 1} 站
                     </span>
                     <div className="inline-flex items-center gap-[6px]">
                       <button
                         aria-label="上移下一站"
-                        className="icon-only grid h-[28px] w-[28px] place-items-center text-[#475466]"
+                        className="icon-only grid h-[28px] w-[28px] place-items-center text-[var(--h5-muted)]"
                         disabled={index === 0}
                         onClick={() => setNextStops((stops) => moveStop(stops, index, index - 1))}
                         type="button"
@@ -246,14 +246,14 @@ export function HuntingProject({
 
         <div className="sheet-actions grid gap-[8px]">
           <button
-            className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+            className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             onClick={onClose}
             type="button"
           >
             取消
           </button>
           <button
-            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
             disabled={!canSubmit}
             type="submit"
           >

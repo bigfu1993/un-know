@@ -170,7 +170,7 @@ export function TrialSchedulePreview({
             </div>
           </div>
         ) : (
-          <p className="notice p-[10px] text-[#61420d]">{previewConfig?.emptyLabel ?? "暂无可查看的时间安排"}。</p>
+          <p className="notice p-[10px] text-[var(--h5-warning)]">{previewConfig?.emptyLabel ?? "暂无可查看的时间安排"}。</p>
         )}
         {tutorTask.can("confirmTrialStart") || canUpdateTrialAvailability ? (
           <div className={`sheet-actions grid gap-[8px] ${tutorTask.can("confirmTrialStart") && canUpdateTrialAvailability ? "grid-cols-2" : ""}`}>
@@ -275,7 +275,7 @@ export function TrialSettlementConfirm({
             <span>{isServiceSettlement ? "课程安排" : "试课安排"}</span>
             <p>{scheduleSummary || (isServiceSettlement ? "暂无课程安排" : "暂无试课安排")}</p>
           </div>
-          <p className="notice p-[10px] text-[#61420d]">
+          <p className="notice p-[10px] text-[var(--h5-warning)]">
             {isServiceSettlement ? "确认后正式服务结算完成，当前家教进入历史订单。" : "确认后开始试课费用结算，并等待家长确认是否正式雇佣。"}
           </p>
         </div>
@@ -285,7 +285,7 @@ export function TrialSettlementConfirm({
             取消
           </button>
           <button
-            className="primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+            className="primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
             disabled={isSubmitting}
             onClick={() => void handleConfirmSettlement()}
             type="button"
@@ -362,7 +362,7 @@ export function ServiceSettlement({
             <span>课程安排</span>
             <p>{scheduleSummary || "暂无课程安排"}</p>
           </div>
-          <p className="notice p-[10px] text-[#61420d]">提交后家教主任务结束，学生端确认结算金额后进入历史订单。</p>
+          <p className="notice p-[10px] text-[var(--h5-warning)]">提交后家教主任务结束，学生端确认结算金额后进入历史订单。</p>
         </div>
 
         <div className="sheet-actions grid grid-cols-2 gap-[8px]">
@@ -370,7 +370,7 @@ export function ServiceSettlement({
             取消
           </button>
           <button
-            className="primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+            className="primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
             disabled={!isServiceFeeValid || isSubmitting}
             onClick={() => void handleConfirm()}
             type="button"

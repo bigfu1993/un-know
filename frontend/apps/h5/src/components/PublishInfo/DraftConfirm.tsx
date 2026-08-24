@@ -41,12 +41,12 @@ export function PublishDraftConfirm({
         </>
       }
     >
-      <p className="text-[13px] leading-[1.6] text-[#657181]">
+      <p className="text-[13px] leading-[1.6] text-[var(--h5-muted)]">
         草稿标题：{draft.title || "未填写标题"}，保存时间：{new Date(draft.createdAt).toLocaleString()}
       </p>
       <div className="sheet-actions grid gap-[8px]">
         <button
-          className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+          className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
           onClick={onDiscardDraft}
           type="button"
         >

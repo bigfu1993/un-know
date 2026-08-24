@@ -10,7 +10,7 @@ export function MineShortcut({
       {isOpen ? children : null}
 
       <button
-        className="floating-avatar grid h-[54px] w-[54px] place-items-center text-[#17212b]"
+        className="floating-avatar grid h-[54px] w-[54px] place-items-center text-[var(--h5-text)]"
         onClick={onTrigger}
         type="button"
         aria-expanded={isQuickDockExpanded}

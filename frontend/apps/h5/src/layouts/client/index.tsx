@@ -51,7 +51,7 @@ function ClientLayoutContent() {
           refetchWorkspace={layout.refetchWorkspaceData}
         >
           <main
-            className={`h5-shell mx-auto min-h-screen max-w-[540px] px-[14px] pt-[14px] text-[#17212b] ${
+            className={`h5-shell mx-auto min-h-screen max-w-[540px] px-[14px] pt-[14px] text-[var(--h5-text)] ${
               navigation.activePage || navigation.isSettingsRoute || navigation.isMineRoute
                 ? "page-mode pb-[28px]"
                 : "pb-[calc(92px+env(safe-area-inset-bottom))]"

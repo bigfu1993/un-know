@@ -18,7 +18,7 @@ export function MessageToast() {
     <div className="message-toast-viewport w-[min(512px,calc(100vw-28px))]">
       <div
         aria-live={type === "error" ? "assertive" : "polite"}
-        className={`message-toast grid items-center gap-[10px] p-[12px] text-[#17212b] leading-none mb-0 ml-0 mr-0 ${type}`}
+        className={`message-toast grid items-center gap-[10px] p-[12px] text-[var(--h5-text)] leading-none mb-0 ml-0 mr-0 ${type}`}
         key={toast.id}
         role={type === "error" ? "alert" : "status"}
         style={{ "--message-toast-color": accentColor } as CSSProperties}

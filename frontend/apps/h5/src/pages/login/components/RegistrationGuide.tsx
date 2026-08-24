@@ -252,12 +252,12 @@ export function RegistrationGuide({ accessToken, ownerPhone, onBack, onCompleted
           })}
         </div>
 
-        <p className="login-tip m-0 text-[13px] leading-[1.5] text-[#657181]">
+        <p className="login-tip m-0 text-[13px] leading-[1.5] text-[var(--h5-muted)]">
           角色选择为必选步骤；昵称和密码必须设置后才能进入，地址信息可以留空。
         </p>
 
         <button
-          className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+          className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
           onClick={onBack}
           type="button"
         >
@@ -291,7 +291,7 @@ export function RegistrationGuide({ accessToken, ownerPhone, onBack, onCompleted
             <span>{description}</span>
           </div>
           <button
-            className="ghost-button inline-flex min-h-[32px] shrink-0 items-center justify-center gap-[5px] px-[10px] py-[7px] text-[#475466]"
+            className="ghost-button inline-flex min-h-[32px] shrink-0 items-center justify-center gap-[5px] px-[10px] py-[7px] text-[var(--h5-muted)]"
             onClick={onToggle}
             type="button"
           >
@@ -313,7 +313,7 @@ export function RegistrationGuide({ accessToken, ownerPhone, onBack, onCompleted
         onSubmit={handleProfileSubmit}
       >
         <div className="registration-profile-scroll grid min-w-0 gap-[12px]">
-          <p className="login-tip m-0 text-[13px] leading-[1.5] text-[#657181]">
+          <p className="login-tip m-0 text-[13px] leading-[1.5] text-[var(--h5-muted)]">
             {roleLabels[role]}资料可先补充必要信息；昵称和登录密码必须设置后才能进入。
           </p>
           <div className="registration-profile-fields grid gap-[10px]">
@@ -440,7 +440,7 @@ export function RegistrationGuide({ accessToken, ownerPhone, onBack, onCompleted
       <div className="registration-profile-footer grid gap-[8px]">
         <div className="registration-profile-actions grid gap-[8px]">
           <button
-            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[#475466]"
+            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             disabled={isSubmitting}
             onClick={handleBackToRoleSelection}
             type="button"
@@ -448,7 +448,7 @@ export function RegistrationGuide({ accessToken, ownerPhone, onBack, onCompleted
             返回重选角色
           </button>
           <button
-            className="primary-button inline-flex min-h-[34px] w-full items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[#748092]"
+            className="primary-button inline-flex min-h-[34px] w-full items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
             disabled={isSubmitting || isNicknameInvalid || hasInvalidProfileFields}
             form={registrationProfileFormId}
             type="submit"
@@ -457,7 +457,7 @@ export function RegistrationGuide({ accessToken, ownerPhone, onBack, onCompleted
             {submitLabel}
           </button>
         </div>
-        <p className="login-tip m-0 text-[13px] leading-[1.5] text-[#657181]">
+        <p className="login-tip m-0 text-[13px] leading-[1.5] text-[var(--h5-muted)]">
           昵称和登录密码为必填；生日、地址、孩子和工商信息可以先留空，后续可在设置页或业务流程中补充。
         </p>
       </div>

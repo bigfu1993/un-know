@@ -7,7 +7,7 @@
   border: 1px solid;
   border-top: 4px solid;
   border-radius: 8px;
-  box-shadow: 0 16px 40px rgba(23, 33, 43, 0.16);
+  box-shadow: 0 16px 40px rgba(30, 26, 22, 0.16);
   pointer-events: auto;
   animation: message-toast-drop 180ms ease-out;
 }
@@ -30,7 +30,7 @@
 
   p {
     margin: 3px 0 0;
-    color: #2f3b4a;
+    color: var(--h5-text);
     font-size: 14px;
     line-height: 1.45;
   }
@@ -38,7 +38,7 @@
   button {
     width: 28px;
     height: 28px;
-    color: #657181;
+    color: var(--h5-muted);
     line-height: 1;
   }
 }
@@ -57,11 +57,11 @@
 
 /* moved-bg-position:start */
 .message-toast {
-  background: #fff;
+  background: var(--h5-surface-solid);
 }
 
 .message-toast button {
-  background: #f1f5f9;
+  background: var(--h5-surface-muted);
 }
 
 .message-toast-viewport {
@@ -74,7 +74,7 @@
 
 /* moved-border:start */
 .message-toast {
-  border-color: color-mix(in srgb, var(--message-toast-color) 28%, #d9e1e8);
+  border-color: color-mix(in srgb, var(--message-toast-color) 28%, var(--h5-border));
   border-top-color: var(--message-toast-color);
 }
 /* moved-border:end */

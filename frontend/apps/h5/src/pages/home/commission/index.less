@@ -44,8 +44,8 @@
   flex: 0 0 auto;
   border-radius: 999px;
   padding: 4px 8px;
-  background: #fff4e5;
-  color: #a35b00;
+  background: var(--h5-warning-soft);
+  color: var(--h5-warning);
   font-size: 12px;
   font-style: normal;
   font-weight: 900;
@@ -58,7 +58,7 @@
     min-width: 0;
     align-items: center;
     gap: 4px;
-    color: #657181;
+    color: var(--h5-muted);
     font-size: 12px;
     line-height: 1.38;
     overflow-wrap: anywhere;
@@ -66,12 +66,12 @@
 
   svg {
     flex: 0 0 auto;
-    color: #175e75;
+    color: var(--h5-accent);
   }
 }
 
 .commission-task-amount {
-  color: #d9344e;
+  color: var(--h5-danger);
   font-size: 14px;
   font-weight: 900;
 }
@@ -92,7 +92,7 @@
 .commission-search,
 .commission-filter {
   span {
-    color: #657181;
+    color: var(--h5-muted);
     font-size: 12px;
     font-weight: 800;
   }
@@ -102,8 +102,8 @@
     width: 100%;
     min-height: 34px;
     padding: 6px 8px;
-    background: #fff;
-    color: #17212b;
+    background: var(--h5-surface-solid);
+    color: var(--h5-text);
     font-size: 12px;
   }
 }
@@ -111,7 +111,7 @@
 .commission-search input,
 .commission-filter select {
   box-sizing: border-box;
-  border: 1px solid #d9e1e8;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
   font: inherit;
   outline: 0;
@@ -119,8 +119,8 @@
 
 .commission-search input:focus,
 .commission-filter select:focus {
-  border-color: #175e75;
-  box-shadow: 0 0 0 3px rgba(23, 94, 117, 0.12);
+  border-color: var(--h5-accent);
+  box-shadow: 0 0 0 3px rgba(47, 110, 74, 0.18);
 }
 
 .commission-icon-button {
@@ -129,43 +129,43 @@
   height: 36px;
   flex: 0 0 36px;
   place-items: center;
-  border: 1px solid #d9e1e8;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: #fff;
-  color: #475466;
+  background: var(--h5-surface-solid);
+  color: var(--h5-muted);
 }
 
 .commission-icon-button.active {
-  border-color: #b8dbe4;
-  background: #dceef3;
-  color: #175e75;
+  border-color: color-mix(in srgb, var(--h5-accent) 45%, transparent);
+  background: var(--h5-accent-soft);
+  color: var(--h5-accent);
 }
 
 .commission-live-button.active {
-  border-color: #b8ead5;
-  background: #eefaf4;
-  color: #1d6f55;
+  border-color: var(--h5-success-border);
+  background: var(--h5-success-soft);
+  color: var(--h5-success);
 }
 
 .commission-option-panel {
   padding: 6px;
-  border: 1px solid #d9e1e8;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--h5-surface-solid);
 
   button {
     min-height: 28px;
     border-radius: 999px;
     padding: 4px 8px;
-    background: #f3f6f9;
-    color: #475466;
+    background: var(--h5-surface-muted);
+    color: var(--h5-muted);
     font-size: 12px;
     font-weight: 800;
   }
 
   button.active {
-    background: #dceef3;
-    color: #175e75;
+    background: var(--h5-accent-soft);
+    color: var(--h5-accent);
   }
 }
 
@@ -177,8 +177,8 @@
   gap: 6px;
   border-radius: 8px;
   padding: 5px 8px;
-  background: #f7fafc;
-  color: #657181;
+  background: var(--h5-surface-muted);
+  color: var(--h5-muted);
   font-size: 12px;
   font-weight: 800;
 
@@ -195,8 +195,8 @@
     gap: 4px;
     border-radius: 999px;
     padding: 4px 8px;
-    background: #fff;
-    color: #175e75;
+    background: var(--h5-surface-solid);
+    color: var(--h5-accent);
     font-size: 12px;
     font-weight: 800;
   }
@@ -208,8 +208,8 @@
 }
 
 .commission-live-status.live {
-  background: #eefaf4;
-  color: #1d6f55;
+  background: var(--h5-success-soft);
+  color: var(--h5-success);
 }
 
 .commission-filter-row {
@@ -232,57 +232,57 @@
   height: 17px;
   place-items: center;
   border-radius: 999px;
-  background: #fff;
-  color: #d92d20;
+  background: var(--h5-surface-solid);
+  color: var(--h5-danger);
   font-size: 11px;
   font-weight: 800;
   line-height: 1;
 }
 
 .commission-quote-option {
-  border: 1px solid #e4e9f1;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: #fff;
-  color: #17212b;
+  background: var(--h5-surface-solid);
+  color: var(--h5-text);
 }
 
 .commission-quote-option.active {
-  border-color: #1f7a63;
-  background: #eefaf4;
+  border-color: var(--h5-success);
+  background: var(--h5-success-soft);
 }
 
 .commission-quote-option.locked {
   cursor: not-allowed;
-  background: #fff8f8;
+  background: var(--h5-danger-soft);
   opacity: 0.86;
 }
 
 .commission-quote-price del {
-  color: #8a96a5;
+  color: var(--h5-subtle);
   font-size: 12px;
 }
 
 .commission-quote-price .counter {
-  color: #d92d20;
+  color: var(--h5-danger);
 }
 
 .commission-quote-option span:last-child {
-  color: #657181;
+  color: var(--h5-muted);
   font-size: 12px;
 }
 
 .commission-quote-counter span {
-  color: #657181;
+  color: var(--h5-muted);
   font-size: 12px;
 }
 
 .commission-quote-counter input {
   min-height: 34px;
-  border: 1px solid #d9e1ec;
+  border: 1px solid var(--h5-border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--h5-surface-solid);
   padding: 0 9px;
-  color: #17212b;
+  color: var(--h5-text);
   font-size: 12px;
 }
 
