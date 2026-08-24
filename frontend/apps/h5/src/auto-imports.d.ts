@@ -391,7 +391,6 @@ declare global {
   const useEffect: typeof import('react').useEffect
   const useEffectEvent: typeof import('react').useEffectEvent
   const useFloatingActionsProps: typeof import('./pages/home/auth/hooks/useFloatingActionsProps').useFloatingActionsProps
-  const useHomeRuntime: typeof import('./pages/home/runtime').useHomeRuntime
   const useHomeRuntimeContext: typeof import('./pages/home/provider').useHomeRuntimeContext
   const useHuntingShortcutFlow: typeof import('./hooks/useHuntingShortcutFlow').useHuntingShortcutFlow
   const useHuntingTaskActions: typeof import('./pages/home/commission/hooks/useHuntingTaskActions').useHuntingTaskActions

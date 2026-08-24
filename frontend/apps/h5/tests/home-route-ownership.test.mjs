@@ -41,18 +41,22 @@ test("登录页面不在一级登录路由内重复创建 Routes", () => {
 
 test("Home Context 与消费 hook 收敛在单个 Provider 文件", () => {
   const legacyContextUrl = new URL("pages/home/context.ts", sourceRoot);
+  const legacyRuntimeUrl = new URL("pages/home/runtime.ts", sourceRoot);
   const providerUrl = new URL("pages/home/provider.tsx", sourceRoot);
   const providerDirectoryUrl = new URL("pages/home/provider/", sourceRoot);
 
   assert.equal(existsSync(legacyContextUrl), false, "Home 根目录不应保留独立 context.ts");
+  assert.equal(existsSync(legacyRuntimeUrl), false, "Home 运行时逻辑不应保留独立 runtime.ts");
   assert.equal(existsSync(providerUrl), true, "Home 根目录缺少 provider.tsx");
   assert.equal(existsSync(providerDirectoryUrl), false, "不应为 Home Provider 新建子目录");
 
   const providerSource = readFileSync(providerUrl, "utf8");
   assert.match(providerSource, /createContext/);
+  assert.match(providerSource, /function useHomeRuntime\(\)/);
   assert.match(providerSource, /export function HomeProvider/);
   assert.match(providerSource, /export function useHomeRuntimeContext/);
   assert.doesNotMatch(providerSource, /export (const|function) HomeRuntimeContext/);
+  assert.doesNotMatch(providerSource, /export function useHomeRuntime\(/);
 
   for (const path of [
     "App.tsx",

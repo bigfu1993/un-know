@@ -49,7 +49,7 @@ test("GlobalProvider 只装配登录后路由并覆盖全部 ClientLayout 子页
     "overlays/publish/provider.tsx",
     "overlays/tutor/provider.tsx",
     "pages/home/commission/index.tsx",
-    "pages/home/runtime.ts",
+    "pages/home/provider.tsx",
     "pages/mine/index.tsx",
     "pages/settings/index.tsx"
   ]) {

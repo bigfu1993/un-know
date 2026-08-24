@@ -219,6 +219,7 @@ tail -n 200 "$REPO_ROOT/log/dev/app-server.log"
 - H5 表单中的输入框、下拉框和文本域默认使用小尺寸控件样式；共享样式需控制高度、内边距和字号，保持弹窗、列表筛选和资料表单紧凑可扫描。需要大尺寸控件时必须有明确业务理由，并检查移动端不撑高首屏。
 - 全局消息提示由根节点注册单例组件；业务页面、组件和 hooks 直接从消息工具模块 import `showMessage`、`hideMessage` 触发或关闭提示，不为此在组件内调用额外 hook。
 - 已被 `unplugin-auto-import` 或 `src/types/global.d.ts` 覆盖的 TypeScript 类型，不在 H5 页面、组件和工具文件中重复显式导入；只保留确实无法全局声明的局部类型。
+- 跨页面共享的领域 Provider（登录用户、Home 运行时、发布/家教等全局 Overlay）按全局 skill `frontend-development`「Provider 文件边界」「全局浮层与跨组件命令」执行；本项目单 Context Provider 参考 `globalProvider.tsx`、`pages/home/provider.tsx`，多 Context 全局 Overlay 参考 `overlays/publish/`、`overlays/tutor/`。
 
 ## UI 与交互
 
