@@ -1,42 +1,147 @@
 import type { KeyboardEvent } from "react";
-import { Info } from "lucide-react";
+import { Award, BookOpen, Info, School, Tags } from "lucide-react";
+import { formatTutorSubjectLabels, getTutorEducationLabel } from "@shared/tutorModel";
+
+/** 家教资料字段，贴近数据源原始形态（学历、学科传 KEY），组件内部统一转中文展示并生成详情弹窗内容。
+ *  字段是否传入代表该概念对当前调用方是否适用：不传（undefined）该行在详情里完全不出现；传了但是空值/null
+ *  代表数据待补充，详情里会展示兜底文案，而不是跳过整行。 */
+interface TutorCardTutor {
+  /** 昵称，缺省不在详情展示该行。 */
+  nickname?: string;
+  /** 手机号，缺省不在详情展示该行。 */
+  phone?: string;
+  /** 真实姓名，缺省不在详情展示该行。 */
+  realName?: string;
+  /** 性别，缺省不在详情展示该行。 */
+  gender?: string;
+  /** 年龄，缺省不在详情展示该行。 */
+  age?: string;
+  /** 籍贯，缺省不在详情展示该行。 */
+  nativePlace?: string;
+  /** 学校，卡片正文和详情都会展示，缺省不展示对应行。 */
+  school?: string;
+  /** 专业，卡片正文和详情都会展示，缺省不展示对应行。 */
+  major?: string;
+  /** 学历 KEY，组件内部查表转中文；卡片正文和详情都会展示，缺省不展示对应行；历史数据可能为 null。 */
+  education?: string | null;
+  /** 学科 KEY 字符串（"、" 分隔），组件内部查表转中文；卡片正文和详情都会展示，缺省不展示对应行。 */
+  subject?: string;
+  /** 绩点，缺省不在详情展示该行；历史数据可能为 null。 */
+  gpa?: string | null;
+  /** 证书，缺省不在详情展示该行；历史数据可能为 null。 */
+  certificate?: string | null;
+  /** 身份证号，缺省不在详情展示该行。 */
+  idCard?: string;
+  /** 学信网截图，缺省不在详情展示该行；历史数据可能为 null。 */
+  xuexinScreenshot?: string | null;
+  /** 受聘次数，缺省不在详情展示该行。 */
+  hiredTimes?: number;
+  /** 可用时间，缺省不在详情展示该行。 */
+  availability?: string;
+}
 
 /** 家教人物资料卡壳属性，供家长浏览认证学生列表和试课申请列表复用。 */
 interface TutorCardProps {
   /** 头部图标，默认家教学位帽图标。 */
   icon?: ReactNode;
-  /** 卡片标题，通常是昵称，允许调用方自行拼接彽标等内容；有 detail 时点击标题打开详情，由组件内部固定处理。 */
+  /** 卡片标题，通常是昵称，允许调用方自行拼接彽标等内容；有详情字段时点击标题打开详情，由组件内部固定处理。 */
   title: ReactNode;
-  /** content 默认插槽，调用方自行拼装详情字段等内容。 */
-  children?: ReactNode;
+  /** 家教资料字段，组件内部据此解析卡片正文和详情弹窗内容；不传则整个字段区和详情入口都不渲染。 */
+  tutor?: TutorCardTutor;
   /** footer 具名插槽，完全由调用方决定内容。 */
   footer?: ReactNode;
   /** 卡片是否选中态，控制高亮样式。 */
   selected?: boolean;
   /** 点击卡片主体（标题、footer 内部动作除外）切换选中；不传则整卡不可点击选中。 */
   onSelect?: () => void;
-  /** 详情弹窗内容；传入后标题自动变为可点击打开详情的入口。 */
-  detail?: ReactNode;
   /** 详情弹窗标题，缺省复用 title。 */
   detailTitle?: ReactNode;
   /** 根节点追加类名，供调用方补充语义态样式。 */
   className?: string;
 }
 
-/** 家教人物资料卡壳：header（图标+标题，固定结构，不对外开放插槽）/content（默认插槽）/footer（具名插槽）三段。
- *  有 detail 时标题自动可点开详情弹窗；有 onSelect 时点击卡片主体（标题、footer 内动作除外）切换选中，两者可以共存。 */
+/** 详情弹窗单个字段展示项。 */
+interface TutorDetailItem {
+  label: string;
+  value: string;
+}
+
+/** 按固定顺序把 `tutor` 转成详情弹窗字段列表：调用方没传的字段代表这个概念对当前记录不适用，整行跳过；
+ *  传了但是空值/null 代表数据待补充，展示兜底文案。 */
+function getTutorDetailItems(tutor: TutorCardTutor): TutorDetailItem[] {
+  const items: TutorDetailItem[] = [];
+
+  if (tutor.nickname !== undefined) {
+    items.push({ label: "昵称", value: tutor.nickname || "未设置昵称" });
+  }
+  if (tutor.phone !== undefined) {
+    items.push({ label: "手机号", value: tutor.phone || "待补充" });
+  }
+  if (tutor.realName !== undefined) {
+    items.push({ label: "真实姓名", value: tutor.realName || "待补充" });
+  }
+  if (tutor.gender !== undefined) {
+    items.push({ label: "性别", value: tutor.gender || "待补充" });
+  }
+  if (tutor.age !== undefined) {
+    items.push({ label: "年龄", value: tutor.age || "待补充" });
+  }
+  if (tutor.nativePlace !== undefined) {
+    items.push({ label: "籍贯", value: tutor.nativePlace || "待补充" });
+  }
+  if (tutor.school !== undefined) {
+    items.push({ label: "学校", value: tutor.school || "待补充" });
+  }
+  if (tutor.major !== undefined) {
+    items.push({ label: "专业", value: tutor.major || "待补充" });
+  }
+  if (tutor.education !== undefined) {
+    items.push({ label: "学历", value: getTutorEducationLabel(tutor.education) || "待补充" });
+  }
+  if (tutor.subject !== undefined) {
+    items.push({ label: "学科", value: formatTutorSubjectLabels(tutor.subject) || "待补充" });
+  }
+  if (tutor.gpa !== undefined) {
+    items.push({ label: "绩点", value: tutor.gpa || "待补充" });
+  }
+  if (tutor.certificate !== undefined) {
+    items.push({ label: "证书", value: tutor.certificate || "待补充" });
+  }
+  if (tutor.idCard !== undefined) {
+    items.push({ label: "身份证号", value: tutor.idCard || "待补充" });
+  }
+  if (tutor.xuexinScreenshot !== undefined) {
+    items.push({ label: "学信网", value: tutor.xuexinScreenshot || "待补充" });
+  }
+  if (tutor.hiredTimes !== undefined) {
+    items.push({ label: "受聘次数", value: `${tutor.hiredTimes} 次` });
+  }
+  if (tutor.availability !== undefined) {
+    items.push({ label: "可用时间", value: tutor.availability || "待补充" });
+  }
+
+  return items;
+}
+
+/** 家教人物资料卡壳：header（图标+标题，固定结构，不对外开放插槽）/content（学校、专业、学历、学科，固定字段，从 `tutor` 内部解析，缺省不渲染对应行）/footer（具名插槽）三段。
+ *  详情弹窗内容也从 `tutor` 内部解析生成，只要有可展示字段标题就自动可点开；有 onSelect 时点击卡片主体（标题、footer 内动作除外）切换选中，两者可以共存。 */
 export function TutorCard({
-  children,
   className,
-  detail,
   detailTitle,
   footer,
   icon,
   onSelect,
   selected = false,
-  title
+  title,
+  tutor
 }: TutorCardProps) {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const school = tutor?.school;
+  const major = tutor?.major;
+  const education = tutor?.education ? getTutorEducationLabel(tutor.education) : undefined;
+  const subjects = tutor?.subject ? formatTutorSubjectLabels(tutor.subject) : undefined;
+  const detailItems = tutor ? getTutorDetailItems(tutor) : [];
+  const hasDetail = detailItems.length > 0;
   const rootClassName = ["flow-card", "tutor-card-container", selected ? "selected" : "", className]
     .filter(Boolean)
     .join(" ");
@@ -66,7 +171,7 @@ export function TutorCard({
           <strong
             className="card-title-chip"
             onClick={
-              detail
+              hasDetail
                 ? (event) => {
                     event.stopPropagation();
                     setIsDetailOpen(true);
@@ -79,7 +184,38 @@ export function TutorCard({
         </div>
       </div>
 
-      {children ? <div className="tutor-card-content grid gap-[8px]">{children}</div> : null}
+      {school || major || education || subjects ? (
+        <div className="tutor-card-content job-task-fields grid gap-[4px]">
+          {school || major || education ? (
+            <div className="grid grid-cols-2 gap-[4px]">
+              {school ? (
+                <span>
+                  <School size={14} />
+                  学校：{school}
+                </span>
+              ) : null}
+              {major ? (
+                <span>
+                  <BookOpen size={14} />
+                  专业：{major}
+                </span>
+              ) : null}
+              {education ? (
+                <span>
+                  <Award size={14} />
+                  学历：{education}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+          {subjects ? (
+            <span>
+              <Tags size={14} />
+              学科：{subjects}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
 
       {footer ? (
         <div className="tutor-card-footer flex flex-wrap items-center gap-[8px]" onClick={(event) => event.stopPropagation()}>
@@ -87,7 +223,7 @@ export function TutorCard({
         </div>
       ) : null}
 
-      {isDetailOpen && detail ? (
+      {isDetailOpen && hasDetail ? (
         <Modal
           ariaLabel="家教信息详情"
           icon={<Info size={18} />}
@@ -100,7 +236,14 @@ export function TutorCard({
             </>
           }
         >
-          {detail}
+          <div className="tutor-applicant-detail-list grid gap-[8px]">
+            {detailItems.map((item) => (
+              <div className="tutor-applicant-detail-item flex items-start justify-between gap-[12px]" key={item.label}>
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+              </div>
+            ))}
+          </div>
         </Modal>
       ) : null}
     </article>

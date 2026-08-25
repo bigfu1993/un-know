@@ -1063,7 +1063,7 @@ public class TutorWorkspaceAppService {
     return jdbcTemplate.query(
         """
             SELECT u.id, u.nickname, u.phone, u.credit_score,
-                   tc.subject, tc.school, tc.major, tc.gender, tc.gpa, tc.certificate,
+                   tc.subject, tc.school, tc.major, tc.gender, tc.education, tc.gpa, tc.certificate,
                    tc.real_name, tc.id_card, tc.age, tc.native_place, tc.xuexin_screenshot
             FROM app_user u
             INNER JOIN tutor_certification tc ON tc.user_id = u.id
@@ -1078,6 +1078,7 @@ public class TutorWorkspaceAppService {
           tutorCertification.put("school", rs.getString("school"));
           tutorCertification.put("major", rs.getString("major"));
           tutorCertification.put("gender", rs.getString("gender"));
+          tutorCertification.put("education", rs.getString("education"));
           tutorCertification.put("gpa", rs.getString("gpa"));
           tutorCertification.put("certificate", rs.getString("certificate"));
           tutorCertification.put("real_name", rs.getString("real_name"));

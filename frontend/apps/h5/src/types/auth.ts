@@ -46,10 +46,6 @@ export interface LoginFormProps {
    * 完成登录后的业务回调。
    */
   onAuthenticated: (session: LoginResponse, phone: string) => void;
-  /**
-   * 进入忘记密码流程的业务回调。
-   */
-  onForgotPassword: (phone?: string) => void;
 }
 
 /**
@@ -68,6 +64,10 @@ export interface RegisterFormProps {
 export interface LoginRegisterCardProps {
   /** 登录表单插槽。 */
   loginForm: ReactNode;
+  /**
+   * 进入忘记密码流程的业务回调；跟"还没有账号"入口放在同一行次要操作区。
+   */
+  onForgotPassword: () => void;
   /** 注册表单插槽。 */
   registerForm: ReactNode;
 }

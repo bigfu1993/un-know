@@ -4,14 +4,18 @@ import { hideMessage, showMessage } from "@tools/messageToast";
 import { normalizeByKey, validateByKey } from "@tools/validation";
 
 /** 登录表单，内部维护验证码登录和本地密码登录所需的输入、校验和提交逻辑。 */
-export function LoginForm({ onAuthenticated, onForgotPassword }: LoginFormProps) {
+export function LoginForm({ onAuthenticated }: LoginFormProps) {
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [credentialMode, setCredentialMode] = useState<LoginCredentialMode>("code");
   const [password, setPassword] = useState("");
   const loginMutation = useClientLogin();
 
-  const submitLabel = loginMutation.isPending ? "登录中" : credentialMode === "password" ? "密码登录" : "验证码登录";
+  const phoneValidation = validateByKey("phone", phone, { label: "手机号", required: true });
+  const isPhoneInvalid = Boolean(phone) && !phoneValidation.isValid;
+  const isCodeInvalid = Boolean(code) && code !== localAuthCode;
+  const isPasswordInvalid = Boolean(password) && password.trim().length < localPasswordMinLength;
+  const submitLabel = loginMutation.isPending ? "登录中" : "登录";
 
   /** 校验登录输入并通过真实登录接口创建会话。 */
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -74,30 +78,21 @@ export function LoginForm({ onAuthenticated, onForgotPassword }: LoginFormProps)
 
   return (
     <form className="grid w-full min-w-0 gap-[14px]" onSubmit={handleSubmit}>
-        <div className="login-method-tabs flex min-w-0 gap-[8px] p-[4px]" aria-label="选择登录方式">
+        <div className="login-mode-switch flex justify-end">
           <button
-            className={credentialMode === "code" ? "active" : ""}
+            className="text-link-button inline-flex items-center gap-[4px]"
             onClick={() => {
-              setCredentialMode("code");
+              setCredentialMode(credentialMode === "code" ? "password" : "code");
               hideMessage();
             }}
             type="button"
           >
-            验证码登录
-          </button>
-          <button
-            className={credentialMode === "password" ? "active" : ""}
-            onClick={() => {
-              setCredentialMode("password");
-              hideMessage();
-            }}
-            type="button"
-          >
-            密码登录
+            <ArrowDownUp size={13} />
+            {credentialMode === "code" ? "密码登录" : "验证码登录"}
           </button>
         </div>
 
-        <label className="login-field grid min-w-0 gap-[7px]">
+        <label className={`login-field grid min-w-0 gap-[7px] ${isPhoneInvalid ? "missing" : ""}`}>
           <span>手机号</span>
           <div className="login-phone-input">
             <Smartphone size={18} />
@@ -109,10 +104,11 @@ export function LoginForm({ onAuthenticated, onForgotPassword }: LoginFormProps)
               value={phone}
             />
           </div>
+          {isPhoneInvalid ? <em>{phoneValidation.message}</em> : null}
         </label>
 
         {credentialMode === "code" ? (
-          <label className="login-field grid min-w-0 gap-[7px]">
+          <label className={`login-field grid min-w-0 gap-[7px] ${isCodeInvalid ? "missing" : ""}`}>
             <span>验证码</span>
             <div className="login-code-input">
               <KeyRound size={18} />
@@ -120,18 +116,17 @@ export function LoginForm({ onAuthenticated, onForgotPassword }: LoginFormProps)
                 inputMode="numeric"
                 maxLength={6}
                 onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
-                placeholder={`本地验证码 ${localAuthCode}`}
+                placeholder="请输入短信验证码"
                 value={code}
               />
               <button className="login-inline-text-button" onClick={() => setCode(localAuthCode)} type="button">
                 填入
               </button>
             </div>
+            <em className="login-field-hint">体验模式短信未接入，验证码固定为 {localAuthCode}，点击"填入"自动填写。</em>
           </label>
-        ) : null}
-
-        {credentialMode === "password" ? (
-          <label className="login-field grid min-w-0 gap-[7px]">
+        ) : (
+          <label className={`login-field grid min-w-0 gap-[7px] ${isPasswordInvalid ? "missing" : ""}`}>
             <span>密码</span>
             <div className="login-password-input">
               <KeyRound size={18} />
@@ -143,24 +138,9 @@ export function LoginForm({ onAuthenticated, onForgotPassword }: LoginFormProps)
                 value={password}
               />
             </div>
+            {isPasswordInvalid ? <em>密码至少需要 {localPasswordMinLength} 位。</em> : null}
           </label>
-        ) : null}
-
-        <p className="login-tip m-0 text-[13px] leading-[1.5] text-[var(--h5-muted)]">
-          {credentialMode === "password"
-            ? "密码会先在本地校验，测试环境继续使用现有登录接口进入。"
-            : `本地联调验证码固定为 ${localAuthCode}；登录成功后 token 会写入本地存储，后续请求自动携带。`}
-        </p>
-
-        <p className="login-tip m-0 text-[13px] leading-[1.5] text-[var(--h5-muted)]">
-          {credentialMode === "password"
-            ? "未设置密码时可切换验证码登录，或注册后在补充页设置密码。"
-            : "未注册手机号需要先切换到注册入口完成开户。"}
-        </p>
-
-        <button className="text-link-button justify-self-end" onClick={() => onForgotPassword(phone)} type="button">
-          忘记密码？
-        </button>
+        )}
 
         <button
           aria-label={submitLabel}

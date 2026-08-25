@@ -1,7 +1,7 @@
 import { BottomTabs, PageShell, ProfileContextCard } from "@components/AppShell";
 import { FloatingActions } from "@pages/home/auth";
-import { HuntingCertification } from "@pages/home/auth/components/Mine/components/HuntingCertification";
-import { TutorCertification } from "@pages/home/auth/components/Mine/components/TutorCertification";
+import { HuntingCertification } from "@pages/home/auth/user/components/HuntingCertification";
+import { TutorCertification } from "@pages/home/auth/user/components/TutorCertification";
 import { Orders } from "@pages/orders";
 import { Wallet } from "@pages/wallet";
 import { getErrorMessage, showMessage } from "@tools/messageToast";

@@ -87,15 +87,18 @@ export function Login({ onLoginSuccess }: LoginProps) {
           onCompleted={onLoginSuccess}
         />
       ) : (
-        <LoginRegisterCard
-          loginForm={
-            <LoginForm
-              onAuthenticated={handleAuthenticatedSession}
-              onForgotPassword={handleOpenPasswordReset}
-            />
-          }
-          registerForm={<RegisterForm onRegistered={handleRegisterSuccess} />}
-        />
+        <>
+          <section className="login-brand grid gap-[4px] p-[18px] text-white">
+            <h1>佚名</h1>
+            <p>面向校园的家教 · 委托 · 兼职 · 优选服务平台</p>
+          </section>
+
+          <LoginRegisterCard
+            loginForm={<LoginForm onAuthenticated={handleAuthenticatedSession} />}
+            onForgotPassword={handleOpenPasswordReset}
+            registerForm={<RegisterForm onRegistered={handleRegisterSuccess} />}
+          />
+        </>
       )}
     </main>
   );

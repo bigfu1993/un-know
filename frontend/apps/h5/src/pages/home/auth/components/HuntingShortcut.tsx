@@ -1,4 +1,4 @@
-import { OngoingHuntings } from "./OngoingHuntings";
+import { OngoingHuntings } from "../huntings";
 
 /** 狩猎快捷入口，封装右下角按钮、创建项目弹窗和推荐委托弹窗。 */
 export function HuntingShortcut({

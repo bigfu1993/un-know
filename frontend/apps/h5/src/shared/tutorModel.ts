@@ -20,3 +20,15 @@ export function formatTutorSubjects(subjects: string[]) {
 export function formatTutorSubjectLabels(subjectText?: string) {
   return parseTutorSubjects(subjectText).map(getTutorSubjectLabel).join("、");
 }
+
+/** 家教学历选项列表，供认证表单渲染；展示文案统一用 `getTutorEducationLabel` 查表。 */
+export const tutorEducationOptions: TutorEducation[] = Object.values(TutorEducation);
+
+/** 学历 KEY 转中文展示文案，查不到或未填写时兜底返回原始值，避免非法/历史脏数据渲染空白。 */
+export function getTutorEducationLabel(education?: string | null): string {
+  if (!education) {
+    return "";
+  }
+
+  return (tutorEducationLabel as Record<string, string>)[education] ?? education;
+}

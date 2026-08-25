@@ -13,6 +13,7 @@ import com.unknown.platform.modules.clientprofile.model.SubmitTutorCertification
 import com.unknown.platform.modules.clientprofile.model.TutorExposureResponse;
 import com.unknown.platform.modules.clientprofile.model.UpdateNicknameRequest;
 import com.unknown.platform.modules.clientprofile.model.UpdateTutorExposureRequest;
+import com.unknown.platform.modules.clientworkspace.model.TutorEducations;
 import com.unknown.platform.modules.clientworkspace.model.TutorSubjects;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -257,14 +258,15 @@ public class ClientProfileAppService {
       throw new BusinessException("TUTOR_CERTIFICATION_STUDENT_ONLY", "仅学生账号可以提交家教认证");
     }
     TutorSubjects.requireValidKeys(request.subject());
+    TutorEducations.requireValidKey(request.education());
 
     jdbcTemplate.update(
         """
             INSERT INTO tutor_certification (
-                user_id, real_name, gender, age, native_place, id_card, school, major, subject,
+                user_id, real_name, gender, age, native_place, id_card, school, major, subject, education,
                 xuexin_screenshot, gpa, certificate, created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
             ON CONFLICT (user_id) DO UPDATE SET
                 real_name = EXCLUDED.real_name,
                 gender = EXCLUDED.gender,
@@ -274,14 +276,15 @@ public class ClientProfileAppService {
                 school = EXCLUDED.school,
                 major = EXCLUDED.major,
                 subject = EXCLUDED.subject,
+                education = EXCLUDED.education,
                 xuexin_screenshot = EXCLUDED.xuexin_screenshot,
                 gpa = EXCLUDED.gpa,
                 certificate = EXCLUDED.certificate,
                 updated_at = NOW()
             """,
         userId, request.realName(), request.gender(), request.age(), request.nativePlace(), request.idCard(),
-        request.school(), request.major(), request.subject(), request.xuexinScreenshot(), request.gpa(),
-        request.certificate()
+        request.school(), request.major(), request.subject(), request.education(), request.xuexinScreenshot(),
+        request.gpa(), request.certificate()
     );
     jdbcTemplate.update(
         """

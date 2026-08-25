@@ -14,7 +14,7 @@ export interface HuntingShortcutProps {
 }
 
 /** 悬浮头像弹窗属性。 */
-export interface MineProps {
+export interface UserProps {
   onClose: () => void;
   onLogout: () => void;
   onNavigate: (surface: import("@app-types/app").PageSurface) => void;
@@ -64,7 +64,7 @@ export interface OngoingOrdersProps {
 export interface FloatingActionsModel {
   hunting: HuntingShortcutProps;
   mine: {
-    panel: MineProps;
+    panel: UserProps;
     shortcut: Omit<MineShortcutProps, "children" | "isQuickDockExpanded">;
   };
   ongoing: {
@@ -99,10 +99,10 @@ export interface UseFloatingActionsPropsOptions {
   onDisableHuntingShortcut: () => void;
   onHuntingFulfillmentAction: NonNullable<OngoingOrdersProps["onHuntingFulfillmentAction"]>;
   onLogout: () => void;
-  onNavigate: MineProps["onNavigate"];
+  onNavigate: UserProps["onNavigate"];
   onOpenHuntingShortcut: () => void;
   onOpenQuoteList: NonNullable<OngoingOrdersProps["onOpenQuoteList"]>;
-  onOpenTab: MineProps["onOpenTab"];
+  onOpenTab: UserProps["onOpenTab"];
   onRequestTutorTrialEnd: NonNullable<OngoingOrdersProps["onRequestTutorTrialEnd"]>;
   onSubmitTutorWorkflowAction: NonNullable<OngoingOrdersProps["onSubmitTutorWorkflowAction"]>;
   onToggleTutorExposure: () => void;

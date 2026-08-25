@@ -34,14 +34,14 @@ declare global {
   const CommissionTaskDetail: typeof import('./pages/home/commission/components/CommissionTaskDetail').CommissionTaskDetail
   const ConfirmAction: typeof import('./components/ConfirmAction/index').ConfirmAction
   const Crosshair: typeof import('lucide-react').Crosshair
-  const DataErrorScreen: typeof import('./pages/home/auth/components/AppStateScreens/index').DataErrorScreen
+  const DataErrorScreen: typeof import('./components/AppStateScreens/index').DataErrorScreen
   const DefaultRoute: typeof import('./pages/home/components/RouteEntries').DefaultRoute
   const EduJobBudget: typeof import('./pages/home/job/components/EduTaskCard').EduJobBudget
   const EduTaskCard: typeof import('./pages/home/job/components/EduTaskCard').EduTaskCard
   const EduTrialApplyAction: typeof import('./pages/home/job/components/EduTaskCard').EduTrialApplyAction
   const Featured: typeof import('./pages/home/shop/index').Featured
   const Filter: typeof import('lucide-react').Filter
-  const FilterTags: typeof import('./pages/home/auth/components/OngoingOrders/components/FilterTags').FilterTags
+  const FilterTags: typeof import('./pages/home/auth/orders/components/FilterTags').FilterTags
   const FloatingActions: typeof import('./pages/home/auth/index').FloatingActions
   const Fragment: typeof import('react').Fragment
   const GraduationCap: typeof import('lucide-react').GraduationCap
@@ -50,12 +50,12 @@ declare global {
   const Home: typeof import('lucide-react').Home
   const HomePage: typeof import('./pages/home/index').HomePage
   const HomeProvider: typeof import('./pages/home/provider').HomeProvider
-  const HuntingCertification: typeof import('./pages/home/auth/components/Mine/components/HuntingCertification').HuntingCertification
+  const HuntingCertification: typeof import('./pages/home/auth/user/components/HuntingCertification').HuntingCertification
   const HuntingCertificationCard: typeof import('./components/HuntingCertificationCard/index').HuntingCertificationCard
   const HuntingCertificationPrompt: typeof import('./pages/home/commission/components/HuntingCertificationPrompt').HuntingCertificationPrompt
   const HuntingProject: typeof import('./components/HuntingProject/index').HuntingProject
   const HuntingShortcut: typeof import('./pages/home/auth/components/HuntingShortcut').HuntingShortcut
-  const InitialLoadingScreen: typeof import('./pages/home/auth/components/AppStateScreens/index').InitialLoadingScreen
+  const InitialLoadingScreen: typeof import('./components/AppStateScreens/index').InitialLoadingScreen
   const JobRoute: typeof import('./pages/home/components/RouteEntries').JobRoute
   const KeyRound: typeof import('lucide-react').KeyRound
   const ListFilters: typeof import('./pages/home/edu/components/ListFilters').ListFilters
@@ -77,13 +77,13 @@ declare global {
   const Modal: typeof import('./ui/Modal/index').Modal
   const Navigate: typeof import('react-router-dom').Navigate
   const NicknameEditor: typeof import('./pages/settings/components/SettingsPanels').NicknameEditor
-  const OngoingHuntings: typeof import('./pages/home/auth/components/OngoingHuntings/index').OngoingHuntings
-  const OngoingOrders: typeof import('./pages/home/auth/components/OngoingOrders/index').OngoingOrders
+  const OngoingHuntings: typeof import('./pages/home/auth/huntings/index').OngoingHuntings
+  const OngoingOrders: typeof import('./pages/home/auth/orders/index').OngoingOrders
   const OngoingQuote: typeof import('./pages/home/commission/components/OngoingQuote').OngoingQuote
   const OngoingShortcut: typeof import('./pages/home/auth/components/OngoingShortcut').OngoingShortcut
-  const OrderActions: typeof import('./pages/home/auth/components/OngoingOrders/components/OrderActions').OrderActions
+  const OrderActions: typeof import('./pages/home/auth/orders/components/OrderActions').OrderActions
   const OrderModuleCard: typeof import('./components/OrderModuleCard/index').OrderModuleCard
-  const OrderStatus: typeof import('./pages/home/auth/components/OngoingOrders/components/OrderActions').OrderStatus
+  const OrderStatus: typeof import('./pages/home/auth/orders/components/OrderActions').OrderStatus
   const Orders: typeof import('./pages/orders/index').Orders
   const PackageCheck: typeof import('lucide-react').PackageCheck
   const PageShell: typeof import('./components/AppShell/index').PageShell
@@ -109,7 +109,7 @@ declare global {
   const ScrollingTicker: typeof import('./components/ScrollingTicker/index').ScrollingTicker
   const SearchToolbar: typeof import('./pages/home/job/components/SearchToolbar').SearchToolbar
   const SectionHeader: typeof import('./components/PageWidgets/index').SectionHeader
-  const ServiceSettlement: typeof import('./pages/home/auth/components/OngoingOrders/components/TutorWorkflowModals').ServiceSettlement
+  const ServiceSettlement: typeof import('./pages/home/auth/orders/components/TutorWorkflowModals').ServiceSettlement
   const Settings: typeof import('lucide-react').Settings
   const SettingsRoute: typeof import('./pages/home/auth/routes').SettingsRoute
   const SettingsView: typeof import('./pages/settings/index').SettingsView
@@ -121,24 +121,26 @@ declare global {
   const StrictMode: typeof import('react').StrictMode
   const Suspense: typeof import('react').Suspense
   const TrialScheduleCalendar: typeof import('./components/TrialScheduleCalendar/index').TrialScheduleCalendar
-  const TrialSchedulePreview: typeof import('./pages/home/auth/components/OngoingOrders/components/TutorWorkflowModals').TrialSchedulePreview
-  const TrialSettlementConfirm: typeof import('./pages/home/auth/components/OngoingOrders/components/TutorWorkflowModals').TrialSettlementConfirm
+  const TrialSchedulePreview: typeof import('./pages/home/auth/orders/components/TutorWorkflowModals').TrialSchedulePreview
+  const TrialSettlementConfirm: typeof import('./pages/home/auth/orders/components/TutorWorkflowModals').TrialSettlementConfirm
   const Truck: typeof import('lucide-react').Truck
   const Tutor: typeof import('./pages/home/edu/index').Tutor
   const TutorApplicantStatus: typeof import('./db/tutorStatus').TutorApplicantStatus
   const TutorApplications: typeof import('./pages/home/edu/components/TutorApplications').TutorApplications
   const TutorCalendar: typeof import('./components/TutorCalendar/index').TutorCalendar
   const TutorCard: typeof import('./pages/home/edu/components/TutorCard').TutorCard
-  const TutorCertification: typeof import('./pages/home/auth/components/Mine/components/TutorCertification').TutorCertification
+  const TutorCertification: typeof import('./pages/home/auth/user/components/TutorCertification').TutorCertification
   const TutorCertificationCard: typeof import('./components/TutorCertificationCard/index').TutorCertificationCard
   const TutorCertificationInfo: typeof import('./components/TutorCertificationInfo/index').TutorCertificationInfo
   const TutorDemandStatus: typeof import('./db/tutorStatus').TutorDemandStatus
+  const TutorEducation: typeof import('./db/tutorEducation').TutorEducation
   const TutorQualificationInfo: typeof import('./pages/settings/components/SettingsPanels').TutorQualificationInfo
   const TutorRoute: typeof import('./pages/home/components/RouteEntries').TutorRoute
   const TutorSubject: typeof import('./db/tutorSubject').TutorSubject
   const TutorTrialList: typeof import('./pages/home/edu/components/TutorApplications').TutorTrialList
   const TutorTrialSchedule: typeof import('./components/TutorTrialSchedule/index').TutorTrialSchedule
-  const UnauthenticatedScreen: typeof import('./pages/home/auth/components/AppStateScreens/index').UnauthenticatedScreen
+  const UnauthenticatedScreen: typeof import('./components/AppStateScreens/index').UnauthenticatedScreen
+  const User: typeof import('./pages/home/auth/user/index').User
   const UserRound: typeof import('lucide-react').UserRound
   const Wallet: typeof import('./pages/wallet/index').Wallet
   const WalletCards: typeof import('lucide-react').WalletCards
@@ -165,7 +167,7 @@ declare global {
   const clientPublishPlatformLabels: typeof import('@unknown/domain').clientPublishPlatformLabels
   const commissionRuleTickerItems: typeof import('./pages/home/commission/model').commissionRuleTickerItems
   const commissionSortOptions: typeof import('./pages/home/commission/model').commissionSortOptions
-  const compactTutorSchedulePreviewSections: typeof import('./pages/home/auth/components/OngoingOrders/model').compactTutorSchedulePreviewSections
+  const compactTutorSchedulePreviewSections: typeof import('./pages/home/auth/orders/model').compactTutorSchedulePreviewSections
   const createAddressBookItem: typeof import('./shared/clientPageModel').createAddressBookItem
   const createContext: typeof import('react').createContext
   const createDefaultDaySchedule: typeof import('./components/TutorTrialSchedule/model').createDefaultDaySchedule
@@ -210,8 +212,8 @@ declare global {
   const getLatestLocalPublishInfoDraft: typeof import('./tools/publishInfo').getLatestLocalPublishInfoDraft
   const getLocalPublishInfoDrafts: typeof import('./tools/publishInfo').getLocalPublishInfoDrafts
   const getMessageToastSnapshot: typeof import('./tools/messageToast').getMessageToastSnapshot
-  const getOngoingOrderCategory: typeof import('./pages/home/auth/components/OngoingOrders/model').getOngoingOrderCategory
-  const getOngoingOrderDisplayDetail: typeof import('./pages/home/auth/components/OngoingOrders/model').getOngoingOrderDisplayDetail
+  const getOngoingOrderCategory: typeof import('./pages/home/auth/orders/model').getOngoingOrderCategory
+  const getOngoingOrderDisplayDetail: typeof import('./pages/home/auth/orders/model').getOngoingOrderDisplayDetail
   const getOrderModuleCounts: typeof import('./components/OrderModuleCard/model').getOrderModuleCounts
   const getProductFilterLabel: typeof import('./shared/clientPageModel').getProductFilterLabel
   const getProfileRequirement: typeof import('./shared/clientPageModel').getProfileRequirement
@@ -235,8 +237,9 @@ declare global {
   const getTutorCardMode: typeof import('./components/TutorCertificationCard/model').getTutorCardMode
   const getTutorDateKey: typeof import('./tools/tutorCalendar').getTutorDateKey
   const getTutorDemandBudgetLabel: typeof import('./tools/tutorDemand').getTutorDemandBudgetLabel
+  const getTutorEducationLabel: typeof import('./shared/tutorModel').getTutorEducationLabel
   const getTutorMonthKey: typeof import('./tools/tutorCalendar').getTutorMonthKey
-  const getTutorOrderSchedulePreviewConfig: typeof import('./pages/home/auth/components/OngoingOrders/model').getTutorOrderSchedulePreviewConfig
+  const getTutorOrderSchedulePreviewConfig: typeof import('./pages/home/auth/orders/model').getTutorOrderSchedulePreviewConfig
   const getTutorServiceScheduleSummaryFromOrderDetail: typeof import('./tools/tutorTrial').getTutorServiceScheduleSummaryFromOrderDetail
   const getTutorSubjectLabel: typeof import('./shared/tutorModel').getTutorSubjectLabel
   const getTutorTaskNode: typeof import('./tools/tutorTaskWorkflow').getTutorTaskNode
@@ -251,7 +254,7 @@ declare global {
   const getTutorTrialScheduleSummaryFromOrderDetail: typeof import('./tools/tutorTrial').getTutorTrialScheduleSummaryFromOrderDetail
   const getTutorTrialStatusLabel: typeof import('./tools/tutorTrial').getTutorTrialStatusLabel
   const getTutorWorkflowSuccessMessage: typeof import('./pages/home/edu/model').getTutorWorkflowSuccessMessage
-  const getTutorWorkflowTargetOrder: typeof import('./pages/home/auth/components/OngoingOrders/model').getTutorWorkflowTargetOrder
+  const getTutorWorkflowTargetOrder: typeof import('./pages/home/auth/orders/model').getTutorWorkflowTargetOrder
   const getWalletDisplayDate: typeof import('./tools/wallet').getWalletDisplayDate
   const getWalletMonthKey: typeof import('./tools/wallet').getWalletMonthKey
   const getWalletMonthOptions: typeof import('./tools/wallet').getWalletMonthOptions
@@ -261,7 +264,7 @@ declare global {
   const hasInvalidCounterQuoteAmount: typeof import('./pages/home/commission/model').hasInvalidCounterQuoteAmount
   const hasInvalidFields: typeof import('./tools/validation').hasInvalidFields
   const hasInvalidRequiredFields: typeof import('./tools/validation').hasInvalidRequiredFields
-  const hasOngoingOrderActions: typeof import('./pages/home/auth/components/OngoingOrders/model').hasOngoingOrderActions
+  const hasOngoingOrderActions: typeof import('./pages/home/auth/orders/model').hasOngoingOrderActions
   const hasStoredPendingRegistration: typeof import('./shared/clientPageModel').hasStoredPendingRegistration
   const hasValidCounterQuoteAmount: typeof import('./pages/home/commission/model').hasValidCounterQuoteAmount
   const hideMessage: typeof import('./tools/messageToast').hideMessage
@@ -279,7 +282,7 @@ declare global {
   const isHuntingTaskPublishType: typeof import('./tools/publishInfo').isHuntingTaskPublishType
   const isNegotiableAmount: typeof import('./tools/publishInfo').isNegotiableAmount
   const isNegotiatingHuntingQuote: typeof import('./pages/home/commission/model').isNegotiatingHuntingQuote
-  const isParentTutorServiceSchedulePending: typeof import('./pages/home/auth/components/OngoingOrders/model').isParentTutorServiceSchedulePending
+  const isParentTutorServiceSchedulePending: typeof import('./pages/home/auth/orders/model').isParentTutorServiceSchedulePending
   const isPositiveAmount: typeof import('./tools/publishInfo').isPositiveAmount
   const isQuoteLockedForPublisher: typeof import('./pages/home/commission/model').isQuoteLockedForPublisher
   const isTutorApplicationListStatus: typeof import('./tools/tutorTrial').isTutorApplicationListStatus
@@ -348,6 +351,8 @@ declare global {
   const tutorApplicantStatusLabel: typeof import('./db/tutorStatus').tutorApplicantStatusLabel
   const tutorCertificationStatusLabels: typeof import('./components/TutorCertificationCard/model').tutorCertificationStatusLabels
   const tutorDemandStatusLabel: typeof import('./db/tutorStatus').tutorDemandStatusLabel
+  const tutorEducationLabel: typeof import('./db/tutorEducation').tutorEducationLabel
+  const tutorEducationOptions: typeof import('./shared/tutorModel').tutorEducationOptions
   const tutorGradeOptions: typeof import('./components/TutorCertificationCard/model').tutorGradeOptions
   const tutorLevelOptions: typeof import('./components/TutorCertificationCard/model').tutorLevelOptions
   const tutorServiceAvailabilityDetailMarker: typeof import('./tools/tutorTrial').tutorServiceAvailabilityDetailMarker
@@ -480,6 +485,9 @@ declare global {
   export type { TrialSchedulePeriodKey, TrialSchedulePeriodConfig, TrialSchedulePeriodState, TrialScheduleDraft, TrialSchedulePlan, TrialScheduleValue, TrialScheduleCalendarMarker } from './components/TutorTrialSchedule/model'
   import('./components/TutorTrialSchedule/model')
   // @ts-ignore
+  export type { TutorEducation } from './db/tutorEducation'
+  import('./db/tutorEducation')
+  // @ts-ignore
   export type { TutorDemandStatus, TutorApplicantStatus } from './db/tutorStatus'
   import('./db/tutorStatus')
   // @ts-ignore
@@ -489,8 +497,8 @@ declare global {
   export type { ConfirmActionConfig } from './hooks/useConfirmAction'
   import('./hooks/useConfirmAction')
   // @ts-ignore
-  export type { OngoingOrderFilter, TutorServiceAvailabilityAction, TutorOrderSchedulePreviewConfig, TutorSchedulePreviewSection, OngoingOrderActionHandlers } from './pages/home/auth/components/OngoingOrders/model'
-  import('./pages/home/auth/components/OngoingOrders/model')
+  export type { OngoingOrderFilter, TutorServiceAvailabilityAction, TutorOrderSchedulePreviewConfig, TutorSchedulePreviewSection, OngoingOrderActionHandlers } from './pages/home/auth/orders/model'
+  import('./pages/home/auth/orders/model')
   // @ts-ignore
   export type { CommissionSortMode, CommissionToolbarPanel } from './pages/home/commission/model'
   import('./pages/home/commission/model')
@@ -528,7 +536,7 @@ declare global {
   export type { CommissionProps, UseHuntingTaskActionsOptions } from './types/commission'
   import('./types/commission')
   // @ts-ignore
-  export type { HuntingShortcutProps, MineProps, MineShortcutProps, OngoingShortcutProps, OngoingHuntingFulfillmentAction, OngoingOrdersProps, FloatingActionsModel, FloatingActionsProps, UseFloatingActionsPropsOptions } from './types/floating-actions'
+  export type { HuntingShortcutProps, UserProps, MineShortcutProps, OngoingShortcutProps, OngoingHuntingFulfillmentAction, OngoingOrdersProps, FloatingActionsModel, FloatingActionsProps, UseFloatingActionsPropsOptions } from './types/floating-actions'
   import('./types/floating-actions')
   // @ts-ignore
   export type { HuntingAreaInputMode, HuntingProjectStop, HuntingProjectDraft, HuntingProjectProps } from './types/hunting-project'

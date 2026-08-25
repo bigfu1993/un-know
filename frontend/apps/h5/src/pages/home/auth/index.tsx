@@ -1,8 +1,8 @@
 import "./index.less";
 import { HuntingShortcut } from "./components/HuntingShortcut";
 import { MineShortcut } from "./components/MineShortcut";
-import { Mine } from "./components/Mine";
-import { OngoingOrders } from "./components/OngoingOrders";
+import { User } from "./user";
+import { OngoingOrders } from "./orders";
 import { OngoingShortcut } from "./components/OngoingShortcut";
 import { QuickActionDock } from "./components/QuickActionDock";
 
@@ -20,7 +20,7 @@ export function FloatingActions({ model }: FloatingActionsProps) {
         {role === "student" ? <HuntingShortcut {...hunting} /> : null}
       </QuickActionDock>
       <MineShortcut {...mine.shortcut} isQuickDockExpanded={quickDockExpanded}>
-        <Mine {...mine.panel} />
+        <User {...mine.panel} />
       </MineShortcut>
       {ongoing.shortcut.isOpen ? <OngoingOrders {...ongoing.panel} /> : null}
     </>

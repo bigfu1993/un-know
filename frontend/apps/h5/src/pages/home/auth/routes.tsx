@@ -5,7 +5,7 @@ import { Mine } from "@pages/mine";
 import { SettingsView } from "@pages/settings";
 import { showMessage } from "@tools/messageToast";
 import { Navigate, useNavigate } from "react-router-dom";
-import { UnauthenticatedScreen } from "./components/AppStateScreens";
+import { UnauthenticatedScreen } from "@components/AppStateScreens";
 
 /** 登录一级路由；已登录用户直接返回当前角色默认首页。 */
 export function LoginRoute() {

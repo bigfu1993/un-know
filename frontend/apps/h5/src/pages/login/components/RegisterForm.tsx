@@ -8,6 +8,9 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
   const [code, setCode] = useState("");
   const [invitationCode, setInvitationCode] = useState("");
   const registerMutation = useClientRegister();
+  const phoneValidation = validateByKey("phone", phone, { label: "手机号", required: true });
+  const isPhoneInvalid = Boolean(phone) && !phoneValidation.isValid;
+  const isCodeInvalid = Boolean(code) && code !== localAuthCode;
   const submitLabel = registerMutation.isPending ? "注册中" : "注册";
 
   /** 校验注册输入并调用真实注册接口创建临时会话。 */
@@ -39,7 +42,7 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
 
   return (
     <form className="grid w-full min-w-0 gap-[14px]" onSubmit={handleSubmit}>
-        <label className="login-field grid min-w-0 gap-[7px]">
+        <label className={`login-field grid min-w-0 gap-[7px] ${isPhoneInvalid ? "missing" : ""}`}>
           <span>手机号</span>
           <div className="register-phone-input">
             <Smartphone size={18} />
@@ -51,9 +54,10 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
               value={phone}
             />
           </div>
+          {isPhoneInvalid ? <em>{phoneValidation.message}</em> : null}
         </label>
 
-        <label className="login-field grid min-w-0 gap-[7px]">
+        <label className={`login-field grid min-w-0 gap-[7px] ${isCodeInvalid ? "missing" : ""}`}>
           <span>验证码</span>
           <div className="register-code-input">
             <KeyRound size={18} />
@@ -61,13 +65,14 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
               inputMode="numeric"
               maxLength={6}
               onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
-              placeholder={`本地验证码 ${localAuthCode}`}
+              placeholder="请输入短信验证码"
               value={code}
             />
             <button onClick={() => setCode(localAuthCode)} type="button">
               填入
             </button>
           </div>
+          <em className="login-field-hint">体验模式短信未接入，验证码固定为 {localAuthCode}，点击"填入"自动填写。</em>
         </label>
 
         <label className="login-field grid min-w-0 gap-[7px]">
@@ -85,11 +90,7 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
         </label>
 
         <p className="login-tip m-0 text-[13px] leading-[1.5] text-[var(--h5-muted)]">
-          本地联调验证码固定为 {localAuthCode}；注册成功后 token 会写入本地存储，后续请求自动携带。
-        </p>
-
-        <p className="login-tip m-0 text-[13px] leading-[1.5] text-[var(--h5-muted)]">
-          注册成功后需要先选择角色，再补充基础信息后进入。
+          注册成功后需要先选择角色，再补充基础信息才能进入。
         </p>
 
         <button

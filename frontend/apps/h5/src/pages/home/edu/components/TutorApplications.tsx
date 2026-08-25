@@ -301,27 +301,10 @@ export function TutorApplications({ candidates, isConfirming = false, onCancelTr
             const candidateTask = createTutorTaskModel({ candidate, role: "parent" });
             const isTrialConfirming = candidateTask.node === "trialScheduled";
             const isCandidateSelected = selectedCandidateId === candidate.id;
-            const detailItems = [
-              { label: "学校", value: candidate.school || "待补充" },
-              { label: "专业", value: candidate.major || "待补充" },
-              { label: "GPA", value: candidate.gpa || "待补充" },
-              { label: "受聘次数", value: `${candidate.hiredTimes} 次` },
-              { label: "可用时间", value: candidate.availability || "待补充" }
-            ];
 
             return (
               <TutorCard
                 className={isTrialConfirming ? "trial-confirming" : ""}
-                detail={
-                  <div className="tutor-applicant-detail-list grid gap-[8px]">
-                    {detailItems.map((item) => (
-                      <div className="tutor-applicant-detail-item flex items-start justify-between gap-[12px]" key={item.label}>
-                        <span>{item.label}</span>
-                        <strong>{item.value}</strong>
-                      </div>
-                    ))}
-                  </div>
-                }
                 detailTitle={candidate.nickname}
                 footer={
                   candidateTask.node === "applicationPending" || candidateTask.node === "trialScheduled" ? (
@@ -360,11 +343,14 @@ export function TutorApplications({ candidates, isConfirming = false, onCancelTr
                     {isTrialConfirming ? renderTutorCandidateStatus(candidateTask) : null}
                   </>
                 }
-              >
-                <span>
-                  {candidate.school} · {candidate.major}
-                </span>
-              </TutorCard>
+                tutor={{
+                  availability: candidate.availability,
+                  gpa: candidate.gpa,
+                  hiredTimes: candidate.hiredTimes,
+                  major: candidate.major,
+                  school: candidate.school
+                }}
+              />
             );
           })}
           {visibleCandidates.length === 0 ? (

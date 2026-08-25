@@ -54,43 +54,17 @@
   gap: 8px;
 }
 
-.login-mode-tabs,
-.login-mode-tabs button,
-.login-method-tabs,
-.login-method-tabs button,
 .login-role-tabs button {
   border-radius: 8px;
-}
-
-.login-mode-tabs,
-.login-method-tabs,
-.login-role-tabs button {
   background: var(--h5-surface-muted);
 }
 
-.login-mode-tabs button,
-.login-method-tabs button,
 .login-field input {
   background: transparent;
 }
 
-.login-mode-tabs button.active,
-.login-method-tabs button.active,
 .login-role-tabs button.active {
   background: var(--h5-accent-soft);
-}
-
-.login-mode-tabs button,
-.login-method-tabs button {
-  flex: 1;
-  padding: 7px 6px;
-  color: var(--h5-muted);
-  font-size: 12px;
-
-  &.active {
-    color: var(--h5-accent);
-    font-weight: 800;
-  }
 }
 
 .login-role-tabs {
@@ -118,11 +92,27 @@
     border: 1px solid var(--h5-border);
     border-radius: 8px;
     background: var(--h5-surface-muted);
+    transition:
+      border-color 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  > div:focus-within {
+    border-color: var(--h5-accent);
+    box-shadow: 0 0 0 3px rgba(47, 110, 74, 0.16);
   }
 
   > span {
     color: var(--h5-muted);
     font-size: 12px;
+  }
+
+  .login-field-hint {
+    color: var(--h5-subtle);
+    font-size: 11.5px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1.4;
   }
 
   button {
@@ -360,4 +350,46 @@
   color: var(--h5-accent);
   font-size: 12px;
   font-weight: 700;
+}
+
+/*
+ * 登录/注册主按钮下方的次要操作区：登录方式切换、忘记密码这类不需要跟表单字段
+ * 抢视觉权重的操作，统一收在主按钮之后，参考常见 App 登录页的信息层级。
+ */
+.login-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.login-form-footer-divider {
+  color: var(--h5-border-strong);
+}
+
+/* "忘记密码"和"还没有账号"是同一类脱离当前表单主流程的次要跳转，左右分布在一行，登录态下才两个都显示。 */
+.login-secondary-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--h5-border);
+  color: var(--h5-muted);
+  font-size: 12.5px;
+}
+
+.login-secondary-actions p {
+  margin: 0;
+}
+
+.login-secondary-actions .text-link-button {
+  min-height: auto;
+  margin-left: 4px;
+}
+
+/* 忘记密码优先级低于"立即注册"，用浅灰而不是强调色、不加粗，避免跟主流程的强调色链接抢注意力。 */
+.login-secondary-actions .text-link-button.muted {
+  color: var(--h5-subtle);
+  font-weight: 400;
 }

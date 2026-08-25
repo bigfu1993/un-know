@@ -1,7 +1,13 @@
 import { useGlobalUser } from "@h5/globalProvider";
 import { useSubmitTutorCertification } from "@unknown/hooks";
 import { getFilledProfileDraft } from "@shared/clientPageModel";
-import { getTutorSubjectLabel, parseTutorSubjects, tutorSubjectOptions } from "@shared/tutorModel";
+import {
+  getTutorEducationLabel,
+  getTutorSubjectLabel,
+  parseTutorSubjects,
+  tutorEducationOptions,
+  tutorSubjectOptions
+} from "@shared/tutorModel";
 import { normalizeByKey, validateByKey } from "@tools/validation";
 
 /** 家教认证字段配置。 */
@@ -36,6 +42,7 @@ const tutorGenderOptions = ["男", "女", "其他"];
 function getInitialTutorCertificationDraft(profileDraft: ProfileDraftState): TutorCertificationDraft {
   return {
     tutorGender: profileDraft.tutorGender ?? "",
+    tutorEducation: profileDraft.tutorEducation ?? "",
     tutorSubject: profileDraft.tutorSubject ?? "",
     ...Object.fromEntries(tutorCertificationFields.map((field) => [field.key, profileDraft[field.key] ?? ""]))
   };
@@ -58,9 +65,16 @@ export function TutorCertification({ onBack, onSubmitError, onSubmitted }: Tutor
     .filter((field) => field.required)
     .map((field) => validateByKey(field.key, draft[field.key] ?? "", { label: field.label, required: true }));
   const genderValidation = validateByKey("tutorGender", draft.tutorGender ?? "", { label: "性别", required: true });
+  const educationValidation = validateByKey("tutorEducation", draft.tutorEducation ?? "", {
+    label: "学历",
+    required: true
+  });
   const subjectValidation = validateByKey("tutorSubject", draft.tutorSubject ?? "", { label: "学科", required: true });
   const isFormValid =
-    genderValidation.isValid && subjectValidation.isValid && requiredFieldResults.every((result) => result.isValid);
+    genderValidation.isValid &&
+    educationValidation.isValid &&
+    subjectValidation.isValid &&
+    requiredFieldResults.every((result) => result.isValid);
   const isSubmitting = submitTutorCertificationMutation.isPending;
 
   /** 更新认证字段并复用统一输入归一化。 */
@@ -98,6 +112,7 @@ export function TutorCertification({ onBack, onSubmitError, onSubmitted }: Tutor
         school: draft.tutorSchool ?? "",
         major: draft.tutorMajor ?? "",
         subject: draft.tutorSubject ?? "",
+        education: draft.tutorEducation ?? "",
         xuexinScreenshot: draft.tutorXuexinScreenshot || undefined,
         gpa: draft.tutorGpa || undefined,
         certificate: draft.tutorCertificate || undefined
@@ -134,6 +149,23 @@ export function TutorCertification({ onBack, onSubmitError, onSubmitted }: Tutor
             ))}
           </div>
           {!genderValidation.isValid ? <em>{genderValidation.message}</em> : null}
+        </label>
+
+        <label className={`profile-field grid gap-[6px] ${!educationValidation.isValid ? "missing" : ""}`}>
+          <span>学历</span>
+          <div className="segmented-control tutor-education-control flex gap-[8px]" aria-label="选择学历">
+            {tutorEducationOptions.map((education) => (
+              <button
+                className={draft.tutorEducation === education ? "active" : ""}
+                key={education}
+                onClick={() => handleFieldChange("tutorEducation", education)}
+                type="button"
+              >
+                {getTutorEducationLabel(education)}
+              </button>
+            ))}
+          </div>
+          {!educationValidation.isValid ? <em>{educationValidation.message}</em> : null}
         </label>
 
         <label className={`profile-field grid gap-[6px] ${!subjectValidation.isValid ? "missing" : ""}`}>

@@ -14,6 +14,7 @@ public record SubmitTutorCertificationRequest(
     @NotBlank String school,
     @NotBlank String major,
     @NotBlank String subject,
+    @NotBlank String education,
     String xuexinScreenshot,
     String gpa,
     String certificate

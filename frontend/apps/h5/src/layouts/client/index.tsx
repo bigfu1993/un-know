@@ -5,7 +5,7 @@ import { PublishOverlayProvider } from "@h5/overlays/publish/provider";
 import { TutorOverlayProvider } from "@h5/overlays/tutor/provider";
 import { HomeProvider, useHomeRuntimeContext } from "@pages/home/provider";
 import { OngoingQuote } from "@pages/home/commission/components/OngoingQuote";
-import { DataErrorScreen, InitialLoadingScreen } from "@pages/home/auth/components/AppStateScreens";
+import { DataErrorScreen, InitialLoadingScreen } from "@components/AppStateScreens";
 import { Navigate, Outlet } from "react-router-dom";
 
 /** 登录后的 H5 公共布局，统一承载页面区域、全局 Overlay 和跨一级路由共享的业务 Provider。 */

@@ -121,6 +121,7 @@ export interface SubmitTutorCertificationRequest {
   school: string;
   major: string;
   subject: string;
+  education: string;
   xuexinScreenshot?: string;
   gpa?: string;
   certificate?: string;
@@ -392,6 +393,7 @@ export interface TutorCertificationRecord {
   school: string;
   major: string;
   gender: string;
+  education: string | null;
   gpa: string | null;
   certificate: string | null;
   real_name: string;

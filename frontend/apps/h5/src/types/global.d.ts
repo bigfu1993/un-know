@@ -60,7 +60,7 @@ declare global {
   type FloatingActionsModel = import("@app-types/floating-actions").FloatingActionsModel;
   type FloatingActionsProps = import("@app-types/floating-actions").FloatingActionsProps;
   type HuntingShortcutProps = import("@app-types/floating-actions").HuntingShortcutProps;
-  type MineProps = import("@app-types/floating-actions").MineProps;
+  type UserProps = import("@app-types/floating-actions").UserProps;
   type MineShortcutProps = import("@app-types/floating-actions").MineShortcutProps;
   type OngoingHuntingFulfillmentAction = import("@app-types/floating-actions").OngoingHuntingFulfillmentAction;
   type OngoingOrdersProps = import("@app-types/floating-actions").OngoingOrdersProps;

@@ -3,18 +3,18 @@ import { usePublishOverlayActions } from "@h5/overlays/publish/context";
 import { useTutorOverlayActions } from "@h5/overlays/tutor/context";
 
 /** 头像弹窗快捷入口的视觉强调类型。 */
-type MineActionTone = "default" | "publish" | "recycle";
+type UserActionTone = "default" | "publish" | "recycle";
 
 /** 头像弹窗快捷入口配置。 */
-interface MineAction {
+interface UserAction {
   action: () => void;
   icon: LucideIcon;
   label: string;
-  tone?: MineActionTone;
+  tone?: UserActionTone;
 }
 
 /** 悬浮头像弹窗，承接账户概览、认证入口和快捷操作。 */
-export function Mine({ walletSummary, onClose, onLogout, onOpenTab, onToggleTutorExposure, onNavigate }: MineProps) {
+export function User({ walletSummary, onClose, onLogout, onOpenTab, onToggleTutorExposure, onNavigate }: UserProps) {
   const { openDefaultPublishInfo, openRecycleInfo } = usePublishOverlayActions();
   const { openCalendar } = useTutorOverlayActions();
   const { accountStatusText, creditScore, phone, profileDraft, nickname, role } = useGlobalUser();
@@ -32,11 +32,11 @@ export function Mine({ walletSummary, onClose, onLogout, onOpenTab, onToggleTuto
   const isTutorExposureEnabled = profileDraft.tutorExposureEnabled === "true";
   const isCompactCertificationRow =
     tutorCardMode === "entry" && huntingCertificationMode === "entry" && shouldShowHuntingCertificationCard;
-  const certifiedTutorActions: MineAction[] =
+  const certifiedTutorActions: UserAction[] =
     tutorCardData.certificationStatus === "normal"
       ? [{ label: "家教日程", icon: CalendarClock, action: openCalendar }]
       : [];
-  const actions: MineAction[] =
+  const actions: UserAction[] =
     role === "student"
       ? [
           { label: "发布", icon: Plus, action: openDefaultPublishInfo, tone: "publish" },

@@ -16,6 +16,12 @@ export function PasswordResetCard({ initialPhone = "", onBack, onCompleted }: Pa
   const [verifyMode, setVerifyMode] = useState<PasswordResetVerifyMode>("code");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const resetPasswordMutation = useResetClientPassword();
+  const phoneValidation = validateByKey("phone", phone, { label: "手机号", required: true });
+  const isPhoneInvalid = Boolean(phone) && !phoneValidation.isValid;
+  const isCodeInvalid = Boolean(code) && code !== localAuthCode;
+  const isOldPasswordInvalid = Boolean(oldPassword) && oldPassword.trim().length < localPasswordMinLength;
+  const isPasswordInvalid = Boolean(password) && password.trim().length < localPasswordMinLength;
+  const isPasswordConfirmInvalid = Boolean(passwordConfirm) && password !== passwordConfirm;
 
   useEffect(() => {
     setPhone(initialPhone);
@@ -80,30 +86,7 @@ export function PasswordResetCard({ initialPhone = "", onBack, onCompleted }: Pa
         </div>
       </div>
 
-      <div className="login-method-tabs flex min-w-0 gap-[8px] p-[4px]" aria-label="选择重置校验方式">
-        <button
-          className={verifyMode === "code" ? "active" : ""}
-          onClick={() => {
-            setVerifyMode("code");
-            hideMessage();
-          }}
-          type="button"
-        >
-          验证码
-        </button>
-        <button
-          className={verifyMode === "password" ? "active" : ""}
-          onClick={() => {
-            setVerifyMode("password");
-            hideMessage();
-          }}
-          type="button"
-        >
-          旧密码
-        </button>
-      </div>
-
-      <label className="login-field grid min-w-0 gap-[7px]">
+      <label className={`login-field grid min-w-0 gap-[7px] ${isPhoneInvalid ? "missing" : ""}`}>
         <span>手机号</span>
         <div className="password-reset-phone-input">
           <Smartphone size={18} />
@@ -115,10 +98,11 @@ export function PasswordResetCard({ initialPhone = "", onBack, onCompleted }: Pa
             value={phone}
           />
         </div>
+        {isPhoneInvalid ? <em>{phoneValidation.message}</em> : null}
       </label>
 
       {verifyMode === "code" ? (
-        <label className="login-field grid min-w-0 gap-[7px]">
+        <label className={`login-field grid min-w-0 gap-[7px] ${isCodeInvalid ? "missing" : ""}`}>
           <span>验证码</span>
           <div className="password-reset-code-input">
             <KeyRound size={18} />
@@ -126,18 +110,19 @@ export function PasswordResetCard({ initialPhone = "", onBack, onCompleted }: Pa
               inputMode="numeric"
               maxLength={6}
               onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
-              placeholder={`本地验证码 ${localAuthCode}`}
+              placeholder="请输入短信验证码"
               value={code}
             />
             <button className="login-inline-text-button" onClick={() => setCode(localAuthCode)} type="button">
               填入
             </button>
           </div>
+          <em className="login-field-hint">体验模式短信未接入，验证码固定为 {localAuthCode}，点击"填入"自动填写。</em>
         </label>
       ) : null}
 
       {verifyMode === "password" ? (
-        <label className="login-field grid min-w-0 gap-[7px]">
+        <label className={`login-field grid min-w-0 gap-[7px] ${isOldPasswordInvalid ? "missing" : ""}`}>
           <span>旧密码</span>
           <div className="password-reset-old-password-input">
             <KeyRound size={18} />
@@ -149,10 +134,11 @@ export function PasswordResetCard({ initialPhone = "", onBack, onCompleted }: Pa
               value={oldPassword}
             />
           </div>
+          {isOldPasswordInvalid ? <em>旧密码至少需要 {localPasswordMinLength} 位。</em> : null}
         </label>
       ) : null}
 
-      <label className="login-field grid min-w-0 gap-[7px]">
+      <label className={`login-field grid min-w-0 gap-[7px] ${isPasswordInvalid ? "missing" : ""}`}>
         <span>新密码</span>
         <div className="password-reset-new-password-input">
           <ShieldCheck size={18} />
@@ -164,9 +150,10 @@ export function PasswordResetCard({ initialPhone = "", onBack, onCompleted }: Pa
             value={password}
           />
         </div>
+        {isPasswordInvalid ? <em>新密码至少需要 {localPasswordMinLength} 位。</em> : null}
       </label>
 
-      <label className="login-field grid min-w-0 gap-[7px]">
+      <label className={`login-field grid min-w-0 gap-[7px] ${isPasswordConfirmInvalid ? "missing" : ""}`}>
         <span>确认密码</span>
         <div className="password-reset-confirm-password-input">
           <ShieldCheck size={18} />
@@ -178,13 +165,14 @@ export function PasswordResetCard({ initialPhone = "", onBack, onCompleted }: Pa
             value={passwordConfirm}
           />
         </div>
+        {isPasswordConfirmInvalid ? <em>两次输入的新密码不一致。</em> : null}
       </label>
 
-      <p className="login-tip m-0 text-[13px] leading-[1.5] text-[var(--h5-muted)]">
-        {verifyMode === "code"
-          ? `短信发送暂未接入，本地联调验证码固定为 ${localAuthCode}。`
-          : "旧密码会提交到真实接口校验，通过后再保存新密码。"}
-      </p>
+      {verifyMode === "password" ? (
+        <p className="login-tip m-0 text-[13px] leading-[1.5] text-[var(--h5-muted)]">
+          旧密码会提交到真实接口校验，通过后再保存新密码。
+        </p>
+      ) : null}
 
       <div className="password-reset-actions grid gap-[8px]">
         <button
@@ -202,6 +190,19 @@ export function PasswordResetCard({ initialPhone = "", onBack, onCompleted }: Pa
         >
           <CheckCircle2 size={16} />
           {isSubmitting ? "处理中" : "确认重置"}
+        </button>
+      </div>
+
+      <div className="login-form-footer">
+        <button
+          className="text-link-button"
+          onClick={() => {
+            setVerifyMode(verifyMode === "code" ? "password" : "code");
+            hideMessage();
+          }}
+          type="button"
+        >
+          {verifyMode === "code" ? "改用旧密码校验" : "改用验证码校验"}
         </button>
       </div>
     </form>
