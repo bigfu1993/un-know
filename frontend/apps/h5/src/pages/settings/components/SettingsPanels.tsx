@@ -1,3 +1,4 @@
+import { getGenderLabel } from "@shared/genderModel";
 import { getTutorSubjectLabel, tutorSubjectOptions } from "@shared/tutorModel";
 import { localAuthCode, localPasswordMinLength } from "@tools/localAuth";
 import { hasInvalidRequiredFields, normalizeByKey, validateByKey } from "@tools/validation";
@@ -161,12 +162,17 @@ export function TutorQualificationInfo({
         </div>
 
         <div className="tutor-qualification-grid grid gap-[8px]">
-          {tutorQualificationInfoFields.map((field) => (
-            <span key={field.key}>
-              <em>{field.label}</em>
-              <strong>{getDisplayValue(profileDraft[field.key])}</strong>
-            </span>
-          ))}
+          {tutorQualificationInfoFields.map((field) => {
+            const rawValue = profileDraft[field.key];
+            const displayValue = field.key === "tutorGender" ? getGenderLabel(rawValue) : rawValue;
+
+            return (
+              <span key={field.key}>
+                <em>{field.label}</em>
+                <strong>{getDisplayValue(displayValue)}</strong>
+              </span>
+            );
+          })}
         </div>
 
         <div className="sheet-actions grid gap-[8px]">

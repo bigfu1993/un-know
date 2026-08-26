@@ -1,6 +1,7 @@
 import { useGlobalUser } from "@h5/globalProvider";
 import { useSubmitTutorCertification } from "@unknown/hooks";
 import { getFilledProfileDraft } from "@shared/clientPageModel";
+import { genderOptions, getGenderLabel } from "@shared/genderModel";
 import {
   getTutorEducationLabel,
   getTutorSubjectLabel,
@@ -34,9 +35,6 @@ const tutorCertificationFields: TutorCertificationField[] = [
   { key: "tutorGpa", label: "绩点", placeholder: "可填写 GPA / 绩点", required: false },
   { key: "tutorCertificate", label: "证书", placeholder: "可填写证书名称、编号或链接", required: false }
 ];
-
-/** 认证性别选项。 */
-const tutorGenderOptions = ["男", "女", "其他"];
 
 /** 根据全局资料草稿初始化认证表单。 */
 function getInitialTutorCertificationDraft(profileDraft: ProfileDraftState): TutorCertificationDraft {
@@ -137,14 +135,14 @@ export function TutorCertification({ onBack, onSubmitError, onSubmitted }: Tutor
         <label className={`profile-field grid gap-[6px] ${!genderValidation.isValid ? "missing" : ""}`}>
           <span>性别</span>
           <div className="segmented-control tutor-gender-control flex gap-[8px]" aria-label="选择性别">
-            {tutorGenderOptions.map((gender) => (
+            {genderOptions.map((gender) => (
               <button
                 className={draft.tutorGender === gender ? "active" : ""}
                 key={gender}
                 onClick={() => handleFieldChange("tutorGender", gender)}
                 type="button"
               >
-                {gender}
+                {getGenderLabel(gender)}
               </button>
             ))}
           </div>

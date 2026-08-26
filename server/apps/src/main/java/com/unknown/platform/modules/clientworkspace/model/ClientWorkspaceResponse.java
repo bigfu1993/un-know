@@ -4,6 +4,7 @@ import com.unknown.platform.common.api.UserNickname;
 import com.unknown.platform.modules.auth.model.ClientRole;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 客户端工作台聚合响应，按角色返回多个模块的首页级数据。
@@ -394,6 +395,29 @@ public record ClientWorkspaceResponse(
       String trialSchedule,
       String serviceSchedule,
       String serviceConfirmationCancelledBy
+  ) {
+  }
+
+  /**
+   * 试课申请候选人及其完整认证资料，供"进行中"弹窗按需求 id 查询申请人列表使用。顶层 {@code id} 是这条
+   * 申请记录自己的 id（不是学生账号 id），加上申请工作流字段（跟 {@link TutorApplicant} 一致，但不含
+   * school/major/gpa——{@code tutor_applicant} 表这三列只是提交申请时写入的占位文案，从未真正被业务
+   * 填充过，展示这几列等于一直在展示假数据）；{@code tutorInformation}/{@code tutorCertification}
+   * 是该申请人的身份和认证资料，字段口径和取值方式都跟 {@code /workspace/tutors} 保持一致，直接返回
+   * app_user/tutor_certification 两张表的原始列值，不做加工/打码——申请相关数据和 tutor 本身信息按
+   * 来源分离，不混在同一层级。
+   */
+  public record TutorApplicantProfile(
+      String id,
+      int hiredTimes,
+      String availability,
+      String status,
+      BigDecimal trialFee,
+      String trialSchedule,
+      String serviceSchedule,
+      String serviceConfirmationCancelledBy,
+      Map<String, Object> tutorInformation,
+      Map<String, Object> tutorCertification
   ) {
   }
 

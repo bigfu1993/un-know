@@ -37,13 +37,15 @@ declare global {
   const DataErrorScreen: typeof import('./components/AppStateScreens/index').DataErrorScreen
   const DefaultRoute: typeof import('./pages/home/components/RouteEntries').DefaultRoute
   const EduJobBudget: typeof import('./pages/home/job/components/EduTaskCard').EduJobBudget
+  const EduJobScheduleView: typeof import('./pages/home/job/components/EduJobScheduleView').EduJobScheduleView
+  const EduTaskApplyAction: typeof import('./pages/home/job/components/EduTaskApplyAction').EduTaskApplyAction
   const EduTaskCard: typeof import('./pages/home/job/components/EduTaskCard').EduTaskCard
-  const EduTrialApplyAction: typeof import('./pages/home/job/components/EduTaskCard').EduTrialApplyAction
   const Featured: typeof import('./pages/home/shop/index').Featured
   const Filter: typeof import('lucide-react').Filter
   const FilterTags: typeof import('./pages/home/auth/orders/components/FilterTags').FilterTags
   const FloatingActions: typeof import('./pages/home/auth/index').FloatingActions
   const Fragment: typeof import('react').Fragment
+  const Gender: typeof import('./db/gender').Gender
   const GraduationCap: typeof import('lucide-react').GraduationCap
   const Header: typeof import('./components/AppShell/index').Header
   const Heart: typeof import('lucide-react').Heart
@@ -184,6 +186,8 @@ declare global {
   const formatTutorSubjects: typeof import('./shared/tutorModel').formatTutorSubjects
   const formatWalletAmount: typeof import('./tools/wallet').formatWalletAmount
   const forwardRef: typeof import('react').forwardRef
+  const genderLabel: typeof import('./db/gender').genderLabel
+  const genderOptions: typeof import('./shared/genderModel').genderOptions
   const getChildProfileOptions: typeof import('./shared/clientPageModel').getChildProfileOptions
   const getCommissionArea: typeof import('./pages/home/commission/model').getCommissionArea
   const getCommissionDestination: typeof import('./pages/home/commission/model').getCommissionDestination
@@ -203,6 +207,8 @@ declare global {
   const getErrorMessage: typeof import('./tools/messageToast').getErrorMessage
   const getFilledFieldCount: typeof import('./tools/validation').getFilledFieldCount
   const getFilledProfileDraft: typeof import('./shared/clientPageModel').getFilledProfileDraft
+  const getGenderIconColor: typeof import('./shared/genderModel').getGenderIconColor
+  const getGenderLabel: typeof import('./shared/genderModel').getGenderLabel
   const getHuntingCertificationCardMode: typeof import('./components/HuntingCertificationCard/model').getHuntingCertificationCardMode
   const getHuntingCertificationDataFromDraft: typeof import('./components/HuntingCertificationCard/model').getHuntingCertificationDataFromDraft
   const getHuntingFulfillmentContact: typeof import('./pages/home/commission/model').getHuntingFulfillmentContact
@@ -484,6 +490,9 @@ declare global {
   // @ts-ignore
   export type { TrialSchedulePeriodKey, TrialSchedulePeriodConfig, TrialSchedulePeriodState, TrialScheduleDraft, TrialSchedulePlan, TrialScheduleValue, TrialScheduleCalendarMarker } from './components/TutorTrialSchedule/model'
   import('./components/TutorTrialSchedule/model')
+  // @ts-ignore
+  export type { Gender } from './db/gender'
+  import('./db/gender')
   // @ts-ignore
   export type { TutorEducation } from './db/tutorEducation'
   import('./db/tutorEducation')

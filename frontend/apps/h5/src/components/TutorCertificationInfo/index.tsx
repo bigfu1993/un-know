@@ -1,6 +1,7 @@
 import "./index.less";
 import { CheckCircle2, GraduationCap, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { genderOptions, getGenderLabel } from "@shared/genderModel";
 import { getTutorSubjectLabel, tutorSubjectOptions } from "@shared/tutorModel";
 import { normalizeByKey, validateByKey } from "@tools/validation";
 
@@ -38,9 +39,6 @@ const tutorCertificationInfoFields: TutorCertificationInfoField[] = [
   { key: "tutorGpa", label: "绩点", placeholder: "可填写 GPA / 绩点", required: false },
   { key: "tutorCertificate", label: "证书", placeholder: "可填写证书名称、编号或链接", required: false }
 ];
-
-/** 认证性别选项。 */
-const tutorGenderOptions = ["男", "女", "其他"];
 
 /** 重新认证限制提示。 */
 const recertificationNoticeItems = ["重新提交认证过程中将无法被查看，也无法接受、联系家教兼职。"];
@@ -213,14 +211,14 @@ export function TutorCertificationInfo({
               <label className={`profile-field grid gap-[6px] ${!genderValidation.isValid ? "missing" : ""}`}>
                 <span>性别</span>
                 <div className="segmented-control tutor-gender-control flex gap-[8px]" aria-label="选择性别">
-                  {tutorGenderOptions.map((gender) => (
+                  {genderOptions.map((gender) => (
                     <button
                       className={draft.tutorGender === gender ? "active" : ""}
                       key={gender}
                       onClick={() => handleDraftChange("tutorGender", gender)}
                       type="button"
                     >
-                      {gender}
+                      {getGenderLabel(gender)}
                     </button>
                   ))}
                 </div>
@@ -419,12 +417,17 @@ function CertificationPreview({ profileDraft }: { profileDraft: ProfileDraftStat
     <section className="tutor-certification-preview grid gap-[8px]">
       <strong>认证资料</strong>
       <div className="tutor-certification-preview-grid grid gap-[8px]">
-        {previewFields.map((field) => (
-          <span key={field.key}>
-            <em>{field.label}</em>
-            <strong>{getDisplayValue(profileDraft[field.key])}</strong>
-          </span>
-        ))}
+        {previewFields.map((field) => {
+          const rawValue = profileDraft[field.key];
+          const displayValue = field.key === "tutorGender" ? getGenderLabel(rawValue) : rawValue;
+
+          return (
+            <span key={field.key}>
+              <em>{field.label}</em>
+              <strong>{getDisplayValue(displayValue)}</strong>
+            </span>
+          );
+        })}
       </div>
     </section>
   );

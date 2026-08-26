@@ -253,7 +253,7 @@ export interface ClientOrder {
   canCancelTutorApplication?: boolean;
   risk?: "payment" | "refund";
   /** 家教卡片专用：展示所需的完整需求结构（含发布方昵称、原始描述等），非家教品类为空；
-   *  不含申请人列表（applicants 恒为空数组），申请人详情走独立的 /workspace/ongoing/tutor 接口。 */
+   *  不含申请人列表（applicants 恒为空数组），申请人详情走独立的 /workspace/ongoing/tutor/application 接口。 */
   tutorDemand?: TutorDemand;
 }
 
@@ -365,6 +365,23 @@ export interface TutorApplicant {
   trialSchedule: string;
 }
 
+/** 试课申请候选人及其完整认证资料，`GET /workspace/ongoing/tutor/application` 按需求 id 查询时返回；
+ *  `tutorCertification` 字段口径和取值方式跟 {@link TutorCertifiedStudent.tutor_certification} 一致，
+ *  直接是 app_user/tutor_certification 两张表的原始列值，不做加工/打码。 */
+export interface TutorApplicantProfile {
+  /** 申请记录自己的 id，不是学生账号 id。 */
+  id: string;
+  hiredTimes: number;
+  availability: string;
+  status: string;
+  trialFee?: number;
+  trialSchedule: string;
+  serviceSchedule?: string;
+  serviceConfirmationCancelledBy?: string;
+  tutorInformation: TutorInformation;
+  tutorCertification: TutorCertificationRecord;
+}
+
 export interface TutorDemand {
   id: string;
   child: string;
@@ -403,12 +420,19 @@ export interface TutorCertificationRecord {
   xuexin_screenshot: string | null;
 }
 
-/** 家长端浏览的认证学生原始数据，app_user 表字段合并 tutor_certification 子对象，不做加工/脱敏。 */
-export interface TutorCertifiedStudent {
+/** 家教身份字段，来自 app_user 原始列值；`GET /workspace/tutors` 和
+ *  `GET /workspace/ongoing/tutor/application` 两个接口都用这同一套内容口径。 */
+export interface TutorInformation {
   id: number;
   nickname: string;
   phone: string;
   credit_score: number;
+}
+
+/** 家长端浏览的认证学生原始数据，身份字段和认证资料字段分别收在 tutor_information/tutor_certification
+ *  两个子对象下，不做加工/脱敏。 */
+export interface TutorCertifiedStudent {
+  tutor_information: TutorInformation;
   tutor_certification: TutorCertificationRecord;
 }
 

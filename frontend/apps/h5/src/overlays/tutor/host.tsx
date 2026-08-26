@@ -6,7 +6,7 @@ import { useTutorOverlayActions, useTutorOverlayHost, useTutorOverlayState } fro
 
 /** 渲染家教申请、试课列表、认证信息和课程日历四类全局弹层。 */
 export function TutorOverlayHost() {
-  const { activeType, targetDemandId } = useTutorOverlayState();
+  const { activeType } = useTutorOverlayState();
   const { closeApplications, closeCalendar, closeCertificationInfo, closeTrialList } = useTutorOverlayActions();
   const {
     applicationCandidates,
@@ -19,14 +19,11 @@ export function TutorOverlayHost() {
     trialListSubmissionPending,
     workflow
   } = useTutorOverlayHost();
-  const candidates = targetDemandId
-    ? applicationCandidates.filter((candidate) => candidate.demandId === targetDemandId)
-    : applicationCandidates;
 
   if (activeType === "tutorApplications") {
     return (
       <TutorApplications
-        candidates={candidates}
+        candidates={applicationCandidates}
         isConfirming={applicationConfirmationPending}
         onCancelTrial={(payload) => void workflow({ ...payload, action: "cancel_trial" })}
         onClose={closeApplications}
@@ -39,7 +36,7 @@ export function TutorOverlayHost() {
   if (activeType === "tutorTrialList") {
     return (
       <TutorTrialList
-        candidates={candidates}
+        candidates={applicationCandidates}
         isSubmitting={trialListSubmissionPending}
         onClose={closeTrialList}
         onConfirmEnd={confirmTrialEnd}

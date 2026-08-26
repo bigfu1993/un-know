@@ -6,6 +6,7 @@ import com.unknown.platform.common.security.ClientSessionService;
 import com.unknown.platform.modules.auth.model.ClientRole;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.ClientOrder;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorApplicant;
+import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorApplicantProfile;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorDemand;
 import com.unknown.platform.modules.clientworkspace.model.ApplyTutorTrialRequest;
 import com.unknown.platform.modules.clientworkspace.model.CompleteTutorTrialEndRequest;
@@ -121,10 +122,18 @@ public class TutorWorkspaceAppService {
     this.support = support;
   }
 
-  /** {@link #tutorApplications} 的接口层入口，从登录态解析当前用户 ID。 */
-  public List<TutorDemand> listTutorApplications(ClientRole role, String authorization) {
+  /**
+   * {@link #parentTutorDemandApplicants} 的接口层入口，从登录态解析当前用户 ID。按需求 id 精确查询
+   * 单条家教需求的申请人列表（含完整认证资料），供"进行中"弹窗（试课申请列表/试课中列表）点开某一张
+   * 卡片时按需加载，不再一次性拉取家长名下全部家教需求再由前端筛选；只返回申请人列表，不带需求本身的
+   * 展示字段。
+   */
+  public List<TutorApplicantProfile> getTutorApplication(ClientRole role, String authorization, String demandId) {
     Long currentUserId = clientSessionService.userIdOrNull(authorization);
-    return tutorApplications(role, currentUserId);
+    if (role != ClientRole.parent || currentUserId == null) {
+      throw new BusinessException("TUTOR_DEMAND_NOT_FOUND", "家教需求不存在或已不可用");
+    }
+    return parentTutorDemandApplicants(currentUserId, demandId);
   }
 
   /**
@@ -1043,22 +1052,11 @@ public class TutorWorkspaceAppService {
 
 
 
-  /**
-   * 家长自己发布的家教需求及其申请人，独立于 {@link #tutorDemands} 页面浏览列表，
-   * 只服务"进行中"弹窗（试课申请列表/试课中列表）。
-   */
-  public List<TutorDemand> tutorApplications(ClientRole role, Long currentUserId) {
-    if (role != ClientRole.parent) {
-      return List.of();
-    }
-
-    return parentTutorDemands(currentUserId);
-  }
-
-
   /** 家长端家教列表展示已开启家教开关、认证通过且真实提交过认证资料的学生信息。
    *  直接返回 app_user 和 tutor_certification 两张表的原始列值，不做任何加工/打码；
-   *  认证信息以 {@code tutor_certification} 为 key，整表数据作为子对象合并进 app_user 数据对象。 */
+   *  按数据来源分成两个子对象：{@code tutor_information}（app_user 身份字段）、
+   *  {@code tutor_certification}（认证资料字段），跟 {@link #tutorApplicantProfiles} 的
+   *  {@code tutorInformation}/{@code tutorCertification} 保持同一套内容口径。 */
   private List<Map<String, Object>> tutorExposedStudents() {
     return jdbcTemplate.query(
         """
@@ -1087,57 +1085,43 @@ public class TutorWorkspaceAppService {
           tutorCertification.put("native_place", rs.getString("native_place"));
           tutorCertification.put("xuexin_screenshot", rs.getString("xuexin_screenshot"));
 
-          Map<String, Object> appUser = new LinkedHashMap<>();
-          appUser.put("id", rs.getLong("id"));
-          appUser.put("nickname", rs.getString("nickname"));
-          appUser.put("phone", rs.getString("phone"));
-          appUser.put("credit_score", rs.getInt("credit_score"));
-          appUser.put("tutor_certification", tutorCertification);
-          return appUser;
+          Map<String, Object> tutorInformation = new LinkedHashMap<>();
+          tutorInformation.put("id", rs.getLong("id"));
+          tutorInformation.put("nickname", rs.getString("nickname"));
+          tutorInformation.put("phone", rs.getString("phone"));
+          tutorInformation.put("credit_score", rs.getInt("credit_score"));
+
+          Map<String, Object> tutor = new LinkedHashMap<>();
+          tutor.put("tutor_information", tutorInformation);
+          tutor.put("tutor_certification", tutorCertification);
+          return tutor;
         }
     );
   }
 
 
 
-  /** 家长本人发布的家教需求，仅用于进行中申请列表数据，不在家教主列表直接展示。 */
-  private List<TutorDemand> parentTutorDemands(Long parentUserId) {
-    if (parentUserId == null) {
-      return List.of();
-    }
-    return jdbcTemplate.query(
+  /** 家长本人发布的单条家教需求的申请人列表，按 public_id + 归属家长一起过滤，避免越权查看他人申请人数据；
+   *  查不到（需求不存在或不属于当前家长）统一按"需求不存在"处理，不额外暴露"存在但无权限"这种更具体的信息。
+   *  只需要确认归属并拿到内部数值 id 转给 {@link #tutorApplicantProfiles}，不需要需求本身的展示字段。 */
+  private List<TutorApplicantProfile> parentTutorDemandApplicants(Long parentUserId, String demandPublicId) {
+    List<Long> demandIds = jdbcTemplate.query(
         """
-            SELECT td.id, td.public_id, td.child, td.subject, td.school, td.budget, td.status,
-                   td.title, td.description, td.address_label, td.period_start, td.period_end, td.period_dates,
-                   COALESCE(NULLIF(u.nickname, ''), '未设置昵称') AS publisher_nickname,
-                   COALESCE(u.phone, '') AS publisher_phone
+            SELECT td.id
             FROM tutor_demand td
-            LEFT JOIN app_user u ON u.id = td.parent_user_id
-            WHERE td.parent_user_id = ?
+            WHERE td.public_id = ?
+              AND td.parent_user_id = ?
               AND td.enabled = TRUE
-              AND td.status NOT IN (?, ?)
-            ORDER BY td.created_at DESC, td.id DESC
+            LIMIT 1
             """,
-        (rs, rowNum) -> new TutorDemand(
-            rs.getString("public_id"),
-            rs.getString("child"),
-            rs.getString("subject"),
-            rs.getString("school"),
-            rs.getString("budget"),
-            tutorDemandStatusLabel(rs.getString("status")),
-            support.defaultText(rs.getString("title"), rs.getString("child") + rs.getString("subject") + "家教"),
-            support.defaultText(rs.getString("description"), "暂无描述"),
-            support.defaultText(rs.getString("address_label"), rs.getString("school")),
-            tutorPeriod(rs.getString("period_start"), rs.getString("period_end")),
-            support.splitTags(rs.getString("period_dates")),
-            new UserNickname(rs.getString("publisher_nickname"), support.maskPhone(rs.getString("publisher_phone"))),
-            "tutorDemand",
-            tutorApplicants(rs.getLong("id"))
-        ),
-        parentUserId,
-        TUTOR_DEMAND_STATUS_CANCELLED,
-        TUTOR_DEMAND_STATUS_ENDED
+        (rs, rowNum) -> rs.getLong("id"),
+        demandPublicId,
+        parentUserId
     );
+    if (demandIds.isEmpty()) {
+      throw new BusinessException("TUTOR_DEMAND_NOT_FOUND", "家教需求不存在或已不可用");
+    }
+    return tutorApplicantProfiles(demandIds.get(0));
   }
 
 
@@ -1253,6 +1237,79 @@ public class TutorWorkspaceAppService {
               support.defaultText(rs.getString("trial_schedule"), ""),
               support.defaultText(rs.getString("service_schedule"), ""),
               rs.getString("service_confirmation_cancelled_by")
+          );
+        },
+        tutorDemandId
+    );
+  }
+
+
+  /** 家教招募需求下的申请人列表，含完整认证资料，供"进行中"弹窗按需求 id 加载使用。
+   *  申请工作流字段（受聘次数、可用时间、状态、试课/正式课安排等）取自 {@code tutor_applicant}；
+   *  认证资料字段的取值方式和列名都跟 {@link #tutorExposedStudents} 保持一致，直接联查
+   *  {@code tutor_certification}，不使用 {@code tutor_applicant.school/major/gpa}——这三列
+   *  从提交申请起就只是占位文案，从未被真实业务写入过。 */
+  private List<TutorApplicantProfile> tutorApplicantProfiles(long tutorDemandId) {
+    return jdbcTemplate.query(
+        """
+            SELECT ta.public_id,
+                   ta.applicant_user_id,
+                   COALESCE(NULLIF(u.nickname, ''), '未设置昵称') AS nickname,
+                   COALESCE(u.phone, '') AS phone,
+                   u.credit_score,
+                   ta.hired_times, ta.availability, ta.status, ta.trial_fee_cents,
+                   COALESCE(NULLIF(trial_schedule.schedule_summary, ''), '') AS trial_schedule,
+                   COALESCE(NULLIF(service_schedule.schedule_summary, ''), '') AS service_schedule,
+                   COALESCE(ta.service_confirmation_cancelled_by, '') AS service_confirmation_cancelled_by,
+                   tc.subject, tc.school, tc.major, tc.gender, tc.education, tc.gpa, tc.certificate,
+                   tc.real_name, tc.id_card, tc.age, tc.native_place, tc.xuexin_screenshot
+            FROM tutor_applicant ta
+            LEFT JOIN app_user u ON u.id = ta.applicant_user_id
+            LEFT JOIN tutor_certification tc ON tc.user_id = ta.applicant_user_id
+            LEFT JOIN tutor_application_schedule trial_schedule
+              ON trial_schedule.tutor_applicant_id = ta.id
+             AND trial_schedule.stage = 'trial'
+             AND trial_schedule.enabled = TRUE
+            LEFT JOIN tutor_application_schedule service_schedule
+              ON service_schedule.tutor_applicant_id = ta.id
+             AND service_schedule.stage = 'service'
+             AND service_schedule.enabled = TRUE
+            WHERE ta.tutor_demand_id = ?
+              AND ta.enabled = TRUE
+            ORDER BY ta.hired_times DESC, ta.id
+            """,
+        (rs, rowNum) -> {
+          Map<String, Object> tutorInformation = new LinkedHashMap<>();
+          tutorInformation.put("id", rs.getLong("applicant_user_id"));
+          tutorInformation.put("nickname", rs.getString("nickname"));
+          tutorInformation.put("phone", rs.getString("phone"));
+          tutorInformation.put("credit_score", rs.getInt("credit_score"));
+
+          Map<String, Object> tutorCertification = new LinkedHashMap<>();
+          tutorCertification.put("subject", rs.getString("subject"));
+          tutorCertification.put("school", rs.getString("school"));
+          tutorCertification.put("major", rs.getString("major"));
+          tutorCertification.put("gender", rs.getString("gender"));
+          tutorCertification.put("education", rs.getString("education"));
+          tutorCertification.put("gpa", rs.getString("gpa"));
+          tutorCertification.put("certificate", rs.getString("certificate"));
+          tutorCertification.put("real_name", rs.getString("real_name"));
+          tutorCertification.put("id_card", rs.getString("id_card"));
+          tutorCertification.put("age", rs.getString("age"));
+          tutorCertification.put("native_place", rs.getString("native_place"));
+          tutorCertification.put("xuexin_screenshot", rs.getString("xuexin_screenshot"));
+
+          return new TutorApplicantProfile(
+              rs.getString("public_id"),
+              rs.getInt("hired_times"),
+              rs.getString("availability"),
+              rs.getString("status"),
+              support.toAmount(rs.getLong("trial_fee_cents")),
+              support.defaultText(rs.getString("trial_schedule"), ""),
+              support.defaultText(rs.getString("service_schedule"), ""),
+              rs.getString("service_confirmation_cancelled_by"),
+              tutorInformation,
+              tutorCertification
           );
         },
         tutorDemandId

@@ -20,7 +20,7 @@ import {
   getHuntingTasks,
   getOngoingOrders,
   getOrderHistory,
-  getTutorApplications,
+  getTutorApplication,
   getTutorCertifiedStudents,
   getChatConversations,
   getChatMessages,
@@ -81,7 +81,8 @@ import {
   clientTutorApplicationsQueryKey,
   clientTutorCertifiedStudentsQueryKey,
   clientWorkspaceQueryKey,
-  getRoleQueryKey
+  getRoleQueryKey,
+  getTutorApplicationQueryKey
 } from "./queryKeys";
 
 export {
@@ -169,12 +170,13 @@ export function useTutorCertifiedStudents(role: Role, enabled = true) {
   });
 }
 
-/** 家长自己发布的家教需求 + 申请人，独立于页面浏览列表，只服务进行中弹窗。 */
-export function useTutorApplications(role: Role, enabled = true) {
+/** 家长点开"进行中"弹窗某一张具体家教卡片时，按需求 id 精确查询这一条家教需求的申请人列表，
+ *  独立于页面浏览列表；不再一次性拉取家长名下全部家教需求再由调用方按 id 筛选。 */
+export function useTutorApplication(role: Role, demandId: string | null, enabled = true) {
   return useQuery({
-    queryKey: getRoleQueryKey(clientTutorApplicationsQueryKey, role),
-    queryFn: getTutorApplications,
-    enabled
+    queryKey: getTutorApplicationQueryKey(role, demandId ?? ""),
+    queryFn: () => getTutorApplication(demandId as string),
+    enabled: enabled && !!demandId
   });
 }
 

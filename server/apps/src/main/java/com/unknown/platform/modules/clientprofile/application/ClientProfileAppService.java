@@ -13,6 +13,7 @@ import com.unknown.platform.modules.clientprofile.model.SubmitTutorCertification
 import com.unknown.platform.modules.clientprofile.model.TutorExposureResponse;
 import com.unknown.platform.modules.clientprofile.model.UpdateNicknameRequest;
 import com.unknown.platform.modules.clientprofile.model.UpdateTutorExposureRequest;
+import com.unknown.platform.modules.clientworkspace.model.Genders;
 import com.unknown.platform.modules.clientworkspace.model.TutorEducations;
 import com.unknown.platform.modules.clientworkspace.model.TutorSubjects;
 import java.sql.ResultSet;
@@ -226,6 +227,7 @@ public class ClientProfileAppService {
     if (role != ClientRole.student) {
       throw new BusinessException("HUNTING_CERTIFICATION_STUDENT_ONLY", "仅学生账号可以提交狩猎认证");
     }
+    Genders.requireValidKey(request.gender());
 
     jdbcTemplate.update(
         """
@@ -259,6 +261,7 @@ public class ClientProfileAppService {
     }
     TutorSubjects.requireValidKeys(request.subject());
     TutorEducations.requireValidKey(request.education());
+    Genders.requireValidKey(request.gender());
 
     jdbcTemplate.update(
         """

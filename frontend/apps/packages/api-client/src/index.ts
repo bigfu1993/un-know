@@ -36,6 +36,7 @@ import {
   SubmitHuntingCertificationResponse,
   SubmitTutorCertificationRequest,
   SubmitTutorCertificationResponse,
+  TutorApplicantProfile,
   TutorCertifiedStudent,
   TutorDemand,
   TutorExposureResponse,
@@ -342,9 +343,13 @@ export async function getTutorCertifiedStudents(): Promise<TutorCertifiedStudent
   return requestJson<TutorCertifiedStudent[]>("/client/workspace/tutors");
 }
 
-/** 获取家长自己发布的家教需求及申请人，只服务进行中弹窗，跟页面浏览列表分开请求。 */
-export async function getTutorApplications(): Promise<TutorDemand[]> {
-  return requestJson<TutorDemand[]>("/client/workspace/ongoing/tutor");
+/** 按需求 id 精确获取家长自己名下某一条家教需求的申请人列表（含完整认证资料，字段口径跟
+ *  {@link getTutorCertifiedStudents} 保持一致），只服务"进行中"弹窗点开具体某张卡片时按需加载，跟页面
+ *  浏览列表分开请求；不再一次性拉取全部家教需求再由调用方按 id 筛选。 */
+export async function getTutorApplication(demandId: string): Promise<TutorApplicantProfile[]> {
+  return requestJson<TutorApplicantProfile[]>(
+    `/client/workspace/ongoing/tutor/application?id=${encodeURIComponent(demandId)}`
+  );
 }
 
 export async function getClientAddresses(): Promise<ClientAddress[]> {

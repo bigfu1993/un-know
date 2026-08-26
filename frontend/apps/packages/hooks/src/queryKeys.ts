@@ -34,3 +34,15 @@ export const clientTutorApplicationsQueryKey = ["client-tutor-applications"] as 
 export function getRoleQueryKey(baseKey: readonly string[], role: Role) {
   return [...baseKey, role] as const;
 }
+
+/**
+ * 单条家教需求申请列表查询键，前缀延续 {@link clientTutorApplicationsQueryKey}，
+ * 这样家教相关 mutation 统一按该前缀 invalidate 时能连带刷新到这里，不用逐个 mutation 补新 key。
+ *
+ * @param role 当前登录角色
+ * @param demandId 家教需求 id
+ * @returns 带角色和需求 id 维度的查询键
+ */
+export function getTutorApplicationQueryKey(role: Role, demandId: string) {
+  return [...clientTutorApplicationsQueryKey, role, demandId] as const;
+}

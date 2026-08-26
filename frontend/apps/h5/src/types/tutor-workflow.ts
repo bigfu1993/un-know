@@ -25,19 +25,39 @@ export interface TutorTrialJob {
 
 /** 家长端试课申请列表候选人。 */
 export interface TutorApplicationCandidate {
+  /** 年龄，来自认证资料；申请人未提交认证资料时缺省。 */
+  age?: string;
   availability: string;
+  /** 证书，来自认证资料；申请人未提交认证资料时缺省。 */
+  certificate?: string | null;
   demandId: string;
+  /** 学历 KEY，来自认证资料；申请人未提交认证资料时缺省。 */
+  education?: string | null;
+  /** 性别，来自认证资料；申请人未提交认证资料时缺省。 */
+  gender?: string;
   gpa: string;
   hiredTimes: number;
   id: string;
+  /** 身份证号，来自认证资料；申请人未提交认证资料时缺省。 */
+  idCard?: string;
   major: string;
+  /** 籍贯，来自认证资料；申请人未提交认证资料时缺省。 */
+  nativePlace?: string;
   nickname: string;
+  /** 手机号，来自 app_user，跟 {@link TutorCertifiedStudent.phone} 口径一致。 */
+  phone?: string;
+  /** 真实姓名，来自认证资料；申请人未提交认证资料时缺省。 */
+  realName?: string;
   school: string;
   serviceConfirmationCancelledBy?: string;
   serviceSchedule?: string;
   status: string;
+  /** 可授课学科 KEY 字符串（"、" 分隔），来自认证资料；申请人未提交认证资料时缺省。 */
+  subject?: string;
   trialFee?: number;
   trialSchedule: string;
+  /** 学信网截图，来自认证资料；申请人未提交认证资料时缺省。 */
+  xuexinScreenshot?: string | null;
 }
 
 /** 家长端确认试课安排载荷。 */

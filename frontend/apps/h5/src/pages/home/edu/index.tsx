@@ -2,6 +2,7 @@ import "./index.less";
 import { MessageCircle } from "lucide-react";
 import { TutorCard } from "./components/TutorCard";
 import { ListFilters } from "./components/ListFilters";
+import { getGenderIconColor } from "@shared/genderModel";
 import { parseTutorSubjects } from "@shared/tutorModel";
 
 /** 按学校、学科筛选认证学生列表；列表顺序沿用服务端信用分排序，不做前端二次排序。 */
@@ -14,19 +15,6 @@ function getVisibleTutors(students: TutorCertifiedStudent[], selectedSchool: str
 
     return schoolMatched && subjectMatched;
   });
-}
-
-/** 性别对应的图标颜色，男生蓝色、女生粉色，其余性别沿用 .card-title svg 的默认色。
- *  用内联 style 而不是 Tailwind 类名，因为全局 `.card-title svg { color: #1d6f55 }`
- *  比单个 class 选择器优先级更高，className 会被它覆盖，必须用内联样式才能真正生效。 */
-function getGenderIconColor(gender: string) {
-  if (gender === "男") {
-    return "#2563eb";
-  }
-  if (gender === "女") {
-    return "#db2777";
-  }
-  return undefined;
 }
 
 /** 家长家教招募页面，浏览已认证并开启家教开关的学生档案。 */
@@ -69,7 +57,7 @@ export function Tutor({ students }: { students: TutorCertifiedStudent[] }) {
             </>
           }
           icon={<GraduationCap size={18} style={{ color: getGenderIconColor(tutor.tutor_certification.gender) }} />}
-          key={tutor.id}
+          key={tutor.tutor_information.id}
           title={tutor.tutor_certification.real_name}
           tutor={{
             age: tutor.tutor_certification.age,
@@ -80,8 +68,8 @@ export function Tutor({ students }: { students: TutorCertifiedStudent[] }) {
             idCard: tutor.tutor_certification.id_card,
             major: tutor.tutor_certification.major,
             nativePlace: tutor.tutor_certification.native_place,
-            nickname: tutor.nickname,
-            phone: tutor.phone,
+            nickname: tutor.tutor_information.nickname,
+            phone: tutor.tutor_information.phone,
             realName: tutor.tutor_certification.real_name,
             school: tutor.tutor_certification.school,
             subject: tutor.tutor_certification.subject,

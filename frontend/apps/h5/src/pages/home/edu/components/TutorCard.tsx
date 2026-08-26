@@ -1,5 +1,6 @@
 import type { KeyboardEvent } from "react";
 import { Award, BookOpen, Info, School, Tags } from "lucide-react";
+import { getGenderLabel } from "@shared/genderModel";
 import { formatTutorSubjectLabels, getTutorEducationLabel } from "@shared/tutorModel";
 
 /** 家教资料字段，贴近数据源原始形态（学历、学科传 KEY），组件内部统一转中文展示并生成详情弹窗内容。
@@ -81,7 +82,7 @@ function getTutorDetailItems(tutor: TutorCardTutor): TutorDetailItem[] {
     items.push({ label: "真实姓名", value: tutor.realName || "待补充" });
   }
   if (tutor.gender !== undefined) {
-    items.push({ label: "性别", value: tutor.gender || "待补充" });
+    items.push({ label: "性别", value: getGenderLabel(tutor.gender) || "待补充" });
   }
   if (tutor.age !== undefined) {
     items.push({ label: "年龄", value: tutor.age || "待补充" });

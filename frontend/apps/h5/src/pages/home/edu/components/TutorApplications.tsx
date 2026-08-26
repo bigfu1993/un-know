@@ -1,6 +1,7 @@
 import { ReceiptText } from "lucide-react";
 import { createTutorTaskModel } from "@tools/tutorTaskWorkflow";
 import { useConfirmAction } from "@h5/hooks/useConfirmAction";
+import { getGenderIconColor } from "@shared/genderModel";
 import { TutorCard } from "./TutorCard";
 
 /** 家长端试课申请列表弹窗属性。 */
@@ -334,6 +335,7 @@ export function TutorApplications({ candidates, isConfirming = false, onCancelTr
                     </div>
                   ) : null
                 }
+                icon={<GraduationCap size={18} style={{ color: getGenderIconColor(candidate.gender) }} />}
                 key={candidate.id}
                 onSelect={() => handleSelectCandidate(candidate)}
                 selected={isCandidateSelected}
@@ -344,11 +346,22 @@ export function TutorApplications({ candidates, isConfirming = false, onCancelTr
                   </>
                 }
                 tutor={{
+                  age: candidate.age,
                   availability: candidate.availability,
+                  certificate: candidate.certificate,
+                  education: candidate.education,
+                  gender: candidate.gender,
                   gpa: candidate.gpa,
                   hiredTimes: candidate.hiredTimes,
+                  idCard: candidate.idCard,
                   major: candidate.major,
-                  school: candidate.school
+                  nativePlace: candidate.nativePlace,
+                  nickname: candidate.nickname,
+                  phone: candidate.phone,
+                  realName: candidate.realName,
+                  school: candidate.school,
+                  subject: candidate.subject,
+                  xuexinScreenshot: candidate.xuexinScreenshot
                 }}
               />
             );

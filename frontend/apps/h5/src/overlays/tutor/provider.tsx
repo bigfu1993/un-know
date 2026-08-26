@@ -6,20 +6,18 @@ import {
   useCompleteTutorTrialEnd,
   useConfirmTutorTrial,
   useHandleTutorWorkflowAction,
-  useTutorApplications
+  useTutorApplication
 } from "@unknown/hooks";
 import { TutorOverlayHostContext, useTutorOverlayActions, useTutorOverlayState } from "./context";
-
-/** React Query 首次返回家教需求前使用的稳定空数组。 */
-const emptyTutorApplications: TutorDemand[] = [];
 
 /** 管理家教全局弹层的真实查询、mutation、资料草稿和用户反馈。 */
 export function TutorOverlayProvider({ children, syncProfileDraft }: TutorOverlayProviderProps) {
   const user = useGlobalUser();
-  const { isApplicationsOpen, isTrialListOpen } = useTutorOverlayState();
+  const { isApplicationsOpen, isTrialListOpen, targetDemandId } = useTutorOverlayState();
   const { closeApplications, closeCertificationInfo, closeTrialList } = useTutorOverlayActions();
-  const { data: tutorApplications = emptyTutorApplications, error: tutorApplicationsError } = useTutorApplications(
+  const { data: tutorApplicants, error: tutorApplicationError } = useTutorApplication(
     user.role,
+    targetDemandId,
     isApplicationsOpen || isTrialListOpen
   );
   const { isPending: confirmTrialPending, mutateAsync: confirmTutorTrial } = useConfirmTutorTrial();
@@ -27,24 +25,34 @@ export function TutorOverlayProvider({ children, syncProfileDraft }: TutorOverla
   const { isPending: workflowPending, mutateAsync: submitTutorWorkflowAction } = useHandleTutorWorkflowAction();
   const applicationCandidates = useMemo<TutorApplicationCandidate[]>(
     () =>
-      tutorApplications.flatMap((demand) =>
-        demand.applicants.map((applicant) => ({
-          availability: applicant.availability,
-          demandId: demand.id,
-          gpa: applicant.gpa,
-          hiredTimes: applicant.hiredTimes,
-          id: applicant.id,
-          major: applicant.major,
-          nickname: applicant.nickname,
-          school: applicant.school,
-          serviceConfirmationCancelledBy: applicant.serviceConfirmationCancelledBy,
-          serviceSchedule: applicant.serviceSchedule,
-          status: applicant.status,
-          trialFee: applicant.trialFee,
-          trialSchedule: applicant.trialSchedule
-        }))
-      ),
-    [tutorApplications]
+      targetDemandId
+        ? (tutorApplicants ?? []).map((applicant) => ({
+            age: applicant.tutorCertification.age,
+            availability: applicant.availability,
+            certificate: applicant.tutorCertification.certificate,
+            demandId: targetDemandId,
+            education: applicant.tutorCertification.education,
+            gender: applicant.tutorCertification.gender,
+            gpa: applicant.tutorCertification.gpa ?? "",
+            hiredTimes: applicant.hiredTimes,
+            id: applicant.id,
+            idCard: applicant.tutorCertification.id_card,
+            major: applicant.tutorCertification.major,
+            nativePlace: applicant.tutorCertification.native_place,
+            nickname: applicant.tutorInformation.nickname,
+            phone: applicant.tutorInformation.phone,
+            realName: applicant.tutorCertification.real_name,
+            school: applicant.tutorCertification.school,
+            serviceConfirmationCancelledBy: applicant.serviceConfirmationCancelledBy,
+            serviceSchedule: applicant.serviceSchedule,
+            status: applicant.status,
+            subject: applicant.tutorCertification.subject,
+            trialFee: applicant.trialFee,
+            trialSchedule: applicant.trialSchedule,
+            xuexinScreenshot: applicant.tutorCertification.xuexin_screenshot
+          }))
+        : [],
+    [targetDemandId, tutorApplicants]
   );
   const calendarTasks = useMemo(() => getTutorCalendarTasks(user.profileDraft), [user.profileDraft]);
 
@@ -114,10 +122,10 @@ export function TutorOverlayProvider({ children, syncProfileDraft }: TutorOverla
   );
 
   useEffect(() => {
-    if (tutorApplicationsError) {
-      showMessage(getErrorMessage(tutorApplicationsError, "家教申请列表加载失败，请稍后重试。"), { type: "error" });
+    if (tutorApplicationError) {
+      showMessage(getErrorMessage(tutorApplicationError, "家教申请列表加载失败，请稍后重试。"), { type: "error" });
     }
-  }, [tutorApplicationsError]);
+  }, [tutorApplicationError]);
 
   const host = useMemo<TutorOverlayHostContextValue>(
     () => ({

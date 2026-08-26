@@ -8,6 +8,7 @@ import com.unknown.platform.modules.clientworkspace.application.HuntingTaskAppSe
 import com.unknown.platform.modules.clientworkspace.application.TutorWorkspaceAppService;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.HuntingTask;
+import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorApplicantProfile;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorDemand;
 import com.unknown.platform.modules.clientworkspace.model.ApplyTutorTrialRequest;
 import com.unknown.platform.modules.clientworkspace.model.CompleteTutorTrialEndRequest;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** 客户端工作台接口，聚合订单、兼职、委托/狩猎、家教、商户商品和钱包数据。 */
@@ -106,10 +108,16 @@ public class ClientWorkspaceController {
     return ApiResponse.ok(tutorWorkspaceAppService.listTutorCertifiedStudents(context.role()));
   }
 
-  /** 获取家长自己发布的家教需求及申请人独立接口，只服务进行中弹窗，跟页面浏览列表分开。 */
-  @GetMapping("/workspace/ongoing/tutor")
-  public ApiResponse<List<TutorDemand>> tutorApplications(ClientRequestContext context) {
-    return ApiResponse.ok(tutorWorkspaceAppService.listTutorApplications(context.role(), context.authorization()));
+  /** 按需求 id 精确查询家长自己名下某一条家教需求的申请人列表（含完整认证资料，字段口径跟
+   *  {@link #tutorCertifiedStudents} 保持一致），只服务"进行中"弹窗点开具体某张卡片时按需加载，跟页面
+   *  浏览列表分开；不再一次性拉取家长名下全部家教需求再由前端按 id 筛选；只返回申请人列表，不带需求
+   *  本身的展示字段。 */
+  @GetMapping("/workspace/ongoing/tutor/application")
+  public ApiResponse<List<TutorApplicantProfile>> tutorApplication(
+      @RequestParam("id") String id,
+      ClientRequestContext context
+  ) {
+    return ApiResponse.ok(tutorWorkspaceAppService.getTutorApplication(context.role(), context.authorization(), id));
   }
 
   /** 发布委托或回收任务，返回列表可直接展示的任务卡片数据。 */

@@ -1,6 +1,7 @@
 import { useGlobalUser } from "@h5/globalProvider";
 import { useSubmitHuntingCertification } from "@unknown/hooks";
 import { getFilledProfileDraft } from "@shared/clientPageModel";
+import { genderOptions, getGenderLabel } from "@shared/genderModel";
 import { normalizeByKey, validateByKey } from "@tools/validation";
 
 /** 狩猎认证字段配置，字段 key 同本地资料草稿保持一致，便于提交后回填表单。 */
@@ -23,9 +24,6 @@ const huntingCertificationFields: HuntingCertificationField[] = [
   { key: "huntingSchool", label: "学校", placeholder: "请输入学校" },
   { key: "huntingMajor", label: "专业", placeholder: "请输入专业" }
 ];
-
-/** 狩猎认证性别选项。 */
-const huntingGenderOptions = ["男", "女", "其他"];
 
 interface HuntingCertificationProps {
   onBack: () => void;
@@ -100,14 +98,14 @@ export function HuntingCertification({ onBack, onSubmitError, onSubmitted }: Hun
         <label className={`profile-field grid gap-[6px] ${!genderValidation.isValid ? "missing" : ""}`}>
           <span>性别</span>
           <div className="segmented-control tutor-gender-control flex gap-[8px]" aria-label="选择性别">
-            {huntingGenderOptions.map((gender) => (
+            {genderOptions.map((gender) => (
               <button
                 className={draft.huntingGender === gender ? "active" : ""}
                 key={gender}
                 onClick={() => handleFieldChange("huntingGender", gender)}
                 type="button"
               >
-                {gender}
+                {getGenderLabel(gender)}
               </button>
             ))}
           </div>
