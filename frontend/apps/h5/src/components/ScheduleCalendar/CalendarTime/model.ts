@@ -45,16 +45,19 @@ export const trialSchedulePeriods: TrialSchedulePeriodConfig[] = [
 
 /** 生成单日默认三段试课排期。 */
 export function createDefaultDaySchedule(): Record<TrialSchedulePeriodKey, TrialSchedulePeriodState> {
-  return trialSchedulePeriods.reduce((daySchedule, period) => {
-    return {
-      ...daySchedule,
-      [period.key]: {
-        enabled: false,
-        end: "",
-        start: ""
-      }
-    };
-  }, {} as Record<TrialSchedulePeriodKey, TrialSchedulePeriodState>);
+  return trialSchedulePeriods.reduce(
+    (daySchedule, period) => {
+      return {
+        ...daySchedule,
+        [period.key]: {
+          enabled: false,
+          end: "",
+          start: ""
+        }
+      };
+    },
+    {} as Record<TrialSchedulePeriodKey, TrialSchedulePeriodState>
+  );
 }
 
 /** 将日期格式化为中文年月日。 */
@@ -64,13 +67,37 @@ export function formatTrialScheduleDate(dateKey: string) {
   return `${year}年${month}月${day}日`;
 }
 
+/** 根据试课天数上限状态和当前查看日期生成排期弹窗副标题。 */
+export function getTrialScheduleSubtitle({
+  activeDate,
+  isScheduleLimitReached,
+  plannedDates
+}: {
+  activeDate: string;
+  isScheduleLimitReached: boolean;
+  plannedDates: string[];
+}) {
+  const messages: string[] = [];
+
+  if (isScheduleLimitReached) {
+    messages.push("试课最多安排 3 天");
+  }
+  if (plannedDates.length > 0 && !plannedDates.includes(activeDate)) {
+    messages.push("建议在计划日程内安排课程");
+  }
+
+  return messages.length > 0 ? `${messages.join("；")}。` : "请选择试课日期和时间。";
+}
+
 /** 将时间格式化为无前导零的展示值。 */
 function formatTrialScheduleTime(timeValue: string) {
   return timeValue.replace(/^0(?=\d:)/, "");
 }
 
 /** 获取单日已经选择的试课时段时间。 */
-export function getEnabledPeriodSummaries(daySchedule: Record<TrialSchedulePeriodKey, TrialSchedulePeriodState> | undefined) {
+export function getEnabledPeriodSummaries(
+  daySchedule: Record<TrialSchedulePeriodKey, TrialSchedulePeriodState> | undefined
+) {
   if (!daySchedule) {
     return [];
   }
@@ -81,34 +108,28 @@ export function getEnabledPeriodSummaries(daySchedule: Record<TrialSchedulePerio
     .map((periodState) => `${formatTrialScheduleTime(periodState.start)}-${formatTrialScheduleTime(periodState.end)}`);
 }
 
-/** 将试课草稿转换为 CalendarPanel 可消费的分段标记列表。 */
-export function getTrialScheduleCalendarItems(
+/** 将试课草稿转换为 CalendarPanel 可消费的日程分段数据。 */
+export function getTrialScheduleCalendarDatas(
   selectedDates: string[],
   scheduleDraft: TrialScheduleDraft,
   options: { scheduleLabel?: string; showPeriodLabel?: boolean } = {}
-): CalendarPanelMarker[] {
+): CalendarPanelScheduleData[] {
   const scheduleLabel = options.scheduleLabel;
 
   return selectedDates.map((dateKey) => ({
     date: dateKey,
-    labelPeriods: options.showPeriodLabel
-      ? trialSchedulePeriods
-          .filter((period) => {
-            const periodState = scheduleDraft[dateKey]?.[period.key];
-
-            return Boolean(periodState?.enabled && periodState.start && periodState.end);
-          })
-          .map((period) => period.key)
-      : undefined,
     periodLabels:
       options.showPeriodLabel && scheduleLabel
-        ? trialSchedulePeriods.reduce((labels, period) => {
-            const periodState = scheduleDraft[dateKey]?.[period.key];
+        ? trialSchedulePeriods.reduce(
+            (labels, period) => {
+              const periodState = scheduleDraft[dateKey]?.[period.key];
 
-            return periodState?.enabled && periodState.start && periodState.end
-              ? { ...labels, [period.key]: scheduleLabel }
-              : labels;
-          }, {} as Record<string, string>)
+              return periodState?.enabled && periodState.start && periodState.end
+                ? { ...labels, [period.key]: scheduleLabel }
+                : labels;
+            },
+            {} as Record<string, string>
+          )
         : undefined,
     periods: trialSchedulePeriods
       .filter((period) => {
@@ -121,7 +142,10 @@ export function getTrialScheduleCalendarItems(
 }
 
 /** 基于试课排期草稿生成后端兼容的试课计划。 */
-export function getTrialSchedulePlan(selectedDates: string[], scheduleDraft: TrialScheduleDraft): TrialSchedulePlan | null {
+export function getTrialSchedulePlan(
+  selectedDates: string[],
+  scheduleDraft: TrialScheduleDraft
+): TrialSchedulePlan | null {
   const scheduledDates = selectedDates
     .filter((dateKey) => getEnabledPeriodSummaries(scheduleDraft[dateKey]).length > 0)
     .sort();
@@ -131,7 +155,9 @@ export function getTrialSchedulePlan(selectedDates: string[], scheduleDraft: Tri
   }
 
   const summary = scheduledDates
-    .map((dateKey) => `${formatTrialScheduleDate(dateKey)} ${getEnabledPeriodSummaries(scheduleDraft[dateKey]).join(" ")}`)
+    .map(
+      (dateKey) => `${formatTrialScheduleDate(dateKey)} ${getEnabledPeriodSummaries(scheduleDraft[dateKey]).join(" ")}`
+    )
     .join("；");
 
   return {

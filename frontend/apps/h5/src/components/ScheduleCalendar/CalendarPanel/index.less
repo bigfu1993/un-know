@@ -111,8 +111,24 @@
   font-size: 12px;
 }
 
-/* 分段标记：按 markerPeriods 顺序从上到下平分格子高度，只在传了 markers/markerPeriods 时渲染，
- * 不影响没有分段需求的调用方（如日程查看弹窗）默认外观。三种底色按分段序号轮换，不绑定具体业务含义。 */
+.calendar-panel__day-badge {
+  position: absolute;
+  top: -3px;
+  right: -5px;
+  display: grid;
+  min-width: 12px;
+  height: 12px;
+  place-items: center;
+  border: 1px solid var(--h5-surface-solid);
+  border-radius: 999px;
+  background: var(--h5-danger);
+  color: var(--h5-surface-solid);
+  font-size: 7px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* 日程分段：按 testedPeriods/arrangedPeriods 顺序从上到下平分格子高度；三种底色按分段序号轮换。 */
 .calendar-panel__period {
   position: absolute;
   right: 0;
@@ -121,6 +137,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  gap: 1px;
   padding-right: 3px;
   opacity: 0;
 }
@@ -137,8 +154,16 @@
   background: rgba(17, 24, 39, 0.18);
 }
 
-.calendar-panel__period.has-marker {
+.calendar-panel__period.has-data {
   opacity: 1;
+}
+
+.calendar-panel__period-icon {
+  position: absolute;
+  left: 3px;
+  flex: 0 0 auto;
+  color: var(--h5-text);
+  stroke-width: 2.4;
 }
 
 .calendar-panel__period-label {

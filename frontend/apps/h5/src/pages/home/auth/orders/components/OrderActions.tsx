@@ -465,6 +465,7 @@ export function OrderActions({
             onClose={() => setIsServiceScheduleOpen(false)}
             onConfirm={handleConfirmServiceSchedule}
             scheduleLabel="课"
+            scheduleType="arranged"
           />
         </Modal>
       ) : null}
@@ -508,6 +509,7 @@ export function OrderActions({
             maxSelectedDates={null}
             onClose={() => setServiceAvailabilityAction(null)}
             onConfirm={handleConfirmServiceAvailability}
+            scheduleType="arranged"
           />
         </Modal>
       ) : null}

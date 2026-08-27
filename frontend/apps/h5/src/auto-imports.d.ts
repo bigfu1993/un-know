@@ -228,8 +228,9 @@ declare global {
   const getStoredPasswordCredential: typeof import('./shared/clientPageModel').getStoredPasswordCredential
   const getStoredProfileDraft: typeof import('./shared/clientPageModel').getStoredProfileDraft
   const getTabTitle: typeof import('./shared/clientPageModel').getTabTitle
-  const getTrialScheduleCalendarItems: typeof import('./components/ScheduleCalendar/CalendarTime/model').getTrialScheduleCalendarItems
+  const getTrialScheduleCalendarDatas: typeof import('./components/ScheduleCalendar/CalendarTime/model').getTrialScheduleCalendarDatas
   const getTrialSchedulePlan: typeof import('./components/ScheduleCalendar/CalendarTime/model').getTrialSchedulePlan
+  const getTrialScheduleSubtitle: typeof import('./components/ScheduleCalendar/CalendarTime/model').getTrialScheduleSubtitle
   const getTrialScheduleSummaryLines: typeof import('./components/ScheduleCalendar/CalendarTime/model').getTrialScheduleSummaryLines
   const getTrialScheduleValueFromSummary: typeof import('./components/ScheduleCalendar/CalendarTime/model').getTrialScheduleValueFromSummary
   const getTutorCalendarCells: typeof import('./tools/tutorCalendar').getTutorCalendarCells
@@ -460,7 +461,7 @@ declare global {
   export type { PublishInfoProps } from './components/PublishInfo/index'
   import('./components/PublishInfo/index')
   // @ts-ignore
-  export type { CalendarPanelMode, CalendarPanelMarker, CalendarPanelProps } from './components/ScheduleCalendar/CalendarPanel/index'
+  export type { CalendarPanelMode, CalendarPanelScheduleData, CalendarPanelProps } from './components/ScheduleCalendar/CalendarPanel/index'
   import('./components/ScheduleCalendar/CalendarPanel/index')
   // @ts-ignore
   export type { CalendarTimeProps } from './components/ScheduleCalendar/CalendarTime/index'

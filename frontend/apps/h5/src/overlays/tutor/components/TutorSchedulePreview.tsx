@@ -3,19 +3,15 @@ interface TutorSchedulePreviewProps extends TutorSchedulePreviewState {
   onClose: () => void;
 }
 
-/** 试课日历要横向拆分的分段顺序，固定按上午、下午、晚上展示。 */
-const markerPeriods: TrialSchedulePeriodKey[] = ["morning", "afternoon", "evening"];
+/** 日程日历固定按上午、下午、晚上展示。 */
+const schedulePeriods: TrialSchedulePeriodKey[] = ["morning", "afternoon", "evening"];
 
-/** 合并同一申请子任务下的多阶段日程，供只读日历统一展示。 */
-function getTutorSchedulePreviewCalendarItems(sections: TutorSchedulePreviewSection[]): CalendarPanelMarker[] {
-  const itemMap = new Map<
-    string,
-    {
-      date: string;
-      periodLabels: Record<string, string>;
-      periods: Set<string>;
-    }
-  >();
+/** 合并同一申请子任务下的多阶段日程，并按试课/正式课程拆分数据通道。 */
+function getTutorSchedulePreviewCalendarDatas(sections: TutorSchedulePreviewSection[]) {
+  const dataMaps = {
+    arranged: new Map<string, CalendarPanelScheduleData>(),
+    tested: new Map<string, CalendarPanelScheduleData>()
+  };
 
   sections.forEach((section) => {
     const scheduleValue = getTrialScheduleValueFromSummary(section.summary);
@@ -23,32 +19,32 @@ function getTutorSchedulePreviewCalendarItems(sections: TutorSchedulePreviewSect
       return;
     }
 
-    getTrialScheduleCalendarItems(scheduleValue.selectedDates, scheduleValue.scheduleDraft, {
+    getTrialScheduleCalendarDatas(scheduleValue.selectedDates, scheduleValue.scheduleDraft, {
       scheduleLabel: section.label,
       showPeriodLabel: section.showScheduleLabel
-    }).forEach((scheduleItem) => {
-      const item = itemMap.get(scheduleItem.date) ?? {
-        date: scheduleItem.date,
+    }).forEach((scheduleData) => {
+      const dataMap = dataMaps[section.dataType];
+      const currentData = dataMap.get(scheduleData.date) ?? {
+        date: scheduleData.date,
         periodLabels: {},
-        periods: new Set<string>()
+        periods: []
       };
 
-      scheduleItem.periods.forEach((period) => item.periods.add(period));
-      item.periodLabels = {
-        ...item.periodLabels,
-        ...scheduleItem.periodLabels
-      };
-      itemMap.set(scheduleItem.date, item);
+      dataMap.set(scheduleData.date, {
+        date: scheduleData.date,
+        periodLabels: {
+          ...currentData.periodLabels,
+          ...scheduleData.periodLabels
+        },
+        periods: [...new Set([...currentData.periods, ...scheduleData.periods])]
+      });
     });
   });
 
-  return [...itemMap.values()]
-    .map((item) => ({
-      date: item.date,
-      periodLabels: item.periodLabels,
-      periods: [...item.periods]
-    }))
-    .sort((left, right) => left.date.localeCompare(right.date));
+  return {
+    arrangedDatas: [...dataMaps.arranged.values()].sort((left, right) => left.date.localeCompare(right.date)),
+    testedDatas: [...dataMaps.tested.values()].sort((left, right) => left.date.localeCompare(right.date))
+  };
 }
 
 /** 获取当前日期下各阶段的具体时间。 */
@@ -74,9 +70,19 @@ function getTutorSchedulePreviewActiveSections(
 }
 
 /** 家教时间只读弹窗，卡片只保留入口按钮，具体时间在日历内查看。 */
-export function TutorSchedulePreview({ emptyLabel, onClose, sections, subtitle, summary, title }: TutorSchedulePreviewProps) {
-  const markers = useMemo(() => getTutorSchedulePreviewCalendarItems(sections), [sections]);
-  const scheduledDates = useMemo(() => markers.map((marker) => marker.date), [markers]);
+export function TutorSchedulePreview({
+  emptyLabel,
+  onClose,
+  sections,
+  subtitle,
+  summary,
+  title
+}: TutorSchedulePreviewProps) {
+  const { arrangedDatas, testedDatas } = useMemo(() => getTutorSchedulePreviewCalendarDatas(sections), [sections]);
+  const scheduledDates = useMemo(
+    () => [...new Set([...testedDatas, ...arrangedDatas].map((data) => data.date))].sort(),
+    [arrangedDatas, testedDatas]
+  );
   const defaultActiveDate = getDefaultTutorScheduleDate(scheduledDates) || undefined;
   const [activeDate, setActiveDate] = useState<string | undefined>(() => defaultActiveDate);
   const activeDateSections = getTutorSchedulePreviewActiveSections(sections, activeDate);
@@ -99,16 +105,18 @@ export function TutorSchedulePreview({ emptyLabel, onClose, sections, subtitle, 
         </>
       }
     >
-      {markers.length > 0 ? (
+      {scheduledDates.length > 0 ? (
         <div className="tutor-schedule-preview-body grid gap-[12px] overflow-auto pr-[2px]">
           <CalendarPanel
             activeDate={activeDate}
-            markerPeriods={markerPeriods}
-            markers={markers}
+            arrangedDatas={arrangedDatas}
+            arrangedPeriods={schedulePeriods}
             maxSelectedDates={null}
             mode="view"
             onActiveDateChange={setActiveDate}
             selectedDates={[]}
+            testedDatas={testedDatas}
+            testedPeriods={schedulePeriods}
           />
           <div className="tutor-schedule-preview-detail grid gap-[6px]">
             <strong>{activeDate ? formatTrialScheduleDate(activeDate) : "请选择日期"}</strong>

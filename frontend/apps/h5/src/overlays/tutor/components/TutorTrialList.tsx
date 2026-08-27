@@ -42,6 +42,7 @@ function getTutorTrialCandidateSchedulePreview(
 ): TutorSchedulePreviewState {
   const trialScheduleSection = candidate.trialSchedule?.trim()
     ? {
+        dataType: "tested" as const,
         label: "试",
         showScheduleLabel: true,
         summary: candidate.trialSchedule.trim(),
@@ -53,6 +54,7 @@ function getTutorTrialCandidateSchedulePreview(
     const sections = compactTutorSchedulePreviewSections([
       candidate.availability?.trim()
         ? {
+            dataType: "arranged" as const,
             showScheduleLabel: false,
             summary: candidate.availability.trim(),
             title: "可家教时间"
@@ -76,6 +78,7 @@ function getTutorTrialCandidateSchedulePreview(
       trialScheduleSection,
       candidate.serviceSchedule?.trim()
         ? {
+            dataType: "arranged" as const,
             label: "课",
             showScheduleLabel: true,
             summary: candidate.serviceSchedule.trim(),
@@ -293,7 +296,9 @@ export function TutorTrialList({
       </>
     ) : null;
 
-    return actionButtons ? <div className="tutor-application-actions flex flex-wrap gap-[8px]">{actionButtons}</div> : null;
+    return actionButtons ? (
+      <div className="tutor-application-actions flex flex-wrap gap-[8px]">{actionButtons}</div>
+    ) : null;
   }
 
   /** 按当前流程节点渲染家长可执行动作。 */
@@ -535,6 +540,7 @@ export function TutorTrialList({
               setIsTutorScheduleOpen(false);
             }}
             scheduleLabel="课"
+            scheduleType="arranged"
           />
         </Modal>
       ) : null}

@@ -9,8 +9,8 @@ import {
 import { createTutorTaskModel } from "@tools/tutorTaskWorkflow";
 import { getTutorOrderSchedulePreviewConfig } from "../model";
 
-/** 试课日历要横向拆分的分段顺序，固定按上午、下午、晚上展示。 */
-const markerPeriods: TrialSchedulePeriodKey[] = ["morning", "afternoon", "evening"];
+/** 日程日历固定按上午、下午、晚上展示。 */
+const schedulePeriods: TrialSchedulePeriodKey[] = ["morning", "afternoon", "evening"];
 
 /** 根据时间段归类到试课日历三段展示。 */
 function getTrialSchedulePreviewPeriod(timeRange: string): TrialSchedulePeriodKey {
@@ -23,46 +23,46 @@ function getTrialSchedulePreviewPeriod(timeRange: string): TrialSchedulePeriodKe
   return startHour < 18 ? "afternoon" : "evening";
 }
 
-/** 合并同一申请子任务下的多阶段日程，日历按阶段显示角标。 */
-function getTrialSchedulePreviewItems(sections: TutorSchedulePreviewSection[]): CalendarPanelMarker[] {
-  const itemMap = new Map<
-    string,
-    {
-      date: string;
-      periodLabels: Record<string, string>;
-      periods: Set<string>;
-    }
-  >();
+/** 合并同一申请子任务下的多阶段日程，并按试课/正式课程拆分数据通道。 */
+function getTrialSchedulePreviewDatas(sections: TutorSchedulePreviewSection[]) {
+  const dataMaps = {
+    arranged: new Map<string, CalendarPanelScheduleData>(),
+    tested: new Map<string, CalendarPanelScheduleData>()
+  };
 
   sections.forEach((section) => {
     parseTutorTrialSchedule(section.summary)
       .filter((scheduleLine) => scheduleLine.date)
       .forEach((scheduleLine) => {
-        const item = itemMap.get(scheduleLine.date) ?? {
+        const dataMap = dataMaps[section.dataType];
+        const currentData = dataMap.get(scheduleLine.date) ?? {
           date: scheduleLine.date,
           periodLabels: {},
-          periods: new Set<string>()
+          periods: []
         };
+        const periods = new Set(currentData.periods);
+        const periodLabels = { ...currentData.periodLabels };
 
         scheduleLine.times.forEach((timeRange) => {
           const period = getTrialSchedulePreviewPeriod(timeRange);
 
-          item.periods.add(period);
+          periods.add(period);
           if (section.showScheduleLabel && section.label) {
-            item.periodLabels[period] = section.label;
+            periodLabels[period] = section.label;
           }
         });
-        itemMap.set(scheduleLine.date, item);
+        dataMap.set(scheduleLine.date, {
+          date: scheduleLine.date,
+          periodLabels,
+          periods: [...periods]
+        });
       });
   });
 
-  return [...itemMap.values()]
-    .map((item) => ({
-      date: item.date,
-      periodLabels: item.periodLabels,
-      periods: [...item.periods]
-    }))
-    .sort((left, right) => left.date.localeCompare(right.date));
+  return {
+    arrangedDatas: [...dataMaps.arranged.values()].sort((left, right) => left.date.localeCompare(right.date)),
+    testedDatas: [...dataMaps.tested.values()].sort((left, right) => left.date.localeCompare(right.date))
+  };
 }
 
 /** 获取当前日期在各阶段下的日程明细。 */
@@ -85,7 +85,11 @@ export function TrialSchedulePreview({
 }: {
   onClose: () => void;
   onConfirmTrial?: (order: ClientOrder) => void;
-  onTutorWorkflowAction?: (order: ClientOrder, action: TutorWorkflowAction, payload?: Partial<TutorWorkflowActionRequest>) => Promise<boolean> | boolean | void;
+  onTutorWorkflowAction?: (
+    order: ClientOrder,
+    action: TutorWorkflowAction,
+    payload?: Partial<TutorWorkflowActionRequest>
+  ) => Promise<boolean> | boolean | void;
   order: ClientOrder;
   role: Role;
 }) {
@@ -95,9 +99,12 @@ export function TrialSchedulePreview({
   const previewConfig = getTutorOrderSchedulePreviewConfig(order, tutorTask);
   const scheduleSections = previewConfig?.sections ?? [];
   const availabilitySummary = getTutorTrialAvailabilitySummaryFromOrderDetail(order.detail);
-  const markers = getTrialSchedulePreviewItems(scheduleSections);
-  const scheduledDates = markers.map((marker) => marker.date);
-  const initialConflictScheduleValue = useMemo(() => getTrialScheduleValueFromSummary(availabilitySummary), [availabilitySummary]);
+  const { arrangedDatas, testedDatas } = getTrialSchedulePreviewDatas(scheduleSections);
+  const scheduledDates = [...new Set([...testedDatas, ...arrangedDatas].map((data) => data.date))].sort();
+  const initialConflictScheduleValue = useMemo(
+    () => getTrialScheduleValueFromSummary(availabilitySummary),
+    [availabilitySummary]
+  );
   const [activeDate, setActiveDate] = useState(() => getDefaultTutorScheduleDate(scheduledDates));
   const previewPeriods: Array<{ key: TrialSchedulePeriodKey; label: string }> = [
     { key: "morning", label: "上午" },
@@ -115,7 +122,9 @@ export function TrialSchedulePreview({
 
     setIsSubmittingConflictSchedule(true);
     try {
-      const result = await onTutorWorkflowAction(order, "update_trial_availability", { availability: value.plan.summary });
+      const result = await onTutorWorkflowAction(order, "update_trial_availability", {
+        availability: value.plan.summary
+      });
 
       if (result !== false) {
         setIsConflictScheduleOpen(false);
@@ -141,16 +150,18 @@ export function TrialSchedulePreview({
         }
       >
         <em className={`ongoing-status-badge ${tutorTask.statusToneClassName}`}>{tutorTask.statusLabel}</em>
-        {markers.length > 0 ? (
+        {scheduledDates.length > 0 ? (
           <div className="trial-schedule-preview-content grid gap-[12px]">
             <CalendarPanel
               activeDate={activeDate}
-              markerPeriods={markerPeriods}
-              markers={markers}
+              arrangedDatas={arrangedDatas}
+              arrangedPeriods={schedulePeriods}
               maxSelectedDates={null}
               mode="view"
               onActiveDateChange={setActiveDate}
               selectedDates={[]}
+              testedDatas={testedDatas}
+              testedPeriods={schedulePeriods}
             />
             <div className="trial-schedule-preview-list grid gap-[8px]">
               {activeScheduleSections.map((section) => (
@@ -173,10 +184,14 @@ export function TrialSchedulePreview({
             </div>
           </div>
         ) : (
-          <p className="notice p-[10px] text-[var(--h5-warning)]">{previewConfig?.emptyLabel ?? "暂无可查看的时间安排"}。</p>
+          <p className="notice p-[10px] text-[var(--h5-warning)]">
+            {previewConfig?.emptyLabel ?? "暂无可查看的时间安排"}。
+          </p>
         )}
         {tutorTask.can("confirmTrialStart") || canUpdateTrialAvailability ? (
-          <div className={`sheet-actions grid gap-[8px] ${tutorTask.can("confirmTrialStart") && canUpdateTrialAvailability ? "grid-cols-2" : ""}`}>
+          <div
+            className={`sheet-actions grid gap-[8px] ${tutorTask.can("confirmTrialStart") && canUpdateTrialAvailability ? "grid-cols-2" : ""}`}
+          >
             {canUpdateTrialAvailability ? (
               <button
                 className="ghost-button min-h-[38px] px-[10px] py-[8px]"
@@ -236,14 +251,19 @@ export function TrialSettlementConfirm({
   order
 }: {
   onClose: () => void;
-  onTutorWorkflowAction?: (order: ClientOrder, action: TutorWorkflowAction, payload?: Partial<TutorWorkflowActionRequest>) => Promise<boolean> | boolean | void;
+  onTutorWorkflowAction?: (
+    order: ClientOrder,
+    action: TutorWorkflowAction,
+    payload?: Partial<TutorWorkflowActionRequest>
+  ) => Promise<boolean> | boolean | void;
   order: ClientOrder;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   // order.detail 是后端拼的自由文本摘要，不是状态 KEY，前缀固定是中文"正式雇佣 · "/"试课申请 · "，
   // 跟已经 KEY 化的 order.status 是两回事，这里继续匹配中文字面量。
   const isServiceSettlement = order.detail.includes("正式雇佣");
-  const feeSummary = getTutorTrialFeeSummaryFromOrderDetail(order.detail) || order.amountLabel || formatCurrency(order.amount);
+  const feeSummary =
+    getTutorTrialFeeSummaryFromOrderDetail(order.detail) || order.amountLabel || formatCurrency(order.amount);
   const scheduleSummary = isServiceSettlement
     ? getTutorServiceScheduleSummaryFromOrderDetail(order.detail)
     : getTutorTrialScheduleSummaryFromOrderDetail(order.detail);
@@ -280,33 +300,40 @@ export function TrialSettlementConfirm({
         </>
       }
     >
-        <div className="trial-settlement-confirm-content grid gap-[8px]">
-          <div className="trial-settlement-confirm-item flex items-center justify-between gap-[12px]">
-            <span>{isServiceSettlement ? "结算金额" : "试课费用"}</span>
-            <strong>{feeSummary}</strong>
-          </div>
-          <div className="trial-settlement-confirm-item grid gap-[5px]">
-            <span>{isServiceSettlement ? "课程安排" : "试课安排"}</span>
-            <p>{scheduleSummary || (isServiceSettlement ? "暂无课程安排" : "暂无试课安排")}</p>
-          </div>
-          <p className="notice p-[10px] text-[var(--h5-warning)]">
-            {isServiceSettlement ? "确认后正式服务结算完成，当前家教进入历史订单。" : "确认后开始试课费用结算，并等待家长确认是否正式雇佣。"}
-          </p>
+      <div className="trial-settlement-confirm-content grid gap-[8px]">
+        <div className="trial-settlement-confirm-item flex items-center justify-between gap-[12px]">
+          <span>{isServiceSettlement ? "结算金额" : "试课费用"}</span>
+          <strong>{feeSummary}</strong>
         </div>
+        <div className="trial-settlement-confirm-item grid gap-[5px]">
+          <span>{isServiceSettlement ? "课程安排" : "试课安排"}</span>
+          <p>{scheduleSummary || (isServiceSettlement ? "暂无课程安排" : "暂无试课安排")}</p>
+        </div>
+        <p className="notice p-[10px] text-[var(--h5-warning)]">
+          {isServiceSettlement
+            ? "确认后正式服务结算完成，当前家教进入历史订单。"
+            : "确认后开始试课费用结算，并等待家长确认是否正式雇佣。"}
+        </p>
+      </div>
 
-        <div className="sheet-actions grid grid-cols-2 gap-[8px]">
-          <button className="ghost-button min-h-[38px] px-[10px] py-[8px]" disabled={isSubmitting} onClick={onClose} type="button">
-            取消
-          </button>
-          <button
-            className="primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
-            disabled={isSubmitting}
-            onClick={() => void handleConfirmSettlement()}
-            type="button"
-          >
-            {isSubmitting ? "确认中" : "结算"}
-          </button>
-        </div>
+      <div className="sheet-actions grid grid-cols-2 gap-[8px]">
+        <button
+          className="ghost-button min-h-[38px] px-[10px] py-[8px]"
+          disabled={isSubmitting}
+          onClick={onClose}
+          type="button"
+        >
+          取消
+        </button>
+        <button
+          className="primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
+          disabled={isSubmitting}
+          onClick={() => void handleConfirmSettlement()}
+          type="button"
+        >
+          {isSubmitting ? "确认中" : "结算"}
+        </button>
+      </div>
     </Modal>
   );
 }
@@ -358,40 +385,49 @@ export function ServiceSettlement({
         </>
       }
     >
-        <div className="trial-settlement-confirm-content grid gap-[8px]">
-          <label className="tutor-trial-settlement-field grid gap-[6px]">
-            <span>结算金额</span>
-            <input
-              inputMode="decimal"
-              min="0"
-              onChange={(event) => setServiceFee(event.target.value)}
-              placeholder="请输入金额"
-              step="0.01"
-              type="number"
-              value={serviceFee}
-            />
-          </label>
-          {!isServiceFeeValid && serviceFee.trim() !== "" ? <span className="tutor-trial-settlement-error">请输入不小于 0 的金额</span> : null}
-          <div className="trial-settlement-confirm-item grid gap-[5px]">
-            <span>课程安排</span>
-            <p>{scheduleSummary || "暂无课程安排"}</p>
-          </div>
-          <p className="notice p-[10px] text-[var(--h5-warning)]">提交后家教主任务结束，学生端确认结算金额后进入历史订单。</p>
+      <div className="trial-settlement-confirm-content grid gap-[8px]">
+        <label className="tutor-trial-settlement-field grid gap-[6px]">
+          <span>结算金额</span>
+          <input
+            inputMode="decimal"
+            min="0"
+            onChange={(event) => setServiceFee(event.target.value)}
+            placeholder="请输入金额"
+            step="0.01"
+            type="number"
+            value={serviceFee}
+          />
+        </label>
+        {!isServiceFeeValid && serviceFee.trim() !== "" ? (
+          <span className="tutor-trial-settlement-error">请输入不小于 0 的金额</span>
+        ) : null}
+        <div className="trial-settlement-confirm-item grid gap-[5px]">
+          <span>课程安排</span>
+          <p>{scheduleSummary || "暂无课程安排"}</p>
         </div>
+        <p className="notice p-[10px] text-[var(--h5-warning)]">
+          提交后家教主任务结束，学生端确认结算金额后进入历史订单。
+        </p>
+      </div>
 
-        <div className="sheet-actions grid grid-cols-2 gap-[8px]">
-          <button className="ghost-button min-h-[38px] px-[10px] py-[8px]" disabled={isSubmitting} onClick={onClose} type="button">
-            取消
-          </button>
-          <button
-            className="primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
-            disabled={!isServiceFeeValid || isSubmitting}
-            onClick={() => void handleConfirm()}
-            type="button"
-          >
-            {isSubmitting ? "提交中" : "结算"}
-          </button>
-        </div>
+      <div className="sheet-actions grid grid-cols-2 gap-[8px]">
+        <button
+          className="ghost-button min-h-[38px] px-[10px] py-[8px]"
+          disabled={isSubmitting}
+          onClick={onClose}
+          type="button"
+        >
+          取消
+        </button>
+        <button
+          className="primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
+          disabled={!isServiceFeeValid || isSubmitting}
+          onClick={() => void handleConfirm()}
+          type="button"
+        >
+          {isSubmitting ? "提交中" : "结算"}
+        </button>
+      </div>
     </Modal>
   );
 }

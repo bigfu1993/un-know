@@ -19,8 +19,8 @@ export interface TutorCalendarProps {
   onClose: () => void;
 }
 
-/** 日历格子要横向拆成的分段顺序，固定按上午、下午两段展示。 */
-const markerPeriods = ["am", "pm"];
+/** 正式课程日历固定按上午、下午两段展示。 */
+const arrangedPeriods = ["am", "pm"];
 
 /**
  * 家教课程日历弹窗：日历网格复用 ScheduleCalendar 的 CalendarPanel（分段标记能力，上午/下午两段），
@@ -31,8 +31,8 @@ export function TutorCalendar({ calendarTasks, initialDate, onClose }: TutorCale
   const todayKey = useMemo(() => getTutorDateKey(new Date()), []);
   const [activeDate, setActiveDate] = useState(initialDate ?? todayKey);
   const activeDateTasks = calendarTasks.filter((task) => task.date === activeDate);
-  /** 按日期归并任务命中的分段，供 CalendarPanel 的 markers 渲染上午/下午标记条。 */
-  const markers = useMemo<CalendarPanelMarker[]>(() => {
+  /** 按日期归并正式课程分段，使用 arranged 数据通道，不产生试课角标。 */
+  const arrangedDatas = useMemo<CalendarPanelScheduleData[]>(() => {
     const dateSet = new Set(calendarTasks.map((task) => task.date));
 
     return [...dateSet].map((date) => ({
@@ -57,8 +57,8 @@ export function TutorCalendar({ calendarTasks, initialDate, onClose }: TutorCale
     >
       <CalendarPanel
         activeDate={activeDate}
-        markerPeriods={markerPeriods}
-        markers={markers}
+        arrangedDatas={arrangedDatas}
+        arrangedPeriods={arrangedPeriods}
         maxSelectedDates={null}
         mode="view"
         onActiveDateChange={setActiveDate}

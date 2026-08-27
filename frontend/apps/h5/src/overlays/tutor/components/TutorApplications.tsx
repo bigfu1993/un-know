@@ -56,6 +56,7 @@ export function TutorApplications({
 }: TutorApplicationsProps) {
   const [selectedCandidateId, setSelectedCandidateId] = useState("");
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [scheduleSubtitle, setScheduleSubtitle] = useState("请选择试课日期和时间。");
   const [trialScheduleValue, setTrialScheduleValue] = useState<TrialScheduleValue | null>(null);
   const {
     closeConfirmation: closeCancelConfirmation,
@@ -65,7 +66,9 @@ export function TutorApplications({
   } = useConfirmAction();
   const visibleCandidates = useMemo(
     () =>
-      applicationCandidates.filter((candidate) => createTutorTaskModel({ candidate, role: "parent" }).isApplicationListVisible),
+      applicationCandidates.filter(
+        (candidate) => createTutorTaskModel({ candidate, role: "parent" }).isApplicationListVisible
+      ),
     [applicationCandidates]
   );
   const selectedCandidate = applicationCandidates.find((candidate) => candidate.id === selectedCandidateId);
@@ -266,19 +269,21 @@ export function TutorApplications({
           title={
             <>
               <strong>试课安排</strong>
-              <span>建议在计划日程内最多安排 3 天。</span>
+              <span className="trial-schedule-sheet__hint">{scheduleSubtitle}</span>
             </>
           }
         >
           <CalendarTime
             availableScheduleSummary={selectedCandidate?.availability ?? ""}
             initialValue={trialScheduleValue ?? getCandidateInitialTrialScheduleValue(selectedCandidate)}
+            mode="view"
             plannedDates={plannedDates}
             onClose={() => setIsScheduleOpen(false)}
             onConfirm={(value) => {
               setTrialScheduleValue(value);
               setIsScheduleOpen(false);
             }}
+            onSubtitleChange={setScheduleSubtitle}
           />
         </Modal>
       ) : null}

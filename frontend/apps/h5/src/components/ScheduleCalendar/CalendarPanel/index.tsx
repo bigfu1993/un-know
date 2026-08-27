@@ -1,37 +1,30 @@
 import "./index.less";
 import { getTutorCalendarCells, getTutorDateKey, getTutorMonthKey } from "@tools/tutorCalendar";
+import { Moon, Sun, Sunrise } from "lucide-react";
 
 /** 日历交互模式：查看模式只切换查看焦点；编辑模式下单击已查看的日期切换安排/取消安排，并支持按住滑动批量选中。 */
 export type CalendarPanelMode = "edit" | "view";
 
 /**
- * 单个日期格子内的分段标记数据，具体分段 key 的业务含义（比如"上午/下午/晚上"）由调用方通过
- * {@link CalendarPanelProps.markerPeriods} 定义，CalendarPanel 本身不理解这些 key 的业务含义。
+ * 单个日期格子内的日程分段数据；试课和正式课程共用该结构，通过不同 Props 保持业务语义独立。
  */
-export interface CalendarPanelMarker {
+export interface CalendarPanelScheduleData {
   date: string;
-  /** 命中的分段 key 列表，决定这一天哪几段显示标记底色。 */
+  /** 命中的分段 key 列表，决定这一天哪几段显示日程底色。 */
   periods: string[];
-  /** 需要叠加文字说明的分段 key 列表。 */
-  labelPeriods?: string[];
-  /** 每个分段 key 对应的展示文案，优先级高于 labelPeriods 的兜底文案。 */
+  /** 每个分段 key 对应的展示文案。 */
   periodLabels?: Record<string, string>;
 }
 
-/** 日期面板日历组件属性；只负责月份网格和查看/选择交互，具体业务时段展示通过可选的 markers 挂载。 */
+/** 日期面板日历组件属性；只负责月份网格、查看/选择交互以及试课/正式课程日程分段展示。 */
 export interface CalendarPanelProps {
   activeDate?: string;
   /** 当前选中的日期：整格底色标记，并驱动天数上限和拖拽批量选择。 */
   selectedDates: string[];
-  /**
-   * 每个日期格子要横向拆成的分段 key 顺序（如 ["morning","afternoon","evening"]），决定分几段、
-   * 从上到下的排列顺序；不传则格子只显示日期数字，不渲染任何分段标记，跟不传 markers 时完全一样。
-   */
-  markerPeriods?: string[];
-  /** 按日期维护的分段标记数据，需要配合 markerPeriods 使用才会渲染。 */
-  markers?: CalendarPanelMarker[];
-  /** markers 里某个分段命中 labelPeriods 但没有走 periodLabels 精确指定文案时使用的兜底文案。 */
-  markerFallbackLabel?: string;
+  /** 按日期维护的正式课程数据；存在数据时展示时段，但不产生试课角标。 */
+  arrangedDatas?: CalendarPanelScheduleData[];
+  /** 正式课程数据的分段 key 顺序。 */
+  arrangedPeriods?: string[];
   /** 选中天数上限，达到上限后未选日期禁止继续新增；不传或传 null/undefined 代表不限制。 */
   maxSelectedDates?: number | null;
   /** 日历交互模式：查看模式只切换查看焦点；编辑模式下单击已查看日期切换选中状态，也支持按住滑动批量选中。 */
@@ -45,11 +38,43 @@ export interface CalendarPanelProps {
    */
   onToggleDate?: (dateKey: string, selectableDateKeys: string[]) => void;
   /**
-   * 计划日期：只精确到"哪天"，为对应格子附加 planned 语义类，但不设置独立背景色，也不参与天数
-   * 上限和拖拽选择计算；跟 selectedDates（本次弹窗当前选中日期）是两种不同粒度的数据。
+   * 计划日期：只精确到"哪天"，为对应格子附加 planned 语义类和计划背景，但不参与天数上限和拖拽
+   * 选择计算；跟 selectedDates（本次弹窗当前选中日期）是两种不同粒度的数据。
    */
   plannedDates?: string[];
   selectableDates?: string[];
+  /** 按日期维护的试课数据；日期存在对应数据时在日期数字右上角显示“试”。 */
+  testedDatas?: CalendarPanelScheduleData[];
+  /** 试课数据的分段 key 顺序。 */
+  testedPeriods?: string[];
+}
+
+/** 将日程数组转换为按日期索引的分段集合，避免渲染每个日期时重复遍历。 */
+function createScheduleDataMap(datas: CalendarPanelScheduleData[]) {
+  return new Map(
+    datas.map((data) => [
+      data.date,
+      {
+        periodLabels: new Map(Object.entries(data.periodLabels ?? {})),
+        periods: new Set(data.periods)
+      }
+    ])
+  );
+}
+
+/** 按上午、下午、晚上的业务语义返回对应图标，未知 key 按分段顺序兜底。 */
+function getSchedulePeriodIcon(period: string, periodIndex: number) {
+  if (period === "morning" || period === "am") {
+    return Sunrise;
+  }
+  if (period === "afternoon" || period === "pm") {
+    return Sun;
+  }
+  if (period === "evening") {
+    return Moon;
+  }
+
+  return [Sunrise, Sun, Moon][periodIndex % 3];
 }
 
 /** 拖拽滑动过程中的即时状态，只用 ref 保存，避免 window 事件监听器闭包读到过期值。 */
@@ -71,19 +96,20 @@ const initialDragState: CalendarPanelDragState = {
   touchedMinDate: null
 };
 
-/** 纯日期面板日历：只展示月份网格和查看/选择两态交互，不承载时段等具体业务展示。 */
+/** 日期面板日历：展示月份网格、查看/选择交互以及试课和正式课程的分时段状态。 */
 export function CalendarPanel({
   activeDate,
-  markerFallbackLabel,
-  markerPeriods,
-  markers,
+  arrangedDatas = [],
+  arrangedPeriods = [],
   maxSelectedDates = null,
   mode,
   onActiveDateChange,
   onToggleDate,
   plannedDates,
   selectableDates,
-  selectedDates
+  selectedDates,
+  testedDatas = [],
+  testedPeriods = []
 }: CalendarPanelProps) {
   const today = useMemo(() => new Date(), []);
   const todayKey = getTutorDateKey(today);
@@ -91,19 +117,13 @@ export function CalendarPanel({
   const [viewMonth, setViewMonth] = useState(() => initialActiveDate.slice(0, 7) || getTutorMonthKey(today));
   const calendarCells = useMemo(() => getTutorCalendarCells(viewMonth), [viewMonth]);
   const monthTitle = `${viewMonth.split("-")[0]}年${Number(viewMonth.split("-")[1])}月`;
-  /** 按日期索引的分段标记数据，未传 markers 时为空表，格子按原样只显示日期数字。 */
-  const markerMap = useMemo(() => {
-    return new Map(
-      (markers ?? []).map((marker) => [
-        marker.date,
-        {
-          labelPeriods: new Set(marker.labelPeriods ?? []),
-          periodLabels: new Map(Object.entries(marker.periodLabels ?? {})),
-          periods: new Set(marker.periods)
-        }
-      ])
-    );
-  }, [markers]);
+  const arrangedDataMap = useMemo(() => createScheduleDataMap(arrangedDatas), [arrangedDatas]);
+  const testedDataMap = useMemo(() => createScheduleDataMap(testedDatas), [testedDatas]);
+  /** 两类日程使用同一日期格分段，按调用方顺序去重后统一渲染。 */
+  const schedulePeriods = useMemo(
+    () => [...new Set([...testedPeriods, ...arrangedPeriods])],
+    [arrangedPeriods, testedPeriods]
+  );
   /** 计划日期索引只判断是否属于发布计划，不参与当前选择或天数上限计算。 */
   const plannedDateSet = useMemo(() => new Set(plannedDates ?? []), [plannedDates]);
   const selectedDateSet = useMemo(() => new Set(selectedDates), [selectedDates]);
@@ -166,8 +186,11 @@ export function CalendarPanel({
       justDraggedRef.current = true;
 
       const [rangeMinDateKey, rangeMaxDateKey] = [startDate, currentDate].sort();
-      const { onToggleDate: latestOnToggleDate, selectableDateKeys: latestSelectableDateKeys, selectedDateSet: latestSelectedDateSet } =
-        latestRef.current;
+      const {
+        onToggleDate: latestOnToggleDate,
+        selectableDateKeys: latestSelectableDateKeys,
+        selectedDateSet: latestSelectedDateSet
+      } = latestRef.current;
 
       latestSelectableDateKeys
         .filter((dateKey) => dateKey >= touchedMinDate && dateKey <= touchedMaxDate)
@@ -289,13 +312,19 @@ export function CalendarPanel({
           }
 
           /** 本次滑动扫过的日期由实时范围决定选中状态，其它日期保持外部传入状态。 */
-          const isSelected = dragTouchedDateSet.has(dateKey) ? dragLiveRangeDateSet.has(dateKey) : selectedDateSet.has(dateKey);
+          const isSelected = dragTouchedDateSet.has(dateKey)
+            ? dragLiveRangeDateSet.has(dateKey)
+            : selectedDateSet.has(dateKey);
           const isOverMaxSelectedDates =
-            maxSelectedDates !== null && maxSelectedDates !== undefined && selectedDates.length >= maxSelectedDates && !isSelected;
+            maxSelectedDates !== null &&
+            maxSelectedDates !== undefined &&
+            selectedDates.length >= maxSelectedDates &&
+            !isSelected;
           const isOutsideSelectableDates = hasSelectableDateLimit && !selectableDateSet.has(dateKey);
           const isPastDate = dateKey < todayKey;
           const dayNumber = Number(dateKey.slice(-2));
-          const markerEntry = markerMap.get(dateKey);
+          const arrangedDataEntry = arrangedDataMap.get(dateKey);
+          const testedDataEntry = testedDataMap.get(dateKey);
           const isPlannedDate = plannedDateSet.has(dateKey);
 
           return (
@@ -308,23 +337,33 @@ export function CalendarPanel({
               onPointerDown={() => handleDragStart(dateKey)}
               type="button"
             >
-              {markerPeriods?.map((period, periodIndex) => {
-                const hasPeriod = markerEntry?.periods.has(period) ?? false;
-                const label =
-                  markerEntry?.periodLabels.get(period) ??
-                  (markerEntry?.labelPeriods.has(period) ? markerFallbackLabel : undefined);
+              {schedulePeriods.map((period, periodIndex) => {
+                const hasPeriod = Boolean(
+                  testedDataEntry?.periods.has(period) || arrangedDataEntry?.periods.has(period)
+                );
+                const label = testedDataEntry?.periodLabels.get(period) ?? arrangedDataEntry?.periodLabels.get(period);
+                const PeriodIcon = getSchedulePeriodIcon(period, periodIndex);
 
                 return (
                   <span
-                    className={`calendar-panel__period calendar-panel__period--${periodIndex % 3} ${hasPeriod ? "has-marker" : ""}`}
+                    className={`calendar-panel__period calendar-panel__period--${periodIndex % 3} ${hasPeriod ? "has-data" : ""}`}
                     key={period}
-                    style={{ height: `${100 / markerPeriods.length}%`, top: `${(periodIndex / markerPeriods.length) * 100}%` }}
+                    style={{
+                      height: `${100 / schedulePeriods.length}%`,
+                      top: `${(periodIndex / schedulePeriods.length) * 100}%`
+                    }}
                   >
+                    {hasPeriod ? (
+                      <PeriodIcon aria-hidden="true" className="calendar-panel__period-icon" size={9} />
+                    ) : null}
                     {label ? <span className="calendar-panel__period-label">{label}</span> : null}
                   </span>
                 );
               })}
-              <strong>{dayNumber}</strong>
+              <strong className="calendar-panel__day-number">
+                {dayNumber}
+                {testedDataEntry ? <span className="calendar-panel__day-badge">试</span> : null}
+              </strong>
             </button>
           );
         })}
