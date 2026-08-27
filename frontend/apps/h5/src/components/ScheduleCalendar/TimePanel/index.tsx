@@ -29,6 +29,10 @@ export interface TimePanelPeriodItem {
 /** 时段选择面板组件属性：顶部标题行按试课排期的四种状态分支渲染，下方按行渲染时段名称、
  *  起止时间输入和清空按钮。 */
 export interface TimePanelProps {
+  /** 当前查看日期是否已经安排了试课时段。 */
+  activeDateHasSchedule: boolean;
+  /** 顶部标题，通常是当前查看的日期文案。 */
+  activeDateLabel: ReactNode;
   periods: TimePanelPeriodItem[];
   /** 点击时段名称，切换该时段选中/取消选中。 */
   onTogglePeriod: (periodKey: string) => void;
@@ -36,22 +40,18 @@ export interface TimePanelProps {
   onChangePeriodTime: (periodKey: string, field: "start" | "end", value: string) => void;
   /** 清空某个时段的起止时间并取消选中。 */
   onClearPeriod: (periodKey: string) => void;
-  /** 当前查看日期是否已经安排了试课时段。 */
-  hasSchedule: boolean;
   /** 当前查看日期是否超出学生可试课范围。 */
   isOutsideSelectableDates: boolean;
-  /** 已计划天数是否达到上限（且当前查看日期本身尚未被计划）。 */
+  /** 已安排天数是否达到上限（且当前查看日期本身尚未被安排）。 */
   isScheduleLimitReached: boolean;
-  /** 已计划天数上限，用于"最多安排 N 天"提示文案；不传或为 null 时不影响判断分支（由调用方保证一致）。 */
-  maxPlannedDates?: number | null;
+  /** 已选择天数上限，用于"最多安排 N 天"提示文案；不传或为 null 时不影响判断分支（由调用方保证一致）。 */
+  maxSelectedDates?: number | null;
   /** 当前查看日期是否已经没有可选时段（如可试课时段已被其它安排占满）。 */
   hasNoSelectablePeriods: boolean;
   /** 移除当前查看日期的全部试课安排。 */
   onClearDaySchedule: () => void;
   /** 全选当前查看日期允许的时段。 */
   onSelectFullDaySchedule: () => void;
-  /** 顶部标题，通常是当前查看的日期文案。 */
-  selectedDateLabel: ReactNode;
 }
 
 /**
@@ -61,30 +61,30 @@ export interface TimePanelProps {
  * 的四态判断和文案固定内置在这里——这个组件专属服务试课排期场景，不再是跨场景通用组件。
  */
 export function TimePanel({
+  activeDateHasSchedule,
+  activeDateLabel,
   hasNoSelectablePeriods,
-  hasSchedule,
   isOutsideSelectableDates,
   isScheduleLimitReached,
-  maxPlannedDates,
+  maxSelectedDates,
   onChangePeriodTime,
   onClearDaySchedule,
   onClearPeriod,
   onSelectFullDaySchedule,
   onTogglePeriod,
-  periods,
-  selectedDateLabel
+  periods
 }: TimePanelProps) {
   return (
     <div className="time-panel grid gap-[10px]">
       <div className="time-panel__header flex items-center justify-between gap-[10px]">
-        <strong>{selectedDateLabel}</strong>
-        {hasSchedule ? (
+        <strong>{activeDateLabel}</strong>
+        {activeDateHasSchedule ? (
           <button className="text-button" onClick={onClearDaySchedule} title="点击重置当日安排" type="button">
             移除当日安排
           </button>
         ) : isOutsideSelectableDates || isScheduleLimitReached ? (
           <span className={isScheduleLimitReached ? "danger" : ""}>
-            {isOutsideSelectableDates ? "请选择学生可试课日期" : isScheduleLimitReached ? `最多安排 ${maxPlannedDates} 天` : ""}
+            {isOutsideSelectableDates ? "请选择学生可试课日期" : isScheduleLimitReached ? `最多安排 ${maxSelectedDates} 天` : ""}
           </span>
         ) : hasNoSelectablePeriods ? (
           <span>已试课时段不可选</span>

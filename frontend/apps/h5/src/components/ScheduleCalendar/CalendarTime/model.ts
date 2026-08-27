@@ -122,34 +122,29 @@ export function getTrialScheduleCalendarItems(
 
 /** 基于试课排期草稿生成后端兼容的试课计划。 */
 export function getTrialSchedulePlan(selectedDates: string[], scheduleDraft: TrialScheduleDraft): TrialSchedulePlan | null {
-  const arrangedDates = selectedDates
+  const scheduledDates = selectedDates
     .filter((dateKey) => getEnabledPeriodSummaries(scheduleDraft[dateKey]).length > 0)
     .sort();
 
-  if (arrangedDates.length === 0) {
+  if (scheduledDates.length === 0) {
     return null;
   }
 
-  const summary = arrangedDates
+  const summary = scheduledDates
     .map((dateKey) => `${formatTrialScheduleDate(dateKey)} ${getEnabledPeriodSummaries(scheduleDraft[dateKey]).join(" ")}`)
     .join("；");
 
   return {
     summary,
-    trialEnd: arrangedDates[arrangedDates.length - 1],
+    trialEnd: scheduledDates[scheduledDates.length - 1],
     trialHalfDay: summary,
-    trialStart: arrangedDates[0]
+    trialStart: scheduledDates[0]
   };
 }
 
 /** 将试课安排摘要按日期拆分为独立展示行。 */
 export function getTrialScheduleSummaryLines(summary: string) {
   return summary.split("；").filter(Boolean);
-}
-
-/** 从试课时间摘要中提取可选日期 key，供家长排期按学生可用日期限制。 */
-export function getTrialScheduleDateKeysFromSummary(summary: string) {
-  return [...new Set(parseTutorTrialSchedule(summary).map((scheduleLine) => scheduleLine.date).filter(Boolean))].sort();
 }
 
 /** 根据时间段开始时间归入上午、下午或晚上。 */

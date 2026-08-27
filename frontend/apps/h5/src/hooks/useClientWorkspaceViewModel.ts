@@ -50,7 +50,7 @@ export function useClientWorkspaceViewModel({
           id: demand.id,
           parentPhone: demand.publisher?.phone ?? "家长电话待平台授权",
           period: demand.period ?? demand.status,
-          periodDates: demand.periodDates ?? [],
+          plannedDates: demand.plannedDates ?? [],
           publisher: demand.publisher ?? { nickname: "家长用户" },
           requirement: `${demand.subject} · ${demand.school}`,
           status: demand.status,

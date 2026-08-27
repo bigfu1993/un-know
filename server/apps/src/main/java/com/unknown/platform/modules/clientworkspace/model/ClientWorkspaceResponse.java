@@ -44,7 +44,7 @@ public record ClientWorkspaceResponse(
       /** 家教卡片专用：家教地址，非家教品类为 null。 */
       String address,
       /** 家教卡片专用：计划周期实际选中的完整日期集合，允许不连续的零散日期；非家教品类为 null。 */
-      List<String> periodDates,
+      List<String> plannedDates,
       BigDecimal quoteAmount,
       Integer quoteCount,
       Integer trialCount,
@@ -96,7 +96,7 @@ public record ClientWorkspaceResponse(
       private String phoneNumber;
       private String subject;
       private String address;
-      private List<String> periodDates;
+      private List<String> plannedDates;
       private BigDecimal quoteAmount;
       private Integer quoteCount;
       private Integer trialCount;
@@ -191,8 +191,8 @@ public record ClientWorkspaceResponse(
         return this;
       }
 
-      public Builder periodDates(List<String> periodDates) {
-        this.periodDates = periodDates;
+      public Builder plannedDates(List<String> plannedDates) {
+        this.plannedDates = plannedDates;
         return this;
       }
 
@@ -300,7 +300,7 @@ public record ClientWorkspaceResponse(
       public ClientOrder build() {
         return new ClientOrder(
             id, role, title, status, activeApplicantStatus, amount, contact, detail, risk, amountLabel, category,
-            phoneNumber, subject, address, periodDates, quoteAmount, quoteCount, trialCount, quoteActionLabel, quoteId,
+            phoneNumber, subject, address, plannedDates, quoteAmount, quoteCount, trialCount, quoteActionLabel, quoteId,
             canCall, canMessage, canRequestCancel, canRequestComplete, canConfirmCancel,
             canConfirmComplete, canRepublish, canAgreeTrial, canOpenTrialResult, canOpenTrialSchedule,
             canOpenTutorTrialList, canOpenTutorApplications, canRejectTrial, canCancelTutorApplication, tutorDemand
@@ -434,7 +434,7 @@ public record ClientWorkspaceResponse(
       String addressLabel,
       String period,
       /** 计划周期实际选中的完整日期集合，允许不连续的零散日期；period 只是这个集合的开始至结束摘要文案。 */
-      List<String> periodDates,
+      List<String> plannedDates,
       UserNickname publisher,
       String sourceType,
       List<TutorApplicant> applicants

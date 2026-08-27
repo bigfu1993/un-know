@@ -3,10 +3,10 @@ import { ReceiptText } from "lucide-react";
 /** 家长端确认结束试课前的结算弹窗属性。 */
 interface TutorTrialSettlementProps {
   candidate: TutorApplicationCandidate;
-  isSubmitting?: boolean;
   mode?: "service" | "trial";
   onClose: () => void;
   onConfirm: (payload: TutorTrialSettlementPayload) => Promise<void> | void;
+  trialListSubmissionPending?: boolean;
 }
 
 /** 家长端试课结算时可选的正式雇佣决策。 */
@@ -15,10 +15,10 @@ type TutorTrialHireDecision = "" | "hire" | "notHire";
 /** 结算弹窗，试课结算可预选雇佣意向，正式服务结算只提交金额。 */
 export function TutorTrialSettlement({
   candidate,
-  isSubmitting = false,
   mode = "trial",
   onClose,
-  onConfirm
+  onConfirm,
+  trialListSubmissionPending = false
 }: TutorTrialSettlementProps) {
   const [trialFee, setTrialFee] = useState(candidate.trialFee === undefined ? "" : String(candidate.trialFee));
   const [hireDecision, setHireDecision] = useState<TutorTrialHireDecision>("");
@@ -33,7 +33,7 @@ export function TutorTrialSettlement({
 
   /** 校验试课结算金额并提交。 */
   function handleConfirm() {
-    if (!isTrialFeeValid || isSubmitting) {
+    if (!isTrialFeeValid || trialListSubmissionPending) {
       return;
     }
 
@@ -95,7 +95,7 @@ export function TutorTrialSettlement({
           <div className="tutor-trial-hire-decision__options grid grid-cols-2 gap-[8px]">
             <button
               className={`tutor-trial-hire-decision__option ${hireDecision === "hire" ? "active" : ""}`}
-              disabled={isSubmitting}
+              disabled={trialListSubmissionPending}
               onClick={() => handleToggleHireDecision("hire")}
               type="button"
             >
@@ -103,7 +103,7 @@ export function TutorTrialSettlement({
             </button>
             <button
               className={`tutor-trial-hire-decision__option ${hireDecision === "notHire" ? "active danger" : ""}`}
-              disabled={isSubmitting}
+              disabled={trialListSubmissionPending}
               onClick={() => handleToggleHireDecision("notHire")}
               type="button"
             >
@@ -116,7 +116,7 @@ export function TutorTrialSettlement({
       <div className="sheet-actions grid grid-cols-2 gap-[8px]">
         <button
           className="ghost-button min-h-[38px] px-[10px] py-[8px]"
-          disabled={isSubmitting}
+          disabled={trialListSubmissionPending}
           onClick={onClose}
           type="button"
         >
@@ -124,7 +124,7 @@ export function TutorTrialSettlement({
         </button>
         <button
           className="primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
-          disabled={!isTrialFeeValid || isSubmitting}
+          disabled={!isTrialFeeValid || trialListSubmissionPending}
           onClick={handleConfirm}
           type="button"
         >

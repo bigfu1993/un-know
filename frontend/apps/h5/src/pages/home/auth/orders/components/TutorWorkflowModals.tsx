@@ -9,8 +9,11 @@ import {
 import { createTutorTaskModel } from "@tools/tutorTaskWorkflow";
 import { getTutorOrderSchedulePreviewConfig } from "../model";
 
+/** 试课日历要横向拆分的分段顺序，固定按上午、下午、晚上展示。 */
+const markerPeriods: TrialSchedulePeriodKey[] = ["morning", "afternoon", "evening"];
+
 /** 根据时间段归类到试课日历三段展示。 */
-function getTrialSchedulePreviewPeriod(timeRange: string): TrialScheduleCalendarPeriod {
+function getTrialSchedulePreviewPeriod(timeRange: string): TrialSchedulePeriodKey {
   const startHour = Number(timeRange.split(":")[0]);
 
   if (startHour < 12) {
@@ -21,13 +24,13 @@ function getTrialSchedulePreviewPeriod(timeRange: string): TrialScheduleCalendar
 }
 
 /** 合并同一申请子任务下的多阶段日程，日历按阶段显示角标。 */
-function getTrialSchedulePreviewItems(sections: TutorSchedulePreviewSection[]): TrialScheduleCalendarItem[] {
+function getTrialSchedulePreviewItems(sections: TutorSchedulePreviewSection[]): CalendarPanelMarker[] {
   const itemMap = new Map<
     string,
     {
       date: string;
-      periodLabels: Partial<Record<TrialScheduleCalendarPeriod, string>>;
-      periods: Set<TrialScheduleCalendarPeriod>;
+      periodLabels: Record<string, string>;
+      periods: Set<string>;
     }
   >();
 
@@ -38,7 +41,7 @@ function getTrialSchedulePreviewItems(sections: TutorSchedulePreviewSection[]): 
         const item = itemMap.get(scheduleLine.date) ?? {
           date: scheduleLine.date,
           periodLabels: {},
-          periods: new Set<TrialScheduleCalendarPeriod>()
+          periods: new Set<string>()
         };
 
         scheduleLine.times.forEach((timeRange) => {
@@ -92,16 +95,16 @@ export function TrialSchedulePreview({
   const previewConfig = getTutorOrderSchedulePreviewConfig(order, tutorTask);
   const scheduleSections = previewConfig?.sections ?? [];
   const availabilitySummary = getTutorTrialAvailabilitySummaryFromOrderDetail(order.detail);
-  const scheduleItems = getTrialSchedulePreviewItems(scheduleSections);
-  const selectedDates = scheduleItems.map((item) => item.date);
+  const markers = getTrialSchedulePreviewItems(scheduleSections);
+  const scheduledDates = markers.map((marker) => marker.date);
   const initialConflictScheduleValue = useMemo(() => getTrialScheduleValueFromSummary(availabilitySummary), [availabilitySummary]);
-  const [selectedDate, setSelectedDate] = useState(() => getDefaultTutorScheduleDate(selectedDates));
-  const previewPeriods: Array<{ key: TrialScheduleCalendarPeriod; label: string }> = [
+  const [activeDate, setActiveDate] = useState(() => getDefaultTutorScheduleDate(scheduledDates));
+  const previewPeriods: Array<{ key: TrialSchedulePeriodKey; label: string }> = [
     { key: "morning", label: "上午" },
     { key: "afternoon", label: "下午" },
     { key: "evening", label: "晚上" }
   ];
-  const activeScheduleSections = getActiveScheduleSections(scheduleSections, selectedDate);
+  const activeScheduleSections = getActiveScheduleSections(scheduleSections, activeDate);
   const canUpdateTrialAvailability = Boolean(previewConfig?.allowConflictAction && onTutorWorkflowAction);
 
   /** 学生日程冲突时重新提交可试课时间，并回到家长重新排期流程。 */
@@ -138,16 +141,16 @@ export function TrialSchedulePreview({
         }
       >
         <em className={`ongoing-status-badge ${tutorTask.statusToneClassName}`}>{tutorTask.statusLabel}</em>
-        {scheduleItems.length > 0 ? (
+        {markers.length > 0 ? (
           <div className="trial-schedule-preview-content grid gap-[12px]">
-            <TrialScheduleCalendar
-              activeDate={selectedDate}
-              initialDate={selectedDates[0]}
-              maxSelectedDates={selectedDates.length}
+            <CalendarPanel
+              activeDate={activeDate}
+              markerPeriods={markerPeriods}
+              markers={markers}
+              maxSelectedDates={null}
               mode="view"
-              onActiveDateChange={setSelectedDate}
-              scheduleItems={scheduleItems}
-              selectedDates={selectedDates}
+              onActiveDateChange={setActiveDate}
+              selectedDates={[]}
             />
             <div className="trial-schedule-preview-list grid gap-[8px]">
               {activeScheduleSections.map((section) => (
@@ -216,7 +219,7 @@ export function TrialSchedulePreview({
             confirmLabel={isSubmittingConflictSchedule ? "提交中" : "重新提交"}
             initialValue={initialConflictScheduleValue}
             isConfirming={isSubmittingConflictSchedule}
-            maxPlannedDates={null}
+            maxSelectedDates={null}
             onClose={() => setIsConflictScheduleOpen(false)}
             onConfirm={handleConfirmConflictSchedule}
           />

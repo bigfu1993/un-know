@@ -5,8 +5,8 @@ import { TutorTrialSettlement } from "./TutorTrialSettlement";
 
 /** 家长端试课中家教列表弹窗属性。 */
 interface TutorTrialListProps {
-  candidates: TutorApplicationCandidate[];
-  isSubmitting?: boolean;
+  applicationCandidates: TutorApplicationCandidate[];
+  trialListSubmissionPending?: boolean;
   onClose: () => void;
   onConfirmEnd?: (payload: {
     applicationId: string;
@@ -105,17 +105,22 @@ function getTutorTrialCandidateSchedulePreview(
 }
 
 /** 家长端查看试课中的家教，并处理试课、正式雇佣、兼职日程和结算链路。 */
-export function TutorTrialList({ candidates, isSubmitting = false, onClose, onWorkflowAction }: TutorTrialListProps) {
+export function TutorTrialList({
+  applicationCandidates,
+  onClose,
+  onWorkflowAction,
+  trialListSubmissionPending = false
+}: TutorTrialListProps) {
   const [hiddenTrialCandidateIds, setHiddenTrialCandidateIds] = useState<string[]>([]);
   const [schedulePreview, setSchedulePreview] = useState<TutorSchedulePreviewState | null>(null);
   const trialCandidates = useMemo(
     () =>
-      candidates.filter(
+      applicationCandidates.filter(
         (candidate) =>
           createTutorTaskModel({ candidate, role: "parent" }).isTrialListVisible &&
           !hiddenTrialCandidateIds.includes(candidate.id)
       ),
-    [candidates, hiddenTrialCandidateIds]
+    [applicationCandidates, hiddenTrialCandidateIds]
   );
   /** 正式服务阶段从父端主卡片进入时，弹窗作为课程列表使用。 */
   const isCourseMode = useMemo(
@@ -159,7 +164,7 @@ export function TutorTrialList({ candidates, isSubmitting = false, onClose, onWo
     action: TutorWorkflowAction,
     payload: Partial<TutorWorkflowActionRequest> = {}
   ) {
-    if (isSubmitting) {
+    if (trialListSubmissionPending) {
       return false;
     }
 
@@ -238,7 +243,7 @@ export function TutorTrialList({ candidates, isSubmitting = false, onClose, onWo
     const actionButtons = candidateTask.can("cancelApplication") ? (
       <button
         className="text-button danger inline-flex min-h-[30px] items-center justify-center gap-[5px] px-[9px] py-[6px] text-[12px]"
-        disabled={isSubmitting}
+        disabled={trialListSubmissionPending}
         onClick={() =>
           openCancelConfirmation({
             confirmLabel: "确认取消",
@@ -254,7 +259,7 @@ export function TutorTrialList({ candidates, isSubmitting = false, onClose, onWo
     ) : candidateTask.can("cancelServiceConfirmation") ? (
       <button
         className="text-button danger inline-flex min-h-[30px] items-center justify-center gap-[5px] px-[9px] py-[6px] text-[12px]"
-        disabled={isSubmitting}
+        disabled={trialListSubmissionPending}
         onClick={() =>
           openCancelConfirmation({
             confirmLabel: "确认取消",
@@ -271,7 +276,7 @@ export function TutorTrialList({ candidates, isSubmitting = false, onClose, onWo
       <>
         <button
           className="ghost-button min-h-[30px] px-[9px] py-[6px] text-[12px] text-[var(--h5-muted)]"
-          disabled={isSubmitting}
+          disabled={trialListSubmissionPending}
           onClick={() => void submitCandidateWorkflowAction(candidate, "remove_rejected_service_offer")}
           type="button"
         >
@@ -279,7 +284,7 @@ export function TutorTrialList({ candidates, isSubmitting = false, onClose, onWo
         </button>
         <button
           className="primary-button inline-flex min-h-[30px] items-center justify-center gap-[5px] px-[9px] py-[6px] text-[12px] text-white"
-          disabled={isSubmitting}
+          disabled={trialListSubmissionPending}
           onClick={() => void submitCandidateWorkflowAction(candidate, "offer_service")}
           type="button"
         >
@@ -310,7 +315,7 @@ export function TutorTrialList({ candidates, isSubmitting = false, onClose, onWo
       return (
         <button
           className="text-button danger inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
-          disabled={isSubmitting}
+          disabled={trialListSubmissionPending}
           onClick={() =>
             openCancelConfirmation({
               confirmLabel: "确认取消",
@@ -330,7 +335,7 @@ export function TutorTrialList({ candidates, isSubmitting = false, onClose, onWo
       return (
         <button
           className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-          disabled={isSubmitting}
+          disabled={trialListSubmissionPending}
           onClick={() => openSettlementPanel(selectedCandidate, "request_trial_result")}
           type="button"
         >
@@ -344,7 +349,7 @@ export function TutorTrialList({ candidates, isSubmitting = false, onClose, onWo
       return (
         <button
           className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-          disabled={isSubmitting}
+          disabled={trialListSubmissionPending}
           onClick={() => openSettlementPanel(selectedCandidate, "confirm_trial_end")}
           type="button"
         >
@@ -359,7 +364,7 @@ export function TutorTrialList({ candidates, isSubmitting = false, onClose, onWo
         <div className="sheet-actions grid grid-cols-2 gap-[8px]">
           <button
             className="ghost-button min-h-[38px] px-[10px] py-[8px]"
-            disabled={isSubmitting}
+            disabled={trialListSubmissionPending}
             onClick={() => void handleSelectNotHire()}
             type="button"
           >
@@ -367,7 +372,7 @@ export function TutorTrialList({ candidates, isSubmitting = false, onClose, onWo
           </button>
           <button
             className="primary-button min-h-[38px] px-[10px] py-[8px] text-white"
-            disabled={isSubmitting}
+            disabled={trialListSubmissionPending}
             onClick={() => void handleWorkflowAction("offer_service")}
             type="button"
           >
@@ -381,7 +386,7 @@ export function TutorTrialList({ candidates, isSubmitting = false, onClose, onWo
       return (
         <button
           className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-          disabled={isSubmitting}
+          disabled={trialListSubmissionPending}
           onClick={() => setIsTutorScheduleOpen(true)}
           type="button"
         >
@@ -395,7 +400,7 @@ export function TutorTrialList({ candidates, isSubmitting = false, onClose, onWo
       return (
         <button
           className="danger-outline-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
-          disabled={isSubmitting}
+          disabled={trialListSubmissionPending}
           onClick={() => openSettlementPanel(selectedCandidate, "request_service_end", "service")}
           type="button"
         >
@@ -408,7 +413,7 @@ export function TutorTrialList({ candidates, isSubmitting = false, onClose, onWo
       return (
         <button
           className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-          disabled={isSubmitting}
+          disabled={trialListSubmissionPending}
           onClick={() => void handleWorkflowAction("resubmit_settlement")}
           type="button"
         >
@@ -523,7 +528,7 @@ export function TutorTrialList({ candidates, isSubmitting = false, onClose, onWo
             blockedScheduleLabel="试"
             blockedScheduleSummary={selectedCandidate.trialSchedule}
             initialValue={null}
-            maxPlannedDates={null}
+            maxSelectedDates={null}
             onClose={() => setIsTutorScheduleOpen(false)}
             onConfirm={(value) => {
               void handleWorkflowAction("submit_service_schedule", { tutorSchedule: value.plan.summary });
@@ -537,7 +542,7 @@ export function TutorTrialList({ candidates, isSubmitting = false, onClose, onWo
       {settlementPanelState ? (
         <TutorTrialSettlement
           candidate={settlementPanelState.candidate}
-          isSubmitting={isSubmitting}
+          trialListSubmissionPending={trialListSubmissionPending}
           mode={settlementPanelState.mode}
           onClose={() => setSettlementPanelState(null)}
           onConfirm={handleConfirmTrialSettlement}

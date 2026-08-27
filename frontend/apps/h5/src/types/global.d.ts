@@ -117,7 +117,7 @@ declare global {
   type TutorOverlayHostContextValue = import("@app-types/overlay").TutorOverlayHostContextValue;
   type TutorOverlayProviderProps = import("@app-types/overlay").TutorOverlayProviderProps;
   type TutorOverlayState = import("@app-types/overlay").TutorOverlayState;
-  type TutorCalendarTask = import("@components/TutorCalendar").TutorCalendarTask;
+  type TutorCalendarTask = import("@h5/overlays/tutor/components/TutorCalendar").TutorCalendarTask;
   type TutorCardData = import("@components/TutorCertificationCard/model").TutorCardData;
   type TutorCardMode = import("@components/TutorCertificationCard/model").TutorCardMode;
   type TutorCertificationStatus = import("@unknown/domain").TutorCertificationStatus;

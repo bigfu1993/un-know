@@ -889,11 +889,11 @@ function TutorPlanPeriodPicker({
     >
         <ScheduleCalendar
           activeDate={activeDate}
-          maxPlannedDates={null}
+          maxSelectedDates={null}
           mode="edit"
           onActiveDateChange={setActiveDate}
           onToggleDate={handleToggleSelectedDate}
-          plannedDates={selectedDateKeys}
+          selectedDates={selectedDateKeys}
         />
 
         <div className="sheet-actions flex gap-[10px]">

@@ -3,14 +3,17 @@ interface TutorSchedulePreviewProps extends TutorSchedulePreviewState {
   onClose: () => void;
 }
 
+/** 试课日历要横向拆分的分段顺序，固定按上午、下午、晚上展示。 */
+const markerPeriods: TrialSchedulePeriodKey[] = ["morning", "afternoon", "evening"];
+
 /** 合并同一申请子任务下的多阶段日程，供只读日历统一展示。 */
-function getTutorSchedulePreviewCalendarItems(sections: TutorSchedulePreviewSection[]): TrialScheduleCalendarItem[] {
+function getTutorSchedulePreviewCalendarItems(sections: TutorSchedulePreviewSection[]): CalendarPanelMarker[] {
   const itemMap = new Map<
     string,
     {
       date: string;
-      periodLabels: Partial<Record<TrialScheduleCalendarPeriod, string>>;
-      periods: Set<TrialScheduleCalendarPeriod>;
+      periodLabels: Record<string, string>;
+      periods: Set<string>;
     }
   >();
 
@@ -27,10 +30,10 @@ function getTutorSchedulePreviewCalendarItems(sections: TutorSchedulePreviewSect
       const item = itemMap.get(scheduleItem.date) ?? {
         date: scheduleItem.date,
         periodLabels: {},
-        periods: new Set<TrialScheduleCalendarPeriod>()
+        periods: new Set<string>()
       };
 
-      scheduleItem.periods.forEach((period) => item.periods.add(period as TrialScheduleCalendarPeriod));
+      scheduleItem.periods.forEach((period) => item.periods.add(period));
       item.periodLabels = {
         ...item.periodLabels,
         ...scheduleItem.periodLabels
@@ -72,9 +75,9 @@ function getTutorSchedulePreviewActiveSections(
 
 /** 家教时间只读弹窗，卡片只保留入口按钮，具体时间在日历内查看。 */
 export function TutorSchedulePreview({ emptyLabel, onClose, sections, subtitle, summary, title }: TutorSchedulePreviewProps) {
-  const scheduleItems = useMemo(() => getTutorSchedulePreviewCalendarItems(sections), [sections]);
-  const selectedDates = useMemo(() => scheduleItems.map((scheduleItem) => scheduleItem.date), [scheduleItems]);
-  const defaultActiveDate = getDefaultTutorScheduleDate(selectedDates) || undefined;
+  const markers = useMemo(() => getTutorSchedulePreviewCalendarItems(sections), [sections]);
+  const scheduledDates = useMemo(() => markers.map((marker) => marker.date), [markers]);
+  const defaultActiveDate = getDefaultTutorScheduleDate(scheduledDates) || undefined;
   const [activeDate, setActiveDate] = useState<string | undefined>(() => defaultActiveDate);
   const activeDateSections = getTutorSchedulePreviewActiveSections(sections, activeDate);
 
@@ -96,16 +99,16 @@ export function TutorSchedulePreview({ emptyLabel, onClose, sections, subtitle, 
         </>
       }
     >
-      {scheduleItems.length > 0 ? (
+      {markers.length > 0 ? (
         <div className="tutor-schedule-preview-body grid gap-[12px] overflow-auto pr-[2px]">
-          <TrialScheduleCalendar
+          <CalendarPanel
             activeDate={activeDate}
-            initialDate={selectedDates[0]}
+            markerPeriods={markerPeriods}
+            markers={markers}
             maxSelectedDates={null}
             mode="view"
             onActiveDateChange={setActiveDate}
-            scheduleItems={scheduleItems}
-            selectedDates={selectedDates}
+            selectedDates={[]}
           />
           <div className="tutor-schedule-preview-detail grid gap-[6px]">
             <strong>{activeDate ? formatTrialScheduleDate(activeDate) : "请选择日期"}</strong>

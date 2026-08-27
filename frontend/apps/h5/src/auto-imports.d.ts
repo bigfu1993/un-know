@@ -23,7 +23,6 @@ declare global {
   const CalendarPanel: typeof import('./components/ScheduleCalendar/CalendarPanel/index').CalendarPanel
   const CalendarTime: typeof import('./components/ScheduleCalendar/CalendarTime/index').CalendarTime
   const CardStatus: typeof import('./components/CardStatus/index').CardStatus
-  const ChatModule: typeof import('./components/ChatModule/index').ChatModule
   const CheckCircle2: typeof import('lucide-react').CheckCircle2
   const CheckoutSheet: typeof import('./components/WorkflowOverlays/index').CheckoutSheet
   const ChevronRight: typeof import('lucide-react').ChevronRight
@@ -38,10 +37,9 @@ declare global {
   const Crosshair: typeof import('lucide-react').Crosshair
   const DataErrorScreen: typeof import('./components/AppStateScreens/index').DataErrorScreen
   const DefaultRoute: typeof import('./pages/home/components/RouteEntries').DefaultRoute
-  const EduJobBudget: typeof import('./pages/home/job/components/EduTaskCard').EduJobBudget
-  const EduJobScheduleView: typeof import('./pages/home/job/components/EduJobScheduleView').EduJobScheduleView
-  const EduTaskApplyAction: typeof import('./pages/home/job/components/EduTaskApplyAction').EduTaskApplyAction
-  const EduTaskCard: typeof import('./pages/home/job/components/EduTaskCard').EduTaskCard
+  const EduDemandApplyAction: typeof import('./pages/home/job/components/EduDemandApplyAction').EduDemandApplyAction
+  const EduDemandCard: typeof import('./pages/home/job/components/EduDemandCard').EduDemandCard
+  const EduJobBudget: typeof import('./pages/home/job/components/EduDemandCard').EduJobBudget
   const Featured: typeof import('./pages/home/shop/index').Featured
   const Filter: typeof import('lucide-react').Filter
   const FilterTags: typeof import('./pages/home/auth/orders/components/FilterTags').FilterTags
@@ -125,13 +123,11 @@ declare global {
   const StrictMode: typeof import('react').StrictMode
   const Suspense: typeof import('react').Suspense
   const TimePanel: typeof import('./components/ScheduleCalendar/TimePanel/index').TimePanel
-  const TrialScheduleCalendar: typeof import('./components/TrialScheduleCalendar/index').TrialScheduleCalendar
   const TrialSchedulePreview: typeof import('./pages/home/auth/orders/components/TutorWorkflowModals').TrialSchedulePreview
   const TrialSettlementConfirm: typeof import('./pages/home/auth/orders/components/TutorWorkflowModals').TrialSettlementConfirm
   const Truck: typeof import('lucide-react').Truck
   const Tutor: typeof import('./pages/home/edu/index').Tutor
   const TutorApplicantStatus: typeof import('./db/tutorStatus').TutorApplicantStatus
-  const TutorCalendar: typeof import('./components/TutorCalendar/index').TutorCalendar
   const TutorCard: typeof import('./pages/home/edu/components/TutorCard').TutorCard
   const TutorCertification: typeof import('./pages/home/auth/user/components/TutorCertification').TutorCertification
   const TutorCertificationCard: typeof import('./components/TutorCertificationCard/index').TutorCertificationCard
@@ -233,7 +229,6 @@ declare global {
   const getStoredProfileDraft: typeof import('./shared/clientPageModel').getStoredProfileDraft
   const getTabTitle: typeof import('./shared/clientPageModel').getTabTitle
   const getTrialScheduleCalendarItems: typeof import('./components/ScheduleCalendar/CalendarTime/model').getTrialScheduleCalendarItems
-  const getTrialScheduleDateKeysFromSummary: typeof import('./components/ScheduleCalendar/CalendarTime/model').getTrialScheduleDateKeysFromSummary
   const getTrialSchedulePlan: typeof import('./components/ScheduleCalendar/CalendarTime/model').getTrialSchedulePlan
   const getTrialScheduleSummaryLines: typeof import('./components/ScheduleCalendar/CalendarTime/model').getTrialScheduleSummaryLines
   const getTrialScheduleValueFromSummary: typeof import('./components/ScheduleCalendar/CalendarTime/model').getTrialScheduleValueFromSummary
@@ -444,9 +439,6 @@ declare global {
   export type { CardStatusProps } from './components/CardStatus/index'
   import('./components/CardStatus/index')
   // @ts-ignore
-  export type { ChatModuleProps } from './components/ChatModule/index'
-  import('./components/ChatModule/index')
-  // @ts-ignore
   export type { ConfirmActionProps } from './components/ConfirmAction/index'
   import('./components/ConfirmAction/index')
   // @ts-ignore
@@ -489,12 +481,6 @@ declare global {
   export type { SummaryCardVariant, AccountSummaryCardProps, WalletSummaryCardProps } from './components/SummaryCards/index'
   import('./components/SummaryCards/index')
   // @ts-ignore
-  export type { TrialScheduleCalendarPeriod, TrialScheduleCalendarMode, TrialScheduleCalendarItem, TrialScheduleCalendarProps } from './components/TrialScheduleCalendar/index'
-  import('./components/TrialScheduleCalendar/index')
-  // @ts-ignore
-  export type { TutorCalendarTask, TutorCalendarProps } from './components/TutorCalendar/index'
-  import('./components/TutorCalendar/index')
-  // @ts-ignore
   export type { TutorCertificationCardProps } from './components/TutorCertificationCard/index'
   import('./components/TutorCertificationCard/index')
   // @ts-ignore
@@ -525,8 +511,8 @@ declare global {
   export type { CommissionSortMode, CommissionToolbarPanel } from './pages/home/commission/model'
   import('./pages/home/commission/model')
   // @ts-ignore
-  export type { EduTaskCardJob } from './pages/home/job/components/EduTaskCard'
-  import('./pages/home/job/components/EduTaskCard')
+  export type { EduDemandCardJob } from './pages/home/job/components/EduDemandCard'
+  import('./pages/home/job/components/EduDemandCard')
   // @ts-ignore
   export type { AddressEditorMode, PhoneChangeDraft, PasswordResetDraft } from './pages/settings/components/SettingsPanels'
   import('./pages/settings/components/SettingsPanels')

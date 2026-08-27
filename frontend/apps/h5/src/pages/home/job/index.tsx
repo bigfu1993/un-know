@@ -1,6 +1,6 @@
 import "./index.less";
-import { EduJobBudget, EduTaskCard } from "./components/EduTaskCard";
-import { EduTaskApplyAction } from "./components/EduTaskApplyAction";
+import { EduDemandCard, EduJobBudget } from "./components/EduDemandCard";
+import { EduDemandApplyAction } from "./components/EduDemandApplyAction";
 import { PartTimeJobCard } from "./components/PartTimeJobCard";
 import { SearchToolbar } from "./components/SearchToolbar";
 
@@ -93,9 +93,9 @@ export function PartTime({
 
       <div className="card-list part-time-list-scroll grid gap-[10px]">
         {visibleTutorJobs.map((job) => (
-          <EduTaskCard
+          <EduDemandCard
             budgetSlot={<EduJobBudget job={job} />}
-            footer={<EduTaskApplyAction job={job} onApplyTrial={onApplyTutorTrial} role={role} />}
+            footer={<EduDemandApplyAction job={job} onApplyTrial={onApplyTutorTrial} role={role} />}
             job={job}
             key={job.id}
           />

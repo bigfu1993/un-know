@@ -107,8 +107,8 @@ export interface TutorOverlayHostContextValue {
   calendarTasks: TutorCalendarTask[];
   confirmTrial: (payload: ConfirmTutorTrialPayload) => void;
   confirmTrialEnd: (payload: CompleteTutorTrialEndPayload) => void;
-  /** 当前弹层目标家教需求发布时选择的日期集合，供试课安排弹窗回显参考，缺省为空数组。 */
-  demandPeriodDates: string[];
+  /** 当前弹层目标家教需求发布时选择的日期集合（计划范围），供试课安排弹窗回显参考，缺省为空数组。 */
+  plannedDates: string[];
   profileDraft: ProfileDraftState;
   saveCertificationInfo: (nextProfileDraft: ProfileDraftState, mode: TutorCertificationInfoSaveMode) => void;
   trialListSubmissionPending: boolean;

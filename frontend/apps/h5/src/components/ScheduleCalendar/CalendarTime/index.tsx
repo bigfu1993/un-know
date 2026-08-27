@@ -22,21 +22,21 @@ export function CalendarTime({
   blockedScheduleLabel,
   blockedScheduleSummary,
   confirmLabel = "确认",
-  demandPeriodDates,
   initialValue,
   isConfirming = false,
-  maxPlannedDates,
+  maxSelectedDates,
   onClose,
   onConfirm,
+  plannedDates,
   scheduleLabel
 }: CalendarTimeProps) {
   const schedule = useTrialSchedule({
     availableScheduleSummary,
     blockedScheduleLabel,
     blockedScheduleSummary,
-    demandPeriodDates,
     initialValue,
-    maxPlannedDates,
+    maxSelectedDates,
+    plannedDates,
     scheduleLabel
   });
 
@@ -44,31 +44,32 @@ export function CalendarTime({
     <>
       <div className="trial-schedule-body grid gap-[12px] overflow-auto pr-[2px]">
         <CalendarPanel
-          activeDate={schedule.selectedDate}
+          activeDate={schedule.activeDate}
           markerFallbackLabel={schedule.markerFallbackLabel}
           markerPeriods={schedule.markerPeriods}
           markers={schedule.markers}
-          maxPlannedDates={schedule.maxPlannedDates}
-          mode={schedule.calendarMode}
-          onActiveDateChange={schedule.setSelectedDate}
+          maxSelectedDates={schedule.maxSelectedDates}
+          mode={schedule.mode}
+          onActiveDateChange={schedule.setActiveDate}
           onToggleDate={schedule.onToggleDate}
           plannedDates={schedule.plannedDates}
           selectableDates={schedule.selectableDates}
+          selectedDates={schedule.selectedDates}
         />
 
         <TimePanel
+          activeDateHasSchedule={schedule.activeDateHasSchedule}
+          activeDateLabel={schedule.activeDateLabel}
           hasNoSelectablePeriods={schedule.hasNoSelectablePeriods}
-          hasSchedule={schedule.selectedDateHasSchedule}
           isOutsideSelectableDates={schedule.isOutsideSelectableDates}
           isScheduleLimitReached={schedule.isScheduleLimitReached}
-          maxPlannedDates={schedule.maxPlannedDates}
+          maxSelectedDates={schedule.maxSelectedDates}
           onChangePeriodTime={schedule.onChangePeriodTime}
           onClearDaySchedule={schedule.onClearDaySchedule}
           onClearPeriod={schedule.onClearPeriod}
           onSelectFullDaySchedule={schedule.onSelectFullDaySchedule}
           onTogglePeriod={schedule.onTogglePeriod}
-          periods={schedule.timePanelPeriods}
-          selectedDateLabel={schedule.selectedDateLabel}
+          periods={schedule.periods}
         />
       </div>
 

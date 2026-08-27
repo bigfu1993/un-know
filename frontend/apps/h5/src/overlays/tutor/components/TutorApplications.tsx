@@ -5,11 +5,8 @@ import { TutorCard } from "@pages/home/edu/components/TutorCard";
 
 /** 家长端试课申请列表弹窗属性。 */
 interface TutorApplicationsProps {
-  candidates: TutorApplicationCandidate[];
-  /** 该家教需求发布时家长选择的日期集合，供试课安排弹窗回显参考；候选人 availability 字段
-   *  自申请试课流程简化后不再由学生真实填写，试课时段真正该参考的是这份需求发布日程。 */
-  demandPeriodDates: string[];
-  isConfirming?: boolean;
+  applicationCandidates: TutorApplicationCandidate[];
+  applicationConfirmationPending?: boolean;
   onClose: () => void;
   onCancelTrial?: (payload: { applicationId: string; demandId: string }) => void;
   onConfirm: (payload: {
@@ -20,6 +17,9 @@ interface TutorApplicationsProps {
     trialStart: string;
   }) => void;
   onReject?: (payload: { applicationId: string; demandId: string }) => void;
+  /** 该家教需求发布时家长选择的日期集合，供试课安排弹窗回显参考；候选人 availability 字段
+   *  自申请试课流程简化后不再由学生真实填写，试课时段真正该参考的是这份需求发布日程。 */
+  plannedDates: string[];
 }
 
 /** 获取申请卡片中已确认过的试课日程摘要。 */
@@ -46,13 +46,13 @@ function getCandidateInitialTrialScheduleValue(candidate: TutorApplicationCandid
 
 /** 家长端选择试课家教并确认试课安排。 */
 export function TutorApplications({
-  candidates,
-  demandPeriodDates,
-  isConfirming = false,
+  applicationCandidates,
+  applicationConfirmationPending = false,
   onCancelTrial,
   onClose,
   onConfirm,
-  onReject
+  onReject,
+  plannedDates
 }: TutorApplicationsProps) {
   const [selectedCandidateId, setSelectedCandidateId] = useState("");
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
@@ -65,10 +65,10 @@ export function TutorApplications({
   } = useConfirmAction();
   const visibleCandidates = useMemo(
     () =>
-      candidates.filter((candidate) => createTutorTaskModel({ candidate, role: "parent" }).isApplicationListVisible),
-    [candidates]
+      applicationCandidates.filter((candidate) => createTutorTaskModel({ candidate, role: "parent" }).isApplicationListVisible),
+    [applicationCandidates]
   );
-  const selectedCandidate = candidates.find((candidate) => candidate.id === selectedCandidateId);
+  const selectedCandidate = applicationCandidates.find((candidate) => candidate.id === selectedCandidateId);
   const selectedCandidateTask = selectedCandidate
     ? createTutorTaskModel({ candidate: selectedCandidate, role: "parent" })
     : null;
@@ -83,7 +83,7 @@ export function TutorApplications({
   const canConfirm = Boolean(
     selectedCandidate &&
     trialScheduleValue?.plan &&
-    !isConfirming &&
+    !applicationConfirmationPending &&
     (!isSelectedCandidateTrialConfirming || isTrialScheduleChanged)
   );
 
@@ -116,7 +116,7 @@ export function TutorApplications({
 
   /** 获取底部提交按钮文案。 */
   function getConfirmButtonLabel() {
-    if (isConfirming) {
+    if (applicationConfirmationPending) {
       return "提交中";
     }
     if (!selectedCandidateId) {
@@ -160,7 +160,7 @@ export function TutorApplications({
                         className={`${
                           candidateTask.node === "trialScheduled" ? "text-button danger" : "danger-outline-button"
                         } inline-flex min-h-[30px] items-center justify-center gap-[5px] px-[9px] py-[6px] text-[12px]`}
-                        disabled={isConfirming}
+                        disabled={applicationConfirmationPending}
                         onClick={() => {
                           if (candidateTask.node === "trialScheduled") {
                             openCancelConfirmation({
@@ -266,14 +266,14 @@ export function TutorApplications({
           title={
             <>
               <strong>试课安排</strong>
-              <span>在发布家教时选择的日期内最多安排 3 天，绿色标记为可选日期。</span>
+              <span>建议在计划日程内最多安排 3 天。</span>
             </>
           }
         >
           <CalendarTime
             availableScheduleSummary={selectedCandidate?.availability ?? ""}
-            demandPeriodDates={demandPeriodDates}
             initialValue={trialScheduleValue ?? getCandidateInitialTrialScheduleValue(selectedCandidate)}
+            plannedDates={plannedDates}
             onClose={() => setIsScheduleOpen(false)}
             onConfirm={(value) => {
               setTrialScheduleValue(value);

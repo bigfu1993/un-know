@@ -1,7 +1,7 @@
 import "./index.less";
 import { getTutorCalendarCells, getTutorDateKey, getTutorMonthKey } from "@tools/tutorCalendar";
 
-/** 日历交互模式：查看模式只切换查看焦点；编辑模式下单击已查看的日期切换计划/取消计划，并支持按住滑动批量选中。 */
+/** 日历交互模式：查看模式只切换查看焦点；编辑模式下单击已查看的日期切换安排/取消安排，并支持按住滑动批量选中。 */
 export type CalendarPanelMode = "edit" | "view";
 
 /**
@@ -12,15 +12,17 @@ export interface CalendarPanelMarker {
   date: string;
   /** 命中的分段 key 列表，决定这一天哪几段显示标记底色。 */
   periods: string[];
-  /** 需要叠加文字说明的分段 key 列表；不传时按 periods 命中情况和 showMarkerFallbackLabel 决定是否用兜底文案。 */
+  /** 需要叠加文字说明的分段 key 列表。 */
   labelPeriods?: string[];
   /** 每个分段 key 对应的展示文案，优先级高于 labelPeriods 的兜底文案。 */
   periodLabels?: Record<string, string>;
 }
 
-/** 日期面板日历组件属性；只负责月份网格和查看/计划/范围起点交互，具体业务时段展示通过可选的 markers 挂载。 */
+/** 日期面板日历组件属性；只负责月份网格和查看/选择交互，具体业务时段展示通过可选的 markers 挂载。 */
 export interface CalendarPanelProps {
   activeDate?: string;
+  /** 当前选中的日期：整格底色标记，并驱动天数上限和拖拽批量选择。 */
+  selectedDates: string[];
   /**
    * 每个日期格子要横向拆成的分段 key 顺序（如 ["morning","afternoon","evening"]），决定分几段、
    * 从上到下的排列顺序；不传则格子只显示日期数字，不渲染任何分段标记，跟不传 markers 时完全一样。
@@ -28,26 +30,25 @@ export interface CalendarPanelProps {
   markerPeriods?: string[];
   /** 按日期维护的分段标记数据，需要配合 markerPeriods 使用才会渲染。 */
   markers?: CalendarPanelMarker[];
-  /** 命中分段但没有专属文案时，是否用统一兜底文案标出（比如统一显示"课"）；缺省不展示兜底文案。 */
-  showMarkerFallbackLabel?: boolean;
-  /** showMarkerFallbackLabel 为真时使用的兜底文案。 */
+  /** markers 里某个分段命中 labelPeriods 但没有走 periodLabels 精确指定文案时使用的兜底文案。 */
   markerFallbackLabel?: string;
-  /** 已计划天数上限，达到上限后未计划的日期禁止再新增计划；不传或传 null/undefined 代表不限制。 */
-  maxPlannedDates?: number | null;
-  /** 日历交互模式：查看模式只切换查看焦点，不做计划交互；编辑模式下单击已查看的日期才切换计划/取消计划，也支持按住滑动批量选中。 */
+  /** 选中天数上限，达到上限后未选日期禁止继续新增；不传或传 null/undefined 代表不限制。 */
+  maxSelectedDates?: number | null;
+  /** 日历交互模式：查看模式只切换查看焦点；编辑模式下单击已查看日期切换选中状态，也支持按住滑动批量选中。 */
   mode: CalendarPanelMode;
   onActiveDateChange?: (dateKey: string) => void;
   /**
    * 编辑模式下触发：单击"已查看"的日期时触发一次；按住滑动结束时，对本次滑动扫过的每个日期各触发一次
-   * （落在最终范围内但还没计划的会被计划，滑动扫过但最终落在范围外、且原本已计划的会被取消计划）。
-   * 查看模式和单击未查看的日期都不会触发。具体计划/取消计划对应什么业务动作由调用方决定；
-   * 因为滑动结束时可能连续触发多次，调用方需要用函数式 setState 更新计划列表，不能依赖闭包里的旧值。
+   * （落在最终范围内但还没选中的会被选中，滑动扫过但最终落在范围外、且原本已选中的会被取消）。
+   * 查看模式和单击未查看的日期都不会触发。具体选择结果对应什么业务动作由调用方决定；因为滑动结束
+   * 时可能连续触发多次，调用方需要用函数式 setState 更新选中列表，不能依赖闭包里的旧值。
    */
   onToggleDate?: (dateKey: string, selectableDateKeys: string[]) => void;
-  /** 已计划的日期：整格底色标记 + 驱动天数上限、拖拽批量计划这些交互逻辑。 */
-  plannedDates: string[];
-  /** 待确认的范围起点日期（调用方自行维护对应流程），用于展示背景变色动画。 */
-  rangeStartDate?: string | null;
+  /**
+   * 计划日期：只精确到"哪天"，为对应格子附加 planned 语义类，但不设置独立背景色，也不参与天数
+   * 上限和拖拽选择计算；跟 selectedDates（本次弹窗当前选中日期）是两种不同粒度的数据。
+   */
+  plannedDates?: string[];
   selectableDates?: string[];
 }
 
@@ -70,24 +71,23 @@ const initialDragState: CalendarPanelDragState = {
   touchedMinDate: null
 };
 
-/** 纯日期面板日历：只展示月份网格和查看/计划/范围起点三态交互，不承载时段等具体业务展示，供需要更轻量日历的场景复用。 */
+/** 纯日期面板日历：只展示月份网格和查看/选择两态交互，不承载时段等具体业务展示。 */
 export function CalendarPanel({
   activeDate,
   markerFallbackLabel,
   markerPeriods,
   markers,
-  maxPlannedDates = null,
+  maxSelectedDates = null,
   mode,
   onActiveDateChange,
   onToggleDate,
   plannedDates,
-  rangeStartDate = null,
   selectableDates,
-  showMarkerFallbackLabel = false
+  selectedDates
 }: CalendarPanelProps) {
   const today = useMemo(() => new Date(), []);
   const todayKey = getTutorDateKey(today);
-  const initialActiveDate = activeDate ?? plannedDates[0] ?? todayKey;
+  const initialActiveDate = activeDate ?? selectedDates[0] ?? plannedDates?.[0] ?? todayKey;
   const [viewMonth, setViewMonth] = useState(() => initialActiveDate.slice(0, 7) || getTutorMonthKey(today));
   const calendarCells = useMemo(() => getTutorCalendarCells(viewMonth), [viewMonth]);
   const monthTitle = `${viewMonth.split("-")[0]}年${Number(viewMonth.split("-")[1])}月`;
@@ -97,7 +97,6 @@ export function CalendarPanel({
       (markers ?? []).map((marker) => [
         marker.date,
         {
-          hasCustomLabelPeriods: marker.labelPeriods !== undefined,
           labelPeriods: new Set(marker.labelPeriods ?? []),
           periodLabels: new Map(Object.entries(marker.periodLabels ?? {})),
           periods: new Set(marker.periods)
@@ -105,7 +104,9 @@ export function CalendarPanel({
       ])
     );
   }, [markers]);
-  const plannedDateSet = useMemo(() => new Set(plannedDates), [plannedDates]);
+  /** 计划日期索引只判断是否属于发布计划，不参与当前选择或天数上限计算。 */
+  const plannedDateSet = useMemo(() => new Set(plannedDates ?? []), [plannedDates]);
+  const selectedDateSet = useMemo(() => new Set(selectedDates), [selectedDates]);
   const selectableDateSet = useMemo(() => new Set(selectableDates ?? []), [selectableDates]);
   const hasSelectableDateLimit = selectableDateSet.size > 0;
   const selectableDateKeys = useMemo(() => {
@@ -124,11 +125,11 @@ export function CalendarPanel({
    */
   const dragStateRef = useRef(initialDragState);
   /** 保存滑动结束时需要用到的最新回调和数据，避免闭包读到滑动开始时的旧值。 */
-  const latestRef = useRef({ onToggleDate, plannedDateSet, selectableDateKeys });
+  const latestRef = useRef({ onToggleDate, selectableDateKeys, selectedDateSet });
 
   useEffect(() => {
-    latestRef.current = { onToggleDate, plannedDateSet, selectableDateKeys };
-  }, [onToggleDate, plannedDateSet, selectableDateKeys]);
+    latestRef.current = { onToggleDate, selectableDateKeys, selectedDateSet };
+  }, [onToggleDate, selectableDateKeys, selectedDateSet]);
 
   /** 本次滑动全程经过的日期范围（起点和途经的每个日期的并集），这些日期的显示状态完全交给本次滑动控制。 */
   const dragTouchedDateSet = useMemo(() => {
@@ -140,7 +141,7 @@ export function CalendarPanel({
 
     return new Set(selectableDateKeys.filter((dateKey) => dateKey >= touchedMinDate && dateKey <= touchedMaxDate));
   }, [dragState, selectableDateKeys]);
-  /** 当前指针位置对应的实时范围（起点到当前经过日期之间），扫过但不在这个范围内的日期实时显示为未计划。 */
+  /** 当前指针位置对应的实时范围，扫过但不在最终范围内的日期实时显示为未选中。 */
   const dragLiveRangeDateSet = useMemo(() => {
     const { currentDate, startDate } = dragState;
 
@@ -153,7 +154,7 @@ export function CalendarPanel({
     return new Set(selectableDateKeys.filter((dateKey) => dateKey >= rangeMinDateKey && dateKey <= rangeMaxDateKey));
   }, [dragState, selectableDateKeys]);
 
-  /** 松开滑动手势：本次扫过的每个日期按最终范围重新判定，该计划的计划、该取消的取消（含拖过去又拖回来、原本已计划的日期）。 */
+  /** 松开滑动手势后按最终范围同步本次扫过日期的选中状态。 */
   function handleDragEnd() {
     const { currentDate, startDate, touchedMaxDate, touchedMinDate } = dragStateRef.current;
 
@@ -165,15 +166,15 @@ export function CalendarPanel({
       justDraggedRef.current = true;
 
       const [rangeMinDateKey, rangeMaxDateKey] = [startDate, currentDate].sort();
-      const { onToggleDate: latestOnToggleDate, plannedDateSet: latestPlannedDateSet, selectableDateKeys: latestSelectableDateKeys } =
+      const { onToggleDate: latestOnToggleDate, selectableDateKeys: latestSelectableDateKeys, selectedDateSet: latestSelectedDateSet } =
         latestRef.current;
 
       latestSelectableDateKeys
         .filter((dateKey) => dateKey >= touchedMinDate && dateKey <= touchedMaxDate)
         .filter((dateKey) => {
-          const shouldBePlanned = dateKey >= rangeMinDateKey && dateKey <= rangeMaxDateKey;
+          const shouldBeSelected = dateKey >= rangeMinDateKey && dateKey <= rangeMaxDateKey;
 
-          return shouldBePlanned !== latestPlannedDateSet.has(dateKey);
+          return shouldBeSelected !== latestSelectedDateSet.has(dateKey);
         })
         .forEach((dateKey) => latestOnToggleDate?.(dateKey, latestSelectableDateKeys));
     }
@@ -247,7 +248,7 @@ export function CalendarPanel({
     onActiveDateChange?.(nextActiveDate);
   }
 
-  /** 单击未查看的日期只切换查看焦点；编辑模式下单击已查看的日期才触发计划/取消计划；滑动刚结束的这次单击会被跳过。 */
+  /** 单击未查看的日期只切换查看焦点；编辑模式下单击已查看的日期才触发安排/取消安排；滑动刚结束的这次单击会被跳过。 */
   function handleSelectDate(dateKey: string) {
     if (justDraggedRef.current) {
       justDraggedRef.current = false;
@@ -287,18 +288,19 @@ export function CalendarPanel({
             return <span className="calendar-panel__day empty" key={`empty-${index}`} />;
           }
 
-          /** 本次滑动扫过的日期由实时范围决定计划与否；没被这次滑动扫过的日期保持真实计划状态不受影响。 */
-          const isPlanned = dragTouchedDateSet.has(dateKey) ? dragLiveRangeDateSet.has(dateKey) : plannedDateSet.has(dateKey);
-          const isOverMaxPlannedDates =
-            maxPlannedDates !== null && maxPlannedDates !== undefined && plannedDates.length >= maxPlannedDates && !isPlanned;
+          /** 本次滑动扫过的日期由实时范围决定选中状态，其它日期保持外部传入状态。 */
+          const isSelected = dragTouchedDateSet.has(dateKey) ? dragLiveRangeDateSet.has(dateKey) : selectedDateSet.has(dateKey);
+          const isOverMaxSelectedDates =
+            maxSelectedDates !== null && maxSelectedDates !== undefined && selectedDates.length >= maxSelectedDates && !isSelected;
           const isOutsideSelectableDates = hasSelectableDateLimit && !selectableDateSet.has(dateKey);
           const isPastDate = dateKey < todayKey;
           const dayNumber = Number(dateKey.slice(-2));
           const markerEntry = markerMap.get(dateKey);
+          const isPlannedDate = plannedDateSet.has(dateKey);
 
           return (
             <button
-              className={`calendar-panel__day ${activeDate === dateKey ? "active" : ""} ${dateKey === todayKey ? "today" : ""} ${isPlanned ? "planned" : ""} ${dateKey === rangeStartDate ? "range-start" : ""} ${isOverMaxPlannedDates ? "limited" : ""} ${isPastDate ? "past" : ""}`}
+              className={`calendar-panel__day ${activeDate === dateKey ? "active" : ""} ${dateKey === todayKey ? "today" : ""} ${isSelected ? "selected" : ""} ${isOverMaxSelectedDates ? "limited" : ""} ${isPastDate ? "past" : ""} ${isPlannedDate ? "planned" : ""}`}
               data-date-key={dateKey}
               disabled={isOutsideSelectableDates}
               key={dateKey}
@@ -310,9 +312,7 @@ export function CalendarPanel({
                 const hasPeriod = markerEntry?.periods.has(period) ?? false;
                 const label =
                   markerEntry?.periodLabels.get(period) ??
-                  (markerEntry?.labelPeriods.has(period) || (!markerEntry?.hasCustomLabelPeriods && showMarkerFallbackLabel && hasPeriod)
-                    ? markerFallbackLabel
-                    : undefined);
+                  (markerEntry?.labelPeriods.has(period) ? markerFallbackLabel : undefined);
 
                 return (
                   <span

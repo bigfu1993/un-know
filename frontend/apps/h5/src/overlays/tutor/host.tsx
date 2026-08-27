@@ -1,6 +1,6 @@
-import { TutorCalendar } from "@components/TutorCalendar";
 import { TutorCertificationInfo } from "@components/TutorCertificationInfo";
 import { TutorApplications } from "./components/TutorApplications";
+import { TutorCalendar } from "./components/TutorCalendar";
 import { TutorTrialList } from "./components/TutorTrialList";
 import { getTutorDateKey } from "@tools/tutorCalendar";
 import { useTutorOverlayActions, useTutorOverlayHost, useTutorOverlayState } from "./provider";
@@ -15,7 +15,7 @@ export function TutorOverlayHost() {
     calendarTasks,
     confirmTrial,
     confirmTrialEnd,
-    demandPeriodDates,
+    plannedDates,
     profileDraft,
     saveCertificationInfo,
     trialListSubmissionPending,
@@ -25,13 +25,13 @@ export function TutorOverlayHost() {
   if (activeType === "tutorApplications") {
     return (
       <TutorApplications
-        candidates={applicationCandidates}
-        demandPeriodDates={demandPeriodDates}
-        isConfirming={applicationConfirmationPending}
+        applicationCandidates={applicationCandidates}
+        applicationConfirmationPending={applicationConfirmationPending}
         onCancelTrial={(payload) => void workflow({ ...payload, action: "cancel_trial" })}
         onClose={closeApplications}
         onConfirm={confirmTrial}
         onReject={(payload) => void workflow({ ...payload, action: "reject_trial" })}
+        plannedDates={plannedDates}
       />
     );
   }
@@ -39,11 +39,11 @@ export function TutorOverlayHost() {
   if (activeType === "tutorTrialList") {
     return (
       <TutorTrialList
-        candidates={applicationCandidates}
-        isSubmitting={trialListSubmissionPending}
+        applicationCandidates={applicationCandidates}
         onClose={closeTrialList}
         onConfirmEnd={confirmTrialEnd}
         onWorkflowAction={workflow}
+        trialListSubmissionPending={trialListSubmissionPending}
       />
     );
   }
@@ -59,7 +59,7 @@ export function TutorOverlayHost() {
   }
 
   if (activeType === "tutorCalendar") {
-    return <TutorCalendar initialDate={getTutorDateKey(new Date())} onClose={closeCalendar} tasks={calendarTasks} />;
+    return <TutorCalendar calendarTasks={calendarTasks} initialDate={getTutorDateKey(new Date())} onClose={closeCalendar} />;
   }
 
   return null;
