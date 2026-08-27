@@ -9,9 +9,47 @@ import {
   saveLocalPublishInfoDraft
 } from "@tools/publishInfo";
 import { usePublishHuntingTask, usePublishTutorDemand } from "@unknown/hooks";
-import { useOverlayActions } from "../context";
-import { PublishOverlayActionsContext, PublishOverlayHostContext } from "./context";
+import { useOverlayActions, useOverlayState } from "../provider";
 import { initialPublishOverlayState, publishOverlayReducer } from "./reducer";
+
+/** 发布入口使用的稳定命令 Context，保持文件私有。 */
+const PublishOverlayActionsContext = createContext<PublishOverlayActions | null>(null);
+
+/** 发布 Host 使用的业务数据与动作 Context，保持文件私有。 */
+const PublishOverlayHostContext = createContext<PublishOverlayHostContextValue | null>(null);
+
+/** 读取发布入口命令。 */
+export function usePublishOverlayActions() {
+  const context = useContext(PublishOverlayActionsContext);
+
+  if (!context) {
+    throw new Error("usePublishOverlayActions 必须在 PublishOverlayProvider 内使用。");
+  }
+
+  return context;
+}
+
+/** 读取发布 Host 需要的真实业务数据与动作。 */
+export function usePublishOverlayHost() {
+  const context = useContext(PublishOverlayHostContext);
+
+  if (!context) {
+    throw new Error("usePublishOverlayHost 必须在 PublishOverlayProvider 内使用。");
+  }
+
+  return context;
+}
+
+/** 读取当前发布弹层类型。 */
+export function usePublishOverlayType(): PublishOverlayType | null {
+  const overlayState = useOverlayState();
+
+  if (overlayState.confirm?.type === "publishDraftConfirm") {
+    return "publishDraftConfirm";
+  }
+
+  return overlayState.primary?.type === "publishInfo" ? "publishInfo" : null;
+}
 
 /** 管理发布弹层草稿、真实发布 mutation、导航回调和用户反馈。 */
 export function PublishOverlayProvider({

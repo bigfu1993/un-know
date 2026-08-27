@@ -18,7 +18,7 @@ import {
 /**
  * useTrialSchedule 入参：只描述业务约束（学生可试课范围、已占用时段、天数上限、初始值），
  * 不含任何弹窗展示相关内容（标题/文案/图标）——展示层由调用方自己用 Modal 包裹
- * TrialScheduleEditor 决定，同一份业务逻辑可以套不同的弹窗外观（试课安排/正式雇佣日程）。
+ * CalendarTime 决定，同一份业务逻辑可以套不同的弹窗外观（试课安排/正式雇佣日程）。
  */
 export interface UseTrialScheduleOptions {
   availableScheduleSummary?: string;
@@ -69,7 +69,7 @@ function mergeTrialScheduleCalendarMarkers(...markerGroups: CalendarPanelMarker[
 
 /**
  * 试课/正式课日程排期的完整状态与业务逻辑，不涉及任何弹窗展示。调用方用返回值驱动
- * `TrialScheduleEditor`（CalendarPanel + TimePanel 组合）和自己的确认/取消按钮；
+ * `CalendarTime`（CalendarPanel + TimePanel 组合）和自己的确认/取消按钮；
  * `value` 为 null 时代表当前排期为空，不可提交。
  */
 export function useTrialSchedule({
@@ -393,5 +393,5 @@ export function useTrialSchedule({
   };
 }
 
-/** useTrialSchedule 的返回值形状，供 TrialScheduleEditor 等消费方标注类型。 */
+/** useTrialSchedule 的返回值形状，供 CalendarTime 等消费方标注类型。 */
 export type TrialScheduleState = ReturnType<typeof useTrialSchedule>;

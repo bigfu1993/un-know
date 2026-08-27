@@ -1,5 +1,5 @@
 import "./index.less";
-import { useCheckoutTrigger } from "@h5/overlays/checkout/context";
+import { useCheckoutTrigger } from "@h5/overlays/checkout/provider";
 
 /** 优选商品排序方式。 */
 type ProductSortMode = "default" | "priceAsc" | "priceDesc" | "stock";

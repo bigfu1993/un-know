@@ -1,5 +1,5 @@
 import type { useCreateHuntingProject } from "@unknown/hooks";
-import { useTutorOverlayActions } from "@h5/overlays/tutor/context";
+import { useTutorOverlayActions } from "@h5/overlays/tutor/provider";
 import { getRouteForTab } from "@h5/router/paths";
 
 /**

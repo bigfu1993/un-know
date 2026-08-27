@@ -84,6 +84,9 @@ interface TutorTaskModelOptions {
 export interface TutorTaskModel {
   availableActions: TutorTaskAction[];
   can: (action: TutorTaskAction) => boolean;
+  /** 卡片右侧实际要展示的状态文案列表：优先取 statusLabels，都没有时兜底用 statusLabel；
+   *  多处候选人/订单卡片都要展示状态角标，这里统一算好，调用方不用各自重复同一段 fallback 逻辑。 */
+  displayStatusLabels: string[];
   isApplicationListVisible: boolean;
   isTrialListVisible: boolean;
   node: TutorTaskNode;
@@ -314,14 +317,17 @@ export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelO
     }
   }
 
+  const statusLabels = getTutorTaskStatusLabels(status, role, order?.activeApplicantStatus);
+
   return {
     availableActions: [...actions],
     can: (action) => actions.has(action),
+    displayStatusLabels: statusLabels.length > 0 ? statusLabels : [statusLabel].filter(Boolean),
     isApplicationListVisible,
     isTrialListVisible,
     node,
     statusLabel,
-    statusLabels: getTutorTaskStatusLabels(status, role, order?.activeApplicantStatus),
+    statusLabels,
     statusTone,
     statusToneClassName: getTutorTaskStatusToneClassName(statusTone)
   };

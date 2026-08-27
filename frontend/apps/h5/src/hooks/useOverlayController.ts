@@ -1,4 +1,4 @@
-import { useOverlayActions } from "@h5/overlays/context";
+import { useOverlayActions } from "@h5/overlays/provider";
 
 /** App 通用浮层控制器，管理头像、进行中和狩猎快捷浮层，并协调全局弹层关闭。 */
 export function useOverlayController() {

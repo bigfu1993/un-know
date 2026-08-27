@@ -212,7 +212,7 @@ export function TrialSchedulePreview({
             </>
           }
         >
-          <TrialScheduleEditor
+          <CalendarTime
             confirmLabel={isSubmittingConflictSchedule ? "提交中" : "重新提交"}
             initialValue={initialConflictScheduleValue}
             isConfirming={isSubmittingConflictSchedule}

@@ -1,5 +1,5 @@
 import { useCancelTutorApplication } from "@unknown/hooks";
-import { useTutorOverlayActions } from "@h5/overlays/tutor/context";
+import { useTutorOverlayActions } from "@h5/overlays/tutor/provider";
 import { getErrorMessage, showMessage } from "@tools/messageToast";
 import {
   getTutorTrialAvailabilitySummaryFromOrderDetail,
@@ -29,17 +29,12 @@ export function OrderStatus({
     return <em className="ongoing-status-badge">{order.status}</em>;
   }
 
-  const statusLabels =
-    tutorTask.statusLabels.length > 0 ? tutorTask.statusLabels : [tutorTask.statusLabel].filter(Boolean);
-
   return (
-    <span className={`ongoing-status-stack ${statusLabels.length > 1 ? "multi" : ""}`}>
-      {statusLabels.map((statusLabel) => (
-        <em className={`ongoing-status-badge ${tutorTask.statusToneClassName}`} key={statusLabel}>
-          {statusLabel}
-        </em>
-      ))}
-    </span>
+    <CardStatus
+      badgeClassName={`ongoing-status-badge ${tutorTask.statusToneClassName}`}
+      labels={tutorTask.displayStatusLabels}
+      stackClassName="ongoing-status-stack"
+    />
   );
 }
 
@@ -459,7 +454,7 @@ export function OrderActions({
             </>
           }
         >
-          <TrialScheduleEditor
+          <CalendarTime
             availableScheduleSummary={getTutorTrialAvailabilitySummaryFromOrderDetail(tutorWorkflowTargetOrder.detail)}
             blockedScheduleLabel="试"
             blockedScheduleSummary={getTutorTrialScheduleSummaryFromOrderDetail(tutorWorkflowTargetOrder.detail)}
@@ -490,7 +485,7 @@ export function OrderActions({
             </>
           }
         >
-          <TrialScheduleEditor
+          <CalendarTime
             blockedScheduleLabel="试"
             blockedScheduleSummary={
               serviceAvailabilityAction === "accept_service_offer"

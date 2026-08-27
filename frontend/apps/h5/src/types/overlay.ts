@@ -120,3 +120,33 @@ export interface TutorOverlayProviderProps {
   children: ReactNode;
   syncProfileDraft: (draft: ProfileDraftState) => void;
 }
+
+/** 家长端试课列表卡片时间预览弹窗状态，TutorTrialList 组装、TutorSchedulePreview 消费。 */
+export interface TutorSchedulePreviewState {
+  buttonLabel: string;
+  emptyLabel: string;
+  sections: TutorSchedulePreviewSection[];
+  subtitle: string;
+  summary: string;
+  title: string;
+}
+
+/** 家长端日程预览中的阶段片段。 */
+export interface TutorSchedulePreviewSection {
+  label?: string;
+  showScheduleLabel?: boolean;
+  summary: string;
+  title: string;
+}
+
+/** 家长端提交结算金额时支持的流程动作，TutorTrialList 触发、TutorTrialSettlement 消费。 */
+export type TutorSettlementAction = Extract<
+  TutorWorkflowAction,
+  "confirm_trial_end" | "request_service_end" | "request_trial_result"
+>;
+
+/** 家长端试课结算提交载荷。 */
+export interface TutorTrialSettlementPayload {
+  hireTutor?: boolean;
+  trialFee: number;
+}

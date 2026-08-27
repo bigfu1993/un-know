@@ -1,6 +1,6 @@
 import { useGlobalUser } from "@h5/globalProvider";
-import { usePublishOverlayActions } from "@h5/overlays/publish/context";
-import { useTutorOverlayActions } from "@h5/overlays/tutor/context";
+import { usePublishOverlayActions } from "@h5/overlays/publish/provider";
+import { useTutorOverlayActions } from "@h5/overlays/tutor/provider";
 
 /** 头像弹窗快捷入口的视觉强调类型。 */
 type UserActionTone = "default" | "publish" | "recycle";

@@ -1,6 +1,6 @@
 import { PublishDraftConfirm } from "@components/PublishInfo/DraftConfirm";
 import { PublishInfo } from "@components/PublishInfo";
-import { usePublishOverlayHost, usePublishOverlayType } from "./context";
+import { usePublishOverlayHost, usePublishOverlayType } from "./provider";
 
 /** 渲染本地草稿确认和正式发布表单两类全局弹层。 */
 export function PublishOverlayHost() {

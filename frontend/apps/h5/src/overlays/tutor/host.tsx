@@ -1,8 +1,9 @@
 import { TutorCalendar } from "@components/TutorCalendar";
 import { TutorCertificationInfo } from "@components/TutorCertificationInfo";
-import { TutorApplications, TutorTrialList } from "./components/TutorApplications";
+import { TutorApplications } from "./components/TutorApplications";
+import { TutorTrialList } from "./components/TutorTrialList";
 import { getTutorDateKey } from "@tools/tutorCalendar";
-import { useTutorOverlayActions, useTutorOverlayHost, useTutorOverlayState } from "./context";
+import { useTutorOverlayActions, useTutorOverlayHost, useTutorOverlayState } from "./provider";
 
 /** 渲染家教申请、试课列表、认证信息和课程日历四类全局弹层。 */
 export function TutorOverlayHost() {

@@ -1,3 +1,27 @@
+.time-panel {
+  border: 1px solid color-mix(in srgb, var(--h5-subtle) 20%, transparent);
+  border-radius: 8px;
+  background: var(--h5-surface-solid);
+  padding: 8px;
+}
+
+.time-panel__header strong {
+  color: var(--h5-text);
+  font-size: 14px;
+}
+
+.time-panel__header span,
+.time-panel__header button {
+  color: var(--h5-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* 达到最多可安排天数上限的提示，用警示色跟普通提示区分开。 */
+.time-panel__header span.danger {
+  color: var(--h5-danger);
+}
+
 .time-panel__row {
   display: grid;
   grid-template-columns: minmax(64px, 0.55fr) minmax(0, 1.85fr);

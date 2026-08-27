@@ -1,5 +1,5 @@
 import type { useUpdateTutorExposure } from "@unknown/hooks";
-import { useTutorOverlayActions } from "@h5/overlays/tutor/context";
+import { useTutorOverlayActions } from "@h5/overlays/tutor/provider";
 import { getRouteForTab } from "@h5/router/paths";
 
 /** 家教/狩猎认证信息面板与认证提交流程入参。 */

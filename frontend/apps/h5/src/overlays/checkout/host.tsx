@@ -1,5 +1,5 @@
 import { CheckoutSheet } from "@components/WorkflowOverlays";
-import { useCheckoutActions, useCheckoutState } from "./context";
+import { useCheckoutActions, useCheckoutState } from "./provider";
 
 /** 在根级 Overlay Host 中渲染购买确认弹层。 */
 export function CheckoutHost() {

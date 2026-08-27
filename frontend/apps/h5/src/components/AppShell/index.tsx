@@ -1,5 +1,5 @@
 import "./index.less";
-import { usePublishOverlayActions } from "@h5/overlays/publish/context";
+import { usePublishOverlayActions } from "@h5/overlays/publish/provider";
 import { useGlobalUser } from "@h5/globalProvider";
 
 /** App 外壳组件集合，负责导航、资料提示和次级页壳。 */

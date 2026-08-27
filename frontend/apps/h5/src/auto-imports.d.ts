@@ -21,6 +21,8 @@ declare global {
   const CalendarClock: typeof import('lucide-react').CalendarClock
   const CalendarDays: typeof import('lucide-react').CalendarDays
   const CalendarPanel: typeof import('./components/ScheduleCalendar/CalendarPanel/index').CalendarPanel
+  const CalendarTime: typeof import('./components/ScheduleCalendar/CalendarTime/index').CalendarTime
+  const CardStatus: typeof import('./components/CardStatus/index').CardStatus
   const ChatModule: typeof import('./components/ChatModule/index').ChatModule
   const CheckCircle2: typeof import('lucide-react').CheckCircle2
   const CheckoutSheet: typeof import('./components/WorkflowOverlays/index').CheckoutSheet
@@ -124,7 +126,6 @@ declare global {
   const Suspense: typeof import('react').Suspense
   const TimePanel: typeof import('./components/ScheduleCalendar/TimePanel/index').TimePanel
   const TrialScheduleCalendar: typeof import('./components/TrialScheduleCalendar/index').TrialScheduleCalendar
-  const TrialScheduleEditor: typeof import('./components/TutorTrialSchedule/TrialScheduleEditor').TrialScheduleEditor
   const TrialSchedulePreview: typeof import('./pages/home/auth/orders/components/TutorWorkflowModals').TrialSchedulePreview
   const TrialSettlementConfirm: typeof import('./pages/home/auth/orders/components/TutorWorkflowModals').TrialSettlementConfirm
   const Truck: typeof import('lucide-react').Truck
@@ -171,7 +172,7 @@ declare global {
   const compactTutorSchedulePreviewSections: typeof import('./pages/home/auth/orders/model').compactTutorSchedulePreviewSections
   const createAddressBookItem: typeof import('./shared/clientPageModel').createAddressBookItem
   const createContext: typeof import('react').createContext
-  const createDefaultDaySchedule: typeof import('./components/TutorTrialSchedule/model').createDefaultDaySchedule
+  const createDefaultDaySchedule: typeof import('./components/ScheduleCalendar/CalendarTime/model').createDefaultDaySchedule
   const createRef: typeof import('react').createRef
   const createRoot: typeof import('react-dom/client').createRoot
   const createTutorTaskModel: typeof import('./tools/tutorTaskWorkflow').createTutorTaskModel
@@ -180,7 +181,7 @@ declare global {
   const filterProducts: typeof import('./shared/clientPageModel').filterProducts
   const formatCompactWalletAmount: typeof import('./tools/wallet').formatCompactWalletAmount
   const formatCurrency: typeof import('./shared/clientPageModel').formatCurrency
-  const formatTrialScheduleDate: typeof import('./components/TutorTrialSchedule/model').formatTrialScheduleDate
+  const formatTrialScheduleDate: typeof import('./components/ScheduleCalendar/CalendarTime/model').formatTrialScheduleDate
   const formatTutorSubjectLabels: typeof import('./shared/tutorModel').formatTutorSubjectLabels
   const formatTutorSubjects: typeof import('./shared/tutorModel').formatTutorSubjects
   const formatWalletAmount: typeof import('./tools/wallet').formatWalletAmount
@@ -202,7 +203,7 @@ declare global {
   const getDelegationLatestTimeLabel: typeof import('./tools/publishInfo').getDelegationLatestTimeLabel
   const getDelegationRequirementLabel: typeof import('./tools/publishInfo').getDelegationRequirementLabel
   const getDeliveryFee: typeof import('./shared/clientPageModel').getDeliveryFee
-  const getEnabledPeriodSummaries: typeof import('./components/TutorTrialSchedule/model').getEnabledPeriodSummaries
+  const getEnabledPeriodSummaries: typeof import('./components/ScheduleCalendar/CalendarTime/model').getEnabledPeriodSummaries
   const getErrorMessage: typeof import('./tools/messageToast').getErrorMessage
   const getFilledFieldCount: typeof import('./tools/validation').getFilledFieldCount
   const getFilledProfileDraft: typeof import('./shared/clientPageModel').getFilledProfileDraft
@@ -231,11 +232,11 @@ declare global {
   const getStoredPasswordCredential: typeof import('./shared/clientPageModel').getStoredPasswordCredential
   const getStoredProfileDraft: typeof import('./shared/clientPageModel').getStoredProfileDraft
   const getTabTitle: typeof import('./shared/clientPageModel').getTabTitle
-  const getTrialScheduleCalendarItems: typeof import('./components/TutorTrialSchedule/model').getTrialScheduleCalendarItems
-  const getTrialScheduleDateKeysFromSummary: typeof import('./components/TutorTrialSchedule/model').getTrialScheduleDateKeysFromSummary
-  const getTrialSchedulePlan: typeof import('./components/TutorTrialSchedule/model').getTrialSchedulePlan
-  const getTrialScheduleSummaryLines: typeof import('./components/TutorTrialSchedule/model').getTrialScheduleSummaryLines
-  const getTrialScheduleValueFromSummary: typeof import('./components/TutorTrialSchedule/model').getTrialScheduleValueFromSummary
+  const getTrialScheduleCalendarItems: typeof import('./components/ScheduleCalendar/CalendarTime/model').getTrialScheduleCalendarItems
+  const getTrialScheduleDateKeysFromSummary: typeof import('./components/ScheduleCalendar/CalendarTime/model').getTrialScheduleDateKeysFromSummary
+  const getTrialSchedulePlan: typeof import('./components/ScheduleCalendar/CalendarTime/model').getTrialSchedulePlan
+  const getTrialScheduleSummaryLines: typeof import('./components/ScheduleCalendar/CalendarTime/model').getTrialScheduleSummaryLines
+  const getTrialScheduleValueFromSummary: typeof import('./components/ScheduleCalendar/CalendarTime/model').getTrialScheduleValueFromSummary
   const getTutorCalendarCells: typeof import('./tools/tutorCalendar').getTutorCalendarCells
   const getTutorCalendarTasks: typeof import('./tools/tutorCalendar').getTutorCalendarTasks
   const getTutorCardDataFromDraft: typeof import('./components/TutorCertificationCard/model').getTutorCardDataFromDraft
@@ -352,7 +353,7 @@ declare global {
   const stringifyTutorSubjectLevelItems: typeof import('./components/TutorCertificationCard/model').stringifyTutorSubjectLevelItems
   const subscribeMessageToast: typeof import('./tools/messageToast').subscribeMessageToast
   const tabIcons: typeof import('./shared/clientPageModel').tabIcons
-  const trialSchedulePeriods: typeof import('./components/TutorTrialSchedule/model').trialSchedulePeriods
+  const trialSchedulePeriods: typeof import('./components/ScheduleCalendar/CalendarTime/model').trialSchedulePeriods
   const tutorApplicantStatusLabel: typeof import('./db/tutorStatus').tutorApplicantStatusLabel
   const tutorCertificationStatusLabels: typeof import('./components/TutorCertificationCard/model').tutorCertificationStatusLabels
   const tutorDemandStatusLabel: typeof import('./db/tutorStatus').tutorDemandStatusLabel
@@ -428,7 +429,7 @@ declare global {
   const useState: typeof import('react').useState
   const useSyncExternalStore: typeof import('react').useSyncExternalStore
   const useTransition: typeof import('react').useTransition
-  const useTrialSchedule: typeof import('./components/TutorTrialSchedule/useTrialSchedule').useTrialSchedule
+  const useTrialSchedule: typeof import('./components/ScheduleCalendar/CalendarTime/useTrialSchedule').useTrialSchedule
   const useTutorTrialActions: typeof import('./pages/home/edu/hooks/useTutorTrialActions').useTutorTrialActions
   const useUpdateClientAddress: typeof import('@unknown/hooks').useUpdateClientAddress
   const useUpdateClientNickname: typeof import('@unknown/hooks').useUpdateClientNickname
@@ -439,6 +440,9 @@ declare global {
 }
 // for type re-export
 declare global {
+  // @ts-ignore
+  export type { CardStatusProps } from './components/CardStatus/index'
+  import('./components/CardStatus/index')
   // @ts-ignore
   export type { ChatModuleProps } from './components/ChatModule/index'
   import('./components/ChatModule/index')
@@ -467,6 +471,15 @@ declare global {
   export type { CalendarPanelMode, CalendarPanelMarker, CalendarPanelProps } from './components/ScheduleCalendar/CalendarPanel/index'
   import('./components/ScheduleCalendar/CalendarPanel/index')
   // @ts-ignore
+  export type { CalendarTimeProps } from './components/ScheduleCalendar/CalendarTime/index'
+  import('./components/ScheduleCalendar/CalendarTime/index')
+  // @ts-ignore
+  export type { TrialSchedulePeriodKey, TrialSchedulePeriodConfig, TrialSchedulePeriodState, TrialScheduleDraft, TrialSchedulePlan, TrialScheduleValue } from './components/ScheduleCalendar/CalendarTime/model'
+  import('./components/ScheduleCalendar/CalendarTime/model')
+  // @ts-ignore
+  export type { UseTrialScheduleOptions, TrialScheduleState } from './components/ScheduleCalendar/CalendarTime/useTrialSchedule'
+  import('./components/ScheduleCalendar/CalendarTime/useTrialSchedule')
+  // @ts-ignore
   export type { TimePanelPeriodItem, TimePanelProps } from './components/ScheduleCalendar/TimePanel/index'
   import('./components/ScheduleCalendar/TimePanel/index')
   // @ts-ignore
@@ -491,15 +504,6 @@ declare global {
   export type { TutorCertificationInfoSaveMode, TutorCertificationInfoProps } from './components/TutorCertificationInfo/index'
   import('./components/TutorCertificationInfo/index')
   // @ts-ignore
-  export type { TrialScheduleEditorProps } from './components/TutorTrialSchedule/TrialScheduleEditor'
-  import('./components/TutorTrialSchedule/TrialScheduleEditor')
-  // @ts-ignore
-  export type { TrialSchedulePeriodKey, TrialSchedulePeriodConfig, TrialSchedulePeriodState, TrialScheduleDraft, TrialSchedulePlan, TrialScheduleValue } from './components/TutorTrialSchedule/model'
-  import('./components/TutorTrialSchedule/model')
-  // @ts-ignore
-  export type { UseTrialScheduleOptions, TrialScheduleState } from './components/TutorTrialSchedule/useTrialSchedule'
-  import('./components/TutorTrialSchedule/useTrialSchedule')
-  // @ts-ignore
   export type { Gender } from './db/gender'
   import('./db/gender')
   // @ts-ignore
@@ -515,7 +519,7 @@ declare global {
   export type { ConfirmActionConfig } from './hooks/useConfirmAction'
   import('./hooks/useConfirmAction')
   // @ts-ignore
-  export type { OngoingOrderFilter, TutorServiceAvailabilityAction, TutorOrderSchedulePreviewConfig, TutorSchedulePreviewSection, OngoingOrderActionHandlers } from './pages/home/auth/orders/model'
+  export type { OngoingOrderFilter, TutorServiceAvailabilityAction, TutorOrderSchedulePreviewConfig, OngoingOrderActionHandlers } from './pages/home/auth/orders/model'
   import('./pages/home/auth/orders/model')
   // @ts-ignore
   export type { CommissionSortMode, CommissionToolbarPanel } from './pages/home/commission/model'
@@ -563,7 +567,7 @@ declare global {
   export type { MessageToastType, MessageToastState, MessageToastOptions } from './types/message-toast'
   import('./types/message-toast')
   // @ts-ignore
-  export type { OverlayLane, TutorOverlayType, PublishOverlayType, GlobalOverlayType, GlobalOverlayEntry, OverlayState, OverlayAction, OverlayActions, OverlayProviderProps, CheckoutState, CheckoutOverlayState, CheckoutOverlayActions, CheckoutTriggerContextValue, CheckoutProviderProps, TutorOverlayActions, TutorOverlayState, TutorOverlayHostContextValue, TutorOverlayProviderProps } from './types/overlay'
+  export type { OverlayLane, TutorOverlayType, PublishOverlayType, GlobalOverlayType, GlobalOverlayEntry, OverlayState, OverlayAction, OverlayActions, OverlayProviderProps, CheckoutState, CheckoutOverlayState, CheckoutOverlayActions, CheckoutTriggerContextValue, CheckoutProviderProps, TutorOverlayActions, TutorOverlayState, TutorOverlayHostContextValue, TutorOverlayProviderProps, TutorSchedulePreviewState, TutorSchedulePreviewSection, TutorSettlementAction, TutorTrialSettlementPayload } from './types/overlay'
   import('./types/overlay')
   // @ts-ignore
   export type { ProfileRequirementField, ProfileRequirementTemplate, ProfileRequirement, ProfileDraftState, RegistrationProfileField, RegistrationProfileTemplate, RegistrationProfileDraft, AddressInfoFormMode, AddressInfoPreviewVariant, AddressBookItem, AddressInfoFormProps } from './types/profile'
