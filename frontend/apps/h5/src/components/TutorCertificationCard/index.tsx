@@ -67,25 +67,18 @@ export function TutorCertificationCard({
         <span className={`tutor-status tutor-status--${certificationStatus}`}>{statusText}</span>
       </div>
 
-      {mode === "default" ? (
-        <div className="tutor-card-meta grid gap-[8px]">
-          <span>
-            <em>学科/年级</em>
-            <strong>{subjectButtonLabel}</strong>
-          </span>
+      <div className="tutor-card-meta grid gap-[8px]">
+        <span>
+          <em>{mode === "default" ? "学科/年级" : "学科"}</em>
+          <strong>{subjectButtonLabel}</strong>
+        </span>
+        {mode === "default" ? (
           <span>
             <em>等级</em>
             <strong>{level}</strong>
           </span>
-        </div>
-      ) : (
-        <div className="tutor-card-meta grid gap-[8px]">
-          <span>
-            <em>学科</em>
-            <strong>{subjectButtonLabel}</strong>
-          </span>
-        </div>
-      )}
+        ) : null}
+      </div>
 
       {certificationStatus === "frozen" ? (
         <p className="tutor-card-warning">

@@ -396,12 +396,21 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
         title="地址信息"
       />
       <div className="card-list grid gap-[10px]">
-        {addressError ? (
+        {addressError || addressItems.length === 0 ? (
           <article className="empty-state p-[14px]">
-            <strong>地址加载失败</strong>
-            <p>{getErrorMessage(addressError, "请检查后端服务后重试。")}</p>
+            {addressError ? (
+              <>
+                <strong>地址加载失败</strong>
+                <p>{getErrorMessage(addressError, "请检查后端服务后重试。")}</p>
+              </>
+            ) : (
+              <>
+                <strong>暂无地址</strong>
+                <p>添加地址后，购买和资料补充会优先使用当前地址。</p>
+              </>
+            )}
           </article>
-        ) : addressItems.length > 0 ? (
+        ) : (
           addressItems.map((item) => (
             <AddressInfoForm
               actionLabel="编辑"
@@ -415,11 +424,6 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
               previewVariant="card"
             />
           ))
-        ) : (
-          <article className="empty-state p-[14px]">
-            <strong>暂无地址</strong>
-            <p>添加地址后，购买和资料补充会优先使用当前地址。</p>
-          </article>
         )}
         <button
           className="address-add-button flow-card compact p-[12px] text-left"

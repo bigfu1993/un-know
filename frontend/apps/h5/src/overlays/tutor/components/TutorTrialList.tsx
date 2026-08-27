@@ -235,74 +235,60 @@ export function TutorTrialList({ candidates, isSubmitting = false, onClose, onWo
     candidate: TutorApplicationCandidate,
     candidateTask: ReturnType<typeof createTutorTaskModel>
   ) {
-    if (candidateTask.can("cancelApplication")) {
-      return (
-        <div className="tutor-application-actions flex flex-wrap gap-[8px]">
-          <button
-            className="text-button danger inline-flex min-h-[30px] items-center justify-center gap-[5px] px-[9px] py-[6px] text-[12px]"
-            disabled={isSubmitting}
-            onClick={() =>
-              openCancelConfirmation({
-                confirmLabel: "确认取消",
-                description: "取消后该学生本次试课结束，学生端与试课列表会按真实状态刷新。",
-                onConfirm: () => void submitCandidateWorkflowAction(candidate, "cancel_trial"),
-                title: "取消试课"
-              })
-            }
-            type="button"
-          >
-            取消试课
-          </button>
-        </div>
-      );
-    }
+    const actionButtons = candidateTask.can("cancelApplication") ? (
+      <button
+        className="text-button danger inline-flex min-h-[30px] items-center justify-center gap-[5px] px-[9px] py-[6px] text-[12px]"
+        disabled={isSubmitting}
+        onClick={() =>
+          openCancelConfirmation({
+            confirmLabel: "确认取消",
+            description: "取消后该学生本次试课结束，学生端与试课列表会按真实状态刷新。",
+            onConfirm: () => void submitCandidateWorkflowAction(candidate, "cancel_trial"),
+            title: "取消试课"
+          })
+        }
+        type="button"
+      >
+        取消试课
+      </button>
+    ) : candidateTask.can("cancelServiceConfirmation") ? (
+      <button
+        className="text-button danger inline-flex min-h-[30px] items-center justify-center gap-[5px] px-[9px] py-[6px] text-[12px]"
+        disabled={isSubmitting}
+        onClick={() =>
+          openCancelConfirmation({
+            confirmLabel: "确认取消",
+            description: "取消后流程将回到试课结算阶段，需要重新处理正式雇佣确认。",
+            onConfirm: () => void submitCandidateWorkflowAction(candidate, "cancel_service_confirmation"),
+            title: "取消兼职确认"
+          })
+        }
+        type="button"
+      >
+        取消兼职确认
+      </button>
+    ) : candidateTask.can("removeRejectedServiceOffer") ? (
+      <>
+        <button
+          className="ghost-button min-h-[30px] px-[9px] py-[6px] text-[12px] text-[var(--h5-muted)]"
+          disabled={isSubmitting}
+          onClick={() => void submitCandidateWorkflowAction(candidate, "remove_rejected_service_offer")}
+          type="button"
+        >
+          移除
+        </button>
+        <button
+          className="primary-button inline-flex min-h-[30px] items-center justify-center gap-[5px] px-[9px] py-[6px] text-[12px] text-white"
+          disabled={isSubmitting}
+          onClick={() => void submitCandidateWorkflowAction(candidate, "offer_service")}
+          type="button"
+        >
+          再次委托
+        </button>
+      </>
+    ) : null;
 
-    if (candidateTask.can("cancelServiceConfirmation")) {
-      return (
-        <div className="tutor-application-actions flex flex-wrap gap-[8px]">
-          <button
-            className="text-button danger inline-flex min-h-[30px] items-center justify-center gap-[5px] px-[9px] py-[6px] text-[12px]"
-            disabled={isSubmitting}
-            onClick={() =>
-              openCancelConfirmation({
-                confirmLabel: "确认取消",
-                description: "取消后流程将回到试课结算阶段，需要重新处理正式雇佣确认。",
-                onConfirm: () => void submitCandidateWorkflowAction(candidate, "cancel_service_confirmation"),
-                title: "取消兼职确认"
-              })
-            }
-            type="button"
-          >
-            取消兼职确认
-          </button>
-        </div>
-      );
-    }
-
-    if (candidateTask.can("removeRejectedServiceOffer")) {
-      return (
-        <div className="tutor-application-actions flex flex-wrap gap-[8px]">
-          <button
-            className="ghost-button min-h-[30px] px-[9px] py-[6px] text-[12px] text-[var(--h5-muted)]"
-            disabled={isSubmitting}
-            onClick={() => void submitCandidateWorkflowAction(candidate, "remove_rejected_service_offer")}
-            type="button"
-          >
-            移除
-          </button>
-          <button
-            className="primary-button inline-flex min-h-[30px] items-center justify-center gap-[5px] px-[9px] py-[6px] text-[12px] text-white"
-            disabled={isSubmitting}
-            onClick={() => void submitCandidateWorkflowAction(candidate, "offer_service")}
-            type="button"
-          >
-            再次委托
-          </button>
-        </div>
-      );
-    }
-
-    return null;
+    return actionButtons ? <div className="tutor-application-actions flex flex-wrap gap-[8px]">{actionButtons}</div> : null;
   }
 
   /** 按当前流程节点渲染家长可执行动作。 */
