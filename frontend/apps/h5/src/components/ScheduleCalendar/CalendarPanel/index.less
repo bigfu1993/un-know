@@ -69,26 +69,28 @@
   background: transparent;
 }
 
-/* 查看：单击后的当前查看单元格，线框从默认灰色切换成主题色；主题色线框只属于查看态，选中不会占用这个颜色。过去的日期一样可以查看，同样显示这条线框。 */
+/* 查看：单击后的当前查看单元格，线框从默认灰色切换成主题色；主题色线框只属于查看态，计划不会占用这个颜色。过去的日期一样可以查看，同样显示这条线框。 */
 .calendar-panel__day.active:not(.range-start) {
   border-color: var(--h5-accent);
 }
 
-/* 早于当天的日期：数字文字用中性灰弱化视觉存在感，但比线框灰更深，保证可读；已选中时仍按选中态显示。 */
-.calendar-panel__day.past:not(.selected) strong {
+/* 早于当天的日期：数字文字用中性灰弱化视觉存在感，但比线框灰更深，保证可读；已计划时仍按计划态显示。 */
+.calendar-panel__day.past:not(.planned) strong {
   color: var(--h5-subtle);
 }
 
-/* 选中：背景填充浅蓝色，边框保持默认颜色；不是当前查看单元格时线框依旧是默认灰色，只有背景能看出选中。 */
-.calendar-panel__day.selected:not(.range-start) {
+/* 计划（.planned）：背景填充主题绿，边框保持默认颜色；不是当前查看单元格时线框依旧是默认灰色，只有背景能看出已计划。
+ * 这个类名和 plannedDates 数量驱动"天数上限"判断和按住滑动批量计划的内部逻辑（见 index.tsx 的
+ * isOverMaxPlannedDates/dragTouchedDateSet）。 */
+.calendar-panel__day.planned:not(.range-start) {
   background: var(--h5-accent-soft);
 }
 
 /*
  * 待确认的范围起点（由调用方自行维护对应流程）：改用蓝色系，
- * 和"查看"/"选中"共用的强调色（暖阳金）线框完全不同色系，避免动画循环到浅色阶段时和其它状态混淆。
+ * 和"查看"/"计划"共用的强调色（暖阳金）线框完全不同色系，避免动画循环到浅色阶段时和其它状态混淆。
  */
-.calendar-panel__day.range-start:not(.selected) {
+.calendar-panel__day.range-start:not(.planned) {
   border-color: #2f6fed;
   box-shadow: inset 0 0 0 2px rgba(47, 111, 237, 0.65);
   animation: calendar-panel-range-start-pulse 1.1s ease-in-out infinite;
@@ -107,14 +109,14 @@
   }
 }
 
-/* 当天日期保持不变：不管是否选中、是否范围起点，数字徽标始终是实心深色圆。 */
+/* 当天日期保持不变：不管是否计划、是否范围起点，数字徽标始终是实心深色圆。 */
 .calendar-panel__day.today strong {
   background: var(--h5-text);
   color: var(--h5-surface-solid);
   box-shadow: none;
 }
 
-.calendar-panel__day.limited:not(.selected) {
+.calendar-panel__day.limited:not(.planned) {
   background: var(--h5-surface-muted);
 }
 
@@ -132,4 +134,40 @@
   place-items: center;
   border-radius: 999px;
   font-size: 12px;
+}
+
+/* 分段标记：按 markerPeriods 顺序从上到下平分格子高度，只在传了 markers/markerPeriods 时渲染，
+ * 不影响没有分段需求的调用方（如日程查看弹窗）默认外观。三种底色按分段序号轮换，不绑定具体业务含义。 */
+.calendar-panel__period {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 3px;
+  opacity: 0;
+}
+
+.calendar-panel__period--0 {
+  background: rgba(34, 197, 94, 0.24);
+}
+
+.calendar-panel__period--1 {
+  background: rgba(59, 130, 246, 0.22);
+}
+
+.calendar-panel__period--2 {
+  background: rgba(17, 24, 39, 0.18);
+}
+
+.calendar-panel__period.has-marker {
+  opacity: 1;
+}
+
+.calendar-panel__period-label {
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
 }

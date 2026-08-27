@@ -131,9 +131,10 @@ export function isTutorTrialListStatus(status?: string) {
   );
 }
 
-/** 判断申请是否应保留在家长端试课申请列表。 */
+/** 判断申请是否应保留在家长端试课申请列表；后端接口已在源头剔除终态申请
+ *  （见 TutorWorkspaceAppService#tutorApplicantProfiles），这里不再重复判断终态。 */
 export function isTutorApplicationListStatus(status?: string) {
-  return isTutorApplicationPendingStatus(status) && !isTutorTerminalStatus(status);
+  return isTutorApplicationPendingStatus(status);
 }
 
 /** 试课日程在进行中卡片详情中的分隔标记。 */

@@ -2,17 +2,17 @@ import { ReceiptText } from "lucide-react";
 import { createTutorTaskModel } from "@tools/tutorTaskWorkflow";
 import { useConfirmAction } from "@h5/hooks/useConfirmAction";
 import { getGenderIconColor } from "@shared/genderModel";
-import { TutorCard } from "./TutorCard";
+import { TutorCard } from "@pages/home/edu/components/TutorCard";
 
 /** 家长端试课申请列表弹窗属性。 */
 interface TutorApplicationsProps {
   candidates: TutorApplicationCandidate[];
+  /** 该家教需求发布时家长选择的日期集合，供试课安排弹窗回显参考；候选人 availability 字段
+   *  自申请试课流程简化后不再由学生真实填写，试课时段真正该参考的是这份需求发布日程。 */
+  demandPeriodDates: string[];
   isConfirming?: boolean;
   onClose: () => void;
-  onCancelTrial?: (payload: {
-    applicationId: string;
-    demandId: string;
-  }) => void;
+  onCancelTrial?: (payload: { applicationId: string; demandId: string }) => void;
   onConfirm: (payload: {
     applicationId: string;
     demandId: string;
@@ -20,10 +20,7 @@ interface TutorApplicationsProps {
     trialHalfDay: string;
     trialStart: string;
   }) => void;
-  onReject?: (payload: {
-    applicationId: string;
-    demandId: string;
-  }) => void;
+  onReject?: (payload: { applicationId: string; demandId: string }) => void;
 }
 
 /** 家长端试课中家教列表弹窗属性。 */
@@ -38,10 +35,12 @@ interface TutorTrialListProps {
     trialFee: number;
     tutorSchedule?: string;
   }) => void;
-  onWorkflowAction: (payload: TutorWorkflowActionRequest & {
-    applicationId: string;
-    demandId?: string;
-  }) => Promise<boolean> | boolean | void;
+  onWorkflowAction: (
+    payload: TutorWorkflowActionRequest & {
+      applicationId: string;
+      demandId?: string;
+    }
+  ) => Promise<boolean> | boolean | void;
 }
 
 /** 家长端确认结束试课前的结算弹窗属性。 */
@@ -57,7 +56,10 @@ interface TutorTrialSettlementProps {
 type TutorTrialHireDecision = "" | "hire" | "notHire";
 
 /** 家长端提交结算金额时支持的流程动作。 */
-type TutorSettlementAction = Extract<TutorWorkflowAction, "confirm_trial_end" | "request_service_end" | "request_trial_result">;
+type TutorSettlementAction = Extract<
+  TutorWorkflowAction,
+  "confirm_trial_end" | "request_service_end" | "request_trial_result"
+>;
 
 /** 家长端试课结算提交载荷。 */
 interface TutorTrialSettlementPayload {
@@ -103,7 +105,7 @@ function getCandidateTrialScheduleSummary(candidate: TutorApplicationCandidate |
 
   const task = createTutorTaskModel({ candidate, role: "parent" });
 
-  return task.node === "trialScheduled" ? candidate.trialSchedule ?? "" : "";
+  return task.node === "trialScheduled" ? (candidate.trialSchedule ?? "") : "";
 }
 
 /** 获取家长排期弹窗初始安排，仅在已有家长排期时回填，不默认选中学生可试课时间。 */
@@ -119,7 +121,8 @@ function getCandidateInitialTrialScheduleValue(candidate: TutorApplicationCandid
 
 /** 渲染家长端候选卡片右侧状态，支持主状态和补充状态上下排列。 */
 function renderTutorCandidateStatus(candidateTask: ReturnType<typeof createTutorTaskModel>) {
-  const statusLabels = candidateTask.statusLabels.length > 0 ? candidateTask.statusLabels : [candidateTask.statusLabel].filter(Boolean);
+  const statusLabels =
+    candidateTask.statusLabels.length > 0 ? candidateTask.statusLabels : [candidateTask.statusLabel].filter(Boolean);
 
   if (statusLabels.length === 0) {
     return null;
@@ -142,7 +145,10 @@ function canSelectTrialCandidateCard(candidateTask: ReturnType<typeof createTuto
 }
 
 /** 获取试课列表卡片的时间预览配置，避免直接在卡片内铺开长时间范围。 */
-function getTutorTrialCandidateSchedulePreview(candidate: TutorApplicationCandidate, candidateTask: ReturnType<typeof createTutorTaskModel>): TutorSchedulePreviewState {
+function getTutorTrialCandidateSchedulePreview(
+  candidate: TutorApplicationCandidate,
+  candidateTask: ReturnType<typeof createTutorTaskModel>
+): TutorSchedulePreviewState {
   const trialScheduleSection = candidate.trialSchedule?.trim()
     ? {
         label: "试",
@@ -208,7 +214,15 @@ function getTutorTrialCandidateSchedulePreview(candidate: TutorApplicationCandid
 }
 
 /** 家长端选择试课家教并确认试课安排。 */
-export function TutorApplications({ candidates, isConfirming = false, onCancelTrial, onClose, onConfirm, onReject }: TutorApplicationsProps) {
+export function TutorApplications({
+  candidates,
+  demandPeriodDates,
+  isConfirming = false,
+  onCancelTrial,
+  onClose,
+  onConfirm,
+  onReject
+}: TutorApplicationsProps) {
   const [selectedCandidateId, setSelectedCandidateId] = useState("");
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [trialScheduleValue, setTrialScheduleValue] = useState<TrialScheduleValue | null>(null);
@@ -219,7 +233,8 @@ export function TutorApplications({ candidates, isConfirming = false, onCancelTr
     openConfirmation: openCancelConfirmation
   } = useConfirmAction();
   const visibleCandidates = useMemo(
-    () => candidates.filter((candidate) => createTutorTaskModel({ candidate, role: "parent" }).isApplicationListVisible),
+    () =>
+      candidates.filter((candidate) => createTutorTaskModel({ candidate, role: "parent" }).isApplicationListVisible),
     [candidates]
   );
   const selectedCandidate = candidates.find((candidate) => candidate.id === selectedCandidateId);
@@ -230,15 +245,15 @@ export function TutorApplications({ candidates, isConfirming = false, onCancelTr
   const selectedCandidateTrialScheduleSummary = getCandidateTrialScheduleSummary(selectedCandidate);
   const isTrialScheduleChanged = Boolean(
     isSelectedCandidateTrialConfirming &&
-      trialScheduleValue?.plan.summary &&
-      trialScheduleValue.plan.summary !== selectedCandidateTrialScheduleSummary
+    trialScheduleValue?.plan.summary &&
+    trialScheduleValue.plan.summary !== selectedCandidateTrialScheduleSummary
   );
   /** 试课确认按钮是否满足学生和试课安排必填要求。 */
   const canConfirm = Boolean(
     selectedCandidate &&
-      trialScheduleValue?.plan &&
-      !isConfirming &&
-      (!isSelectedCandidateTrialConfirming || isTrialScheduleChanged)
+    trialScheduleValue?.plan &&
+    !isConfirming &&
+    (!isSelectedCandidateTrialConfirming || isTrialScheduleChanged)
   );
 
   /** 选择或取消选择家教申请，确认中的申请会自动带出原试课安排。 */
@@ -320,7 +335,8 @@ export function TutorApplications({ candidates, isConfirming = false, onCancelTr
                             openCancelConfirmation({
                               confirmLabel: "确认取消",
                               description: "取消后该学生本次试课安排结束，学生端与家长端列表会按真实状态刷新。",
-                              onConfirm: () => onCancelTrial?.({ applicationId: candidate.id, demandId: candidate.demandId }),
+                              onConfirm: () =>
+                                onCancelTrial?.({ applicationId: candidate.id, demandId: candidate.demandId }),
                               title: "取消试课"
                             });
                             return;
@@ -382,7 +398,7 @@ export function TutorApplications({ candidates, isConfirming = false, onCancelTr
             type="button"
           >
             <CalendarClock size={17} />
-            <span>{isSelectedCandidateTrialConfirming ? "调整试课安排" : selectedCandidate ? "制定试课计划" : "试课安排"}</span>
+            <span>{isSelectedCandidateTrialConfirming ? "调整试课计划" : "制定试课计划"}</span>
           </button>
           {trialScheduleValue ? (
             <div className="tutor-trial-schedule-summary">
@@ -405,16 +421,29 @@ export function TutorApplications({ candidates, isConfirming = false, onCancelTr
       </Modal>
 
       {isScheduleOpen ? (
-        <TutorTrialSchedule
-          availableScheduleSummary={selectedCandidate?.availability ?? ""}
-          initialValue={trialScheduleValue ?? getCandidateInitialTrialScheduleValue(selectedCandidate)}
+        <Modal
+          ariaLabel="试课安排"
+          icon={<CalendarClock size={18} />}
           onClose={() => setIsScheduleOpen(false)}
-          onConfirm={(value) => {
-            setTrialScheduleValue(value);
-            setIsScheduleOpen(false);
-          }}
-          subtitle="在学生提交的可试课时间内最多安排 3 天。"
-        />
+          panelClassName="trial-schedule-sheet mx-auto grid max-h-[min(82vh,700px)] max-w-[540px] gap-[12px] overflow-hidden px-[14px] pb-[calc(14px+env(safe-area-inset-bottom))] pt-[14px]"
+          title={
+            <>
+              <strong>试课安排</strong>
+              <span>在发布家教时选择的日期内最多安排 3 天，绿色标记为可选日期。</span>
+            </>
+          }
+        >
+          <TrialScheduleEditor
+            availableScheduleSummary={selectedCandidate?.availability ?? ""}
+            demandPeriodDates={demandPeriodDates}
+            initialValue={trialScheduleValue ?? getCandidateInitialTrialScheduleValue(selectedCandidate)}
+            onClose={() => setIsScheduleOpen(false)}
+            onConfirm={(value) => {
+              setTrialScheduleValue(value);
+              setIsScheduleOpen(false);
+            }}
+          />
+        </Modal>
       ) : null}
       {cancelConfirmation ? (
         <ConfirmAction
@@ -429,19 +458,15 @@ export function TutorApplications({ candidates, isConfirming = false, onCancelTr
   );
 }
 /** 家长端查看试课中的家教，并处理试课、正式雇佣、兼职日程和结算链路。 */
-export function TutorTrialList({
-  candidates,
-  isSubmitting = false,
-  onClose,
-  onWorkflowAction
-}: TutorTrialListProps) {
+export function TutorTrialList({ candidates, isSubmitting = false, onClose, onWorkflowAction }: TutorTrialListProps) {
   const [hiddenTrialCandidateIds, setHiddenTrialCandidateIds] = useState<string[]>([]);
   const [schedulePreview, setSchedulePreview] = useState<TutorSchedulePreviewState | null>(null);
   const trialCandidates = useMemo(
     () =>
       candidates.filter(
         (candidate) =>
-          createTutorTaskModel({ candidate, role: "parent" }).isTrialListVisible && !hiddenTrialCandidateIds.includes(candidate.id)
+          createTutorTaskModel({ candidate, role: "parent" }).isTrialListVisible &&
+          !hiddenTrialCandidateIds.includes(candidate.id)
       ),
     [candidates, hiddenTrialCandidateIds]
   );
@@ -509,7 +534,11 @@ export function TutorTrialList({
   }
 
   /** 打开试课结算弹窗，确认金额后进入学生费用确认。 */
-  function openSettlementPanel(candidate: TutorApplicationCandidate, action: TutorSettlementAction, mode: "service" | "trial" = "trial") {
+  function openSettlementPanel(
+    candidate: TutorApplicationCandidate,
+    action: TutorSettlementAction,
+    mode: "service" | "trial" = "trial"
+  ) {
     setSettlementPanelState({ action, candidate, mode });
   }
 
@@ -519,7 +548,11 @@ export function TutorTrialList({
       return;
     }
 
-    const result = await submitCandidateWorkflowAction(settlementPanelState.candidate, settlementPanelState.action, payload);
+    const result = await submitCandidateWorkflowAction(
+      settlementPanelState.candidate,
+      settlementPanelState.action,
+      payload
+    );
     if (result !== false) {
       setSettlementPanelState(null);
     }
@@ -551,7 +584,10 @@ export function TutorTrialList({
   }
 
   /** 渲染试课列表单张学生卡片内的独立操作。 */
-  function renderTrialCandidateCardActions(candidate: TutorApplicationCandidate, candidateTask: ReturnType<typeof createTutorTaskModel>) {
+  function renderTrialCandidateCardActions(
+    candidate: TutorApplicationCandidate,
+    candidateTask: ReturnType<typeof createTutorTaskModel>
+  ) {
     if (candidateTask.can("cancelApplication")) {
       return (
         <div className="tutor-application-actions flex flex-wrap gap-[8px]">
@@ -769,7 +805,11 @@ export function TutorTrialList({
         title={
           <>
             <strong>{isCourseMode ? "课程" : "试课列表"}</strong>
-            <span>{isCourseMode ? `共 ${trialCandidates.length} 位，处理正式雇佣课程和结束` : `共 ${trialCandidates.length} 位，按流程处理试课、正式雇佣和日程`}</span>
+            <span>
+              {isCourseMode
+                ? `共 ${trialCandidates.length} 位，处理正式雇佣课程和结束`
+                : `共 ${trialCandidates.length} 位，按流程处理试课、正式雇佣和日程`}
+            </span>
           </>
         }
       >
@@ -785,9 +825,7 @@ export function TutorTrialList({
               <article
                 className={`tutor-application-card tutor-trial-list-card flow-card compact grid gap-[7px] p-[12px] text-left ${
                   isCandidateSelected && canSelectTrialCandidate ? "active" : ""
-                } ${canSelectTrialCandidate ? "" : "not-selectable"} ${
-                  candidateTask.statusToneClassName
-                }`}
+                } ${canSelectTrialCandidate ? "" : "not-selectable"} ${candidateTask.statusToneClassName}`}
                 key={candidate.id}
               >
                 <button
@@ -831,21 +869,32 @@ export function TutorTrialList({
       </Modal>
 
       {isTutorScheduleOpen && selectedCandidate ? (
-        <TutorTrialSchedule
-          availableScheduleSummary={selectedCandidate.availability}
-          blockedScheduleLabel="试"
-          blockedScheduleSummary={selectedCandidate.trialSchedule}
-          initialValue={null}
-          maxSelectedDates={null}
+        <Modal
+          ariaLabel="正式雇佣日程"
+          icon={<CalendarClock size={18} />}
           onClose={() => setIsTutorScheduleOpen(false)}
-          onConfirm={(value) => {
-            void handleWorkflowAction("submit_service_schedule", { tutorSchedule: value.plan.summary });
-            setIsTutorScheduleOpen(false);
-          }}
-          scheduleLabel="课"
-          subtitle="请在学生提交的可家教时间内制定正式雇佣日程，提交后直接进入正式雇佣。"
-          title="正式雇佣日程"
-        />
+          panelClassName="trial-schedule-sheet mx-auto grid max-h-[min(82vh,700px)] max-w-[540px] gap-[12px] overflow-hidden px-[14px] pb-[calc(14px+env(safe-area-inset-bottom))] pt-[14px]"
+          title={
+            <>
+              <strong>正式雇佣日程</strong>
+              <span>请在学生提交的可家教时间内制定正式雇佣日程，提交后直接进入正式雇佣。</span>
+            </>
+          }
+        >
+          <TrialScheduleEditor
+            availableScheduleSummary={selectedCandidate.availability}
+            blockedScheduleLabel="试"
+            blockedScheduleSummary={selectedCandidate.trialSchedule}
+            initialValue={null}
+            maxPlannedDates={null}
+            onClose={() => setIsTutorScheduleOpen(false)}
+            onConfirm={(value) => {
+              void handleWorkflowAction("submit_service_schedule", { tutorSchedule: value.plan.summary });
+              setIsTutorScheduleOpen(false);
+            }}
+            scheduleLabel="课"
+          />
+        </Modal>
       ) : null}
 
       {settlementPanelState ? (
@@ -858,9 +907,7 @@ export function TutorTrialList({
         />
       ) : null}
 
-      {schedulePreview ? (
-        <TutorSchedulePreview {...schedulePreview} onClose={() => setSchedulePreview(null)} />
-      ) : null}
+      {schedulePreview ? <TutorSchedulePreview {...schedulePreview} onClose={() => setSchedulePreview(null)} /> : null}
       {cancelConfirmation ? (
         <ConfirmAction
           confirmLabel={cancelConfirmation.confirmLabel}
@@ -901,7 +948,7 @@ function getTutorSchedulePreviewCalendarItems(sections: TutorSchedulePreviewSect
         periods: new Set<TrialScheduleCalendarPeriod>()
       };
 
-      scheduleItem.periods.forEach((period) => item.periods.add(period));
+      scheduleItem.periods.forEach((period) => item.periods.add(period as TrialScheduleCalendarPeriod));
       item.periodLabels = {
         ...item.periodLabels,
         ...scheduleItem.periodLabels
@@ -920,7 +967,10 @@ function getTutorSchedulePreviewCalendarItems(sections: TutorSchedulePreviewSect
 }
 
 /** 获取当前日期下各阶段的具体时间。 */
-function getTutorSchedulePreviewActiveSections(sections: TutorSchedulePreviewSection[], activeDate: string | undefined) {
+function getTutorSchedulePreviewActiveSections(
+  sections: TutorSchedulePreviewSection[],
+  activeDate: string | undefined
+) {
   if (!activeDate) {
     return [];
   }
@@ -939,14 +989,7 @@ function getTutorSchedulePreviewActiveSections(sections: TutorSchedulePreviewSec
 }
 
 /** 家教时间只读弹窗，卡片只保留入口按钮，具体时间在日历内查看。 */
-function TutorSchedulePreview({
-  emptyLabel,
-  onClose,
-  sections,
-  subtitle,
-  summary,
-  title
-}: TutorSchedulePreviewProps) {
+function TutorSchedulePreview({ emptyLabel, onClose, sections, subtitle, summary, title }: TutorSchedulePreviewProps) {
   const scheduleItems = useMemo(() => getTutorSchedulePreviewCalendarItems(sections), [sections]);
   const selectedDates = useMemo(() => scheduleItems.map((scheduleItem) => scheduleItem.date), [scheduleItems]);
   const defaultActiveDate = getDefaultTutorScheduleDate(selectedDates) || undefined;
@@ -971,46 +1014,52 @@ function TutorSchedulePreview({
         </>
       }
     >
-        {scheduleItems.length > 0 ? (
-          <div className="tutor-schedule-preview-body grid gap-[12px] overflow-auto pr-[2px]">
-            <TrialScheduleCalendar
-              activeDate={activeDate}
-              initialDate={selectedDates[0]}
-              maxSelectedDates={null}
-              mode="view"
-              onActiveDateChange={setActiveDate}
-              scheduleItems={scheduleItems}
-              selectedDates={selectedDates}
-            />
-            <div className="tutor-schedule-preview-detail grid gap-[6px]">
-              <strong>{activeDate ? formatTrialScheduleDate(activeDate) : "请选择日期"}</strong>
-              {activeDateSections.length > 0 ? (
-                activeDateSections.map((section) => (
-                  <span key={section.title}>
-                    {section.title}：{section.times.join(" ")}
-                  </span>
-                ))
-              ) : (
-                <span>当日暂无安排</span>
-              )}
-            </div>
+      {scheduleItems.length > 0 ? (
+        <div className="tutor-schedule-preview-body grid gap-[12px] overflow-auto pr-[2px]">
+          <TrialScheduleCalendar
+            activeDate={activeDate}
+            initialDate={selectedDates[0]}
+            maxSelectedDates={null}
+            mode="view"
+            onActiveDateChange={setActiveDate}
+            scheduleItems={scheduleItems}
+            selectedDates={selectedDates}
+          />
+          <div className="tutor-schedule-preview-detail grid gap-[6px]">
+            <strong>{activeDate ? formatTrialScheduleDate(activeDate) : "请选择日期"}</strong>
+            {activeDateSections.length > 0 ? (
+              activeDateSections.map((section) => (
+                <span key={section.title}>
+                  {section.title}：{section.times.join(" ")}
+                </span>
+              ))
+            ) : (
+              <span>当日暂无安排</span>
+            )}
           </div>
-        ) : (
-          <article className="empty-state p-[14px] text-center">
-            <strong>{emptyLabel}</strong>
-            <span>当前记录未返回可查看的时间数据。</span>
-          </article>
-        )}
+        </div>
+      ) : (
+        <article className="empty-state p-[14px] text-center">
+          <strong>{emptyLabel}</strong>
+          <span>当前记录未返回可查看的时间数据。</span>
+        </article>
+      )}
 
-        <button className="primary-button min-h-[38px] px-[10px] py-[8px] text-white" onClick={onClose} type="button">
-          关闭
-        </button>
+      <button className="primary-button min-h-[38px] px-[10px] py-[8px] text-white" onClick={onClose} type="button">
+        关闭
+      </button>
     </Modal>
   );
 }
 
 /** 结算弹窗，试课结算可预选雇佣意向，正式服务结算只提交金额。 */
-function TutorTrialSettlement({ candidate, isSubmitting = false, mode = "trial", onClose, onConfirm }: TutorTrialSettlementProps) {
+function TutorTrialSettlement({
+  candidate,
+  isSubmitting = false,
+  mode = "trial",
+  onClose,
+  onConfirm
+}: TutorTrialSettlementProps) {
   const [trialFee, setTrialFee] = useState(candidate.trialFee === undefined ? "" : String(candidate.trialFee));
   const [hireDecision, setHireDecision] = useState<TutorTrialHireDecision>("");
   const isServiceMode = mode === "service";
@@ -1047,71 +1096,81 @@ function TutorTrialSettlement({ candidate, isSubmitting = false, mode = "trial",
         </>
       }
     >
-        <div className="tutor-trial-settlement-summary grid gap-[8px]">
-          <div className="flex items-center justify-between gap-[10px]">
-            <span>{isServiceMode ? "家教学生" : "试课学生"}</span>
-            <strong>{candidate.nickname}</strong>
+      <div className="tutor-trial-settlement-summary grid gap-[8px]">
+        <div className="flex items-center justify-between gap-[10px]">
+          <span>{isServiceMode ? "家教学生" : "试课学生"}</span>
+          <strong>{candidate.nickname}</strong>
+        </div>
+        <div className="grid gap-[5px]">
+          <span>{isServiceMode ? "课程安排" : "试课安排"}</span>
+          <p>
+            {(isServiceMode ? candidate.serviceSchedule : candidate.trialSchedule) ||
+              (isServiceMode ? "暂无课程安排" : "暂无试课安排")}
+          </p>
+        </div>
+      </div>
+
+      <label className="tutor-trial-settlement-field grid gap-[6px]">
+        <span>{isServiceMode ? "结算金额" : "试课结算金额"}</span>
+        <input
+          inputMode="decimal"
+          min="0"
+          onChange={(event) => setTrialFee(event.target.value)}
+          placeholder="请输入金额"
+          step="0.01"
+          type="number"
+          value={trialFee}
+        />
+      </label>
+      {!isTrialFeeValid && trialFee.trim() !== "" ? (
+        <span className="tutor-trial-settlement-error">请输入不小于 0 的金额</span>
+      ) : null}
+
+      {!isServiceMode ? (
+        <div className="tutor-trial-hire-decision grid gap-[8px]">
+          <div className="tutor-trial-hire-decision__header grid gap-[3px]">
+            <strong>是否正式雇佣</strong>
+            <span>可不选择，仅提交结算；学生确认费用后再单独处理。</span>
           </div>
-          <div className="grid gap-[5px]">
-            <span>{isServiceMode ? "课程安排" : "试课安排"}</span>
-            <p>{(isServiceMode ? candidate.serviceSchedule : candidate.trialSchedule) || (isServiceMode ? "暂无课程安排" : "暂无试课安排")}</p>
+          <div className="tutor-trial-hire-decision__options grid grid-cols-2 gap-[8px]">
+            <button
+              className={`tutor-trial-hire-decision__option ${hireDecision === "hire" ? "active" : ""}`}
+              disabled={isSubmitting}
+              onClick={() => handleToggleHireDecision("hire")}
+              type="button"
+            >
+              正式雇佣
+            </button>
+            <button
+              className={`tutor-trial-hire-decision__option ${hireDecision === "notHire" ? "active danger" : ""}`}
+              disabled={isSubmitting}
+              onClick={() => handleToggleHireDecision("notHire")}
+              type="button"
+            >
+              不正式雇佣
+            </button>
           </div>
         </div>
+      ) : null}
 
-        <label className="tutor-trial-settlement-field grid gap-[6px]">
-          <span>{isServiceMode ? "结算金额" : "试课结算金额"}</span>
-          <input
-            inputMode="decimal"
-            min="0"
-            onChange={(event) => setTrialFee(event.target.value)}
-            placeholder="请输入金额"
-            step="0.01"
-            type="number"
-            value={trialFee}
-          />
-        </label>
-        {!isTrialFeeValid && trialFee.trim() !== "" ? <span className="tutor-trial-settlement-error">请输入不小于 0 的金额</span> : null}
-
-        {!isServiceMode ? (
-          <div className="tutor-trial-hire-decision grid gap-[8px]">
-            <div className="tutor-trial-hire-decision__header grid gap-[3px]">
-              <strong>是否正式雇佣</strong>
-              <span>可不选择，仅提交结算；学生确认费用后再单独处理。</span>
-            </div>
-            <div className="tutor-trial-hire-decision__options grid grid-cols-2 gap-[8px]">
-              <button
-                className={`tutor-trial-hire-decision__option ${hireDecision === "hire" ? "active" : ""}`}
-                disabled={isSubmitting}
-                onClick={() => handleToggleHireDecision("hire")}
-                type="button"
-              >
-                正式雇佣
-              </button>
-              <button
-                className={`tutor-trial-hire-decision__option ${hireDecision === "notHire" ? "active danger" : ""}`}
-                disabled={isSubmitting}
-                onClick={() => handleToggleHireDecision("notHire")}
-                type="button"
-              >
-                不正式雇佣
-              </button>
-            </div>
-          </div>
-        ) : null}
-
-        <div className="sheet-actions grid grid-cols-2 gap-[8px]">
-          <button className="ghost-button min-h-[38px] px-[10px] py-[8px]" disabled={isSubmitting} onClick={onClose} type="button">
-            取消
-          </button>
-          <button
-            className="primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
-            disabled={!isTrialFeeValid || isSubmitting}
-            onClick={handleConfirm}
-            type="button"
-          >
-            结算
-          </button>
-        </div>
+      <div className="sheet-actions grid grid-cols-2 gap-[8px]">
+        <button
+          className="ghost-button min-h-[38px] px-[10px] py-[8px]"
+          disabled={isSubmitting}
+          onClick={onClose}
+          type="button"
+        >
+          取消
+        </button>
+        <button
+          className="primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
+          disabled={!isTrialFeeValid || isSubmitting}
+          onClick={handleConfirm}
+          type="button"
+        >
+          结算
+        </button>
+      </div>
     </Modal>
   );
 }

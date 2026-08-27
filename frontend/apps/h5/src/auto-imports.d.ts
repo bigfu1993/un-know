@@ -122,13 +122,14 @@ declare global {
   const Store: typeof import('lucide-react').Store
   const StrictMode: typeof import('react').StrictMode
   const Suspense: typeof import('react').Suspense
+  const TimePanel: typeof import('./components/ScheduleCalendar/TimePanel/index').TimePanel
   const TrialScheduleCalendar: typeof import('./components/TrialScheduleCalendar/index').TrialScheduleCalendar
+  const TrialScheduleEditor: typeof import('./components/TutorTrialSchedule/TrialScheduleEditor').TrialScheduleEditor
   const TrialSchedulePreview: typeof import('./pages/home/auth/orders/components/TutorWorkflowModals').TrialSchedulePreview
   const TrialSettlementConfirm: typeof import('./pages/home/auth/orders/components/TutorWorkflowModals').TrialSettlementConfirm
   const Truck: typeof import('lucide-react').Truck
   const Tutor: typeof import('./pages/home/edu/index').Tutor
   const TutorApplicantStatus: typeof import('./db/tutorStatus').TutorApplicantStatus
-  const TutorApplications: typeof import('./pages/home/edu/components/TutorApplications').TutorApplications
   const TutorCalendar: typeof import('./components/TutorCalendar/index').TutorCalendar
   const TutorCard: typeof import('./pages/home/edu/components/TutorCard').TutorCard
   const TutorCertification: typeof import('./pages/home/auth/user/components/TutorCertification').TutorCertification
@@ -139,8 +140,6 @@ declare global {
   const TutorQualificationInfo: typeof import('./pages/settings/components/SettingsPanels').TutorQualificationInfo
   const TutorRoute: typeof import('./pages/home/components/RouteEntries').TutorRoute
   const TutorSubject: typeof import('./db/tutorSubject').TutorSubject
-  const TutorTrialList: typeof import('./pages/home/edu/components/TutorApplications').TutorTrialList
-  const TutorTrialSchedule: typeof import('./components/TutorTrialSchedule/index').TutorTrialSchedule
   const UnauthenticatedScreen: typeof import('./components/AppStateScreens/index').UnauthenticatedScreen
   const User: typeof import('./pages/home/auth/user/index').User
   const UserRound: typeof import('lucide-react').UserRound
@@ -429,6 +428,7 @@ declare global {
   const useState: typeof import('react').useState
   const useSyncExternalStore: typeof import('react').useSyncExternalStore
   const useTransition: typeof import('react').useTransition
+  const useTrialSchedule: typeof import('./components/TutorTrialSchedule/useTrialSchedule').useTrialSchedule
   const useTutorTrialActions: typeof import('./pages/home/edu/hooks/useTutorTrialActions').useTutorTrialActions
   const useUpdateClientAddress: typeof import('@unknown/hooks').useUpdateClientAddress
   const useUpdateClientNickname: typeof import('@unknown/hooks').useUpdateClientNickname
@@ -464,8 +464,11 @@ declare global {
   export type { PublishInfoProps } from './components/PublishInfo/index'
   import('./components/PublishInfo/index')
   // @ts-ignore
-  export type { CalendarPanelMode, CalendarPanelProps } from './components/ScheduleCalendar/CalendarPanel/index'
+  export type { CalendarPanelMode, CalendarPanelMarker, CalendarPanelProps } from './components/ScheduleCalendar/CalendarPanel/index'
   import('./components/ScheduleCalendar/CalendarPanel/index')
+  // @ts-ignore
+  export type { TimePanelPeriodItem, TimePanelProps } from './components/ScheduleCalendar/TimePanel/index'
+  import('./components/ScheduleCalendar/TimePanel/index')
   // @ts-ignore
   export type { ScrollingTickerDirection, ScrollingTickerProps } from './components/ScrollingTicker/index'
   import('./components/ScrollingTicker/index')
@@ -488,8 +491,14 @@ declare global {
   export type { TutorCertificationInfoSaveMode, TutorCertificationInfoProps } from './components/TutorCertificationInfo/index'
   import('./components/TutorCertificationInfo/index')
   // @ts-ignore
-  export type { TrialSchedulePeriodKey, TrialSchedulePeriodConfig, TrialSchedulePeriodState, TrialScheduleDraft, TrialSchedulePlan, TrialScheduleValue, TrialScheduleCalendarMarker } from './components/TutorTrialSchedule/model'
+  export type { TrialScheduleEditorProps } from './components/TutorTrialSchedule/TrialScheduleEditor'
+  import('./components/TutorTrialSchedule/TrialScheduleEditor')
+  // @ts-ignore
+  export type { TrialSchedulePeriodKey, TrialSchedulePeriodConfig, TrialSchedulePeriodState, TrialScheduleDraft, TrialSchedulePlan, TrialScheduleValue } from './components/TutorTrialSchedule/model'
   import('./components/TutorTrialSchedule/model')
+  // @ts-ignore
+  export type { UseTrialScheduleOptions, TrialScheduleState } from './components/TutorTrialSchedule/useTrialSchedule'
+  import('./components/TutorTrialSchedule/useTrialSchedule')
   // @ts-ignore
   export type { Gender } from './db/gender'
   import('./db/gender')

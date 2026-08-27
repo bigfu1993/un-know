@@ -1244,7 +1244,11 @@ public class TutorWorkspaceAppService {
   }
 
 
-  /** 家教招募需求下的申请人列表，含完整认证资料，供"进行中"弹窗按需求 id 加载使用。
+  /** 家教招募需求下的申请人列表，含完整认证资料，供"进行中"弹窗按需求 id 加载使用；这份数据同时
+   *  服务"试课申请列表"（{@code isApplicationListVisible}）和"试课/正式雇佣列表"
+   *  （{@code isTrialListVisible}）两个前端视图，两者用到的状态集合互不相同，因此这里只在源头
+   *  剔除两个视图都用不到的真正终态申请（已拒绝/已取消/已结束/试课已结束/正式服务已失效），
+   *  不能收窄成只留某一个视图需要的状态子集，否则会把另一个视图需要的候选人一起过滤掉。
    *  申请工作流字段（受聘次数、可用时间、状态、试课/正式课安排等）取自 {@code tutor_applicant}；
    *  认证资料字段的取值方式和列名都跟 {@link #tutorExposedStudents} 保持一致，直接联查
    *  {@code tutor_certification}，不使用 {@code tutor_applicant.school/major/gpa}——这三列
@@ -1276,6 +1280,7 @@ public class TutorWorkspaceAppService {
              AND service_schedule.enabled = TRUE
             WHERE ta.tutor_demand_id = ?
               AND ta.enabled = TRUE
+              AND ta.status NOT IN (?, ?, ?, ?, ?)
             ORDER BY ta.hired_times DESC, ta.id
             """,
         (rs, rowNum) -> {
@@ -1312,7 +1317,12 @@ public class TutorWorkspaceAppService {
               tutorCertification
           );
         },
-        tutorDemandId
+        tutorDemandId,
+        TUTOR_APPLICANT_STATUS_REJECTED,
+        TUTOR_APPLICANT_STATUS_CANCELLED,
+        TUTOR_APPLICANT_STATUS_ENDED,
+        TUTOR_APPLICANT_STATUS_TRIAL_ENDED,
+        TUTOR_APPLICANT_STATUS_FORMAL_SERVICE_INVALID
     );
   }
 

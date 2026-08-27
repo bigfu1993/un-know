@@ -447,52 +447,74 @@ export function OrderActions({
         />
       ) : null}
       {isServiceScheduleOpen ? (
-        <TutorTrialSchedule
-          availableScheduleSummary={getTutorTrialAvailabilitySummaryFromOrderDetail(tutorWorkflowTargetOrder.detail)}
-          blockedScheduleLabel="试"
-          blockedScheduleSummary={getTutorTrialScheduleSummaryFromOrderDetail(tutorWorkflowTargetOrder.detail)}
-          confirmLabel={isSubmittingServiceSchedule ? "提交中" : "提交日程"}
-          initialValue={null}
-          isConfirming={isSubmittingServiceSchedule}
-          maxSelectedDates={null}
+        <Modal
+          ariaLabel="正式雇佣日程"
+          icon={<CalendarClock size={18} />}
           onClose={() => setIsServiceScheduleOpen(false)}
-          onConfirm={handleConfirmServiceSchedule}
-          scheduleLabel="课"
-          subtitle="请在学生提交的可家教时间内制定正式雇佣日程，提交后直接进入正式雇佣。"
-          title="正式雇佣日程"
-        />
+          panelClassName="trial-schedule-sheet mx-auto grid max-h-[min(82vh,700px)] max-w-[540px] gap-[12px] overflow-hidden px-[14px] pb-[calc(14px+env(safe-area-inset-bottom))] pt-[14px]"
+          title={
+            <>
+              <strong>正式雇佣日程</strong>
+              <span>请在学生提交的可家教时间内制定正式雇佣日程，提交后直接进入正式雇佣。</span>
+            </>
+          }
+        >
+          <TrialScheduleEditor
+            availableScheduleSummary={getTutorTrialAvailabilitySummaryFromOrderDetail(tutorWorkflowTargetOrder.detail)}
+            blockedScheduleLabel="试"
+            blockedScheduleSummary={getTutorTrialScheduleSummaryFromOrderDetail(tutorWorkflowTargetOrder.detail)}
+            confirmLabel={isSubmittingServiceSchedule ? "提交中" : "提交日程"}
+            initialValue={null}
+            isConfirming={isSubmittingServiceSchedule}
+            maxPlannedDates={null}
+            onClose={() => setIsServiceScheduleOpen(false)}
+            onConfirm={handleConfirmServiceSchedule}
+            scheduleLabel="课"
+          />
+        </Modal>
       ) : null}
       {serviceAvailabilityAction ? (
-        <TutorTrialSchedule
-          blockedScheduleLabel="试"
-          blockedScheduleSummary={
-            serviceAvailabilityAction === "accept_service_offer"
-              ? getTutorTrialScheduleSummaryFromOrderDetail(order.detail)
-              : ""
-          }
-          confirmLabel={
-            isSubmittingServiceAvailability
-              ? "提交中"
-              : serviceAvailabilityAction === "accept_service_offer"
-                ? "同意并提交"
-                : "提交修改"
-          }
-          initialValue={
-            serviceAvailabilityAction === "request_service_schedule_change"
-              ? getTrialScheduleValueFromSummary(getTutorTrialAvailabilitySummaryFromOrderDetail(order.detail))
-              : null
-          }
-          isConfirming={isSubmittingServiceAvailability}
-          maxSelectedDates={null}
+        <Modal
+          ariaLabel={serviceAvailabilityAction === "accept_service_offer" ? "可家教日期" : "修改可家教日期"}
+          icon={<CalendarClock size={18} />}
           onClose={() => setServiceAvailabilityAction(null)}
-          onConfirm={handleConfirmServiceAvailability}
-          subtitle={
-            serviceAvailabilityAction === "accept_service_offer"
-              ? "请基于已完成的试课日程选择可正式家教的日期和时间，标记为“试”的时段不可再次选择。"
-              : "请重新选择可进行正式家教的日期和时间，提交后等待家长重新制定正式雇佣日程。"
+          panelClassName="trial-schedule-sheet mx-auto grid max-h-[min(82vh,700px)] max-w-[540px] gap-[12px] overflow-hidden px-[14px] pb-[calc(14px+env(safe-area-inset-bottom))] pt-[14px]"
+          title={
+            <>
+              <strong>{serviceAvailabilityAction === "accept_service_offer" ? "可家教日期" : "修改可家教日期"}</strong>
+              <span>
+                {serviceAvailabilityAction === "accept_service_offer"
+                  ? "请基于已完成的试课日程选择可正式家教的日期和时间，标记为“试”的时段不可再次选择。"
+                  : "请重新选择可进行正式家教的日期和时间，提交后等待家长重新制定正式雇佣日程。"}
+              </span>
+            </>
           }
-          title={serviceAvailabilityAction === "accept_service_offer" ? "可家教日期" : "修改可家教日期"}
-        />
+        >
+          <TrialScheduleEditor
+            blockedScheduleLabel="试"
+            blockedScheduleSummary={
+              serviceAvailabilityAction === "accept_service_offer"
+                ? getTutorTrialScheduleSummaryFromOrderDetail(order.detail)
+                : ""
+            }
+            confirmLabel={
+              isSubmittingServiceAvailability
+                ? "提交中"
+                : serviceAvailabilityAction === "accept_service_offer"
+                  ? "同意并提交"
+                  : "提交修改"
+            }
+            initialValue={
+              serviceAvailabilityAction === "request_service_schedule_change"
+                ? getTrialScheduleValueFromSummary(getTutorTrialAvailabilitySummaryFromOrderDetail(order.detail))
+                : null
+            }
+            isConfirming={isSubmittingServiceAvailability}
+            maxPlannedDates={null}
+            onClose={() => setServiceAvailabilityAction(null)}
+            onConfirm={handleConfirmServiceAvailability}
+          />
+        </Modal>
       ) : null}
     </>
   );

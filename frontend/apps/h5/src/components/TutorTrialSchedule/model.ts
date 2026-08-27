@@ -36,14 +36,6 @@ export interface TrialScheduleValue {
   selectedDates: string[];
 }
 
-/** 试课日历单元格的时段与文字标记数据。 */
-export interface TrialScheduleCalendarMarker {
-  date: string;
-  labelPeriods?: TrialSchedulePeriodKey[];
-  periodLabels?: Partial<Record<TrialSchedulePeriodKey, string>>;
-  periods: TrialSchedulePeriodKey[];
-}
-
 /** 试课默认可选时段。 */
 export const trialSchedulePeriods: TrialSchedulePeriodConfig[] = [
   { defaultEnd: "11:00", defaultStart: "09:00", key: "morning", label: "上午" },
@@ -89,12 +81,14 @@ export function getEnabledPeriodSummaries(daySchedule: Record<TrialSchedulePerio
     .map((periodState) => `${formatTrialScheduleTime(periodState.start)}-${formatTrialScheduleTime(periodState.end)}`);
 }
 
-/** 将试课草稿转换为试课日历可消费的日程列表。 */
+/** 将试课草稿转换为 CalendarPanel 可消费的分段标记列表。 */
 export function getTrialScheduleCalendarItems(
   selectedDates: string[],
   scheduleDraft: TrialScheduleDraft,
   options: { scheduleLabel?: string; showPeriodLabel?: boolean } = {}
-): TrialScheduleCalendarMarker[] {
+): CalendarPanelMarker[] {
+  const scheduleLabel = options.scheduleLabel;
+
   return selectedDates.map((dateKey) => ({
     date: dateKey,
     labelPeriods: options.showPeriodLabel
@@ -107,14 +101,14 @@ export function getTrialScheduleCalendarItems(
           .map((period) => period.key)
       : undefined,
     periodLabels:
-      options.showPeriodLabel && options.scheduleLabel
+      options.showPeriodLabel && scheduleLabel
         ? trialSchedulePeriods.reduce((labels, period) => {
             const periodState = scheduleDraft[dateKey]?.[period.key];
 
             return periodState?.enabled && periodState.start && periodState.end
-              ? { ...labels, [period.key]: options.scheduleLabel }
+              ? { ...labels, [period.key]: scheduleLabel }
               : labels;
-          }, {} as Partial<Record<TrialSchedulePeriodKey, string>>)
+          }, {} as Record<string, string>)
         : undefined,
     periods: trialSchedulePeriods
       .filter((period) => {

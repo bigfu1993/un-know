@@ -6,6 +6,7 @@ import {
   useCompleteTutorTrialEnd,
   useConfirmTutorTrial,
   useHandleTutorWorkflowAction,
+  useOngoingOrdersSnapshot,
   useTutorApplication
 } from "@unknown/hooks";
 import { TutorOverlayHostContext, useTutorOverlayActions, useTutorOverlayState } from "./context";
@@ -20,6 +21,12 @@ export function TutorOverlayProvider({ children, syncProfileDraft }: TutorOverla
     targetDemandId,
     isApplicationsOpen || isTrialListOpen
   );
+  /** 直接读取"进行中"列表已缓存的查询结果，找到当前弹层目标需求发布时选择的日期，供试课安排
+   *  弹窗回显参考；学生端申请试课已不再要求先提交可试课时间（详见后端 applyTutorTrial 说明），
+   *  试课时段安排真正应该参考的是家长发布家教时选择的日程，不是候选人早已失效的 availability
+   *  字段。触发弹层的订单卡片本身就是从这份缓存渲染出来的，不需要再订阅一次查询去保证数据可用，
+   *  避免每次打开弹层都因默认 staleTime 额外发一次 /client/workspace/ongoing 请求。 */
+  const demandPeriodDates = useOngoingOrdersSnapshot(user.role, targetDemandId);
   const { isPending: confirmTrialPending, mutateAsync: confirmTutorTrial } = useConfirmTutorTrial();
   const { isPending: confirmTrialEndPending, mutateAsync: completeTutorTrialEnd } = useCompleteTutorTrialEnd();
   const { isPending: workflowPending, mutateAsync: submitTutorWorkflowAction } = useHandleTutorWorkflowAction();
@@ -134,6 +141,7 @@ export function TutorOverlayProvider({ children, syncProfileDraft }: TutorOverla
       calendarTasks,
       confirmTrial,
       confirmTrialEnd,
+      demandPeriodDates,
       profileDraft: user.profileDraft,
       saveCertificationInfo,
       trialListSubmissionPending: confirmTrialEndPending || workflowPending,
@@ -146,6 +154,7 @@ export function TutorOverlayProvider({ children, syncProfileDraft }: TutorOverla
       confirmTrialEnd,
       confirmTrialEndPending,
       confirmTrialPending,
+      demandPeriodDates,
       saveCertificationInfo,
       workflow,
       workflowPending,

@@ -1,6 +1,6 @@
 import { TutorCalendar } from "@components/TutorCalendar";
 import { TutorCertificationInfo } from "@components/TutorCertificationInfo";
-import { TutorApplications, TutorTrialList } from "@pages/home/edu/components/TutorApplications";
+import { TutorApplications, TutorTrialList } from "./components/TutorApplications";
 import { getTutorDateKey } from "@tools/tutorCalendar";
 import { useTutorOverlayActions, useTutorOverlayHost, useTutorOverlayState } from "./context";
 
@@ -14,6 +14,7 @@ export function TutorOverlayHost() {
     calendarTasks,
     confirmTrial,
     confirmTrialEnd,
+    demandPeriodDates,
     profileDraft,
     saveCertificationInfo,
     trialListSubmissionPending,
@@ -24,6 +25,7 @@ export function TutorOverlayHost() {
     return (
       <TutorApplications
         candidates={applicationCandidates}
+        demandPeriodDates={demandPeriodDates}
         isConfirming={applicationConfirmationPending}
         onCancelTrial={(payload) => void workflow({ ...payload, action: "cancel_trial" })}
         onClose={closeApplications}

@@ -200,16 +200,27 @@ export function TrialSchedulePreview({
         ) : null}
       </Modal>
       {isConflictScheduleOpen ? (
-        <TutorTrialSchedule
-          confirmLabel={isSubmittingConflictSchedule ? "提交中" : "重新提交"}
-          initialValue={initialConflictScheduleValue}
-          isConfirming={isSubmittingConflictSchedule}
-          maxSelectedDates={null}
+        <Modal
+          ariaLabel="日程冲突"
+          icon={<CalendarClock size={18} />}
           onClose={() => setIsConflictScheduleOpen(false)}
-          onConfirm={handleConfirmConflictSchedule}
-          subtitle="请重新选择可试课日期和时间，提交后回到申请试课中等待家长重新安排。"
-          title="日程冲突"
-        />
+          panelClassName="trial-schedule-sheet mx-auto grid max-h-[min(82vh,700px)] max-w-[540px] gap-[12px] overflow-hidden px-[14px] pb-[calc(14px+env(safe-area-inset-bottom))] pt-[14px]"
+          title={
+            <>
+              <strong>日程冲突</strong>
+              <span>请重新选择可试课日期和时间，提交后回到申请试课中等待家长重新安排。</span>
+            </>
+          }
+        >
+          <TrialScheduleEditor
+            confirmLabel={isSubmittingConflictSchedule ? "提交中" : "重新提交"}
+            initialValue={initialConflictScheduleValue}
+            isConfirming={isSubmittingConflictSchedule}
+            maxPlannedDates={null}
+            onClose={() => setIsConflictScheduleOpen(false)}
+            onConfirm={handleConfirmConflictSchedule}
+          />
+        </Modal>
       ) : null}
     </>
   );

@@ -35,7 +35,7 @@ export function EduJobScheduleView({
           activeDate={activeDate}
           mode="view"
           onActiveDateChange={setActiveDate}
-          selectedDates={periodDates}
+          plannedDates={periodDates}
         />
       ) : (
         <p className="notice p-[10px] text-[var(--h5-warning)]">家长暂未确定具体日程，可通过消息与家长确认。</p>

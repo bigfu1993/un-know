@@ -136,6 +136,18 @@ export function useOngoingOrders(role: Role, enabled = true) {
   });
 }
 
+/** 从"进行中"列表已缓存的查询结果里直接读取某条家教需求发布时选择的日程，不做任何新的请求订阅、
+ *  不触发网络请求；只读一次当前缓存快照。触发方（"进行中"列表页的订单卡片）本身就是这份缓存数据
+ *  渲染出来的，点击时缓存必然已经写入，因此不需要再补一次 useOngoingOrders 订阅去保证数据可用——
+ *  这也是当初改成这样的原因：避免家教申请/试课弹层每次打开都因为默认 staleTime 触发一次多余的
+ *  /client/workspace/ongoing 请求。缓存里没有这条需求时返回空数组，调用方按“未取到发布日程”处理。 */
+export function useOngoingOrdersSnapshot(role: Role, demandId: string | null): string[] {
+  const queryClient = useQueryClient();
+  const orders = queryClient.getQueryData<ClientOrder[]>(getRoleQueryKey(clientOngoingOrdersQueryKey, role));
+
+  return orders?.find((order) => order.id === demandId)?.periodDates ?? [];
+}
+
 /** 当前账号订单历史，跟 useOngoingOrders 同一套底层数据但不做归档过滤，只服务订单历史页。 */
 export function useOrderHistory(role: Role, enabled = true) {
   return useQuery({

@@ -1,56 +1,57 @@
-import "./index.less";
-import { CalendarClock } from "lucide-react";
 import { getTutorDateKey } from "@tools/tutorCalendar";
 import {
   createDefaultDaySchedule,
   formatTrialScheduleDate,
   getEnabledPeriodSummaries,
-  getTrialScheduleDateKeysFromSummary,
   getTrialScheduleCalendarItems,
+  getTrialScheduleDateKeysFromSummary,
   getTrialSchedulePlan,
   getTrialScheduleValueFromSummary,
   trialSchedulePeriods,
   type TrialScheduleDraft,
-  type TrialScheduleCalendarMarker,
   type TrialSchedulePeriodConfig,
   type TrialSchedulePeriodKey,
   type TrialSchedulePeriodState,
   type TrialScheduleValue
 } from "./model";
 
-/** 试课排期弹窗属性。 */
-interface TutorTrialScheduleProps {
+/**
+ * useTrialSchedule 入参：只描述业务约束（学生可试课范围、已占用时段、天数上限、初始值），
+ * 不含任何弹窗展示相关内容（标题/文案/图标）——展示层由调用方自己用 Modal 包裹
+ * TrialScheduleEditor 决定，同一份业务逻辑可以套不同的弹窗外观（试课安排/正式雇佣日程）。
+ */
+export interface UseTrialScheduleOptions {
   availableScheduleSummary?: string;
   blockedScheduleLabel?: string;
   blockedScheduleSummary?: string;
-  confirmLabel?: string;
+  /**
+   * 家教需求发布时家长选择的日期集合，仅在候选人没有真实提交可试课时间（availableScheduleSummary
+   * 为空）时用来兜底限定可选日期并回显参考标记；候选人一旦有真实提交的可试课时间，仍以那份数据为准。
+   */
+  demandPeriodDates?: string[];
   initialValue: TrialScheduleValue | null;
-  isConfirming?: boolean;
-  maxSelectedDates?: number | null;
-  onClose: () => void;
-  onConfirm: (value: TrialScheduleValue) => void;
+  maxPlannedDates?: number | null;
   scheduleLabel?: string;
-  subtitle?: string;
-  title?: string;
 }
 
+/** 试课排期日历要横向拆分的分段顺序，固定按上午、下午、晚上展示。 */
+const trialScheduleMarkerPeriods = trialSchedulePeriods.map((period) => period.key);
+
 /** 合并学生可选时间背景和家长已安排课程文字标记。 */
-function mergeTrialScheduleCalendarMarkers(
-  ...markerGroups: TrialScheduleCalendarMarker[][]
-): TrialScheduleCalendarMarker[] {
+function mergeTrialScheduleCalendarMarkers(...markerGroups: CalendarPanelMarker[][]): CalendarPanelMarker[] {
   const markerMap = new Map<
     string,
     {
-      labelPeriods: Set<TrialSchedulePeriodKey>;
-      periods: Set<TrialSchedulePeriodKey>;
+      labelPeriods: Set<string>;
+      periods: Set<string>;
     }
   >();
 
   markerGroups.forEach((items) => {
     items.forEach((item) => {
       const marker = markerMap.get(item.date) ?? {
-        labelPeriods: new Set<TrialSchedulePeriodKey>(),
-        periods: new Set<TrialSchedulePeriodKey>()
+        labelPeriods: new Set<string>(),
+        periods: new Set<string>()
       };
 
       item.periods.forEach((period) => marker.periods.add(period));
@@ -66,42 +67,49 @@ function mergeTrialScheduleCalendarMarkers(
   }));
 }
 
-/** 试课安排弹窗，复用课程日历的月份网格生成逻辑。 */
-export function TutorTrialSchedule({
+/**
+ * 试课/正式课日程排期的完整状态与业务逻辑，不涉及任何弹窗展示。调用方用返回值驱动
+ * `TrialScheduleEditor`（CalendarPanel + TimePanel 组合）和自己的确认/取消按钮；
+ * `value` 为 null 时代表当前排期为空，不可提交。
+ */
+export function useTrialSchedule({
   availableScheduleSummary = "",
   blockedScheduleLabel = "试",
   blockedScheduleSummary = "",
-  confirmLabel = "确认",
+  demandPeriodDates = [],
   initialValue,
-  isConfirming = false,
-  maxSelectedDates = 3,
-  onClose,
-  onConfirm,
-  scheduleLabel = "试",
-  subtitle = "最多选择 3 天，设置每天可试课时间。",
-  title = "试课安排"
-}: TutorTrialScheduleProps) {
+  maxPlannedDates = 3,
+  scheduleLabel = "试"
+}: UseTrialScheduleOptions) {
   const today = useMemo(() => new Date(), []);
   const todayKey = getTutorDateKey(today);
-  const selectableDates = useMemo(() => getTrialScheduleDateKeysFromSummary(availableScheduleSummary), [availableScheduleSummary]);
+  const availabilitySelectableDates = useMemo(
+    () => getTrialScheduleDateKeysFromSummary(availableScheduleSummary),
+    [availableScheduleSummary]
+  );
+  /** 候选人没有真实提交可试课时间时，兜底用家教需求发布时的日期集合限定可选日期。 */
+  const selectableDates = availabilitySelectableDates.length > 0 ? availabilitySelectableDates : [...demandPeriodDates].sort();
   const selectableDateSet = useMemo(() => new Set(selectableDates), [selectableDates]);
   const availableScheduleValue = useMemo(() => getTrialScheduleValueFromSummary(availableScheduleSummary), [availableScheduleSummary]);
   const availableScheduleDraft = availableScheduleValue?.scheduleDraft ?? {};
   const blockedScheduleValue = useMemo(() => getTrialScheduleValueFromSummary(blockedScheduleSummary), [blockedScheduleSummary]);
   const blockedScheduleDraft = blockedScheduleValue?.scheduleDraft ?? {};
   const hasSelectableDateLimit = selectableDateSet.size > 0;
+  /** 只有候选人真实提交过可试课时间才需要锁定具体时刻只读展示；需求发布日期只有"哪天"没有"几点"，
+   *  不应该锁死时间输入，家长仍要能在允许的日期内自由挑选具体时段。 */
   const hasAvailableScheduleLimit = Boolean(availableScheduleSummary.trim() && availableScheduleValue);
-  const initialSelectedDate = initialValue?.selectedDates[0] ?? selectableDates[0] ?? blockedScheduleValue?.selectedDates[0] ?? todayKey;
-  const [selectedDate, setSelectedDate] = useState(initialSelectedDate);
-  const [selectedDates, setSelectedDates] = useState<string[]>(() => initialValue?.selectedDates ?? []);
+  const initialActiveDate = initialValue?.selectedDates[0] ?? selectableDates[0] ?? blockedScheduleValue?.selectedDates[0] ?? todayKey;
+  const [selectedDate, setSelectedDate] = useState(initialActiveDate);
+  /** 本次实际计划（安排）的试课日期，驱动 CalendarPanel 的 plannedDates/天数上限/拖拽批量计划。 */
+  const [plannedDates, setPlannedDates] = useState<string[]>(() => initialValue?.selectedDates ?? []);
   const [scheduleDraft, setScheduleDraft] = useState<TrialScheduleDraft>(() => initialValue?.scheduleDraft ?? {});
   const selectedDaySchedule = scheduleDraft[selectedDate] ?? createDefaultDaySchedule();
   const selectedDateHasSchedule = getEnabledPeriodSummaries(selectedDaySchedule).length > 0;
-  const hasSelectedDate = selectedDates.includes(selectedDate);
+  const hasPlannedDate = plannedDates.includes(selectedDate);
   const isScheduleLimitReached =
-    maxSelectedDates !== null && maxSelectedDates !== undefined && selectedDates.length >= maxSelectedDates && !hasSelectedDate;
-  const isOutsideSelectableDates = hasSelectableDateLimit && !selectableDateSet.has(selectedDate) && !hasSelectedDate;
-  const schedulePlan = getTrialSchedulePlan(selectedDates, scheduleDraft);
+    maxPlannedDates !== null && maxPlannedDates !== undefined && plannedDates.length >= maxPlannedDates && !hasPlannedDate;
+  const isOutsideSelectableDates = hasSelectableDateLimit && !selectableDateSet.has(selectedDate) && !hasPlannedDate;
+  const schedulePlan = getTrialSchedulePlan(plannedDates, scheduleDraft);
   const availableScheduleItems = useMemo(
     () =>
       hasAvailableScheduleLimit && availableScheduleValue
@@ -110,8 +118,8 @@ export function TutorTrialSchedule({
     [availableScheduleValue, hasAvailableScheduleLimit]
   );
   const arrangedScheduleItems = useMemo(
-    () => getTrialScheduleCalendarItems(selectedDates, scheduleDraft, { showPeriodLabel: hasAvailableScheduleLimit }),
-    [hasAvailableScheduleLimit, scheduleDraft, selectedDates]
+    () => getTrialScheduleCalendarItems(plannedDates, scheduleDraft, { showPeriodLabel: hasAvailableScheduleLimit }),
+    [hasAvailableScheduleLimit, scheduleDraft, plannedDates]
   );
   const blockedScheduleItems = useMemo(
     () =>
@@ -130,12 +138,12 @@ export function TutorTrialSchedule({
 
   /** 判断指定日期是否受可选范围或天数上限限制，禁止新增排期。 */
   function isDateDisabledForNewSchedule(dateKey: string) {
-    const isSelectedDate = selectedDates.includes(dateKey);
-    const isOverMaxSelectedDates =
-      maxSelectedDates !== null && maxSelectedDates !== undefined && selectedDates.length >= maxSelectedDates && !isSelectedDate;
-    const isOutsideSelectableDate = hasSelectableDateLimit && !selectableDateSet.has(dateKey) && !isSelectedDate;
+    const isPlannedDate = plannedDates.includes(dateKey);
+    const isOverMaxPlannedDates =
+      maxPlannedDates !== null && maxPlannedDates !== undefined && plannedDates.length >= maxPlannedDates && !isPlannedDate;
+    const isOutsideSelectableDate = hasSelectableDateLimit && !selectableDateSet.has(dateKey) && !isPlannedDate;
 
-    return isOverMaxSelectedDates || isOutsideSelectableDate;
+    return isOverMaxPlannedDates || isOutsideSelectableDate;
   }
 
   /** 判断当前排期是否受学生提交的可试课时段约束。 */
@@ -163,8 +171,8 @@ export function TutorTrialSchedule({
     );
   }
 
-  /** 生成单击选中日期时使用的默认排期。 */
-  function createRangeSelectedDaySchedule(dateKey: string, currentDaySchedule = createDefaultDaySchedule()) {
+  /** 生成单击计划日期时使用的默认排期。 */
+  function createRangePlannedDaySchedule(dateKey: string, currentDaySchedule = createDefaultDaySchedule()) {
     const selectablePeriods = getSelectablePeriodsForDate(dateKey);
 
     if (selectablePeriods.length === 0) {
@@ -186,10 +194,10 @@ export function TutorTrialSchedule({
     }, currentDaySchedule);
   }
 
-  /** 同步单日排期，并按配置的天数上限和可选日期范围维护可提交日期。 */
+  /** 同步单日排期，并按配置的天数上限和可选日期范围维护已计划日期。 */
   function syncDaySchedule(dateKey: string, nextDaySchedule: Record<TrialSchedulePeriodKey, TrialSchedulePeriodState>) {
     const nextDateHasSchedule = getEnabledPeriodSummaries(nextDaySchedule).length > 0;
-    const isNewScheduleDate = !selectedDates.includes(dateKey);
+    const isNewScheduleDate = !plannedDates.includes(dateKey);
 
     if (nextDateHasSchedule && isNewScheduleDate && isDateDisabledForNewSchedule(dateKey)) {
       return;
@@ -205,7 +213,7 @@ export function TutorTrialSchedule({
 
       return { ...currentDraft, [dateKey]: nextDaySchedule };
     });
-    setSelectedDates((currentDates) => {
+    setPlannedDates((currentDates) => {
       if (nextDateHasSchedule) {
         return [...new Set([...currentDates, dateKey])].sort();
       }
@@ -214,7 +222,7 @@ export function TutorTrialSchedule({
     });
   }
 
-  /** 移除一组日期的全部排期，并同步可提交日期列表。 */
+  /** 移除一组日期的全部排期，并同步已计划日期列表。 */
   function clearDaySchedules(dateKeys: string[]) {
     if (dateKeys.length === 0) {
       return;
@@ -230,7 +238,7 @@ export function TutorTrialSchedule({
 
       return nextDraft;
     });
-    setSelectedDates((currentDates) => currentDates.filter((currentDateKey) => !dateKeySet.has(currentDateKey)));
+    setPlannedDates((currentDates) => currentDates.filter((currentDateKey) => !dateKeySet.has(currentDateKey)));
   }
 
   /** 移除指定日期的全部排期。 */
@@ -238,7 +246,7 @@ export function TutorTrialSchedule({
     clearDaySchedules([dateKey]);
   }
 
-  /** 点击时段名称时切换该时段安排，未选中则填入快捷默认时间，已选中则取消安排。 */
+  /** 点击时段名称时切换该时段安排，未计划则填入快捷默认时间，已计划则取消安排。 */
   function handleTogglePeriodPreset(period: TrialSchedulePeriodConfig) {
     if (isDateDisabledForNewSchedule(selectedDate)) {
       return;
@@ -272,7 +280,7 @@ export function TutorTrialSchedule({
       return;
     }
 
-    const nextDaySchedule = createRangeSelectedDaySchedule(dateKey, scheduleDraft[dateKey] ?? createDefaultDaySchedule());
+    const nextDaySchedule = createRangePlannedDaySchedule(dateKey, scheduleDraft[dateKey] ?? createDefaultDaySchedule());
 
     if (!nextDaySchedule) {
       return;
@@ -286,9 +294,9 @@ export function TutorTrialSchedule({
     clearDaySchedule(dateKey);
   }
 
-  /** 编辑模式下单击日期直接切换选中：当天已有排期则移除，未排期则按可选时段全选，直接复用编辑区"全选/移除当日安排"的动作。 */
+  /** 编辑模式下单击日期直接切换计划：当天已有排期则移除，未排期则按可选时段全选，直接复用编辑区"全选/移除当日安排"的动作。 */
   function handleToggleDaySchedule(dateKey: string) {
-    if (selectedDates.includes(dateKey)) {
+    if (plannedDates.includes(dateKey)) {
       handleClearDaySchedule(dateKey);
       return;
     }
@@ -331,140 +339,59 @@ export function TutorTrialSchedule({
     });
   }
 
-  /** 确认试课安排并返回上层业务弹窗。 */
-  function handleConfirmSchedule() {
-    if (!schedulePlan) {
-      return;
-    }
+  /** 按 TimePanel 需要的形状，把当前查看日期的三个时段状态和禁用态算好传给它，具体业务规则不下沉进组件。 */
+  const timePanelPeriods: TimePanelPeriodItem[] = trialSchedulePeriods.map((period) => {
+    const periodState = selectedDaySchedule[period.key];
+    const isPeriodSelected = periodState.enabled;
+    const isPeriodUnavailable =
+      isPeriodOutsideAvailableSchedule(selectedDate, period.key) || isPeriodBlockedBySchedule(selectedDate, period.key);
 
-    onConfirm({
-      plan: schedulePlan,
-      scheduleDraft,
-      selectedDates: [...selectedDates].sort()
-    });
-  }
+    return {
+      enabled: isPeriodSelected,
+      end: periodState.end,
+      isClearDisabled: !periodState.start && !periodState.end,
+      isTimeInputDisabled:
+        hasAvailableScheduleLimit || isDateDisabledForNewSchedule(selectedDate) || isPeriodSelected || isPeriodUnavailable,
+      isToggleDisabled: (isDateDisabledForNewSchedule(selectedDate) && !isPeriodSelected) || (isPeriodUnavailable && !isPeriodSelected),
+      isUnavailable: isPeriodUnavailable,
+      key: period.key,
+      label: period.label,
+      start: periodState.start
+    };
+  });
 
-  return (
-    <Modal
-      ariaLabel={title}
-      icon={<CalendarClock size={18} />}
-      onClose={onClose}
-      panelClassName="trial-schedule-sheet mx-auto grid max-h-[min(82vh,700px)] max-w-[540px] gap-[12px] overflow-hidden px-[14px] pb-[calc(14px+env(safe-area-inset-bottom))] pt-[14px]"
-      title={
-        <>
-          <strong>{title}</strong>
-          <span>{subtitle}</span>
-        </>
+  return {
+    calendarMode: (hasAvailableScheduleLimit ? "view" : "edit") as CalendarPanelMode,
+    hasNoSelectablePeriods: getSelectablePeriodsForDate(selectedDate).length === 0,
+    isOutsideSelectableDates,
+    isScheduleLimitReached,
+    markerFallbackLabel: calendarScheduleLabel,
+    markerPeriods: trialScheduleMarkerPeriods,
+    markers: scheduleItems,
+    maxPlannedDates,
+    onChangePeriodTime: (periodKey: string, field: "start" | "end", value: string) =>
+      handleChangePeriodTime(periodKey as TrialSchedulePeriodKey, field, value),
+    onClearDaySchedule: () => handleClearDaySchedule(),
+    onClearPeriod: (periodKey: string) => handleClearPeriod(periodKey as TrialSchedulePeriodKey),
+    onSelectFullDaySchedule: () => handleSelectFullDaySchedule(),
+    onToggleDate: handleToggleDaySchedule,
+    onTogglePeriod: (periodKey: string) => {
+      const period = trialSchedulePeriods.find((candidatePeriod) => candidatePeriod.key === periodKey);
+
+      if (period) {
+        handleTogglePeriodPreset(period);
       }
-    >
-        <div className="trial-schedule-body grid gap-[12px] overflow-auto pr-[2px]">
-          <TrialScheduleCalendar
-            activeDate={selectedDate}
-            initialDate={initialSelectedDate}
-            maxSelectedDates={maxSelectedDates}
-            mode={hasAvailableScheduleLimit ? "view" : "edit"}
-            onActiveDateChange={setSelectedDate}
-            onToggleDate={handleToggleDaySchedule}
-            scheduleItems={scheduleItems}
-            scheduleLabel={calendarScheduleLabel}
-            selectableDates={selectableDates}
-            selectedDates={selectedDates}
-            showScheduleLabel={false}
-          />
-
-          <div className="trial-schedule-editor grid gap-[10px]">
-            <div className="trial-schedule-editor-header flex items-center justify-between gap-[10px]">
-              <strong>{formatTrialScheduleDate(selectedDate)}</strong>
-              {selectedDateHasSchedule ? (
-                <button className="text-button" onClick={() => handleClearDaySchedule()} title="点击重置当日安排" type="button">
-                  移除当日安排
-                </button>
-              ) : isOutsideSelectableDates || isScheduleLimitReached ? (
-                <span>
-                  {isOutsideSelectableDates
-                    ? "请选择学生可试课日期"
-                    : isScheduleLimitReached
-                      ? `最多安排 ${maxSelectedDates} 天`
-                      : ""}
-                </span>
-              ) : getSelectablePeriodsForDate(selectedDate).length === 0 ? (
-                <span>已试课时段不可选</span>
-              ) : (
-                <button className="text-button" onClick={() => handleSelectFullDaySchedule()} type="button">
-                  全选
-                </button>
-              )}
-            </div>
-            {trialSchedulePeriods.map((period) => {
-              const periodState = selectedDaySchedule[period.key];
-              const isPeriodSelected = periodState.enabled;
-              const isPeriodUnavailable =
-                isPeriodOutsideAvailableSchedule(selectedDate, period.key) || isPeriodBlockedBySchedule(selectedDate, period.key);
-
-              return (
-                <div className={`trial-schedule-row ${isPeriodSelected ? "selected" : ""} ${isPeriodUnavailable ? "unavailable" : ""}`} key={period.key}>
-                  <button
-                    className="trial-schedule-toggle"
-                    disabled={(isDateDisabledForNewSchedule(selectedDate) && !isPeriodSelected) || (isPeriodUnavailable && !isPeriodSelected)}
-                    onClick={() => handleTogglePeriodPreset(period)}
-                    type="button"
-                  >
-                    <strong>{period.label}</strong>
-                  </button>
-                  <div className="trial-schedule-time-fields">
-                    <input
-                      aria-label={`${period.label}开始时间`}
-                      disabled={
-                        hasAvailableScheduleLimit ||
-                        isDateDisabledForNewSchedule(selectedDate) ||
-                        isPeriodSelected ||
-                        isPeriodUnavailable
-                      }
-                      onChange={(event) => handleChangePeriodTime(period.key, "start", event.target.value)}
-                      type="time"
-                      value={periodState.start}
-                    />
-                    <span>至</span>
-                    <input
-                      aria-label={`${period.label}结束时间`}
-                      disabled={
-                        hasAvailableScheduleLimit ||
-                        isDateDisabledForNewSchedule(selectedDate) ||
-                        isPeriodSelected ||
-                        isPeriodUnavailable
-                      }
-                      onChange={(event) => handleChangePeriodTime(period.key, "end", event.target.value)}
-                      type="time"
-                      value={periodState.end}
-                    />
-                    <button
-                      className="trial-schedule-clear-button"
-                      disabled={!periodState.start && !periodState.end}
-                      onClick={() => handleClearPeriod(period.key)}
-                      type="button"
-                    >
-                      清空
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="sheet-actions grid grid-cols-2 gap-[8px]">
-          <button className="ghost-button min-h-[38px] px-[10px] py-[8px]" onClick={onClose} type="button">
-            取消
-          </button>
-          <button
-            className="primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
-            disabled={!schedulePlan || isConfirming}
-            onClick={handleConfirmSchedule}
-            type="button"
-          >
-            {confirmLabel}
-          </button>
-        </div>
-    </Modal>
-  );
+    },
+    plannedDates,
+    selectableDates,
+    selectedDate,
+    selectedDateHasSchedule,
+    selectedDateLabel: formatTrialScheduleDate(selectedDate),
+    setSelectedDate,
+    timePanelPeriods,
+    value: schedulePlan ? { plan: schedulePlan, scheduleDraft, selectedDates: [...plannedDates].sort() } : null
+  };
 }
+
+/** useTrialSchedule 的返回值形状，供 TrialScheduleEditor 等消费方标注类型。 */
+export type TrialScheduleState = ReturnType<typeof useTrialSchedule>;
