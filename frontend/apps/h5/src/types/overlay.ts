@@ -134,8 +134,6 @@ export interface TutorSchedulePreviewState {
 /** 家长端日程预览中的阶段片段。 */
 export interface TutorSchedulePreviewSection {
   dataType: "arranged" | "tested";
-  label?: string;
-  showScheduleLabel?: boolean;
   summary: string;
   title: string;
 }

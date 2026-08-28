@@ -1,6 +1,7 @@
 package com.unknown.platform.modules.clientprofile.controller.client;
 
 import com.unknown.platform.common.api.ApiResponse;
+import com.unknown.platform.common.api.ScheduleTimeTemplate;
 import com.unknown.platform.common.api.UserNickname;
 import com.unknown.platform.common.security.ClientRequestContext;
 import com.unknown.platform.modules.clientprofile.application.ClientProfileAppService;
@@ -46,6 +47,26 @@ public class ClientProfileController {
   @PutMapping("/nickname")
   public ApiResponse<UserNickname> updateNickname(ClientRequestContext context, @Valid @RequestBody UpdateNicknameRequest request) {
     return ApiResponse.ok(clientProfileAppService.updateNickname(context.authorization(), request));
+  }
+
+  /**
+   * 更新当前登录用户的可排期时间模板。
+   *
+   * @param context 客户端请求上下文（角色 + 登录令牌）
+   * @param templateJson 时间模板原始 JSON
+   * @return 已保存的时间模板
+   */
+  @PutMapping("/schedule-time-template")
+  public ApiResponse<ScheduleTimeTemplate> updateScheduleTimeTemplate(
+      ClientRequestContext context,
+      @RequestBody String templateJson
+  ) {
+    return ApiResponse.ok(
+        clientProfileAppService.updateScheduleTimeTemplate(
+            context.authorization(),
+            ScheduleTimeTemplateRequestParser.parse(templateJson)
+        )
+    );
   }
 
   /**

@@ -274,9 +274,7 @@ export function TutorApplications({
           }
         >
           <CalendarTime
-            availableScheduleSummary={selectedCandidate?.availability ?? ""}
             initialValue={trialScheduleValue ?? getCandidateInitialTrialScheduleValue(selectedCandidate)}
-            mode="view"
             plannedDates={plannedDates}
             onClose={() => setIsScheduleOpen(false)}
             onConfirm={(value) => {

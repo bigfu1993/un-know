@@ -32,6 +32,7 @@ import {
   ResetClientPasswordResponse,
   SelectRoleRequest,
   SendChatMessageRequest,
+  ScheduleTimeTemplate,
   SubmitHuntingCertificationRequest,
   SubmitHuntingCertificationResponse,
   SubmitTutorCertificationRequest,
@@ -358,6 +359,16 @@ export async function getClientAddresses(): Promise<ClientAddress[]> {
 
 export async function updateClientNickname(payload: UpdateNicknameRequest): Promise<UserNickname> {
   return requestJson<UserNickname>("/client/profile/nickname", {
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
+}
+
+/** 更新当前用户的早、中、晚可用时间模板。 */
+export async function updateClientScheduleTimeTemplate(
+  payload: ScheduleTimeTemplate
+): Promise<ScheduleTimeTemplate> {
+  return requestJson<ScheduleTimeTemplate>("/client/profile/schedule-time-template", {
     method: "PUT",
     body: JSON.stringify(payload)
   });

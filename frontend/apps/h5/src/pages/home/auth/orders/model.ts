@@ -29,8 +29,6 @@ export interface TutorOrderSchedulePreviewConfig {
 /** 家教日程预览中的一个阶段片段。 */
 export interface TutorSchedulePreviewSection {
   dataType: "arranged" | "tested";
-  label?: string;
-  showScheduleLabel?: boolean;
   summary: string;
   title: string;
 }
@@ -100,7 +98,6 @@ export function getTutorOrderSchedulePreviewConfig(
       availabilitySummary
         ? {
             dataType: "arranged",
-            showScheduleLabel: false,
             summary: availabilitySummary,
             title: "可家教时间"
           }
@@ -108,8 +105,6 @@ export function getTutorOrderSchedulePreviewConfig(
       trialScheduleSummary
         ? {
             dataType: "tested",
-            label: "试",
-            showScheduleLabel: true,
             summary: trialScheduleSummary,
             title: "试课安排"
           }
@@ -134,8 +129,6 @@ export function getTutorOrderSchedulePreviewConfig(
       trialScheduleSummary
         ? {
             dataType: "tested",
-            label: "试",
-            showScheduleLabel: true,
             summary: trialScheduleSummary,
             title: "试课安排"
           }
@@ -143,8 +136,6 @@ export function getTutorOrderSchedulePreviewConfig(
       serviceScheduleSummary
         ? {
             dataType: "arranged",
-            label: "课",
-            showScheduleLabel: true,
             summary: serviceScheduleSummary,
             title: "课程安排"
           }
@@ -170,8 +161,6 @@ export function getTutorOrderSchedulePreviewConfig(
         sections: [
           {
             dataType: "tested",
-            label: "试",
-            showScheduleLabel: true,
             summary: trialScheduleSummary,
             title: "试课安排"
           }

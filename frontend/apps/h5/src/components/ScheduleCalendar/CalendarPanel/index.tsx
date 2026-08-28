@@ -12,8 +12,6 @@ export interface CalendarPanelScheduleData {
   date: string;
   /** 命中的分段 key 列表，决定这一天哪几段显示日程底色。 */
   periods: string[];
-  /** 每个分段 key 对应的展示文案。 */
-  periodLabels?: Record<string, string>;
 }
 
 /** 日期面板日历组件属性；只负责月份网格、查看/选择交互以及试课/正式课程日程分段展示。 */
@@ -51,15 +49,7 @@ export interface CalendarPanelProps {
 
 /** 将日程数组转换为按日期索引的分段集合，避免渲染每个日期时重复遍历。 */
 function createScheduleDataMap(datas: CalendarPanelScheduleData[]) {
-  return new Map(
-    datas.map((data) => [
-      data.date,
-      {
-        periodLabels: new Map(Object.entries(data.periodLabels ?? {})),
-        periods: new Set(data.periods)
-      }
-    ])
-  );
+  return new Map(datas.map((data) => [data.date, new Set(data.periods)]));
 }
 
 /** 按上午、下午、晚上的业务语义返回对应图标，未知 key 按分段顺序兜底。 */
@@ -339,9 +329,8 @@ export function CalendarPanel({
             >
               {schedulePeriods.map((period, periodIndex) => {
                 const hasPeriod = Boolean(
-                  testedDataEntry?.periods.has(period) || arrangedDataEntry?.periods.has(period)
+                  testedDataEntry?.has(period) || arrangedDataEntry?.has(period)
                 );
-                const label = testedDataEntry?.periodLabels.get(period) ?? arrangedDataEntry?.periodLabels.get(period);
                 const PeriodIcon = getSchedulePeriodIcon(period, periodIndex);
 
                 return (
@@ -356,7 +345,6 @@ export function CalendarPanel({
                     {hasPeriod ? (
                       <PeriodIcon aria-hidden="true" className="calendar-panel__period-icon" size={9} />
                     ) : null}
-                    {label ? <span className="calendar-panel__period-label">{label}</span> : null}
                   </span>
                 );
               })}

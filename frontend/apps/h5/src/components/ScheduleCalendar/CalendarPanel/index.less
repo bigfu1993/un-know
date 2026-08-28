@@ -1,5 +1,7 @@
 .calendar-panel {
   display: grid;
+  width: 100%;
+  min-width: 0;
   gap: 8px;
   border: 1px solid var(--h5-border);
   border-radius: 8px;
@@ -13,7 +15,9 @@
 
 /* 工具栏跟星期行、日期格子行共用同一份居中宽度，保证"上月/下月"按钮的左右边界和格子边界对齐。 */
 .calendar-panel__toolbar {
-  width: min(100%, 310px);
+  width: 100%;
+  max-width: 310px;
+  min-width: 0;
   justify-self: center;
   border-radius: 8px;
   background: var(--h5-surface-muted);
@@ -23,7 +27,9 @@
 .calendar-panel__weekdays,
 .calendar-panel__grid {
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  width: min(100%, 310px);
+  width: 100%;
+  max-width: 310px;
+  min-width: 0;
   justify-self: center;
 }
 
@@ -47,8 +53,10 @@
 /* 线框是单元格的默认常驻样式，默认灰色；单击查看时才切换成主题色，用来区分"查看中"的单元格。 */
 .calendar-panel__day {
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 100%;
+  max-width: 40px;
+  aspect-ratio: 1;
+  justify-self: center;
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--h5-border);
@@ -134,11 +142,6 @@
   right: 0;
   left: 0;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 1px;
-  padding-right: 3px;
   opacity: 0;
 }
 
@@ -164,10 +167,4 @@
   flex: 0 0 auto;
   color: var(--h5-text);
   stroke-width: 2.4;
-}
-
-.calendar-panel__period-label {
-  font-size: 9px;
-  font-weight: 900;
-  line-height: 1;
 }

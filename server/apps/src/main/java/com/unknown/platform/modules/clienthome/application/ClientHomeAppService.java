@@ -1,5 +1,8 @@
 package com.unknown.platform.modules.clienthome.application;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.unknown.platform.common.api.ScheduleTimeTemplate;
 import com.unknown.platform.common.exception.BusinessException;
 import com.unknown.platform.common.security.ClientSessionService;
 import com.unknown.platform.modules.auth.model.ClientRole;
@@ -16,10 +19,16 @@ import org.springframework.stereotype.Service;
 public class ClientHomeAppService {
   private final JdbcTemplate jdbcTemplate;
   private final ClientSessionService clientSessionService;
+  private final ObjectMapper objectMapper;
 
-  public ClientHomeAppService(JdbcTemplate jdbcTemplate, ClientSessionService clientSessionService) {
+  public ClientHomeAppService(
+      JdbcTemplate jdbcTemplate,
+      ClientSessionService clientSessionService,
+      ObjectMapper objectMapper
+  ) {
     this.jdbcTemplate = jdbcTemplate;
     this.clientSessionService = clientSessionService;
+    this.objectMapper = objectMapper;
   }
 
   /** 获取当前角色首页数据；已登录时优先读取当前账号，未登录仅用于本地兜底预览。 */
@@ -44,7 +53,8 @@ public class ClientHomeAppService {
         profileSql("u.role = ?", "ORDER BY u.updated_at DESC, u.id DESC"),
         (rs, rowNum) -> mapRoleProfile(role, rs.getString("nickname"), rs.getString("account_label"),
             rs.getInt("credit_score"), rs.getLong("withdrawable_cents"), rs.getString("status"),
-            rs.getString("tutor_certification_status"), rs.getString("hunting_certification_status"), rs.getBoolean("tutor_exposure_enabled")),
+            rs.getString("tutor_certification_status"), rs.getString("hunting_certification_status"),
+            rs.getBoolean("tutor_exposure_enabled"), rs.getString("schedule_time_template")),
         role.name()
     );
   }
@@ -54,7 +64,8 @@ public class ClientHomeAppService {
         profileSql("u.id = ? AND u.role = ?", ""),
         (rs, rowNum) -> mapRoleProfile(role, rs.getString("nickname"), rs.getString("account_label"),
             rs.getInt("credit_score"), rs.getLong("withdrawable_cents"), rs.getString("status"),
-            rs.getString("tutor_certification_status"), rs.getString("hunting_certification_status"), rs.getBoolean("tutor_exposure_enabled")),
+            rs.getString("tutor_certification_status"), rs.getString("hunting_certification_status"),
+            rs.getBoolean("tutor_exposure_enabled"), rs.getString("schedule_time_template")),
         userId,
         role.name()
     );
@@ -66,6 +77,7 @@ public class ClientHomeAppService {
                    COALESCE(u.tutor_certification_status, 'pending') AS tutor_certification_status,
                    COALESCE(u.hunting_certification_status, 'pending') AS hunting_certification_status,
                    COALESCE(u.tutor_exposure_enabled, FALSE) AS tutor_exposure_enabled,
+                   u.schedule_time_template::text AS schedule_time_template,
                    COALESCE(w.withdrawable_cents, 0) AS withdrawable_cents
             FROM app_user u
             LEFT JOIN wallet_account w ON w.user_id = u.id
@@ -84,7 +96,8 @@ public class ClientHomeAppService {
       String status,
       String tutorCertificationStatus,
       String huntingCertificationStatus,
-      boolean tutorExposureEnabled
+      boolean tutorExposureEnabled,
+      String scheduleTimeTemplateJson
   ) {
     return new RoleProfile(
         role,
@@ -95,7 +108,8 @@ public class ClientHomeAppService {
         accountStatus(status),
         certificationStatus(tutorCertificationStatus),
         certificationStatus(huntingCertificationStatus),
-        tutorExposureEnabled
+        tutorExposureEnabled,
+        readScheduleTimeTemplate(scheduleTimeTemplateJson)
     );
   }
 
@@ -155,5 +169,13 @@ public class ClientHomeAppService {
       case "frozen" -> "frozen";
       default -> "pending";
     };
+  }
+
+  private ScheduleTimeTemplate readScheduleTimeTemplate(String templateJson) {
+    try {
+      return objectMapper.readValue(templateJson, ScheduleTimeTemplate.class);
+    } catch (JsonProcessingException exception) {
+      throw new IllegalStateException("时间模板反序列化失败", exception);
+    }
   }
 }

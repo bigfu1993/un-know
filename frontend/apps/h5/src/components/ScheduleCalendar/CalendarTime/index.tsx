@@ -1,6 +1,9 @@
+import { useGlobalUser, useGlobalUserActions } from "@h5/globalProvider";
+import { getErrorMessage, showMessage } from "@tools/messageToast";
+import { updateClientScheduleTimeTemplate } from "@unknown/api-client";
 import "./index.less";
 import { useTrialSchedule, type UseTrialScheduleOptions } from "./useTrialSchedule";
-import { getTrialScheduleSubtitle, type TrialScheduleValue } from "./model";
+import { createScheduleTimeTemplateFromDay, getTrialScheduleSubtitle, type TrialScheduleValue } from "./model";
 
 /** 试课/正式课排期编辑区属性；不含 Modal 展示信息（标题/文案/图标），由调用方自己套一层 Modal。 */
 export interface CalendarTimeProps extends UseTrialScheduleOptions {
@@ -20,42 +23,78 @@ export interface CalendarTimeProps extends UseTrialScheduleOptions {
  * 调用方决定。
  */
 export function CalendarTime({
-  availableScheduleSummary,
-  blockedScheduleLabel,
   blockedScheduleSummary,
   confirmLabel = "确认",
   initialValue,
   isConfirming = false,
   maxSelectedDates,
-  mode,
   onClose,
   onConfirm,
   onSubtitleChange,
   plannedDates,
-  scheduleLabel,
   scheduleType
 }: CalendarTimeProps) {
+  const { scheduleTimeTemplate } = useGlobalUser();
+  const { setScheduleTimeTemplate } = useGlobalUserActions();
+  const [isSavingScheduleTimeTemplate, setIsSavingScheduleTimeTemplate] = useState(false);
   const schedule = useTrialSchedule({
-    availableScheduleSummary,
-    blockedScheduleLabel,
     blockedScheduleSummary,
     initialValue,
     maxSelectedDates,
-    mode,
     plannedDates,
-    scheduleLabel,
     scheduleType
   });
+  const hasScheduleTimeTemplate = Object.values(scheduleTimeTemplate).some(Boolean);
+
+  /** 将当前日期的有效安排保存为用户时间模板。 */
+  async function handleSaveScheduleTimeTemplate() {
+    if (Object.values(schedule.activeDaySchedule).some((periodState) => periodState.legacyRange)) {
+      showMessage("请先清空并重新设置历史异常时段。", { type: "warning" });
+      return;
+    }
+
+    setIsSavingScheduleTimeTemplate(true);
+
+    try {
+      const template = createScheduleTimeTemplateFromDay(schedule.activeDaySchedule);
+      const savedTemplate = await updateClientScheduleTimeTemplate(template);
+      setScheduleTimeTemplate(savedTemplate);
+      showMessage("时间模板已更新。", { type: "success" });
+    } catch (error) {
+      showMessage(getErrorMessage(error, "时间模板更新失败，请稍后重试。"), { type: "error" });
+    } finally {
+      setIsSavingScheduleTimeTemplate(false);
+    }
+  }
+
+  /** 将用户时间模板整组应用到当前日期。 */
+  function handleUseScheduleTimeTemplate() {
+    const result = schedule.applyScheduleTimeTemplate(scheduleTimeTemplate);
+
+    if (!result.ok) {
+      showMessage(result.reason ?? "时间模板无法应用到当前日期。", { type: "warning" });
+      return;
+    }
+
+    showMessage("时间模板已应用到当前日期。", { type: "success" });
+  }
 
   useEffect(() => {
     onSubtitleChange?.(
       getTrialScheduleSubtitle({
         activeDate: schedule.activeDate,
+        isActiveDatePast: schedule.isActiveDatePast,
         isScheduleLimitReached: schedule.isScheduleLimitReached,
         plannedDates: schedule.plannedDates
       })
     );
-  }, [onSubtitleChange, schedule.activeDate, schedule.isScheduleLimitReached, schedule.plannedDates]);
+  }, [
+    onSubtitleChange,
+    schedule.activeDate,
+    schedule.isActiveDatePast,
+    schedule.isScheduleLimitReached,
+    schedule.plannedDates
+  ]);
 
   return (
     <>
@@ -65,11 +104,9 @@ export function CalendarTime({
           arrangedDatas={schedule.arrangedDatas}
           arrangedPeriods={schedule.arrangedPeriods}
           maxSelectedDates={schedule.maxSelectedDates}
-          mode={schedule.mode}
+          mode="view"
           onActiveDateChange={schedule.setActiveDate}
-          onToggleDate={schedule.onToggleDate}
           plannedDates={schedule.plannedDates}
-          selectableDates={schedule.selectableDates}
           selectedDates={schedule.selectedDates}
           testedDatas={schedule.testedDatas}
           testedPeriods={schedule.testedPeriods}
@@ -78,15 +115,15 @@ export function CalendarTime({
         <TimePanel
           activeDateHasSchedule={schedule.activeDateHasSchedule}
           activeDateLabel={schedule.activeDateLabel}
-          hasNoSelectablePeriods={schedule.hasNoSelectablePeriods}
+          hasScheduleTimeTemplate={hasScheduleTimeTemplate}
           isActiveDatePast={schedule.isActiveDatePast}
-          isOutsideSelectableDates={schedule.isOutsideSelectableDates}
+          isSavingScheduleTimeTemplate={isSavingScheduleTimeTemplate}
           isScheduleLimitReached={schedule.isScheduleLimitReached}
-          onChangePeriodTime={schedule.onChangePeriodTime}
-          onClearDaySchedule={schedule.onClearDaySchedule}
+          onCancelAll={schedule.onClearDaySchedule}
+          onChangePeriodRange={schedule.onChangePeriodRange}
           onClearPeriod={schedule.onClearPeriod}
-          onSelectFullDaySchedule={schedule.onSelectFullDaySchedule}
-          onTogglePeriod={schedule.onTogglePeriod}
+          onSaveScheduleTimeTemplate={handleSaveScheduleTimeTemplate}
+          onUseScheduleTimeTemplate={handleUseScheduleTimeTemplate}
           periods={schedule.periods}
         />
       </div>

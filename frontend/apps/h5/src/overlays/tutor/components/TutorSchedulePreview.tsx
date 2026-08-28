@@ -19,23 +19,15 @@ function getTutorSchedulePreviewCalendarDatas(sections: TutorSchedulePreviewSect
       return;
     }
 
-    getTrialScheduleCalendarDatas(scheduleValue.selectedDates, scheduleValue.scheduleDraft, {
-      scheduleLabel: section.label,
-      showPeriodLabel: section.showScheduleLabel
-    }).forEach((scheduleData) => {
+    getTrialScheduleCalendarDatas(scheduleValue.selectedDates, scheduleValue.scheduleDraft).forEach((scheduleData) => {
       const dataMap = dataMaps[section.dataType];
       const currentData = dataMap.get(scheduleData.date) ?? {
         date: scheduleData.date,
-        periodLabels: {},
         periods: []
       };
 
       dataMap.set(scheduleData.date, {
         date: scheduleData.date,
-        periodLabels: {
-          ...currentData.periodLabels,
-          ...scheduleData.periodLabels
-        },
         periods: [...new Set([...currentData.periods, ...scheduleData.periods])]
       });
     });

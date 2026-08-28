@@ -455,8 +455,6 @@ export function OrderActions({
           }
         >
           <CalendarTime
-            availableScheduleSummary={getTutorTrialAvailabilitySummaryFromOrderDetail(tutorWorkflowTargetOrder.detail)}
-            blockedScheduleLabel="试"
             blockedScheduleSummary={getTutorTrialScheduleSummaryFromOrderDetail(tutorWorkflowTargetOrder.detail)}
             confirmLabel={isSubmittingServiceSchedule ? "提交中" : "提交日程"}
             initialValue={null}
@@ -464,7 +462,6 @@ export function OrderActions({
             maxSelectedDates={null}
             onClose={() => setIsServiceScheduleOpen(false)}
             onConfirm={handleConfirmServiceSchedule}
-            scheduleLabel="课"
             scheduleType="arranged"
           />
         </Modal>
@@ -487,7 +484,6 @@ export function OrderActions({
           }
         >
           <CalendarTime
-            blockedScheduleLabel="试"
             blockedScheduleSummary={
               serviceAvailabilityAction === "accept_service_offer"
                 ? getTutorTrialScheduleSummaryFromOrderDetail(order.detail)

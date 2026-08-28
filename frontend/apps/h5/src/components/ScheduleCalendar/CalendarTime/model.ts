@@ -1,3 +1,4 @@
+import type { ScheduleTimeRange, ScheduleTimeTemplate } from "@unknown/domain";
 import { parseTutorTrialSchedule } from "@tools/tutorTrial";
 
 /** 试课排期时段标识。 */
@@ -5,16 +6,18 @@ export type TrialSchedulePeriodKey = "morning" | "afternoon" | "evening";
 
 /** 试课排期时段配置。 */
 export interface TrialSchedulePeriodConfig {
-  defaultEnd: string;
-  defaultStart: string;
   key: TrialSchedulePeriodKey;
   label: string;
+  maxTime: string;
+  minTime: string;
 }
 
 /** 试课排期单个时段状态。 */
 export interface TrialSchedulePeriodState {
   enabled: boolean;
   end: string;
+  /** 旧排期中无法进入当前双滑块的原始起止时间，只读保留到用户主动清空。 */
+  legacyRange?: ScheduleTimeRange;
   start: string;
 }
 
@@ -36,11 +39,11 @@ export interface TrialScheduleValue {
   selectedDates: string[];
 }
 
-/** 试课默认可选时段。 */
+/** 试课三个固定时段的可排期边界。 */
 export const trialSchedulePeriods: TrialSchedulePeriodConfig[] = [
-  { defaultEnd: "11:00", defaultStart: "09:00", key: "morning", label: "上午" },
-  { defaultEnd: "17:00", defaultStart: "14:00", key: "afternoon", label: "下午" },
-  { defaultEnd: "21:00", defaultStart: "18:00", key: "evening", label: "晚上" }
+  { key: "morning", label: "上午", minTime: "08:00", maxTime: "12:00" },
+  { key: "afternoon", label: "下午", minTime: "12:00", maxTime: "18:00" },
+  { key: "evening", label: "晚上", minTime: "18:00", maxTime: "22:00" }
 ];
 
 /** 生成单日默认三段试课排期。 */
@@ -60,6 +63,123 @@ export function createDefaultDaySchedule(): Record<TrialSchedulePeriodKey, Trial
   );
 }
 
+/** 将 HH:mm 时间转换为当天分钟数；格式或范围无效时返回 null。 */
+function getTrialScheduleTimeMinutes(timeValue: string) {
+  const match = /^(\d{2}):(\d{2})$/.exec(timeValue);
+
+  if (!match) {
+    return null;
+  }
+
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+
+  return hour <= 23 && minute <= 59 ? hour * 60 + minute : null;
+}
+
+/** 创建原子时段范围；滑块重合时保留位置但不形成有效安排。 */
+export function createTrialSchedulePeriodState(start: string, end: string): TrialSchedulePeriodState {
+  const startMinutes = getTrialScheduleTimeMinutes(start);
+  const endMinutes = getTrialScheduleTimeMinutes(end);
+
+  if (startMinutes === null || endMinutes === null || endMinutes < startMinutes) {
+    return { enabled: false, start: "", end: "" };
+  }
+  if (endMinutes === startMinutes) {
+    return { enabled: false, start, end };
+  }
+  if (endMinutes - startMinutes < 10) {
+    return { enabled: false, start: "", end: "" };
+  }
+
+  return { enabled: true, start, end };
+}
+
+/** 按固定时段窗口创建范围，越界或偏离窗口十分钟刻度时统一归一化为空状态。 */
+export function createTrialSchedulePeriodStateForPeriod(
+  periodKey: TrialSchedulePeriodKey,
+  start: string,
+  end: string
+): TrialSchedulePeriodState {
+  const periodState = createTrialSchedulePeriodState(start, end);
+  const period = trialSchedulePeriods.find((candidatePeriod) => candidatePeriod.key === periodKey);
+
+  if (!periodState.start || !periodState.end || !period) {
+    return periodState;
+  }
+
+  const startMinutes = getTrialScheduleTimeMinutes(periodState.start);
+  const endMinutes = getTrialScheduleTimeMinutes(periodState.end);
+  const minMinutes = getTrialScheduleTimeMinutes(period.minTime);
+  const maxMinutes = getTrialScheduleTimeMinutes(period.maxTime);
+
+  if (
+    startMinutes === null ||
+    endMinutes === null ||
+    minMinutes === null ||
+    maxMinutes === null ||
+    startMinutes < minMinutes ||
+    endMinutes > maxMinutes ||
+    (startMinutes - minMinutes) % 10 !== 0 ||
+    (endMinutes - minMinutes) % 10 !== 0
+  ) {
+    return createTrialSchedulePeriodState("", "");
+  }
+
+  return periodState;
+}
+
+/** 用稀疏时间模板整组覆盖单日安排，模板未包含的时段会被清空。 */
+export function createTrialScheduleDayFromTemplate(
+  template: ScheduleTimeTemplate
+): Record<TrialSchedulePeriodKey, TrialSchedulePeriodState> {
+  return trialSchedulePeriods.reduce(
+    (daySchedule, period) => {
+      const range = template[period.key];
+
+      return {
+        ...daySchedule,
+        [period.key]: createTrialSchedulePeriodStateForPeriod(period.key, range?.start ?? "", range?.end ?? "")
+      };
+    },
+    {} as Record<TrialSchedulePeriodKey, TrialSchedulePeriodState>
+  );
+}
+
+/** 将单日安排转换为只包含有效时段的稀疏时间模板。 */
+export function createScheduleTimeTemplateFromDay(
+  daySchedule: Record<TrialSchedulePeriodKey, TrialSchedulePeriodState>
+): ScheduleTimeTemplate {
+  return trialSchedulePeriods.reduce<ScheduleTimeTemplate>((template, period) => {
+    const periodState = daySchedule[period.key];
+
+    if (periodState.legacyRange) {
+      throw new Error("当前日存在历史异常时段，无法保存为模板");
+    }
+    if (!periodState.enabled) {
+      return template;
+    }
+
+    const normalizedPeriodState = createTrialSchedulePeriodStateForPeriod(
+      period.key,
+      periodState.start,
+      periodState.end
+    );
+
+    if (!normalizedPeriodState.enabled) {
+      throw new Error("当前日存在不符合窗口十分钟刻度的时段，无法保存为模板");
+    }
+
+    return {
+      ...template,
+      [period.key]: {
+        start: normalizedPeriodState.start,
+        end: normalizedPeriodState.end
+      }
+    };
+  }, {});
+}
+
 /** 将日期格式化为中文年月日。 */
 export function formatTrialScheduleDate(dateKey: string) {
   const [year, month, day] = dateKey.split("-").map(Number);
@@ -67,16 +187,22 @@ export function formatTrialScheduleDate(dateKey: string) {
   return `${year}年${month}月${day}日`;
 }
 
-/** 根据试课天数上限状态和当前查看日期生成排期弹窗副标题。 */
+/** 根据当前查看日期和试课天数上限状态生成排期弹窗副标题。 */
 export function getTrialScheduleSubtitle({
   activeDate,
+  isActiveDatePast,
   isScheduleLimitReached,
   plannedDates
 }: {
   activeDate: string;
+  isActiveDatePast: boolean;
   isScheduleLimitReached: boolean;
   plannedDates: string[];
 }) {
+  if (isActiveDatePast) {
+    return "该日期无法制定课程安排";
+  }
+
   const messages: string[] = [];
 
   if (isScheduleLimitReached) {
@@ -94,6 +220,21 @@ function formatTrialScheduleTime(timeValue: string) {
   return timeValue.replace(/^0(?=\d:)/, "");
 }
 
+/** 读取已安排时段的展示范围；历史异常范围优先保留原始文字。 */
+function getTrialSchedulePeriodDisplayRange(periodState: TrialSchedulePeriodState): ScheduleTimeRange | null {
+  if (!periodState.enabled) {
+    return null;
+  }
+  if (periodState.legacyRange) {
+    return periodState.legacyRange;
+  }
+  if (periodState.start && periodState.end) {
+    return { start: periodState.start, end: periodState.end };
+  }
+
+  return null;
+}
+
 /** 获取单日已经选择的试课时段时间。 */
 export function getEnabledPeriodSummaries(
   daySchedule: Record<TrialSchedulePeriodKey, TrialSchedulePeriodState> | undefined
@@ -103,39 +244,23 @@ export function getEnabledPeriodSummaries(
   }
 
   return trialSchedulePeriods
-    .map((period) => daySchedule[period.key])
-    .filter((periodState) => periodState.enabled && periodState.start && periodState.end)
-    .map((periodState) => `${formatTrialScheduleTime(periodState.start)}-${formatTrialScheduleTime(periodState.end)}`);
+    .map((period) => getTrialSchedulePeriodDisplayRange(daySchedule[period.key]))
+    .filter((range): range is ScheduleTimeRange => range !== null)
+    .map((range) => `${formatTrialScheduleTime(range.start)}-${formatTrialScheduleTime(range.end)}`);
 }
 
 /** 将试课草稿转换为 CalendarPanel 可消费的日程分段数据。 */
 export function getTrialScheduleCalendarDatas(
   selectedDates: string[],
-  scheduleDraft: TrialScheduleDraft,
-  options: { scheduleLabel?: string; showPeriodLabel?: boolean } = {}
+  scheduleDraft: TrialScheduleDraft
 ): CalendarPanelScheduleData[] {
-  const scheduleLabel = options.scheduleLabel;
-
   return selectedDates.map((dateKey) => ({
     date: dateKey,
-    periodLabels:
-      options.showPeriodLabel && scheduleLabel
-        ? trialSchedulePeriods.reduce(
-            (labels, period) => {
-              const periodState = scheduleDraft[dateKey]?.[period.key];
-
-              return periodState?.enabled && periodState.start && periodState.end
-                ? { ...labels, [period.key]: scheduleLabel }
-                : labels;
-            },
-            {} as Record<string, string>
-          )
-        : undefined,
     periods: trialSchedulePeriods
       .filter((period) => {
         const periodState = scheduleDraft[dateKey]?.[period.key];
 
-        return Boolean(periodState?.enabled && periodState.start && periodState.end);
+        return Boolean(periodState && getTrialSchedulePeriodDisplayRange(periodState));
       })
       .map((period) => period.key)
   }));
@@ -203,12 +328,18 @@ export function getTrialScheduleValueFromSummary(summary: string): TrialSchedule
     scheduleLine.times.forEach((timeRange) => {
       const [start, end] = timeRange.split("-");
       const periodKey = getTrialSchedulePeriodKey(timeRange);
+      const normalizedStart = normalizeTrialInputTime(start);
+      const normalizedEnd = normalizeTrialInputTime(end);
+      const periodState = createTrialSchedulePeriodStateForPeriod(periodKey, normalizedStart, normalizedEnd);
 
-      daySchedule[periodKey] = {
-        enabled: Boolean(start && end),
-        end: normalizeTrialInputTime(end),
-        start: normalizeTrialInputTime(start)
-      };
+      daySchedule[periodKey] = periodState.enabled
+        ? periodState
+        : {
+            enabled: true,
+            end: "",
+            legacyRange: { end, start },
+            start: ""
+          };
     });
 
     return { ...draft, [scheduleLine.date]: daySchedule };

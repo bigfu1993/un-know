@@ -41,6 +41,19 @@ export interface ClientPrimaryTab {
   description: string;
 }
 
+/** 用户在单个时段内可用的时间范围。 */
+export interface ScheduleTimeRange {
+  start: string;
+  end: string;
+}
+
+/** 用户按早、中、晚维护的稀疏可用时间模板。 */
+export interface ScheduleTimeTemplate {
+  morning?: ScheduleTimeRange;
+  afternoon?: ScheduleTimeRange;
+  evening?: ScheduleTimeRange;
+}
+
 export interface RoleProfile {
   role: Role;
   nickname: string;
@@ -51,6 +64,7 @@ export interface RoleProfile {
   tutorCertificationStatus: TutorCertificationStatus;
   huntingCertificationStatus: HuntingCertificationStatus;
   tutorExposureEnabled: boolean;
+  scheduleTimeTemplate: ScheduleTimeTemplate;
 }
 
 export interface ClientHomePayload {

@@ -171,6 +171,10 @@ declare global {
   const createDefaultDaySchedule: typeof import('./components/ScheduleCalendar/CalendarTime/model').createDefaultDaySchedule
   const createRef: typeof import('react').createRef
   const createRoot: typeof import('react-dom/client').createRoot
+  const createScheduleTimeTemplateFromDay: typeof import('./components/ScheduleCalendar/CalendarTime/model').createScheduleTimeTemplateFromDay
+  const createTrialScheduleDayFromTemplate: typeof import('./components/ScheduleCalendar/CalendarTime/model').createTrialScheduleDayFromTemplate
+  const createTrialSchedulePeriodState: typeof import('./components/ScheduleCalendar/CalendarTime/model').createTrialSchedulePeriodState
+  const createTrialSchedulePeriodStateForPeriod: typeof import('./components/ScheduleCalendar/CalendarTime/model').createTrialSchedulePeriodStateForPeriod
   const createTutorTaskModel: typeof import('./tools/tutorTaskWorkflow').createTutorTaskModel
   const delegationRequirementTags: typeof import('./tools/publishInfo').delegationRequirementTags
   const deliveryModeLabels: typeof import('@unknown/domain').deliveryModeLabels

@@ -327,8 +327,7 @@ public class TutorWorkspaceAppService {
     }
 
     String trialScheduleText = tutorTrialScheduleText(request.trialStart(), request.trialEnd(), request.trialHalfDay());
-    String studentAvailability = tutorApplicationAvailability(demand.id(), applicationId);
-    assertTutorTrialScheduleWithinAvailability(trialScheduleText, studentAvailability);
+    assertTutorTrialSchedule(trialScheduleText);
 
     int updatedRows = jdbcTemplate.update(
         """
@@ -1456,7 +1455,7 @@ public class TutorWorkspaceAppService {
   }
 
 
-  /** 查询学生提交的原始可试课时间，家长确认试课时必须在该范围内安排。 */
+  /** 查询学生提交的原始可用时间，供延期保留的正式日程 workflow 校验使用。 */
   private String tutorApplicationAvailability(long tutorDemandId, String applicationId) {
     List<String> rows = jdbcTemplate.query(
         """
@@ -1478,33 +1477,14 @@ public class TutorWorkspaceAppService {
   }
 
 
-  /** 校验家长安排的试课日期和时间段不超过 3 天，并落在学生提交的可试课时间内。 */
-  private void assertTutorTrialScheduleWithinAvailability(String trialSchedule, String studentAvailability) {
+  /** 校验家长当前提交的试课安排非空且不超过 3 天，不读取历史可试课时间。 */
+  private void assertTutorTrialSchedule(String trialSchedule) {
     Map<LocalDate, List<TutorTrialTimeRange>> trialScheduleMap = parseTutorTrialScheduleMap(trialSchedule);
     if (trialScheduleMap.isEmpty()) {
       throw new BusinessException("TUTOR_TRIAL_SCHEDULE_REQUIRED", "请先制定试课安排");
     }
     if (trialScheduleMap.size() > TUTOR_TRIAL_PARENT_MAX_DAYS) {
       throw new BusinessException("TUTOR_TRIAL_SCHEDULE_TOO_MANY_DAYS", "试课安排最多选择 3 天");
-    }
-
-    Map<LocalDate, List<TutorTrialTimeRange>> availabilityMap = parseTutorTrialScheduleMap(studentAvailability);
-    if (availabilityMap.isEmpty()) {
-      return;
-    }
-
-    for (Map.Entry<LocalDate, List<TutorTrialTimeRange>> entry : trialScheduleMap.entrySet()) {
-      List<TutorTrialTimeRange> availableRanges = availabilityMap.get(entry.getKey());
-      if (availableRanges == null) {
-        throw new BusinessException("TUTOR_TRIAL_SCHEDULE_OUT_OF_AVAILABILITY", "试课安排必须在学生提交的可试课日期内");
-      }
-
-      for (TutorTrialTimeRange trialRange : entry.getValue()) {
-        boolean contained = availableRanges.stream().anyMatch((availableRange) -> availableRange.contains(trialRange));
-        if (!contained) {
-          throw new BusinessException("TUTOR_TRIAL_SCHEDULE_OUT_OF_AVAILABILITY", "试课安排必须在学生提交的可试课时间段内");
-        }
-      }
     }
   }
 

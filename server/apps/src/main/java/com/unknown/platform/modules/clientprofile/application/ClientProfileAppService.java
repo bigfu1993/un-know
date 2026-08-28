@@ -1,5 +1,8 @@
 package com.unknown.platform.modules.clientprofile.application;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.unknown.platform.common.api.ScheduleTimeTemplate;
 import com.unknown.platform.common.api.UserNickname;
 import com.unknown.platform.common.exception.BusinessException;
 import com.unknown.platform.common.security.ClientSessionService;
@@ -32,10 +35,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class ClientProfileAppService {
   private final JdbcTemplate jdbcTemplate;
   private final ClientSessionService clientSessionService;
+  private final ObjectMapper objectMapper;
 
-  public ClientProfileAppService(JdbcTemplate jdbcTemplate, ClientSessionService clientSessionService) {
+  public ClientProfileAppService(
+      JdbcTemplate jdbcTemplate,
+      ClientSessionService clientSessionService,
+      ObjectMapper objectMapper
+  ) {
     this.jdbcTemplate = jdbcTemplate;
     this.clientSessionService = clientSessionService;
+    this.objectMapper = objectMapper;
   }
 
   /**
@@ -63,6 +72,29 @@ public class ClientProfileAppService {
         userId
     );
     return new UserNickname(nickname, maskPhone(userPhone(userId)));
+  }
+
+  /**
+   * 保存当前登录用户的时间模板，模板仅允许包含所属时段内的十分钟粒度范围。
+   *
+   * @param authorization 客户端登录访问令牌
+   * @param template 用户提交的时间模板
+   * @return 已持久化的时间模板
+   */
+  @Transactional
+  public ScheduleTimeTemplate updateScheduleTimeTemplate(
+      String authorization,
+      ScheduleTimeTemplate template
+  ) {
+    long userId = clientSessionService.requireUserId(authorization);
+    ScheduleTimeTemplatePolicy.validateForSave(template);
+    String templateJson = writeScheduleTimeTemplate(template);
+    jdbcTemplate.update(
+        "UPDATE app_user SET schedule_time_template = CAST(? AS jsonb), updated_at = NOW() WHERE id = ?",
+        templateJson,
+        userId
+    );
+    return template;
   }
 
   /**
@@ -492,6 +524,14 @@ public class ClientProfileAppService {
 
   private String clean(String value) {
     return value == null ? "" : value.strip();
+  }
+
+  private String writeScheduleTimeTemplate(ScheduleTimeTemplate template) {
+    try {
+      return objectMapper.writeValueAsString(template);
+    } catch (JsonProcessingException exception) {
+      throw new IllegalStateException("时间模板序列化失败", exception);
+    }
   }
 
   /** 将手机号脱敏后返回给前端展示。 */

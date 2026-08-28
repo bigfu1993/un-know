@@ -37,23 +37,13 @@ function getTrialSchedulePreviewDatas(sections: TutorSchedulePreviewSection[]) {
         const dataMap = dataMaps[section.dataType];
         const currentData = dataMap.get(scheduleLine.date) ?? {
           date: scheduleLine.date,
-          periodLabels: {},
           periods: []
         };
         const periods = new Set(currentData.periods);
-        const periodLabels = { ...currentData.periodLabels };
 
-        scheduleLine.times.forEach((timeRange) => {
-          const period = getTrialSchedulePreviewPeriod(timeRange);
-
-          periods.add(period);
-          if (section.showScheduleLabel && section.label) {
-            periodLabels[period] = section.label;
-          }
-        });
+        scheduleLine.times.forEach((timeRange) => periods.add(getTrialSchedulePreviewPeriod(timeRange)));
         dataMap.set(scheduleLine.date, {
           date: scheduleLine.date,
-          periodLabels,
           periods: [...periods]
         });
       });

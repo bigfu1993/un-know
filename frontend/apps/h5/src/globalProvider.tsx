@@ -4,7 +4,7 @@ import {
   setStoredClientAuthSession
 } from "@unknown/api-client";
 import { accountStatusLabels, roleLabels } from "@unknown/domain";
-import type { RoleProfile } from "@unknown/domain";
+import type { RoleProfile, ScheduleTimeTemplate } from "@unknown/domain";
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 
 import { getStoredProfileDraft, setStoredProfileDraft } from "@h5/shared/clientPageModel";
@@ -21,6 +21,7 @@ interface GlobalUser {
   creditScore: number;
   profileCompletionRequired: boolean;
   profileDraft: ProfileDraftState;
+  scheduleTimeTemplate: ScheduleTimeTemplate;
 }
 
 /** 登录用户信息的受控更新动作。 */
@@ -29,6 +30,7 @@ interface GlobalUserActions {
   setUserNickname: (nickname: string) => void;
   setUserPhone: (phone: string) => void;
   setUserProfileDraft: (profileDraft: ProfileDraftState) => void;
+  setScheduleTimeTemplate: (scheduleTimeTemplate: ScheduleTimeTemplate) => void;
   syncUserProfile: (profile: RoleProfile) => void;
 }
 
@@ -62,7 +64,8 @@ function buildGlobalUser(
     accountStatusText: accountStatusLabels[accountStatus],
     creditScore: profile?.creditScore ?? 0,
     profileCompletionRequired: session?.profileCompletionRequired ?? false,
-    profileDraft: serverProfileDraft
+    profileDraft: serverProfileDraft,
+    scheduleTimeTemplate: profile?.scheduleTimeTemplate ?? {}
   };
 }
 
@@ -147,9 +150,23 @@ export function GlobalProvider({ children }: { children: ReactNode }) {
     [commitUser]
   );
 
+  const setScheduleTimeTemplate = useCallback(
+    (scheduleTimeTemplate: ScheduleTimeTemplate) => {
+      commitUser({ ...userRef.current, scheduleTimeTemplate });
+    },
+    [commitUser]
+  );
+
   const actions = useMemo(
-    () => ({ clearUser, setUserNickname, setUserPhone, setUserProfileDraft, syncUserProfile }),
-    [clearUser, setUserNickname, setUserPhone, setUserProfileDraft, syncUserProfile]
+    () => ({
+      clearUser,
+      setUserNickname,
+      setUserPhone,
+      setUserProfileDraft,
+      setScheduleTimeTemplate,
+      syncUserProfile
+    }),
+    [clearUser, setUserNickname, setUserPhone, setUserProfileDraft, setScheduleTimeTemplate, syncUserProfile]
   );
 
   return (

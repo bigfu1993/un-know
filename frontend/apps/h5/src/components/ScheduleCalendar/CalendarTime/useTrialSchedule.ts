@@ -1,6 +1,9 @@
+import type { ScheduleTimeTemplate } from "@unknown/domain";
 import { getTutorDateKey } from "@tools/tutorCalendar";
 import {
   createDefaultDaySchedule,
+  createTrialScheduleDayFromTemplate,
+  createTrialSchedulePeriodStateForPeriod,
   formatTrialScheduleDate,
   getEnabledPeriodSummaries,
   getTrialScheduleCalendarDatas,
@@ -8,31 +11,25 @@ import {
   getTrialScheduleValueFromSummary,
   trialSchedulePeriods,
   type TrialScheduleDraft,
-  type TrialSchedulePeriodConfig,
   type TrialSchedulePeriodKey,
   type TrialSchedulePeriodState,
   type TrialScheduleValue
 } from "./model";
 
 /**
- * useTrialSchedule 入参：只描述业务约束（学生可试课范围、已占用时段、天数上限、初始值），
+ * useTrialSchedule 入参：只描述业务约束（已占用时段、天数上限、初始值），
  * 不含任何弹窗展示相关内容（标题/文案/图标）——展示层由调用方自己用 Modal 包裹
  * CalendarTime 决定，同一份业务逻辑可以套不同的弹窗外观（试课安排/正式雇佣日程）。
  */
 export interface UseTrialScheduleOptions {
-  availableScheduleSummary?: string;
-  blockedScheduleLabel?: string;
   blockedScheduleSummary?: string;
   initialValue: TrialScheduleValue | null;
   maxSelectedDates?: number | null;
-  /** 日历日期交互模式；不传时根据是否存在学生可用时间约束自动判断。 */
-  mode?: CalendarPanelMode;
   /**
    * 家教需求发布时家长选择的日期集合（计划范围），始终作为参考标记回显；“在计划范围内选择”
    * 只是文字建议，不限制家长选择其它日期，也不自动计入本次实际安排。
    */
   plannedDates?: string[];
-  scheduleLabel?: string;
   /** 当前编辑的是试课还是正式课程，用于把日程数据放入对应的 CalendarPanel 数据通道。 */
   scheduleType?: "arranged" | "tested";
 }
@@ -40,33 +37,22 @@ export interface UseTrialScheduleOptions {
 /** 试课排期日历要横向拆分的分段顺序，固定按上午、下午、晚上展示。 */
 const trialScheduleDataPeriods = trialSchedulePeriods.map((period) => period.key);
 
-/** 合并同一业务通道内的可选时间、已有安排和当前草稿。 */
+/** 合并同一业务通道内的已有安排和当前草稿。 */
 function mergeTrialScheduleCalendarDatas(...dataGroups: CalendarPanelScheduleData[][]): CalendarPanelScheduleData[] {
-  const dataMap = new Map<
-    string,
-    {
-      periodLabels: Record<string, string>;
-      periods: Set<string>;
-    }
-  >();
+  const dataMap = new Map<string, Set<string>>();
 
   dataGroups.forEach((datas) => {
     datas.forEach((data) => {
-      const currentData = dataMap.get(data.date) ?? {
-        periodLabels: {},
-        periods: new Set<string>()
-      };
+      const periods = dataMap.get(data.date) ?? new Set<string>();
 
-      data.periods.forEach((period) => currentData.periods.add(period));
-      currentData.periodLabels = { ...currentData.periodLabels, ...data.periodLabels };
-      dataMap.set(data.date, currentData);
+      data.periods.forEach((period) => periods.add(period));
+      dataMap.set(data.date, periods);
     });
   });
 
-  return [...dataMap.entries()].map(([date, data]) => ({
+  return [...dataMap.entries()].map(([date, periods]) => ({
     date,
-    periodLabels: data.periodLabels,
-    periods: [...data.periods]
+    periods: [...periods]
   }));
 }
 
@@ -76,46 +62,23 @@ function mergeTrialScheduleCalendarDatas(...dataGroups: CalendarPanelScheduleDat
  * `value` 为 null 时代表当前排期为空，不可提交。
  */
 export function useTrialSchedule({
-  availableScheduleSummary = "",
-  blockedScheduleLabel = "试",
   blockedScheduleSummary = "",
   initialValue,
   maxSelectedDates = 3,
-  mode,
   plannedDates = [],
-  scheduleLabel = "试",
   scheduleType = "tested"
 }: UseTrialScheduleOptions) {
   const today = useMemo(() => new Date(), []);
   const todayKey = getTutorDateKey(today);
-  const availableScheduleValue = useMemo(
-    () => getTrialScheduleValueFromSummary(availableScheduleSummary),
-    [availableScheduleSummary]
-  );
-  const availableScheduleDraft = availableScheduleValue?.scheduleDraft ?? {};
   const blockedScheduleValue = useMemo(
     () => getTrialScheduleValueFromSummary(blockedScheduleSummary),
     [blockedScheduleSummary]
   );
   const blockedScheduleDraft = blockedScheduleValue?.scheduleDraft ?? {};
-  /** 只有候选人真实提交过可试课时间才需要锁定具体时刻只读展示；需求发布日期只有"哪天"没有"几点"，
-   *  不应该锁死时间输入，家长仍要能在允许的日期内自由挑选具体时段。 */
-  const hasAvailableScheduleLimit = Boolean(availableScheduleSummary.trim() && availableScheduleValue);
-  const calendarMode = mode ?? (hasAvailableScheduleLimit ? "view" : "edit");
-  const selectableDates = useMemo(
-    () => (hasAvailableScheduleLimit && availableScheduleValue ? availableScheduleValue.selectedDates : []),
-    [availableScheduleValue, hasAvailableScheduleLimit]
-  );
-  const selectableDateSet = useMemo(() => new Set(selectableDates), [selectableDates]);
-  const hasSelectableDateLimit = selectableDateSet.size > 0;
   /** 发布计划日期始终回显，但不参与可选范围、天数上限或实际安排计算。 */
   const normalizedPlannedDates = useMemo(() => [...new Set(plannedDates)].sort(), [plannedDates]);
   const initialActiveDate =
-    initialValue?.selectedDates[0] ??
-    normalizedPlannedDates[0] ??
-    selectableDates[0] ??
-    blockedScheduleValue?.selectedDates[0] ??
-    todayKey;
+    initialValue?.selectedDates[0] ?? normalizedPlannedDates[0] ?? blockedScheduleValue?.selectedDates[0] ?? todayKey;
   const [activeDate, setActiveDate] = useState(initialActiveDate);
   /** 当前弹窗草稿选中的试课日期，提交时写入 TrialScheduleValue.selectedDates。 */
   const [selectedDates, setSelectedDates] = useState<string[]>(() => initialValue?.selectedDates ?? []);
@@ -129,46 +92,30 @@ export function useTrialSchedule({
     maxSelectedDates !== undefined &&
     selectedDates.length >= maxSelectedDates &&
     !isActiveDateSelected;
-  const isOutsideSelectableDates =
-    hasSelectableDateLimit && !selectableDateSet.has(activeDate) && !isActiveDateSelected;
   const schedulePlan = getTrialSchedulePlan(selectedDates, scheduleDraft);
-  const availableDatas = useMemo(
-    () =>
-      hasAvailableScheduleLimit && availableScheduleValue
-        ? getTrialScheduleCalendarDatas(availableScheduleValue.selectedDates, availableScheduleValue.scheduleDraft)
-        : [],
-    [availableScheduleValue, hasAvailableScheduleLimit]
-  );
   const selectedDatas = useMemo(
-    () =>
-      getTrialScheduleCalendarDatas(selectedDates, scheduleDraft, {
-        scheduleLabel,
-        showPeriodLabel: hasAvailableScheduleLimit
-      }),
-    [hasAvailableScheduleLimit, scheduleDraft, scheduleLabel, selectedDates]
+    () => getTrialScheduleCalendarDatas(selectedDates, scheduleDraft),
+    [scheduleDraft, selectedDates]
   );
   const blockedTestedDatas = useMemo(
     () =>
       blockedScheduleValue
-        ? getTrialScheduleCalendarDatas(blockedScheduleValue.selectedDates, blockedScheduleValue.scheduleDraft, {
-            scheduleLabel: blockedScheduleLabel,
-            showPeriodLabel: true
-          })
+        ? getTrialScheduleCalendarDatas(blockedScheduleValue.selectedDates, blockedScheduleValue.scheduleDraft)
         : [],
-    [blockedScheduleLabel, blockedScheduleValue]
+    [blockedScheduleValue]
   );
   const testedDatas = useMemo(
     () =>
       scheduleType === "tested"
-        ? mergeTrialScheduleCalendarDatas(availableDatas, blockedTestedDatas, selectedDatas)
+        ? mergeTrialScheduleCalendarDatas(blockedTestedDatas, selectedDatas)
         : blockedTestedDatas,
-    [availableDatas, blockedTestedDatas, scheduleType, selectedDatas]
+    [blockedTestedDatas, scheduleType, selectedDatas]
   );
   const arrangedDatas = useMemo(
-    () => (scheduleType === "arranged" ? mergeTrialScheduleCalendarDatas(availableDatas, selectedDatas) : []),
-    [availableDatas, scheduleType, selectedDatas]
+    () => (scheduleType === "arranged" ? selectedDatas : []),
+    [scheduleType, selectedDatas]
   );
-  /** 判断指定日期是否已经过去或受可选范围、天数上限限制，禁止新增排期。 */
+  /** 判断指定日期是否已经过去或受天数上限限制，禁止新增排期。 */
   function isDateDisabledForNewSchedule(dateKey: string) {
     const isSelectedDate = selectedDates.includes(dateKey);
     const isPastDate = dateKey < todayKey;
@@ -177,67 +124,28 @@ export function useTrialSchedule({
       maxSelectedDates !== undefined &&
       selectedDates.length >= maxSelectedDates &&
       !isSelectedDate;
-    const isOutsideSelectableDate = hasSelectableDateLimit && !selectableDateSet.has(dateKey) && !isSelectedDate;
 
-    return isPastDate || isOverMaxSelectedDates || isOutsideSelectableDate;
-  }
-
-  /** 判断当前排期是否受学生提交的可试课时段约束。 */
-  function isPeriodOutsideAvailableSchedule(dateKey: string, periodKey: TrialSchedulePeriodKey) {
-    if (!hasAvailableScheduleLimit) {
-      return false;
-    }
-
-    const availablePeriodState = availableScheduleDraft[dateKey]?.[periodKey];
-
-    return !availablePeriodState?.enabled || !availablePeriodState.start || !availablePeriodState.end;
+    return isPastDate || isOverMaxSelectedDates;
   }
 
   /** 判断指定时段是否已被试课日程占用，正式雇佣可用时间不能重复选择。 */
   function isPeriodBlockedBySchedule(dateKey: string, periodKey: TrialSchedulePeriodKey) {
     const blockedPeriodState = blockedScheduleDraft[dateKey]?.[periodKey];
 
-    return Boolean(blockedPeriodState?.enabled && blockedPeriodState.start && blockedPeriodState.end);
-  }
-
-  /** 获取指定日期内允许选择的试课时段。 */
-  function getSelectablePeriodsForDate(dateKey: string) {
-    return trialSchedulePeriods.filter(
-      (period) =>
-        !isPeriodOutsideAvailableSchedule(dateKey, period.key) && !isPeriodBlockedBySchedule(dateKey, period.key)
+    return Boolean(
+      blockedPeriodState?.enabled &&
+      (blockedPeriodState.legacyRange || (blockedPeriodState.start && blockedPeriodState.end))
     );
   }
 
-  /** 生成单击选中日期时使用的默认排期。 */
-  function createRangeSelectedDaySchedule(dateKey: string, currentDaySchedule = createDefaultDaySchedule()) {
-    const selectablePeriods = getSelectablePeriodsForDate(dateKey);
-
-    if (selectablePeriods.length === 0) {
-      return null;
-    }
-
-    return selectablePeriods.reduce((daySchedule, period) => {
-      const currentPeriodState = currentDaySchedule[period.key];
-      const availablePeriodState = availableScheduleDraft[dateKey]?.[period.key];
-
-      return {
-        ...daySchedule,
-        [period.key]: {
-          enabled: true,
-          end:
-            currentPeriodState.end ||
-            (hasAvailableScheduleLimit && availablePeriodState ? availablePeriodState.end : period.defaultEnd),
-          start:
-            currentPeriodState.start ||
-            (hasAvailableScheduleLimit && availablePeriodState ? availablePeriodState.start : period.defaultStart)
-        }
-      };
-    }, currentDaySchedule);
-  }
-
-  /** 同步单日排期，并按配置的天数上限和可选日期范围维护已安排日期。 */
+  /** 同步单日排期，并按配置的天数上限维护已安排日期。 */
   function syncDaySchedule(dateKey: string, nextDaySchedule: Record<TrialSchedulePeriodKey, TrialSchedulePeriodState>) {
     const nextDateHasSchedule = getEnabledPeriodSummaries(nextDaySchedule).length > 0;
+    const nextDateHasDraft = trialSchedulePeriods.some((period) => {
+      const periodState = nextDaySchedule[period.key];
+
+      return Boolean(periodState.legacyRange || periodState.start || periodState.end);
+    });
     const isNewScheduleDate = !selectedDates.includes(dateKey);
 
     if (nextDateHasSchedule && isNewScheduleDate && isDateDisabledForNewSchedule(dateKey)) {
@@ -245,7 +153,7 @@ export function useTrialSchedule({
     }
 
     setScheduleDraft((currentDraft) => {
-      if (!nextDateHasSchedule) {
+      if (!nextDateHasDraft) {
         const nextDraft = { ...currentDraft };
         delete nextDraft[dateKey];
 
@@ -287,52 +195,6 @@ export function useTrialSchedule({
     clearDaySchedules([dateKey]);
   }
 
-  /** 点击时段名称时切换该时段安排，未安排则填入快捷默认时间，已安排则取消安排。 */
-  function handleTogglePeriodPreset(period: TrialSchedulePeriodConfig) {
-    if (isDateDisabledForNewSchedule(activeDate)) {
-      return;
-    }
-
-    const currentDaySchedule = scheduleDraft[activeDate] ?? createDefaultDaySchedule();
-    const currentPeriodState = currentDaySchedule[period.key];
-    const availablePeriodState = availableScheduleDraft[activeDate]?.[period.key];
-
-    if (currentPeriodState.enabled) {
-      handleClearPeriod(period.key);
-      return;
-    }
-    if (isPeriodOutsideAvailableSchedule(activeDate, period.key) || isPeriodBlockedBySchedule(activeDate, period.key)) {
-      return;
-    }
-
-    syncDaySchedule(activeDate, {
-      ...currentDaySchedule,
-      [period.key]: {
-        enabled: true,
-        end: hasAvailableScheduleLimit && availablePeriodState ? availablePeriodState.end : period.defaultEnd,
-        start: hasAvailableScheduleLimit && availablePeriodState ? availablePeriodState.start : period.defaultStart
-      }
-    });
-  }
-
-  /** 全选指定日期允许的上午、下午、晚上时段，默认作用于当前查看日期。 */
-  function handleSelectFullDaySchedule(dateKey: string = activeDate) {
-    if (isDateDisabledForNewSchedule(dateKey)) {
-      return;
-    }
-
-    const nextDaySchedule = createRangeSelectedDaySchedule(
-      dateKey,
-      scheduleDraft[dateKey] ?? createDefaultDaySchedule()
-    );
-
-    if (!nextDaySchedule) {
-      return;
-    }
-
-    syncDaySchedule(dateKey, nextDaySchedule);
-  }
-
   /** 移除指定日期下所有试课时段安排，默认作用于当前查看日期。 */
   function handleClearDaySchedule(dateKey: string = activeDate) {
     if (dateKey < todayKey) {
@@ -342,44 +204,42 @@ export function useTrialSchedule({
     clearDaySchedule(dateKey);
   }
 
-  /** 编辑模式下单击日期直接切换安排：当天已有排期则移除，未排期则按可选时段全选，直接复用编辑区"全选/移除当日安排"的动作。 */
-  function handleToggleDaySchedule(dateKey: string) {
-    if (selectedDates.includes(dateKey)) {
-      handleClearDaySchedule(dateKey);
-      return;
-    }
-
-    handleSelectFullDaySchedule(dateKey);
-  }
-
-  /** 自定义某个时段的开始或结束时间，两个时间均存在时自动计入安排。 */
-  function handleChangePeriodTime(periodKey: TrialSchedulePeriodKey, field: "end" | "start", value: string) {
-    if (
-      hasAvailableScheduleLimit ||
-      isDateDisabledForNewSchedule(activeDate) ||
-      isPeriodBlockedBySchedule(activeDate, periodKey)
-    ) {
+  /** 原子更新某个时段的起止范围；重合滑块保留位置但不计为有效安排。 */
+  function handleChangePeriodRange(periodKey: TrialSchedulePeriodKey, start: string, end: string) {
+    if (isDateDisabledForNewSchedule(activeDate) || isPeriodBlockedBySchedule(activeDate, periodKey)) {
       return;
     }
 
     const currentDaySchedule = scheduleDraft[activeDate] ?? createDefaultDaySchedule();
-    const nextPeriodState = {
-      ...currentDaySchedule[periodKey],
-      [field]: value
-    };
 
     syncDaySchedule(activeDate, {
       ...currentDaySchedule,
-      [periodKey]: {
-        ...nextPeriodState,
-        enabled: Boolean(nextPeriodState.start && nextPeriodState.end)
-      }
+      [periodKey]: createTrialSchedulePeriodStateForPeriod(periodKey, start, end)
     });
+  }
+
+  /** 将模板整组应用到当前日期；任一模板时段被占用时不修改任何草稿。 */
+  function applyScheduleTimeTemplate(template: ScheduleTimeTemplate): { ok: boolean; reason?: string } {
+    if (isDateDisabledForNewSchedule(activeDate)) {
+      return { ok: false, reason: "当前日期不可安排" };
+    }
+
+    const hasBlockedTemplatePeriod = trialSchedulePeriods.some(
+      (period) => template[period.key] && isPeriodBlockedBySchedule(activeDate, period.key)
+    );
+
+    if (hasBlockedTemplatePeriod) {
+      return { ok: false, reason: "模板包含已占用时段" };
+    }
+
+    syncDaySchedule(activeDate, createTrialScheduleDayFromTemplate(template));
+
+    return { ok: true };
   }
 
   /** 清空某个时段的自定义时间并取消该时段安排。 */
   function handleClearPeriod(periodKey: TrialSchedulePeriodKey) {
-    if (isActiveDatePast) {
+    if (isActiveDatePast || isPeriodBlockedBySchedule(activeDate, periodKey)) {
       return;
     }
 
@@ -398,26 +258,21 @@ export function useTrialSchedule({
   /** 按 TimePanel 需要的形状，把当前查看日期的三个时段状态和禁用态算好传给它，具体业务规则不下沉进组件。 */
   const periods: TimePanelPeriodItem[] = trialSchedulePeriods.map((period) => {
     const periodState = activeDaySchedule[period.key];
-    const isPeriodSelected = periodState.enabled;
-    const isPeriodUnavailable =
-      isPeriodOutsideAvailableSchedule(activeDate, period.key) || isPeriodBlockedBySchedule(activeDate, period.key);
+    const isPeriodUnavailable = isPeriodBlockedBySchedule(activeDate, period.key);
 
     return {
-      enabled: isPeriodSelected,
+      enabled: periodState.enabled,
       end: periodState.end,
-      isClearDisabled: isActiveDatePast || (!periodState.start && !periodState.end),
+      isClearDisabled:
+        isActiveDatePast || isPeriodUnavailable || (!periodState.legacyRange && !periodState.start && !periodState.end),
       isTimeInputDisabled:
-        hasAvailableScheduleLimit ||
-        isDateDisabledForNewSchedule(activeDate) ||
-        isPeriodSelected ||
-        isPeriodUnavailable,
-      isToggleDisabled:
-        isActiveDatePast ||
-        (isDateDisabledForNewSchedule(activeDate) && !isPeriodSelected) ||
-        (isPeriodUnavailable && !isPeriodSelected),
+        Boolean(periodState.legacyRange) || isDateDisabledForNewSchedule(activeDate) || isPeriodUnavailable,
       isUnavailable: isPeriodUnavailable,
       key: period.key,
       label: period.label,
+      legacyRange: periodState.legacyRange,
+      maxTime: period.maxTime,
+      minTime: period.minTime,
       start: periodState.start
     };
   });
@@ -425,31 +280,19 @@ export function useTrialSchedule({
   return {
     activeDate,
     activeDateHasSchedule,
+    activeDaySchedule,
     activeDateLabel: formatTrialScheduleDate(activeDate),
-    hasNoSelectablePeriods: getSelectablePeriodsForDate(activeDate).length === 0,
+    applyScheduleTimeTemplate,
     isActiveDatePast,
-    isOutsideSelectableDates,
     isScheduleLimitReached,
     arrangedDatas,
     arrangedPeriods: arrangedDatas.length > 0 ? trialScheduleDataPeriods : [],
     maxSelectedDates,
-    mode: calendarMode,
-    onChangePeriodTime: (periodKey: string, field: "start" | "end", value: string) =>
-      handleChangePeriodTime(periodKey as TrialSchedulePeriodKey, field, value),
+    onChangePeriodRange: handleChangePeriodRange,
     onClearDaySchedule: () => handleClearDaySchedule(),
-    onClearPeriod: (periodKey: string) => handleClearPeriod(periodKey as TrialSchedulePeriodKey),
-    onSelectFullDaySchedule: () => handleSelectFullDaySchedule(),
-    onToggleDate: calendarMode === "edit" ? handleToggleDaySchedule : undefined,
-    onTogglePeriod: (periodKey: string) => {
-      const period = trialSchedulePeriods.find((candidatePeriod) => candidatePeriod.key === periodKey);
-
-      if (period) {
-        handleTogglePeriodPreset(period);
-      }
-    },
+    onClearPeriod: handleClearPeriod,
     periods,
     plannedDates: normalizedPlannedDates,
-    selectableDates,
     selectedDates,
     setActiveDate,
     testedDatas,

@@ -43,8 +43,6 @@ function getTutorTrialCandidateSchedulePreview(
   const trialScheduleSection = candidate.trialSchedule?.trim()
     ? {
         dataType: "tested" as const,
-        label: "试",
-        showScheduleLabel: true,
         summary: candidate.trialSchedule.trim(),
         title: "试课安排"
       }
@@ -55,7 +53,6 @@ function getTutorTrialCandidateSchedulePreview(
       candidate.availability?.trim()
         ? {
             dataType: "arranged" as const,
-            showScheduleLabel: false,
             summary: candidate.availability.trim(),
             title: "可家教时间"
           }
@@ -79,8 +76,6 @@ function getTutorTrialCandidateSchedulePreview(
       candidate.serviceSchedule?.trim()
         ? {
             dataType: "arranged" as const,
-            label: "课",
-            showScheduleLabel: true,
             summary: candidate.serviceSchedule.trim(),
             title: "课程安排"
           }
@@ -529,8 +524,6 @@ export function TutorTrialList({
           }
         >
           <CalendarTime
-            availableScheduleSummary={selectedCandidate.availability}
-            blockedScheduleLabel="试"
             blockedScheduleSummary={selectedCandidate.trialSchedule}
             initialValue={null}
             maxSelectedDates={null}
@@ -539,7 +532,6 @@ export function TutorTrialList({
               void handleWorkflowAction("submit_service_schedule", { tutorSchedule: value.plan.summary });
               setIsTutorScheduleOpen(false);
             }}
-            scheduleLabel="课"
             scheduleType="arranged"
           />
         </Modal>
