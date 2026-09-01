@@ -567,7 +567,7 @@ declare global {
   export type { PublishOverlayDraftState, PublishOverlayDraftAction, PublishOverlayActions, PublishOverlayHostContextValue, PublishOverlayProviderProps } from './types/publish'
   import('./types/publish')
   // @ts-ignore
-  export type { ChildProfileOption, TutorTrialJob, TutorApplicationCandidate, ConfirmTutorTrialPayload, CompleteTutorTrialEndPayload, TutorWorkflowActionPayload, TutorWorkflowAction, TutorWorkflowActionRequest } from './types/tutor-workflow'
+  export type { ChildProfileOption, TutorTrialJob, TutorApplicationCandidate, ConfirmTutorTrialPayload, TutorWorkflowActionPayload, TutorWorkflowAction, TutorWorkflowActionRequest } from './types/tutor-workflow'
   import('./types/tutor-workflow')
   // @ts-ignore
   export type { ModalProps } from './ui/Modal/index'

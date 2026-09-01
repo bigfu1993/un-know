@@ -3,7 +3,6 @@ import { getTutorWorkflowSuccessMessage } from "@pages/home/edu/model";
 import { showMessage } from "@tools/messageToast";
 import { getTutorCalendarTasks } from "@tools/tutorCalendar";
 import {
-  useCompleteTutorTrialEnd,
   useConfirmTutorTrial,
   useHandleTutorWorkflowAction,
   useOngoingOrdersSnapshot,
@@ -78,7 +77,7 @@ export function useTutorOverlayHost() {
 export function TutorOverlayProvider({ children, syncProfileDraft }: TutorOverlayProviderProps) {
   const user = useGlobalUser();
   const { isApplicationsOpen, isTrialListOpen, targetDemandId } = useTutorOverlayState();
-  const { closeApplications, closeCertificationInfo, closeTrialList } = useTutorOverlayActions();
+  const { closeApplications, closeCertificationInfo } = useTutorOverlayActions();
   const { data: tutorApplicants, error: tutorApplicationError } = useTutorApplication(
     user.role,
     targetDemandId,
@@ -87,7 +86,6 @@ export function TutorOverlayProvider({ children, syncProfileDraft }: TutorOverla
   /** 使用进行中订单接口已缓存的计划日期，通过 Provider 统一传给家教弹层。 */
   const plannedDates = useOngoingOrdersSnapshot(user.role, targetDemandId);
   const { isPending: confirmTrialPending, mutateAsync: confirmTutorTrial } = useConfirmTutorTrial();
-  const { isPending: confirmTrialEndPending, mutateAsync: completeTutorTrialEnd } = useCompleteTutorTrialEnd();
   const { isPending: workflowPending, mutateAsync: submitTutorWorkflowAction } = useHandleTutorWorkflowAction();
   const applicationCandidates = useMemo<TutorApplicationCandidate[]>(
     () =>
@@ -134,20 +132,6 @@ export function TutorOverlayProvider({ children, syncProfileDraft }: TutorOverla
       }
     },
     [closeApplications, confirmTutorTrial]
-  );
-
-  /** 确认家教试课结束信息，并由 mutation 失效策略刷新相关查询。 */
-  const confirmTrialEnd = useCallback(
-    async (payload: CompleteTutorTrialEndPayload) => {
-      try {
-        await completeTutorTrialEnd(payload);
-        closeTrialList();
-        showMessage("试课费用已提交，等待学生确认。", { type: "success" });
-      } catch (error) {
-        showMessage(getErrorMessage(error, "结束试课确认处理失败，请稍后重试。"), { type: "error" });
-      }
-    },
-    [closeTrialList, completeTutorTrialEnd]
   );
 
   /** 提交家教弹层中的流程动作。 */
@@ -199,19 +183,16 @@ export function TutorOverlayProvider({ children, syncProfileDraft }: TutorOverla
       applicationConfirmationPending: confirmTrialPending || workflowPending,
       calendarTasks,
       confirmTrial,
-      confirmTrialEnd,
       plannedDates,
       profileDraft: user.profileDraft,
       saveCertificationInfo,
-      trialListSubmissionPending: confirmTrialEndPending || workflowPending,
+      trialListSubmissionPending: workflowPending,
       workflow
     }),
     [
       applicationCandidates,
       calendarTasks,
       confirmTrial,
-      confirmTrialEnd,
-      confirmTrialEndPending,
       confirmTrialPending,
       plannedDates,
       saveCertificationInfo,

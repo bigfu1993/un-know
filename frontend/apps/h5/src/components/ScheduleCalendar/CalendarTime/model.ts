@@ -1,4 +1,9 @@
-import type { ScheduleTimeRange, ScheduleTimeTemplate } from "@unknown/domain";
+import type {
+  ConfirmTutorTrialRequest,
+  ScheduleTimeRange,
+  ScheduleTimeTemplate,
+  TutorTrialScheduleDate
+} from "@unknown/domain";
 import { parseTutorTrialSchedule } from "@tools/tutorTrial";
 
 /** 试课排期时段标识。 */
@@ -24,19 +29,15 @@ export interface TrialSchedulePeriodState {
 /** 试课排期草稿，按日期维护每天三段时间。 */
 export type TrialScheduleDraft = Record<string, Record<TrialSchedulePeriodKey, TrialSchedulePeriodState>>;
 
-/** 试课排期提交计划。 */
-export interface TrialSchedulePlan {
+/** 试课排期提交计划，摘要只用于本地展示和修改比较。 */
+export interface TrialSchedulePlan extends ConfirmTutorTrialRequest {
   summary: string;
-  trialEnd: string;
-  trialHalfDay: string;
-  trialStart: string;
 }
 
 /** 试课排期弹窗返回值。 */
 export interface TrialScheduleValue {
   plan: TrialSchedulePlan;
   scheduleDraft: TrialScheduleDraft;
-  selectedDates: string[];
 }
 
 /** 试课三个固定时段的可排期边界。 */
@@ -235,43 +236,52 @@ function getTrialSchedulePeriodDisplayRange(periodState: TrialSchedulePeriodStat
   return null;
 }
 
-/** 获取单日已经选择的试课时段时间。 */
-export function getEnabledPeriodSummaries(
+/** 获取单日已经选择的结构化试课时间段。 */
+function getEnabledPeriodTimeRanges(
   daySchedule: Record<TrialSchedulePeriodKey, TrialSchedulePeriodState> | undefined
-) {
+): ScheduleTimeRange[] {
   if (!daySchedule) {
     return [];
   }
 
   return trialSchedulePeriods
     .map((period) => getTrialSchedulePeriodDisplayRange(daySchedule[period.key]))
-    .filter((range): range is ScheduleTimeRange => range !== null)
-    .map((range) => `${formatTrialScheduleTime(range.start)}-${formatTrialScheduleTime(range.end)}`);
+    .filter((range): range is ScheduleTimeRange => range !== null);
+}
+
+/** 获取单日已经选择的试课时段展示文案。 */
+export function getEnabledPeriodSummaries(
+  daySchedule: Record<TrialSchedulePeriodKey, TrialSchedulePeriodState> | undefined
+) {
+  return getEnabledPeriodTimeRanges(daySchedule).map(
+    (range) => `${formatTrialScheduleTime(range.start)}-${formatTrialScheduleTime(range.end)}`
+  );
 }
 
 /** 将试课草稿转换为 CalendarPanel 可消费的日程分段数据。 */
 export function getTrialScheduleCalendarDatas(
-  selectedDates: string[],
   scheduleDraft: TrialScheduleDraft
 ): CalendarPanelScheduleData[] {
-  return selectedDates.map((dateKey) => ({
-    date: dateKey,
-    periods: trialSchedulePeriods
-      .filter((period) => {
-        const periodState = scheduleDraft[dateKey]?.[period.key];
+  return Object.keys(scheduleDraft)
+    .sort()
+    .flatMap((dateKey) => {
+      const periods = trialSchedulePeriods
+        .filter((period) => {
+          const periodState = scheduleDraft[dateKey]?.[period.key];
 
-        return Boolean(periodState && getTrialSchedulePeriodDisplayRange(periodState));
-      })
-      .map((period) => period.key)
-  }));
+          return Boolean(periodState && getTrialSchedulePeriodDisplayRange(periodState));
+        })
+        .map((period) => period.key);
+
+      return periods.length > 0 ? [{ date: dateKey, periods }] : [];
+    });
 }
 
-/** 基于试课排期草稿生成后端兼容的试课计划。 */
+/** 基于试课排期草稿生成结构化试课提交计划。 */
 export function getTrialSchedulePlan(
-  selectedDates: string[],
   scheduleDraft: TrialScheduleDraft
 ): TrialSchedulePlan | null {
-  const scheduledDates = selectedDates
+  const scheduledDates = Object.keys(scheduleDraft)
     .filter((dateKey) => getEnabledPeriodSummaries(scheduleDraft[dateKey]).length > 0)
     .sort();
 
@@ -279,17 +289,21 @@ export function getTrialSchedulePlan(
     return null;
   }
 
-  const summary = scheduledDates
-    .map(
-      (dateKey) => `${formatTrialScheduleDate(dateKey)} ${getEnabledPeriodSummaries(scheduleDraft[dateKey]).join(" ")}`
+  const dates: TutorTrialScheduleDate[] = scheduledDates.map((date) => ({
+    date,
+    timeRanges: getEnabledPeriodTimeRanges(scheduleDraft[date])
+  }));
+  const summary = dates
+    .map(({ date, timeRanges }) =>
+      `${formatTrialScheduleDate(date)} ${timeRanges
+        .map((range) => `${formatTrialScheduleTime(range.start)}-${formatTrialScheduleTime(range.end)}`)
+        .join(" ")}`
     )
     .join("；");
 
   return {
-    summary,
-    trialEnd: scheduledDates[scheduledDates.length - 1],
-    trialHalfDay: summary,
-    trialStart: scheduledDates[0]
+    dates,
+    summary
   };
 }
 
@@ -344,8 +358,7 @@ export function getTrialScheduleValueFromSummary(summary: string): TrialSchedule
 
     return { ...draft, [scheduleLine.date]: daySchedule };
   }, {} as TrialScheduleDraft);
-  const selectedDates = Object.keys(scheduleDraft).sort();
-  const plan = getTrialSchedulePlan(selectedDates, scheduleDraft);
+  const plan = getTrialSchedulePlan(scheduleDraft);
 
-  return plan ? { plan, scheduleDraft, selectedDates } : null;
+  return plan ? { plan, scheduleDraft } : null;
 }

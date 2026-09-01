@@ -99,6 +99,7 @@ const {
   createTrialSchedulePeriodState,
   createTrialSchedulePeriodStateForPeriod,
   getTrialScheduleCalendarDatas,
+  getTrialSchedulePlan,
   getTrialScheduleSubtitle,
   getTrialScheduleValueFromSummary,
   trialSchedulePeriods
@@ -285,6 +286,29 @@ test("时间范围按十分钟间隔决定是否形成安排", () => {
   });
 });
 
+test("试课提交计划从草稿推导排序后的结构化日期和时间段", () => {
+  const plan = getTrialSchedulePlan({
+    "2099-09-06": {
+      morning: { enabled: true, start: "09:00", end: "10:30" },
+      afternoon: { enabled: false, start: "", end: "" },
+      evening: { enabled: false, start: "", end: "" }
+    },
+    "2099-09-08": {
+      morning: { enabled: false, start: "", end: "" },
+      afternoon: { enabled: false, start: "", end: "" },
+      evening: { enabled: true, start: "18:00", end: "20:00" }
+    }
+  });
+
+  assert.deepEqual(plan, {
+    dates: [
+      { date: "2099-09-06", timeRanges: [{ start: "09:00", end: "10:30" }] },
+      { date: "2099-09-08", timeRanges: [{ start: "18:00", end: "20:00" }] }
+    ],
+    summary: "2099年9月6日 9:00-10:30；2099年9月8日 18:00-20:00"
+  });
+});
+
 test("时间范围必须完整落在所属固定时段窗口内", () => {
   assert.deepEqual(createTrialSchedulePeriodStateForPeriod("morning", "07:00", "08:00"), {
     enabled: false,
@@ -423,9 +447,9 @@ test("日历始终只切换查看焦点且 hook 暴露原子范围与模板契�
 });
 
 test("日历状态沿组件 props 链保持同一字段命名", () => {
-  const schedule = renderTrialSchedule({ maxSelectedDates: 2 });
+  const schedule = renderTrialSchedule({ maxScheduleDates: 2 });
 
-  assert.equal(schedule.maxSelectedDates, 2);
+  assert.equal(schedule.maxScheduleDates, 2);
   assert.equal(typeof schedule.activeDate, "string");
   assert.equal(typeof schedule.setActiveDate, "function");
   assert.ok(Array.isArray(schedule.periods));
@@ -434,7 +458,9 @@ test("日历状态沿组件 props 链保持同一字段命名", () => {
   assert.ok(Array.isArray(schedule.arrangedDatas));
   assert.ok(Array.isArray(schedule.arrangedPeriods));
   assert.ok(!("maxArrangedDates" in schedule));
+  assert.ok(!("maxSelectedDates" in schedule));
   assert.ok(!("selectedDate" in schedule));
+  assert.ok(!("selectedDates" in schedule));
   assert.ok(!("calendarMode" in schedule));
   assert.ok(!("timePanelPeriods" in schedule));
   assert.ok(!("markers" in schedule));
@@ -446,13 +472,17 @@ test("家长制定试课时由 CalendarTime 固定日历查看模式", () => {
   assert.doesNotMatch(tutorApplicationsSource, /<CalendarTime[\s\S]*?\n\s+mode="view"/);
 });
 
+test("家长试课排期主操作使用提交试课日程文案", () => {
+  assert.match(tutorApplicationsSource, /return "提交试课日程";/);
+  assert.doesNotMatch(tutorApplicationsSource, /试课信息确认/);
+});
+
 test("试课数据为日期添加试角标并显示上午下午晚上图标", () => {
   const dateKey = "2026-09-06";
   const markup = renderToStaticMarkup(
     React.createElement(CalendarPanel, {
       activeDate: dateKey,
       mode: "view",
-      selectedDates: [],
       testedDatas: [{ date: dateKey, periods: ["morning", "afternoon", "evening"] }],
       testedPeriods: ["morning", "afternoon", "evening"]
     })
@@ -467,7 +497,7 @@ test("试课数据为日期添加试角标并显示上午下午晚上图标", ()
 
 test("日历排期数据不再生成时段标签", () => {
   assert.deepEqual(
-    getTrialScheduleCalendarDatas(["2026-09-06"], {
+    getTrialScheduleCalendarDatas({
       "2026-09-06": {
         morning: { enabled: true, end: "10:00", start: "09:00" }
       }
@@ -482,7 +512,6 @@ test("日历单元格只显示时段图标且不渲染标签", () => {
     React.createElement(CalendarPanel, {
       activeDate: dateKey,
       mode: "view",
-      selectedDates: [],
       testedDatas: [
         {
           date: dateKey,
@@ -535,8 +564,7 @@ test("正式课程数据使用 arranged 契约且不显示试角标", () => {
       activeDate: dateKey,
       arrangedDatas: [{ date: dateKey, periods: ["morning", "afternoon", "evening"] }],
       arrangedPeriods: ["morning", "afternoon", "evening"],
-      mode: "view",
-      selectedDates: []
+      mode: "view"
     })
   );
   const cellMarkup = getDateCellMarkup(markup, dateKey);
@@ -609,10 +637,10 @@ test("已有三天安排时查看已安排日期不会误报天数上限", () =>
   const initialValue = getTrialScheduleValueFromSummary(
     "2099年9月6日 9:00-11:00；2099年9月7日 9:00-11:00；2099年9月8日 9:00-11:00"
   );
-  const schedule = renderTrialSchedule({ initialValue, maxSelectedDates: 3 });
+  const schedule = renderTrialSchedule({ initialValue, maxScheduleDates: 3 });
 
   assert.ok(initialValue);
-  assert.equal(schedule.selectedDates.length, 3);
+  assert.equal(schedule.value?.plan.dates.length, 3);
   assert.equal(schedule.isScheduleLimitReached, false);
 });
 
@@ -637,7 +665,7 @@ test("过去日期允许在日历查看且 TimePanel 在试课和正式课程排
     React.createElement(CalendarPanel, {
       activeDate: pastDate,
       mode: "view",
-      selectedDates: [pastDate],
+      plannedDates: [pastDate],
       testedDatas: [{ date: pastDate, periods: ["morning"] }],
       testedPeriods: ["morning"]
     })
@@ -1414,31 +1442,40 @@ test("TimePanel 不再提供整日全选入口", () => {
   assert.doesNotMatch(markup, />全选<\/button>/);
 });
 
-test("计划日期与当前选中日期使用独立状态类", () => {
+test("计划日期只由 plannedDates 添加 planned 状态类", () => {
   const markup = renderToStaticMarkup(
     React.createElement(CalendarPanel, {
       activeDate: "2026-09-06",
       mode: "view",
-      plannedDates: ["2026-09-06"],
-      selectedDates: ["2026-09-08"]
+      plannedDates: ["2026-09-06", "2026-09-08"]
     })
   );
   const plannedDateClasses = getDateStateClasses(markup, "2026-09-06");
-  const selectedDateClasses = getDateStateClasses(markup, "2026-09-08");
+  const anotherPlannedDateClasses = getDateStateClasses(markup, "2026-09-08");
 
   assert.ok(plannedDateClasses.has("planned"));
   assert.ok(!plannedDateClasses.has("selected"));
-  assert.ok(selectedDateClasses.has("selected"));
-  assert.ok(!selectedDateClasses.has("planned"));
-  assert.ok(!selectedDateClasses.has("arranged"));
+  assert.ok(anotherPlannedDateClasses.has("planned"));
+  assert.ok(!anotherPlannedDateClasses.has("selected"));
+  assert.ok(!anotherPlannedDateClasses.has("arranged"));
 });
 
 test("计划日期使用背景色且不再显示圆点标记", () => {
   assert.match(calendarPanelStyles, /\.calendar-panel__day\.planned[^{]*[{][^}]*(?:background|background-color)\s*:/);
   assert.doesNotMatch(calendarPanelStyles, /\.calendar-panel__day\.planned::after/);
-  assert.doesNotMatch(
-    calendarPanelStyles,
-    /\.calendar-panel__day\.selected[^{]*[{][^}]*(?:background|background-color)\s*:/
-  );
+  assert.doesNotMatch(calendarPanelStyles, /\.selected/);
   assert.doesNotMatch(calendarPanelStyles, /\.calendar-panel__day\.arranged/);
+});
+
+test("日期单元格样式优先级为 active 高于 past 高于 planned", () => {
+  const plannedRuleIndex = calendarPanelStyles.indexOf(".calendar-panel__day.planned {");
+  const pastRuleIndex = calendarPanelStyles.indexOf(".calendar-panel__day.past {");
+  const activeRuleIndex = calendarPanelStyles.indexOf(".calendar-panel__day.active {");
+
+  assert.ok(plannedRuleIndex >= 0);
+  assert.ok(pastRuleIndex > plannedRuleIndex);
+  assert.ok(activeRuleIndex > pastRuleIndex);
+  assert.match(calendarPanelStyles, /\.calendar-panel__day\.past\s*\{[^}]*opacity:\s*0\.[0-9]+/);
+  assert.match(calendarPanelStyles, /\.calendar-panel__day\.active\s*\{[^}]*opacity:\s*1/);
+  assert.doesNotMatch(calendarPanelStyles, /\.calendar-panel__day\.past:not\(\.planned\)/);
 });

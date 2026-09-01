@@ -1,7 +1,10 @@
-import type { KeyboardEvent } from "react";
+import type { KeyboardEvent, MouseEvent } from "react";
 import { Award, BookOpen, Info, School, Tags } from "lucide-react";
 import { getGenderLabel } from "@shared/genderModel";
 import { formatTutorSubjectLabels, getTutorEducationLabel } from "@shared/tutorModel";
+
+/** footer 内不应触发卡片选中的交互元素。 */
+const FOOTER_INTERACTIVE_TARGET_SELECTOR = "button, a, input, select, textarea, [role='button']";
 
 /** 家教资料字段，贴近数据源原始形态（学历、学科传 KEY），组件内部统一转中文展示并生成详情弹窗内容。
  *  字段是否传入代表该概念对当前调用方是否适用：不传（undefined）该行在详情里完全不出现；传了但是空值/null
@@ -55,6 +58,8 @@ interface TutorCardProps {
   selected?: boolean;
   /** 点击卡片主体（标题、footer 内部动作除外）切换选中；不传则整卡不可点击选中。 */
   onSelect?: () => void;
+  /** footer 非交互区域是否复用卡片选中动作，默认关闭以保持普通卡片原有行为。 */
+  selectOnFooter?: boolean;
   /** 详情弹窗标题，缺省复用 title。 */
   detailTitle?: ReactNode;
   /** 根节点追加类名，供调用方补充语义态样式。 */
@@ -125,13 +130,15 @@ function getTutorDetailItems(tutor: TutorCardTutor): TutorDetailItem[] {
 }
 
 /** 家教人物资料卡壳：header（图标+标题，固定结构，不对外开放插槽）/content（学校、专业、学历、学科，固定字段，从 `tutor` 内部解析，缺省不渲染对应行）/footer（具名插槽）三段。
- *  详情弹窗内容也从 `tutor` 内部解析生成，只要有可展示字段标题就自动可点开；有 onSelect 时点击卡片主体（标题、footer 内动作除外）切换选中，两者可以共存。 */
+ *  详情弹窗内容也从 `tutor` 内部解析生成，只要有可展示字段标题就自动可点开；有 onSelect 时点击卡片主体切换选中，
+ *  调用方可单独开启 footer 非交互区域选中，footer 内按钮等交互控件始终不触发选中。 */
 export function TutorCard({
   className,
   detailTitle,
   footer,
   icon,
   onSelect,
+  selectOnFooter = false,
   selected = false,
   title,
   tutor
@@ -156,6 +163,19 @@ export function TutorCard({
       event.preventDefault();
       onSelect();
     }
+  }
+
+  /** 隔离 footer 内部动作，并按调用方配置让非交互区域复用整卡选中逻辑。 */
+  function handleFooterClick(event: MouseEvent<HTMLDivElement>) {
+    const isInteractiveTarget =
+      event.target instanceof Element && Boolean(event.target.closest(FOOTER_INTERACTIVE_TARGET_SELECTOR));
+
+    event.stopPropagation();
+    if (!selectOnFooter || !onSelect || isInteractiveTarget) {
+      return;
+    }
+
+    onSelect();
   }
 
   return (
@@ -219,7 +239,7 @@ export function TutorCard({
       ) : null}
 
       {footer ? (
-        <div className="tutor-card-footer flex flex-wrap items-center gap-[8px]" onClick={(event) => event.stopPropagation()}>
+        <div className="tutor-card-footer flex flex-wrap items-center gap-[8px]" onClick={handleFooterClick}>
           {footer}
         </div>
       ) : null}

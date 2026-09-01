@@ -39,7 +39,6 @@ function EduJobScheduleView({ onClose, plannedDates }: { onClose: () => void; pl
           mode="view"
           onActiveDateChange={setActiveDate}
           plannedDates={plannedDates}
-          selectedDates={[]}
         />
       ) : (
         <p className="notice p-[10px] text-[var(--h5-warning)]">家长暂未确定具体日程，可通过消息与家长确认。</p>

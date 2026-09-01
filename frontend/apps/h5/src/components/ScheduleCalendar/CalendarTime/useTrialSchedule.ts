@@ -24,7 +24,8 @@ import {
 export interface UseTrialScheduleOptions {
   blockedScheduleSummary?: string;
   initialValue: TrialScheduleValue | null;
-  maxSelectedDates?: number | null;
+  /** 实际课程安排的日期数量上限；null 代表不限制。 */
+  maxScheduleDates?: number | null;
   /**
    * 家教需求发布时家长选择的日期集合（计划范围），始终作为参考标记回显；“在计划范围内选择”
    * 只是文字建议，不限制家长选择其它日期，也不自动计入本次实际安排。
@@ -64,7 +65,7 @@ function mergeTrialScheduleCalendarDatas(...dataGroups: CalendarPanelScheduleDat
 export function useTrialSchedule({
   blockedScheduleSummary = "",
   initialValue,
-  maxSelectedDates = 3,
+  maxScheduleDates = 3,
   plannedDates = [],
   scheduleType = "tested"
 }: UseTrialScheduleOptions) {
@@ -78,54 +79,42 @@ export function useTrialSchedule({
   /** 发布计划日期始终回显，但不参与可选范围、天数上限或实际安排计算。 */
   const normalizedPlannedDates = useMemo(() => [...new Set(plannedDates)].sort(), [plannedDates]);
   const initialActiveDate =
-    initialValue?.selectedDates[0] ?? normalizedPlannedDates[0] ?? blockedScheduleValue?.selectedDates[0] ?? todayKey;
+    normalizedPlannedDates[0] ?? initialValue?.plan.dates[0]?.date ?? blockedScheduleValue?.plan.dates[0]?.date ?? todayKey;
   const [activeDate, setActiveDate] = useState(initialActiveDate);
-  /** 当前弹窗草稿选中的试课日期，提交时写入 TrialScheduleValue.selectedDates。 */
-  const [selectedDates, setSelectedDates] = useState<string[]>(() => initialValue?.selectedDates ?? []);
   const [scheduleDraft, setScheduleDraft] = useState<TrialScheduleDraft>(() => initialValue?.scheduleDraft ?? {});
   const activeDaySchedule = scheduleDraft[activeDate] ?? createDefaultDaySchedule();
   const activeDateHasSchedule = getEnabledPeriodSummaries(activeDaySchedule).length > 0;
   const isActiveDatePast = activeDate < todayKey;
-  const isActiveDateSelected = selectedDates.includes(activeDate);
+  const schedulePlan = getTrialSchedulePlan(scheduleDraft);
+  /** 实际安排日期从结构化计划派生，不再维护独立日期状态。 */
+  const scheduledDates = schedulePlan?.dates.map(({ date }) => date) ?? [];
+  const isActiveDateScheduled = scheduledDates.includes(activeDate);
   const isScheduleLimitReached =
-    maxSelectedDates !== null &&
-    maxSelectedDates !== undefined &&
-    selectedDates.length >= maxSelectedDates &&
-    !isActiveDateSelected;
-  const schedulePlan = getTrialSchedulePlan(selectedDates, scheduleDraft);
-  const selectedDatas = useMemo(
-    () => getTrialScheduleCalendarDatas(selectedDates, scheduleDraft),
-    [scheduleDraft, selectedDates]
-  );
+    maxScheduleDates !== null && scheduledDates.length >= maxScheduleDates && !isActiveDateScheduled;
+  const scheduleDatas = useMemo(() => getTrialScheduleCalendarDatas(scheduleDraft), [scheduleDraft]);
   const blockedTestedDatas = useMemo(
-    () =>
-      blockedScheduleValue
-        ? getTrialScheduleCalendarDatas(blockedScheduleValue.selectedDates, blockedScheduleValue.scheduleDraft)
-        : [],
+    () => (blockedScheduleValue ? getTrialScheduleCalendarDatas(blockedScheduleValue.scheduleDraft) : []),
     [blockedScheduleValue]
   );
   const testedDatas = useMemo(
     () =>
       scheduleType === "tested"
-        ? mergeTrialScheduleCalendarDatas(blockedTestedDatas, selectedDatas)
+        ? mergeTrialScheduleCalendarDatas(blockedTestedDatas, scheduleDatas)
         : blockedTestedDatas,
-    [blockedTestedDatas, scheduleType, selectedDatas]
+    [blockedTestedDatas, scheduleDatas, scheduleType]
   );
   const arrangedDatas = useMemo(
-    () => (scheduleType === "arranged" ? selectedDatas : []),
-    [scheduleType, selectedDatas]
+    () => (scheduleType === "arranged" ? scheduleDatas : []),
+    [scheduleDatas, scheduleType]
   );
   /** 判断指定日期是否已经过去或受天数上限限制，禁止新增排期。 */
   function isDateDisabledForNewSchedule(dateKey: string) {
-    const isSelectedDate = selectedDates.includes(dateKey);
+    const isScheduledDate = scheduledDates.includes(dateKey);
     const isPastDate = dateKey < todayKey;
-    const isOverMaxSelectedDates =
-      maxSelectedDates !== null &&
-      maxSelectedDates !== undefined &&
-      selectedDates.length >= maxSelectedDates &&
-      !isSelectedDate;
+    const isOverMaxScheduleDates =
+      maxScheduleDates !== null && scheduledDates.length >= maxScheduleDates && !isScheduledDate;
 
-    return isPastDate || isOverMaxSelectedDates;
+    return isPastDate || isOverMaxScheduleDates;
   }
 
   /** 判断指定时段是否已被试课日程占用，正式雇佣可用时间不能重复选择。 */
@@ -138,7 +127,7 @@ export function useTrialSchedule({
     );
   }
 
-  /** 同步单日排期，并按配置的天数上限维护已安排日期。 */
+  /** 同步单日排期，实际安排日期由有效时间段实时派生。 */
   function syncDaySchedule(dateKey: string, nextDaySchedule: Record<TrialSchedulePeriodKey, TrialSchedulePeriodState>) {
     const nextDateHasSchedule = getEnabledPeriodSummaries(nextDaySchedule).length > 0;
     const nextDateHasDraft = trialSchedulePeriods.some((period) => {
@@ -146,7 +135,7 @@ export function useTrialSchedule({
 
       return Boolean(periodState.legacyRange || periodState.start || periodState.end);
     });
-    const isNewScheduleDate = !selectedDates.includes(dateKey);
+    const isNewScheduleDate = !scheduledDates.includes(dateKey);
 
     if (nextDateHasSchedule && isNewScheduleDate && isDateDisabledForNewSchedule(dateKey)) {
       return;
@@ -161,13 +150,6 @@ export function useTrialSchedule({
       }
 
       return { ...currentDraft, [dateKey]: nextDaySchedule };
-    });
-    setSelectedDates((currentDates) => {
-      if (nextDateHasSchedule) {
-        return [...new Set([...currentDates, dateKey])].sort();
-      }
-
-      return currentDates.filter((currentDateKey) => currentDateKey !== dateKey);
     });
   }
 
@@ -187,7 +169,6 @@ export function useTrialSchedule({
 
       return nextDraft;
     });
-    setSelectedDates((currentDates) => currentDates.filter((currentDateKey) => !dateKeySet.has(currentDateKey)));
   }
 
   /** 移除指定日期的全部排期。 */
@@ -287,17 +268,16 @@ export function useTrialSchedule({
     isScheduleLimitReached,
     arrangedDatas,
     arrangedPeriods: arrangedDatas.length > 0 ? trialScheduleDataPeriods : [],
-    maxSelectedDates,
+    maxScheduleDates,
     onChangePeriodRange: handleChangePeriodRange,
     onClearDaySchedule: () => handleClearDaySchedule(),
     onClearPeriod: handleClearPeriod,
     periods,
     plannedDates: normalizedPlannedDates,
-    selectedDates,
     setActiveDate,
     testedDatas,
     testedPeriods: testedDatas.length > 0 ? trialScheduleDataPeriods : [],
-    value: schedulePlan ? { plan: schedulePlan, scheduleDraft, selectedDates: [...selectedDates].sort() } : null
+    value: schedulePlan ? { plan: schedulePlan, scheduleDraft } : null
   };
 }
 

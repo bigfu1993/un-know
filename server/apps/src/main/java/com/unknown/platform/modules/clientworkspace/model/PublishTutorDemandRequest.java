@@ -2,6 +2,7 @@ package com.unknown.platform.modules.clientworkspace.model;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -17,7 +18,7 @@ public record PublishTutorDemandRequest(
     @NotBlank(message = "家教周期开始日期不能为空") String periodStart,
     @NotBlank(message = "家教周期结束日期不能为空") String periodEnd,
     /** 计划周期实际选中的完整日期集合，允许不连续的零散日期；periodStart/periodEnd 由前端从这个集合推导出最早/最晚日期。 */
-    List<String> periodDates,
+    @NotEmpty(message = "家教计划日期不能为空") List<String> plannedDates,
     Boolean trialEnabled,
     String trialDuration,
     @DecimalMin("0.00") BigDecimal wageAmount,

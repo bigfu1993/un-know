@@ -110,7 +110,6 @@ declare global {
   type ChildProfileOption = import("@app-types/tutor-workflow").ChildProfileOption;
   type TutorTrialJob = import("@app-types/tutor-workflow").TutorTrialJob;
   type TutorApplicationCandidate = import("@app-types/tutor-workflow").TutorApplicationCandidate;
-  type CompleteTutorTrialEndPayload = import("@app-types/tutor-workflow").CompleteTutorTrialEndPayload;
   type ConfirmTutorTrialPayload = import("@app-types/tutor-workflow").ConfirmTutorTrialPayload;
   type TutorWorkflowActionPayload = import("@app-types/tutor-workflow").TutorWorkflowActionPayload;
   type TutorOverlayActions = import("@app-types/overlay").TutorOverlayActions;

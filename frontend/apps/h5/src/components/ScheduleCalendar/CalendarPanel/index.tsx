@@ -2,7 +2,7 @@ import "./index.less";
 import { getTutorCalendarCells, getTutorDateKey, getTutorMonthKey } from "@tools/tutorCalendar";
 import { Moon, Sun, Sunrise } from "lucide-react";
 
-/** 日历交互模式：查看模式只切换查看焦点；编辑模式下单击已查看的日期切换安排/取消安排，并支持按住滑动批量选中。 */
+/** 日历交互模式：查看模式只切换查看焦点；编辑模式下单击已查看的日期切换计划状态，并支持按住滑动批量调整计划日期。 */
 export type CalendarPanelMode = "edit" | "view";
 
 /**
@@ -14,33 +14,27 @@ export interface CalendarPanelScheduleData {
   periods: string[];
 }
 
-/** 日期面板日历组件属性；只负责月份网格、查看/选择交互以及试课/正式课程日程分段展示。 */
+/** 日期面板日历组件属性；只负责月份网格、查看/计划编辑交互以及试课/正式课程日程分段展示。 */
 export interface CalendarPanelProps {
   activeDate?: string;
-  /** 当前选中的日期：整格底色标记，并驱动天数上限和拖拽批量选择。 */
-  selectedDates: string[];
   /** 按日期维护的正式课程数据；存在数据时展示时段，但不产生试课角标。 */
   arrangedDatas?: CalendarPanelScheduleData[];
   /** 正式课程数据的分段 key 顺序。 */
   arrangedPeriods?: string[];
-  /** 选中天数上限，达到上限后未选日期禁止继续新增；不传或传 null/undefined 代表不限制。 */
-  maxSelectedDates?: number | null;
-  /** 日历交互模式：查看模式只切换查看焦点；编辑模式下单击已查看日期切换选中状态，也支持按住滑动批量选中。 */
+  /** 日历交互模式：查看模式只切换查看焦点；编辑模式下单击已查看日期切换计划状态，也支持按住滑动批量调整计划日期。 */
   mode: CalendarPanelMode;
   onActiveDateChange?: (dateKey: string) => void;
   /**
    * 编辑模式下触发：单击"已查看"的日期时触发一次；按住滑动结束时，对本次滑动扫过的每个日期各触发一次
-   * （落在最终范围内但还没选中的会被选中，滑动扫过但最终落在范围外、且原本已选中的会被取消）。
-   * 查看模式和单击未查看的日期都不会触发。具体选择结果对应什么业务动作由调用方决定；因为滑动结束
-   * 时可能连续触发多次，调用方需要用函数式 setState 更新选中列表，不能依赖闭包里的旧值。
+   * （落在最终范围内但还没计划的会加入计划，滑动扫过但最终落在范围外、且原本已计划的会移出计划）。
+   * 查看模式和单击未查看的日期都不会触发。因为滑动结束时可能连续触发多次，调用方需要用函数式
+   * setState 更新计划日期列表，不能依赖闭包里的旧值。
    */
   onToggleDate?: (dateKey: string, selectableDateKeys: string[]) => void;
   /**
-   * 计划日期：只精确到"哪天"，为对应格子附加 planned 语义类和计划背景，但不参与天数上限和拖拽
-   * 选择计算；跟 selectedDates（本次弹窗当前选中日期）是两种不同粒度的数据。
+   * 计划日期：发布家教时作为编辑数据源，后续试课安排时作为只读参考回显；对应格子统一附加 planned 类。
    */
   plannedDates?: string[];
-  selectableDates?: string[];
   /** 按日期维护的试课数据；日期存在对应数据时在日期数字右上角显示“试”。 */
   testedDatas?: CalendarPanelScheduleData[];
   /** 试课数据的分段 key 顺序。 */
@@ -71,7 +65,7 @@ function getSchedulePeriodIcon(period: string, periodIndex: number) {
 interface CalendarPanelDragState {
   /** 当前指针经过的日期。 */
   currentDate: string | null;
-  /** 按住开始滑动的起点日期，非空代表正在滑动选择中。 */
+  /** 按住开始调整计划范围的起点日期，非空代表计划范围手势正在进行。 */
   startDate: string | null;
   /** 本次滑动全程经过的最大日期（起点和途经的每个日期取最大值）。 */
   touchedMaxDate: string | null;
@@ -86,24 +80,21 @@ const initialDragState: CalendarPanelDragState = {
   touchedMinDate: null
 };
 
-/** 日期面板日历：展示月份网格、查看/选择交互以及试课和正式课程的分时段状态。 */
+/** 日期面板日历：展示月份网格、查看/计划编辑交互以及试课和正式课程的分时段状态。 */
 export function CalendarPanel({
   activeDate,
   arrangedDatas = [],
   arrangedPeriods = [],
-  maxSelectedDates = null,
   mode,
   onActiveDateChange,
   onToggleDate,
-  plannedDates,
-  selectableDates,
-  selectedDates,
+  plannedDates = [],
   testedDatas = [],
   testedPeriods = []
 }: CalendarPanelProps) {
   const today = useMemo(() => new Date(), []);
   const todayKey = getTutorDateKey(today);
-  const initialActiveDate = activeDate ?? selectedDates[0] ?? plannedDates?.[0] ?? todayKey;
+  const initialActiveDate = activeDate ?? plannedDates[0] ?? todayKey;
   const [viewMonth, setViewMonth] = useState(() => initialActiveDate.slice(0, 7) || getTutorMonthKey(today));
   const calendarCells = useMemo(() => getTutorCalendarCells(viewMonth), [viewMonth]);
   const monthTitle = `${viewMonth.split("-")[0]}年${Number(viewMonth.split("-")[1])}月`;
@@ -114,16 +105,12 @@ export function CalendarPanel({
     () => [...new Set([...testedPeriods, ...arrangedPeriods])],
     [arrangedPeriods, testedPeriods]
   );
-  /** 计划日期索引只判断是否属于发布计划，不参与当前选择或天数上限计算。 */
-  const plannedDateSet = useMemo(() => new Set(plannedDates ?? []), [plannedDates]);
-  const selectedDateSet = useMemo(() => new Set(selectedDates), [selectedDates]);
-  const selectableDateSet = useMemo(() => new Set(selectableDates ?? []), [selectableDates]);
-  const hasSelectableDateLimit = selectableDateSet.size > 0;
-  const selectableDateKeys = useMemo(() => {
-    return calendarCells
-      .filter((dateKey): dateKey is string => Boolean(dateKey))
-      .filter((dateKey) => !hasSelectableDateLimit || selectableDateSet.has(dateKey));
-  }, [calendarCells, hasSelectableDateLimit, selectableDateSet]);
+  /** 计划日期索引同时驱动发布编辑态和后续试课计划回显。 */
+  const plannedDateSet = useMemo(() => new Set(plannedDates), [plannedDates]);
+  const selectableDateKeys = useMemo(
+    () => calendarCells.filter((dateKey): dateKey is string => Boolean(dateKey)),
+    [calendarCells]
+  );
   /** 拖拽滑动状态的可渲染镜像；随手势推进同步更新，用于计算实时预览。 */
   const [dragState, setDragState] = useState<CalendarPanelDragState>(initialDragState);
   /** 标记刚发生过滑动，用于抑制滑动松开后紧跟的一次单击，避免被当成普通点击重复处理。 */
@@ -135,11 +122,11 @@ export function CalendarPanel({
    */
   const dragStateRef = useRef(initialDragState);
   /** 保存滑动结束时需要用到的最新回调和数据，避免闭包读到滑动开始时的旧值。 */
-  const latestRef = useRef({ onToggleDate, selectableDateKeys, selectedDateSet });
+  const latestRef = useRef({ onToggleDate, plannedDateSet, selectableDateKeys });
 
   useEffect(() => {
-    latestRef.current = { onToggleDate, selectableDateKeys, selectedDateSet };
-  }, [onToggleDate, selectableDateKeys, selectedDateSet]);
+    latestRef.current = { onToggleDate, plannedDateSet, selectableDateKeys };
+  }, [onToggleDate, plannedDateSet, selectableDateKeys]);
 
   /** 本次滑动全程经过的日期范围（起点和途经的每个日期的并集），这些日期的显示状态完全交给本次滑动控制。 */
   const dragTouchedDateSet = useMemo(() => {
@@ -151,7 +138,7 @@ export function CalendarPanel({
 
     return new Set(selectableDateKeys.filter((dateKey) => dateKey >= touchedMinDate && dateKey <= touchedMaxDate));
   }, [dragState, selectableDateKeys]);
-  /** 当前指针位置对应的实时范围，扫过但不在最终范围内的日期实时显示为未选中。 */
+  /** 当前指针位置对应的实时范围，扫过但不在最终范围内的日期实时显示为未计划。 */
   const dragLiveRangeDateSet = useMemo(() => {
     const { currentDate, startDate } = dragState;
 
@@ -164,7 +151,7 @@ export function CalendarPanel({
     return new Set(selectableDateKeys.filter((dateKey) => dateKey >= rangeMinDateKey && dateKey <= rangeMaxDateKey));
   }, [dragState, selectableDateKeys]);
 
-  /** 松开滑动手势后按最终范围同步本次扫过日期的选中状态。 */
+  /** 松开滑动手势后按最终范围同步本次扫过日期的计划状态。 */
   function handleDragEnd() {
     const { currentDate, startDate, touchedMaxDate, touchedMinDate } = dragStateRef.current;
 
@@ -178,16 +165,16 @@ export function CalendarPanel({
       const [rangeMinDateKey, rangeMaxDateKey] = [startDate, currentDate].sort();
       const {
         onToggleDate: latestOnToggleDate,
-        selectableDateKeys: latestSelectableDateKeys,
-        selectedDateSet: latestSelectedDateSet
+        plannedDateSet: latestPlannedDateSet,
+        selectableDateKeys: latestSelectableDateKeys
       } = latestRef.current;
 
       latestSelectableDateKeys
         .filter((dateKey) => dateKey >= touchedMinDate && dateKey <= touchedMaxDate)
         .filter((dateKey) => {
-          const shouldBeSelected = dateKey >= rangeMinDateKey && dateKey <= rangeMaxDateKey;
+          const shouldBePlanned = dateKey >= rangeMinDateKey && dateKey <= rangeMaxDateKey;
 
-          return shouldBeSelected !== latestSelectedDateSet.has(dateKey);
+          return shouldBePlanned !== latestPlannedDateSet.has(dateKey);
         })
         .forEach((dateKey) => latestOnToggleDate?.(dateKey, latestSelectableDateKeys));
     }
@@ -196,7 +183,7 @@ export function CalendarPanel({
     setDragState(initialDragState);
   }
 
-  /** 按住单元格开始滑动选择；只在编辑模式下生效，查看模式按住不会有任何效果。 */
+  /** 按住单元格开始滑动调整计划范围；只在编辑模式下生效，查看模式按住不会有任何效果。 */
   function handleDragStart(dateKey: string) {
     if (mode !== "edit") {
       return;
@@ -301,27 +288,19 @@ export function CalendarPanel({
             return <span className="calendar-panel__day empty" key={`empty-${index}`} />;
           }
 
-          /** 本次滑动扫过的日期由实时范围决定选中状态，其它日期保持外部传入状态。 */
-          const isSelected = dragTouchedDateSet.has(dateKey)
+          /** 本次滑动扫过的日期由实时范围决定计划状态，其它日期保持外部传入状态。 */
+          const isPlannedDate = dragTouchedDateSet.has(dateKey)
             ? dragLiveRangeDateSet.has(dateKey)
-            : selectedDateSet.has(dateKey);
-          const isOverMaxSelectedDates =
-            maxSelectedDates !== null &&
-            maxSelectedDates !== undefined &&
-            selectedDates.length >= maxSelectedDates &&
-            !isSelected;
-          const isOutsideSelectableDates = hasSelectableDateLimit && !selectableDateSet.has(dateKey);
+            : plannedDateSet.has(dateKey);
           const isPastDate = dateKey < todayKey;
           const dayNumber = Number(dateKey.slice(-2));
           const arrangedDataEntry = arrangedDataMap.get(dateKey);
           const testedDataEntry = testedDataMap.get(dateKey);
-          const isPlannedDate = plannedDateSet.has(dateKey);
 
           return (
             <button
-              className={`calendar-panel__day ${activeDate === dateKey ? "active" : ""} ${dateKey === todayKey ? "today" : ""} ${isSelected ? "selected" : ""} ${isOverMaxSelectedDates ? "limited" : ""} ${isPastDate ? "past" : ""} ${isPlannedDate ? "planned" : ""}`}
+              className={`calendar-panel__day ${activeDate === dateKey ? "active" : ""} ${dateKey === todayKey ? "today" : ""} ${isPastDate ? "past" : ""} ${isPlannedDate ? "planned" : ""}`}
               data-date-key={dateKey}
-              disabled={isOutsideSelectableDates}
               key={dateKey}
               onClick={() => handleSelectDate(dateKey)}
               onPointerDown={() => handleDragStart(dateKey)}

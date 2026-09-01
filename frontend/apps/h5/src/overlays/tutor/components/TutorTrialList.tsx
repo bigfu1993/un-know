@@ -8,13 +8,6 @@ interface TutorTrialListProps {
   applicationCandidates: TutorApplicationCandidate[];
   trialListSubmissionPending?: boolean;
   onClose: () => void;
-  onConfirmEnd?: (payload: {
-    applicationId: string;
-    demandId: string;
-    hireTutor?: boolean;
-    trialFee: number;
-    tutorSchedule?: string;
-  }) => void;
   onWorkflowAction: (
     payload: TutorWorkflowActionRequest & {
       applicationId: string;
@@ -526,7 +519,7 @@ export function TutorTrialList({
           <CalendarTime
             blockedScheduleSummary={selectedCandidate.trialSchedule}
             initialValue={null}
-            maxSelectedDates={null}
+            maxScheduleDates={null}
             onClose={() => setIsTutorScheduleOpen(false)}
             onConfirm={(value) => {
               void handleWorkflowAction("submit_service_schedule", { tutorSchedule: value.plan.summary });

@@ -19,7 +19,7 @@ function getTutorSchedulePreviewCalendarDatas(sections: TutorSchedulePreviewSect
       return;
     }
 
-    getTrialScheduleCalendarDatas(scheduleValue.selectedDates, scheduleValue.scheduleDraft).forEach((scheduleData) => {
+    getTrialScheduleCalendarDatas(scheduleValue.scheduleDraft).forEach((scheduleData) => {
       const dataMap = dataMaps[section.dataType];
       const currentData = dataMap.get(scheduleData.date) ?? {
         date: scheduleData.date,
@@ -103,10 +103,8 @@ export function TutorSchedulePreview({
             activeDate={activeDate}
             arrangedDatas={arrangedDatas}
             arrangedPeriods={schedulePeriods}
-            maxSelectedDates={null}
             mode="view"
             onActiveDateChange={setActiveDate}
-            selectedDates={[]}
             testedDatas={testedDatas}
             testedPeriods={schedulePeriods}
           />

@@ -44,7 +44,7 @@
   gap: 5px;
 }
 
-/* 编辑模式下单元格要支持按住滑动选择，关掉浏览器默认的触屏滚动/文字选中手势，避免和滑动手势打架。 */
+/* 编辑模式下单元格要支持按住滑动调整计划范围，关掉浏览器默认的触屏滚动/文字选中手势，避免和滑动手势打架。 */
 .calendar-panel__grid.edit-mode .calendar-panel__day {
   touch-action: none;
   user-select: none;
@@ -69,7 +69,8 @@
     border-color 160ms ease,
     background 160ms ease,
     box-shadow 160ms ease,
-    color 160ms ease;
+    color 160ms ease,
+    opacity 160ms ease;
 }
 
 .calendar-panel__day.empty {
@@ -77,30 +78,27 @@
   background: transparent;
 }
 
-/* 查看：单击后的当前查看单元格，线框从默认灰色切换成主题色，用来区分"查看中"的单元格。 */
-.calendar-panel__day.active {
-  border-color: var(--h5-accent);
-}
-
-/* 早于当天的日期：数字文字用中性灰弱化视觉存在感；已选中时仍按选中态显示。 */
-.calendar-panel__day.past:not(.selected) strong {
-  color: var(--h5-subtle);
-}
-
-/* 发布计划（.planned）：使用主题色背景回显；当前选中（.selected）只保留状态类。 */
+/* 发布计划与后续计划回显统一使用 .planned，以主题色背景展示。 */
 .calendar-panel__day.planned {
   background: var(--h5-accent-soft);
 }
 
-/* 当天日期保持不变：不管是否选中，数字徽标始终是实心深色圆。 */
+/* 过去日期保留计划和日程原样，仅整体半透明弱化；规则位于 planned 之后，视觉优先级更高。 */
+.calendar-panel__day.past {
+  opacity: 0.55;
+}
+
+/* 当前查看态优先级最高：即使日期已经过去，也恢复完整可见度并展示主题线框。 */
+.calendar-panel__day.active {
+  border-color: var(--h5-accent);
+  opacity: 1;
+}
+
+/* 当天日期保持不变：不管是否在计划中，数字徽标始终是实心深色圆。 */
 .calendar-panel__day.today strong {
   background: var(--h5-text);
   color: var(--h5-surface-solid);
   box-shadow: none;
-}
-
-.calendar-panel__day.limited:not(.selected) {
-  background: var(--h5-surface-muted);
 }
 
 .calendar-panel__day:disabled {
@@ -121,11 +119,11 @@
 
 .calendar-panel__day-badge {
   position: absolute;
-  top: -3px;
-  right: -5px;
+  top: -4px;
+  right: -6px;
   display: grid;
-  min-width: 12px;
-  height: 12px;
+  min-width: 14px;
+  height: 14px;
   place-items: center;
   border: 1px solid var(--h5-surface-solid);
   border-radius: 999px;

@@ -462,7 +462,7 @@ export interface PublishTutorDemandRequest {
   periodStart: string;
   periodEnd: string;
   /** 计划周期实际选中的完整日期集合，允许不连续的零散日期；periodStart/periodEnd 是这个集合里的最早/最晚日期，仅作连续区间摘要。 */
-  periodDates?: string[];
+  plannedDates?: string[];
   trialEnabled?: boolean;
   trialDuration?: string;
   wageAmount?: number | null;
@@ -478,18 +478,15 @@ export interface ApplyTutorTrialRequest {
   message?: string;
 }
 
-/** 家长确认家教试课安排请求。 */
-export interface ConfirmTutorTrialRequest {
-  trialStart: string;
-  trialEnd: string;
-  trialHalfDay: string;
+/** 单日试课日程及其有效时间段。 */
+export interface TutorTrialScheduleDate {
+  date: string;
+  timeRanges: ScheduleTimeRange[];
 }
 
-/** 家长确认结束试课时的试课结算请求，正式雇佣决策可后续单独选择。 */
-export interface CompleteTutorTrialEndRequest {
-  hireTutor?: boolean;
-  trialFee: number;
-  tutorSchedule?: string;
+/** 家长提交家教试课日程请求。 */
+export interface ConfirmTutorTrialRequest {
+  dates: TutorTrialScheduleDate[];
 }
 
 /** 家教流程动作，与流程图节点保持一致。 */

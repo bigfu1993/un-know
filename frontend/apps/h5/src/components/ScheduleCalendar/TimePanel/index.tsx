@@ -346,9 +346,7 @@ export function TimePanel({
                         <span>{minutesToTime(endMinutes)}</span>
                       </output>
                     ) : null}
-                    <span className="time-panel__range-endpoint time-panel__range-endpoint--end">
-                      {period.maxTime}
-                    </span>
+                    <span className="time-panel__range-endpoint time-panel__range-endpoint--end">{period.maxTime}</span>
                   </div>
                 </div>
               )}

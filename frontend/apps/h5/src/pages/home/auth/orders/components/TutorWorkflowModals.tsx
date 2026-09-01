@@ -146,10 +146,8 @@ export function TrialSchedulePreview({
               activeDate={activeDate}
               arrangedDatas={arrangedDatas}
               arrangedPeriods={schedulePeriods}
-              maxSelectedDates={null}
               mode="view"
               onActiveDateChange={setActiveDate}
-              selectedDates={[]}
               testedDatas={testedDatas}
               testedPeriods={schedulePeriods}
             />
@@ -224,7 +222,7 @@ export function TrialSchedulePreview({
             confirmLabel={isSubmittingConflictSchedule ? "提交中" : "重新提交"}
             initialValue={initialConflictScheduleValue}
             isConfirming={isSubmittingConflictSchedule}
-            maxSelectedDates={null}
+            maxScheduleDates={null}
             onClose={() => setIsConflictScheduleOpen(false)}
             onConfirm={handleConfirmConflictSchedule}
           />

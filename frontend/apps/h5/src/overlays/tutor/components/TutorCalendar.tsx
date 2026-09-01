@@ -59,10 +59,8 @@ export function TutorCalendar({ calendarTasks, initialDate, onClose }: TutorCale
         activeDate={activeDate}
         arrangedDatas={arrangedDatas}
         arrangedPeriods={arrangedPeriods}
-        maxSelectedDates={null}
         mode="view"
         onActiveDateChange={setActiveDate}
-        selectedDates={[]}
       />
 
       <div className="tutor-calendar-detail grid gap-[8px]">

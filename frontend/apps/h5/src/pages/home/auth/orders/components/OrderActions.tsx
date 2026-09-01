@@ -459,7 +459,7 @@ export function OrderActions({
             confirmLabel={isSubmittingServiceSchedule ? "提交中" : "提交日程"}
             initialValue={null}
             isConfirming={isSubmittingServiceSchedule}
-            maxSelectedDates={null}
+            maxScheduleDates={null}
             onClose={() => setIsServiceScheduleOpen(false)}
             onConfirm={handleConfirmServiceSchedule}
             scheduleType="arranged"
@@ -502,7 +502,7 @@ export function OrderActions({
                 : null
             }
             isConfirming={isSubmittingServiceAvailability}
-            maxSelectedDates={null}
+            maxScheduleDates={null}
             onClose={() => setServiceAvailabilityAction(null)}
             onConfirm={handleConfirmServiceAvailability}
             scheduleType="arranged"

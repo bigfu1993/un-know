@@ -4,8 +4,6 @@ import {
   applyTutorTrial,
   cancelTutorApplication,
   cancelTutorDemand,
-  confirmHuntingTaskQuote,
-  completeTutorTrialEnd,
   confirmTutorTrial,
   confirmTutorTrialStart,
   createChatConversation,
@@ -50,7 +48,6 @@ import {
 import {
   ChatQuickActionRequest,
   ClientOrder,
-  CompleteTutorTrialEndRequest,
   ConfirmTutorTrialRequest,
   CreateChatConversationRequest,
   CreateHuntingProjectRequest,
@@ -287,20 +284,6 @@ export function useQuoteHuntingTask() {
   });
 }
 
-export function useConfirmHuntingTaskQuote() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: { quoteId: string; taskId: string }) =>
-      confirmHuntingTaskQuote(payload.taskId, payload.quoteId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });
-      void queryClient.invalidateQueries({ queryKey: clientOngoingOrdersQueryKey });
-      void queryClient.invalidateQueries({ queryKey: clientHuntingTasksQueryKey });
-    }
-  });
-}
-
 export function useDecideHuntingTaskQuote() {
   const queryClient = useQueryClient();
 
@@ -424,23 +407,6 @@ export function useRequestTutorTrialEnd() {
 
   return useMutation({
     mutationFn: (applicationId: string) => requestTutorTrialEnd(applicationId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });
-      void queryClient.invalidateQueries({ queryKey: clientOngoingOrdersQueryKey });
-      void queryClient.invalidateQueries({ queryKey: clientPartTimeJobsQueryKey });
-      void queryClient.invalidateQueries({ queryKey: clientTutorApplicationsQueryKey });
-    }
-  });
-}
-
-export function useCompleteTutorTrialEnd() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: CompleteTutorTrialEndRequest & { applicationId: string; demandId: string }) => {
-      const { applicationId, demandId, ...request } = payload;
-      return completeTutorTrialEnd(demandId, applicationId, request);
-    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: clientWorkspaceQueryKey });
       void queryClient.invalidateQueries({ queryKey: clientOngoingOrdersQueryKey });

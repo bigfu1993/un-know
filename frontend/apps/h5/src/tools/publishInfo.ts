@@ -34,7 +34,7 @@ export interface PublishInfoDraft {
   tutorDateEnd: string;
   tutorDateStart: string;
   /** 计划周期实际选中的完整日期集合，允许不连续的零散日期；tutorDateStart/tutorDateEnd 是这个集合里的最早/最晚日期，仅作连续区间摘要展示。 */
-  tutorDates: string[];
+  plannedDates: string[];
   tutorSchoolTags: string[];
   tutorSubject: string;
   tutorTime: string;
@@ -174,7 +174,7 @@ export function buildPublishTutorDemandRequest(
     childId: draft.childId,
     childName: selectedChild?.name ?? "孩子",
     description: draft.description.trim(),
-    periodDates: draft.tutorDates,
+    plannedDates: draft.plannedDates,
     periodEnd: draft.tutorDateEnd.trim(),
     periodStart: draft.tutorDateStart.trim(),
     requirement: "",

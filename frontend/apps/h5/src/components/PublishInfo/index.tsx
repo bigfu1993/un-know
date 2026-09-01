@@ -105,7 +105,7 @@ const initialPublishInfoDraft: PublishInfoDraft = {
   trialEnabled: "是",
   tutorDateEnd: "",
   tutorDateStart: "",
-  tutorDates: [],
+  plannedDates: [],
   tutorSchoolTags: [],
   tutorSubject: "",
   tutorTime: "",
@@ -317,10 +317,10 @@ export function PublishInfo({
   }
 
   /** 更新家教计划周期实际选中的日期集合；单独走这个 setter 是因为 handleFieldChange 只接受字符串值。 */
-  function handleChangeTutorDates(dates: string[]) {
+  function handleChangePlannedDates(dates: string[]) {
     setDraft((currentDraft) => ({
       ...currentDraft,
-      tutorDates: dates
+      plannedDates: dates
     }));
   }
 
@@ -384,7 +384,7 @@ export function PublishInfo({
               childOptions={childOptions}
               draft={draft}
               onChange={handleFieldChange}
-              onChangeTutorDates={handleChangeTutorDates}
+              onChangePlannedDates={handleChangePlannedDates}
             />
           )}
         </div>
@@ -631,13 +631,13 @@ function TutorPublishFields({
   childOptions,
   draft,
   onChange,
-  onChangeTutorDates
+  onChangePlannedDates
 }: {
   addressItems: AddressBookItem[];
   childOptions: ChildProfileOption[];
   draft: PublishInfoDraft;
   onChange: (key: keyof PublishInfoDraft, value: string) => void;
-  onChangeTutorDates: (dates: string[]) => void;
+  onChangePlannedDates: (dates: string[]) => void;
 }) {
   return (
     <div className="publish-form-fields grid gap-[10px]">
@@ -669,7 +669,7 @@ function TutorPublishFields({
         onChange={onChange}
         options={tutorSubjectOptions.map((subject) => ({ label: getTutorSubjectLabel(subject), value: subject }))}
       />
-      <TutorPlanPeriodField draft={draft} onChange={onChange} onChangeTutorDates={onChangeTutorDates} />
+      <TutorPlanPeriodField draft={draft} onChange={onChange} onChangePlannedDates={onChangePlannedDates} />
       <SwitchField
         checked={draft.trialEnabled === "是"}
         icon={BadgeCheck}
@@ -766,27 +766,27 @@ function TutorAddressField({
 function TutorPlanPeriodField({
   draft,
   onChange,
-  onChangeTutorDates
+  onChangePlannedDates
 }: {
   draft: PublishInfoDraft;
   onChange: PublishInfoFieldChange;
-  onChangeTutorDates: (dates: string[]) => void;
+  onChangePlannedDates: (dates: string[]) => void;
 }) {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const hasInvalidDateRange = Boolean(draft.tutorDateStart && draft.tutorDateEnd && draft.tutorDateEnd < draft.tutorDateStart);
-  const hasSelectedRange = Boolean(draft.tutorDateStart && draft.tutorDateEnd && !hasInvalidDateRange);
+  const hasPlannedRange = Boolean(draft.tutorDateStart && draft.tutorDateEnd && !hasInvalidDateRange);
 
   /** 重置计划周期：清空选中的完整日期集合和推导出的开始~结束日期。 */
   function handleResetPeriod() {
-    onChangeTutorDates([]);
+    onChangePlannedDates([]);
     onChange("tutorDateStart", "");
     onChange("tutorDateEnd", "");
   }
 
   return (
-    <div className={`profile-field publish-field tutor-period-date-field grid gap-[8px] ${hasSelectedRange ? "" : "missing"}`}>
+    <div className={`profile-field publish-field tutor-period-date-field grid gap-[8px] ${hasPlannedRange ? "" : "missing"}`}>
       <FieldLabel icon={CalendarDays} label="计划周期" />
-      <div className={`tutor-period-date-field__trigger flex items-center justify-between gap-[10px] ${hasSelectedRange ? "filled" : ""}`}>
+      <div className={`tutor-period-date-field__trigger flex items-center justify-between gap-[10px] ${hasPlannedRange ? "filled" : ""}`}>
         <div
           aria-haspopup="dialog"
           aria-label="选择计划周期"
@@ -801,12 +801,12 @@ function TutorPlanPeriodField({
           role="button"
           tabIndex={0}
         >
-          {hasSelectedRange ? (
-            <span className="tutor-period-date-field__count">共 {draft.tutorDates.length} 天</span>
+          {hasPlannedRange ? (
+            <span className="tutor-period-date-field__count">共 {draft.plannedDates.length} 天</span>
           ) : null}
-          <span className="tutor-period-date-field__value">{formatPublishPeriodDatesDetail(draft.tutorDates)}</span>
+          <span className="tutor-period-date-field__value">{formatPublishPeriodDatesDetail(draft.plannedDates)}</span>
         </div>
-        {hasSelectedRange ? (
+        {hasPlannedRange ? (
           <button className="tutor-period-date-field__reset text-button" onClick={handleResetPeriod} type="button">
             重置
           </button>
@@ -817,7 +817,7 @@ function TutorPlanPeriodField({
         <TutorPlanPeriodPicker
           draft={draft}
           onChange={onChange}
-          onChangeTutorDates={onChangeTutorDates}
+          onChangePlannedDates={onChangePlannedDates}
           onClose={() => setIsPickerOpen(false)}
         />
       ) : null}
@@ -829,45 +829,45 @@ function TutorPlanPeriodField({
 function TutorPlanPeriodPicker({
   draft,
   onChange,
-  onChangeTutorDates,
+  onChangePlannedDates,
   onClose
 }: {
   draft: PublishInfoDraft;
   onChange: PublishInfoFieldChange;
-  onChangeTutorDates: (dates: string[]) => void;
+  onChangePlannedDates: (dates: string[]) => void;
   onClose: () => void;
 }) {
   const todayKey = useMemo(() => getTutorDateKey(new Date()), []);
-  /** 初始选中日期优先用草稿里已经保存的零散日期集合；老草稿只有开始~结束区间时，退化成展开这段连续区间。 */
-  const initialSelectedDateKeys = useMemo(
-    () => (draft.tutorDates.length > 0 ? draft.tutorDates : getPublishPeriodRangeDateKeys(draft.tutorDateStart, draft.tutorDateEnd)),
+  /** 初始计划日期优先用草稿里已经保存的零散日期集合；老草稿只有开始~结束区间时，退化成展开这段连续区间。 */
+  const initialPlannedDateKeys = useMemo(
+    () => (draft.plannedDates.length > 0 ? draft.plannedDates : getPublishPeriodRangeDateKeys(draft.tutorDateStart, draft.tutorDateEnd)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
   const [activeDate, setActiveDate] = useState(draft.tutorDateStart || todayKey);
-  /** 日历当前选中的日期集合（可以是不连续的零散日期），是本弹窗的选中数据源头；开始~结束日期只是从中推导出的连续区间摘要。 */
-  const [selectedDateKeys, setSelectedDateKeys] = useState<string[]>(initialSelectedDateKeys);
-  const sortedSelectedDateKeys = useMemo(() => [...selectedDateKeys].sort(), [selectedDateKeys]);
-  const periodStartDate = sortedSelectedDateKeys[0] ?? "";
-  const periodEndDate = sortedSelectedDateKeys[sortedSelectedDateKeys.length - 1] ?? "";
-  const hasSelectedRange = selectedDateKeys.length > 0;
+  /** 日历计划日期集合可以是不连续的零散日期；开始~结束日期只是从中推导出的连续区间摘要。 */
+  const [plannedDateKeys, setPlannedDateKeys] = useState<string[]>(initialPlannedDateKeys);
+  const sortedPlannedDateKeys = useMemo(() => [...plannedDateKeys].sort(), [plannedDateKeys]);
+  const periodStartDate = sortedPlannedDateKeys[0] ?? "";
+  const periodEndDate = sortedPlannedDateKeys[sortedPlannedDateKeys.length - 1] ?? "";
+  const hasPlannedRange = plannedDateKeys.length > 0;
 
   /**
-   * 选中日期集合变化后，把完整日期集合和推导出的开始~结束日期一起同步回发布草稿：
-   * tutorDates 保留真实的零散选中结果，tutorDateStart/tutorDateEnd 只作展示用的连续区间摘要，
+   * 计划日期集合变化后，把完整日期集合和推导出的开始~结束日期一起同步回发布草稿：
+   * plannedDates 保留真实的零散计划结果，tutorDateStart/tutorDateEnd 只作展示用的连续区间摘要，
    * 提交接口时两者都会带上，不会再出现"选的零散日期、提交后只剩一段连续区间"的丢失。
-   * 确认按钮的可点击状态直接看 hasSelectedRange，不受这里的一拍延迟影响。
+   * 确认按钮的可点击状态直接看 hasPlannedRange，不受这里的一拍延迟影响。
    */
   useEffect(() => {
-    onChangeTutorDates(sortedSelectedDateKeys);
+    onChangePlannedDates(sortedPlannedDateKeys);
     onChange("tutorDateStart", periodStartDate);
     onChange("tutorDateEnd", periodEndDate);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortedSelectedDateKeys, periodStartDate, periodEndDate]);
+  }, [sortedPlannedDateKeys, periodStartDate, periodEndDate]);
 
   /** 单击已查看日期或滑动选择结束时触发：切换选中，支持多选和滑动批量选中/取消。 */
-  function handleToggleSelectedDate(dateKey: string) {
-    setSelectedDateKeys((currentDateKeys) =>
+  function handleTogglePlannedDate(dateKey: string) {
+    setPlannedDateKeys((currentDateKeys) =>
       currentDateKeys.includes(dateKey)
         ? currentDateKeys.filter((currentDateKey) => currentDateKey !== dateKey)
         : [...currentDateKeys, dateKey]
@@ -889,11 +889,10 @@ function TutorPlanPeriodPicker({
     >
         <ScheduleCalendar
           activeDate={activeDate}
-          maxSelectedDates={null}
           mode="edit"
           onActiveDateChange={setActiveDate}
-          onToggleDate={handleToggleSelectedDate}
-          selectedDates={selectedDateKeys}
+          onToggleDate={handleTogglePlannedDate}
+          plannedDates={plannedDateKeys}
         />
 
         <div className="sheet-actions flex gap-[10px]">
@@ -902,7 +901,7 @@ function TutorPlanPeriodPicker({
           </button>
           <button
             className="primary-button flex-1 min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
-            disabled={!hasSelectedRange}
+            disabled={!hasPlannedRange}
             onClick={onClose}
             type="button"
           >

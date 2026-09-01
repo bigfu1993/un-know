@@ -1,3 +1,4 @@
+import { useSelectClientRole } from "@unknown/hooks";
 import {
   addressInfoFields,
   campusAreaOptions,
@@ -23,28 +24,9 @@ const registrationRoleIcons = {
 /** 注册信息录入表单 id，供同级固定 footer 中的提交按钮绑定。 */
 const registrationProfileFormId = "registration-profile-form";
 
-/** 解析 H5 接口基础地址，避免开发热更新期间依赖共享包导出。 */
+/** 解析 H5 接口基础地址，供注册后使用新会话令牌直接提交地址。 */
 function getH5ApiBaseUrl() {
   return (globalThis as H5RuntimeGlobals).__UNKNOWN_API_BASE_URL__ ?? "http://127.0.0.1:9988";
-}
-
-/** 为刚注册的账号确认最终角色，并返回刷新后的会话。 */
-async function selectClientRoleAfterRegistration(accessToken: string, role: Role) {
-  const response = await fetch(`${getH5ApiBaseUrl()}/client/auth/select-role`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ role })
-  });
-  const result = (await response.json()) as ApiEnvelope<LoginResponse>;
-
-  if (!response.ok || result.code !== "OK" || !result.data) {
-    throw new Error(result.message || `HTTP ${response.status}`);
-  }
-
-  return result.data;
 }
 
 /** 注册引导阶段地址填写完整时，使用新会话令牌直接创建服务端当前地址。 */
@@ -79,6 +61,7 @@ export function RegistrationGuide({ accessToken, ownerPhone, onBack, onCompleted
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const resetPasswordMutation = useResetClientPassword();
+  const selectRoleMutation = useSelectClientRole();
   const visibleProfileFields = [
     ...(isAddressVisible ? addressInfoFields : []),
     ...(selectedRole === "parent" && isChildVisible ? parentChildInfoFields : []),
@@ -197,7 +180,7 @@ export function RegistrationGuide({ accessToken, ownerPhone, onBack, onCompleted
 
     setIsSubmitting(true);
     try {
-      const session = await selectClientRoleAfterRegistration(accessToken, selectedRole);
+      const session = await selectRoleMutation.mutateAsync({ accessToken, role: selectedRole });
       const sessionWithNickname = {
         ...session,
         nickname: nickname.trim(),

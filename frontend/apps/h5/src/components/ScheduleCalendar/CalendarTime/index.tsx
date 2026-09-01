@@ -27,7 +27,7 @@ export function CalendarTime({
   confirmLabel = "确认",
   initialValue,
   isConfirming = false,
-  maxSelectedDates,
+  maxScheduleDates,
   onClose,
   onConfirm,
   onSubtitleChange,
@@ -40,7 +40,7 @@ export function CalendarTime({
   const schedule = useTrialSchedule({
     blockedScheduleSummary,
     initialValue,
-    maxSelectedDates,
+    maxScheduleDates,
     plannedDates,
     scheduleType
   });
@@ -103,11 +103,9 @@ export function CalendarTime({
           activeDate={schedule.activeDate}
           arrangedDatas={schedule.arrangedDatas}
           arrangedPeriods={schedule.arrangedPeriods}
-          maxSelectedDates={schedule.maxSelectedDates}
           mode="view"
           onActiveDateChange={schedule.setActiveDate}
           plannedDates={schedule.plannedDates}
-          selectedDates={schedule.selectedDates}
           testedDatas={schedule.testedDatas}
           testedPeriods={schedule.testedPeriods}
         />

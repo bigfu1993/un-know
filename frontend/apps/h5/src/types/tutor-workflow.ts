@@ -60,23 +60,11 @@ export interface TutorApplicationCandidate {
   xuexinScreenshot?: string | null;
 }
 
-/** 家长端确认试课安排载荷。 */
-export interface ConfirmTutorTrialPayload {
+/** 家长端提交试课日程载荷。 */
+export type ConfirmTutorTrialPayload = import("@unknown/domain").ConfirmTutorTrialRequest & {
   applicationId: string;
   demandId: string;
-  trialEnd: string;
-  trialHalfDay: string;
-  trialStart: string;
-}
-
-/** 家长端确认试课结束载荷。 */
-export interface CompleteTutorTrialEndPayload {
-  applicationId: string;
-  demandId: string;
-  hireTutor?: boolean;
-  trialFee: number;
-  tutorSchedule?: string;
-}
+};
 
 /** 家教流程动作载荷，由业务按钮补充当前申请 ID。 */
 export type TutorWorkflowActionPayload = import("@unknown/domain").TutorWorkflowActionRequest & {

@@ -9,13 +9,7 @@ interface TutorApplicationsProps {
   applicationConfirmationPending?: boolean;
   onClose: () => void;
   onCancelTrial?: (payload: { applicationId: string; demandId: string }) => void;
-  onConfirm: (payload: {
-    applicationId: string;
-    demandId: string;
-    trialEnd: string;
-    trialHalfDay: string;
-    trialStart: string;
-  }) => void;
+  onConfirm: (payload: ConfirmTutorTrialPayload) => void;
   onReject?: (payload: { applicationId: string; demandId: string }) => void;
   /** 该家教需求发布时家长选择的日期集合，供试课安排弹窗回显参考；候选人 availability 字段
    *  自申请试课流程简化后不再由学生真实填写，试课时段真正该参考的是这份需求发布日程。 */
@@ -82,7 +76,7 @@ export function TutorApplications({
     trialScheduleValue?.plan.summary &&
     trialScheduleValue.plan.summary !== selectedCandidateTrialScheduleSummary
   );
-  /** 试课确认按钮是否满足学生和试课安排必填要求。 */
+  /** 试课日程提交按钮是否满足学生和试课安排必填要求。 */
   const canConfirm = Boolean(
     selectedCandidate &&
     trialScheduleValue?.plan &&
@@ -110,10 +104,8 @@ export function TutorApplications({
 
     onConfirm({
       applicationId: selectedCandidate.id,
+      dates: trialScheduleValue.plan.dates,
       demandId: selectedCandidate.demandId,
-      trialEnd: trialScheduleValue.plan.trialEnd,
-      trialHalfDay: trialScheduleValue.plan.trialHalfDay,
-      trialStart: trialScheduleValue.plan.trialStart
     });
   }
 
@@ -129,7 +121,7 @@ export function TutorApplications({
       return "修改试课安排";
     }
 
-    return "试课信息确认";
+    return "提交试课日程";
   }
 
   return (
@@ -188,6 +180,7 @@ export function TutorApplications({
                 icon={<GraduationCap size={18} style={{ color: getGenderIconColor(candidate.gender) }} />}
                 key={candidate.id}
                 onSelect={() => handleSelectCandidate(candidate)}
+                selectOnFooter
                 selected={isCandidateSelected}
                 title={
                   <>

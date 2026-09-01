@@ -33,7 +33,7 @@ test("App 只组合一级路由，Home 模块拥有嵌套子路由", () => {
 });
 
 test("登录页面不在一级登录路由内重复创建 Routes", () => {
-  const appStateSource = readSource("pages/home/auth/components/AppStateScreens/index.tsx");
+  const appStateSource = readSource("components/AppStateScreens/index.tsx");
 
   assert.doesNotMatch(appStateSource, /<Routes>/);
   assert.match(appStateSource, /<Login\s+onLoginSuccess=/);

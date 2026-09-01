@@ -14,7 +14,6 @@ export function TutorOverlayHost() {
     applicationConfirmationPending,
     calendarTasks,
     confirmTrial,
-    confirmTrialEnd,
     plannedDates,
     profileDraft,
     saveCertificationInfo,
@@ -41,7 +40,6 @@ export function TutorOverlayHost() {
       <TutorTrialList
         applicationCandidates={applicationCandidates}
         onClose={closeTrialList}
-        onConfirmEnd={confirmTrialEnd}
         onWorkflowAction={workflow}
         trialListSubmissionPending={trialListSubmissionPending}
       />
