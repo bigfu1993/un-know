@@ -14,11 +14,9 @@ export function getTutorMonthKey(date: Date) {
   return getTutorDateKey(date).slice(0, 7);
 }
 
-/** 日程/日历默认查看日期：可选日期集合里包含今天就默认选中今天，否则回退到第一个可选日期。 */
-export function getDefaultTutorScheduleDate(availableDates: string[]) {
-  const todayKey = getTutorDateKey(new Date());
-
-  return availableDates.includes(todayKey) ? todayKey : (availableDates[0] ?? "");
+/** 日程/日历每次打开时统一查看当天，业务日期集合只负责回显，不改变初始焦点。 */
+export function getDefaultTutorScheduleDate() {
+  return getTutorDateKey(new Date());
 }
 
 /** 生成指定月份的家教日历网格。 */

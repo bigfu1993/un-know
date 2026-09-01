@@ -92,6 +92,8 @@ export function getTutorOrderSchedulePreviewConfig(
   const trialScheduleSummary = getTutorTrialScheduleSummaryFromOrderDetail(order.detail);
   const serviceScheduleSummary = getTutorServiceScheduleSummaryFromOrderDetail(order.detail);
   const availabilitySummary = getTutorTrialAvailabilitySummaryFromOrderDetail(order.detail);
+  const hasTestedDates = Boolean(order.testedDates?.length);
+  const hasTrialSchedule = hasTestedDates || Boolean(trialScheduleSummary);
 
   if (tutorTask.node === "serviceSchedulePending") {
     const sections = compactTutorSchedulePreviewSections([
@@ -102,7 +104,7 @@ export function getTutorOrderSchedulePreviewConfig(
             title: "可家教时间"
           }
         : null,
-      trialScheduleSummary
+      hasTrialSchedule
         ? {
             dataType: "tested",
             summary: trialScheduleSummary,
@@ -126,7 +128,7 @@ export function getTutorOrderSchedulePreviewConfig(
 
   if (tutorTask.node === "formalTutoring") {
     const sections = compactTutorSchedulePreviewSections([
-      trialScheduleSummary
+      hasTrialSchedule
         ? {
             dataType: "tested",
             summary: trialScheduleSummary,
@@ -153,7 +155,7 @@ export function getTutorOrderSchedulePreviewConfig(
     };
   }
 
-  return trialScheduleSummary
+  return hasTrialSchedule
     ? {
         allowConflictAction: tutorTask.can("updateTrialAvailability"),
         buttonLabel: "日程",

@@ -1,8 +1,10 @@
 import "./index.less";
 import { getTutorCalendarCells, getTutorDateKey, getTutorMonthKey } from "@tools/tutorCalendar";
+import { Switch } from "@ui/Switch";
+import type { ScheduleTimeTemplate } from "@unknown/domain";
 import { Moon, Sun, Sunrise } from "lucide-react";
 
-/** 日历交互模式：查看模式只切换查看焦点；编辑模式下单击已查看的日期切换计划状态，并支持按住滑动批量调整计划日期。 */
+/** 计划日期交互模式：查看模式不修改 plannedDates；编辑模式允许点击和拖拽调整 plannedDates。 */
 export type CalendarPanelMode = "edit" | "view";
 
 /**
@@ -21,7 +23,7 @@ export interface CalendarPanelProps {
   arrangedDatas?: CalendarPanelScheduleData[];
   /** 正式课程数据的分段 key 顺序。 */
   arrangedPeriods?: string[];
-  /** 日历交互模式：查看模式只切换查看焦点；编辑模式下单击已查看日期切换计划状态，也支持按住滑动批量调整计划日期。 */
+  /** 计划日期交互模式；模板排期由 onScheduledDatesChange 能力独立控制。 */
   mode: CalendarPanelMode;
   onActiveDateChange?: (dateKey: string) => void;
   /**
@@ -35,6 +37,17 @@ export interface CalendarPanelProps {
    * 计划日期：发布家教时作为编辑数据源，后续试课安排时作为只读参考回显；对应格子统一附加 planned 类。
    */
   plannedDates?: string[];
+  /** 用户级时间模板；仅存在排期日期变更能力时用于 CalendarPanel 内部模板开关。 */
+  scheduleTimeTemplate?: ScheduleTimeTemplate;
+  /** 当前实际安排的日期集合，用于模板开关开启后的点击和拖拽编辑。 */
+  scheduledDates?: string[];
+  /** 试课达到日期上限时只锁定拖拽；单击已安排日期仍可取消并释放名额。 */
+  scheduleDragLocked?: boolean;
+  /**
+   * 仅制定试课或正式课程时提供。CalendarPanel 根据该能力显示内部模板开关，并在每次点击或拖拽完成后
+   * 一次性提交新的安排日期集合；changedDateKeys 只包含本次手势涉及的日期。
+   */
+  onScheduledDatesChange?: (scheduledDates: string[], changedDateKeys: string[]) => void;
   /** 按日期维护的试课数据；日期存在对应数据时在日期数字右上角显示“试”。 */
   testedDatas?: CalendarPanelScheduleData[];
   /** 试课数据的分段 key 顺序。 */
@@ -67,6 +80,8 @@ interface CalendarPanelDragState {
   currentDate: string | null;
   /** 按住开始调整计划范围的起点日期，非空代表计划范围手势正在进行。 */
   startDate: string | null;
+  /** 本次手势编辑计划日期还是模板排期日期。 */
+  selectionType: "planned" | "scheduled" | null;
   /** 本次滑动全程经过的最大日期（起点和途经的每个日期取最大值）。 */
   touchedMaxDate: string | null;
   /** 本次滑动全程经过的最小日期（起点和途经的每个日期取最小值）。 */
@@ -75,6 +90,7 @@ interface CalendarPanelDragState {
 
 const initialDragState: CalendarPanelDragState = {
   currentDate: null,
+  selectionType: null,
   startDate: null,
   touchedMaxDate: null,
   touchedMinDate: null
@@ -87,26 +103,43 @@ export function CalendarPanel({
   arrangedPeriods = [],
   mode,
   onActiveDateChange,
+  onScheduledDatesChange,
   onToggleDate,
   plannedDates = [],
+  scheduleDragLocked = false,
+  scheduleTimeTemplate = {},
+  scheduledDates = [],
   testedDatas = [],
   testedPeriods = []
 }: CalendarPanelProps) {
   const today = useMemo(() => new Date(), []);
   const todayKey = getTutorDateKey(today);
-  const initialActiveDate = activeDate ?? plannedDates[0] ?? todayKey;
-  const [viewMonth, setViewMonth] = useState(() => initialActiveDate.slice(0, 7) || getTutorMonthKey(today));
+  const resolvedActiveDate = activeDate ?? todayKey;
+  const [viewMonth, setViewMonth] = useState(() => resolvedActiveDate.slice(0, 7) || getTutorMonthKey(today));
   const calendarCells = useMemo(() => getTutorCalendarCells(viewMonth), [viewMonth]);
   const monthTitle = `${viewMonth.split("-")[0]}年${Number(viewMonth.split("-")[1])}月`;
   const arrangedDataMap = useMemo(() => createScheduleDataMap(arrangedDatas), [arrangedDatas]);
   const testedDataMap = useMemo(() => createScheduleDataMap(testedDatas), [testedDatas]);
+  const templatePeriodSet = useMemo(
+    () =>
+      new Set(
+        Object.entries(scheduleTimeTemplate)
+          .filter(([, range]) => Boolean(range))
+          .map(([period]) => period)
+      ),
+    [scheduleTimeTemplate]
+  );
+  const hasScheduleTimeTemplate = templatePeriodSet.size > 0;
+  const [isUsingScheduleTimeTemplate, setIsUsingScheduleTimeTemplate] = useState(false);
+  const isScheduleTemplateEditing = Boolean(onScheduledDatesChange && isUsingScheduleTimeTemplate);
   /** 两类日程使用同一日期格分段，按调用方顺序去重后统一渲染。 */
   const schedulePeriods = useMemo(
-    () => [...new Set([...testedPeriods, ...arrangedPeriods])],
-    [arrangedPeriods, testedPeriods]
+    () => [...new Set([...testedPeriods, ...arrangedPeriods, ...templatePeriodSet])],
+    [arrangedPeriods, templatePeriodSet, testedPeriods]
   );
   /** 计划日期索引同时驱动发布编辑态和后续试课计划回显。 */
   const plannedDateSet = useMemo(() => new Set(plannedDates), [plannedDates]);
+  const scheduledDateSet = useMemo(() => new Set(scheduledDates), [scheduledDates]);
   const selectableDateKeys = useMemo(
     () => calendarCells.filter((dateKey): dateKey is string => Boolean(dateKey)),
     [calendarCells]
@@ -122,11 +155,29 @@ export function CalendarPanel({
    */
   const dragStateRef = useRef(initialDragState);
   /** 保存滑动结束时需要用到的最新回调和数据，避免闭包读到滑动开始时的旧值。 */
-  const latestRef = useRef({ onToggleDate, plannedDateSet, selectableDateKeys });
+  const latestRef = useRef({
+    onScheduledDatesChange,
+    onToggleDate,
+    plannedDateSet,
+    scheduledDateSet,
+    selectableDateKeys
+  });
 
   useEffect(() => {
-    latestRef.current = { onToggleDate, plannedDateSet, selectableDateKeys };
-  }, [onToggleDate, plannedDateSet, selectableDateKeys]);
+    latestRef.current = {
+      onScheduledDatesChange,
+      onToggleDate,
+      plannedDateSet,
+      scheduledDateSet,
+      selectableDateKeys
+    };
+  }, [onScheduledDatesChange, onToggleDate, plannedDateSet, scheduledDateSet, selectableDateKeys]);
+
+  useEffect(() => {
+    if ((!onScheduledDatesChange || !hasScheduleTimeTemplate) && isUsingScheduleTimeTemplate) {
+      setIsUsingScheduleTimeTemplate(false);
+    }
+  }, [hasScheduleTimeTemplate, isUsingScheduleTimeTemplate, onScheduledDatesChange]);
 
   /** 本次滑动全程经过的日期范围（起点和途经的每个日期的并集），这些日期的显示状态完全交给本次滑动控制。 */
   const dragTouchedDateSet = useMemo(() => {
@@ -152,7 +203,7 @@ export function CalendarPanel({
   }, [dragState, selectableDateKeys]);
 
   /** 松开滑动手势后按最终范围同步本次扫过日期的计划状态。 */
-  function handleDragEnd() {
+  const handleDragEnd = useCallback(() => {
     const { currentDate, startDate, touchedMaxDate, touchedMinDate } = dragStateRef.current;
 
     if (!startDate) {
@@ -163,34 +214,49 @@ export function CalendarPanel({
       justDraggedRef.current = true;
 
       const [rangeMinDateKey, rangeMaxDateKey] = [startDate, currentDate].sort();
-      const {
-        onToggleDate: latestOnToggleDate,
-        plannedDateSet: latestPlannedDateSet,
-        selectableDateKeys: latestSelectableDateKeys
-      } = latestRef.current;
+      const latestState = latestRef.current;
+      const touchedDateKeys = latestState.selectableDateKeys.filter(
+        (dateKey) => dateKey >= touchedMinDate && dateKey <= touchedMaxDate
+      );
 
-      latestSelectableDateKeys
-        .filter((dateKey) => dateKey >= touchedMinDate && dateKey <= touchedMaxDate)
-        .filter((dateKey) => {
-          const shouldBePlanned = dateKey >= rangeMinDateKey && dateKey <= rangeMaxDateKey;
+      if (dragStateRef.current.selectionType === "planned") {
+        touchedDateKeys
+          .filter((dateKey) => {
+            const shouldBePlanned = dateKey >= rangeMinDateKey && dateKey <= rangeMaxDateKey;
 
-          return shouldBePlanned !== latestPlannedDateSet.has(dateKey);
-        })
-        .forEach((dateKey) => latestOnToggleDate?.(dateKey, latestSelectableDateKeys));
+            return shouldBePlanned !== latestState.plannedDateSet.has(dateKey);
+          })
+          .forEach((dateKey) => latestState.onToggleDate?.(dateKey, latestState.selectableDateKeys));
+      } else if (dragStateRef.current.selectionType === "scheduled") {
+        const editableTouchedDateKeys = touchedDateKeys.filter((dateKey) => dateKey >= todayKey);
+        const nextScheduledDateSet = new Set(latestState.scheduledDateSet);
+
+        editableTouchedDateKeys.forEach((dateKey) => {
+          if (dateKey >= rangeMinDateKey && dateKey <= rangeMaxDateKey) {
+            nextScheduledDateSet.add(dateKey);
+          } else {
+            nextScheduledDateSet.delete(dateKey);
+          }
+        });
+        latestState.onScheduledDatesChange?.([...nextScheduledDateSet].sort(), editableTouchedDateKeys);
+      }
     }
 
     dragStateRef.current = initialDragState;
     setDragState(initialDragState);
-  }
+  }, [todayKey]);
 
-  /** 按住单元格开始滑动调整计划范围；只在编辑模式下生效，查看模式按住不会有任何效果。 */
+  /** 按住单元格开始滑动调整计划范围，或在模板开关开启时批量调整排期日期。 */
   function handleDragStart(dateKey: string) {
-    if (mode !== "edit") {
+    const selectionType = mode === "edit" ? "planned" : isScheduleTemplateEditing ? "scheduled" : null;
+
+    if (!selectionType || (selectionType === "scheduled" && (scheduleDragLocked || dateKey < todayKey))) {
       return;
     }
 
     const nextDragState: CalendarPanelDragState = {
       currentDate: dateKey,
+      selectionType,
       startDate: dateKey,
       touchedMaxDate: dateKey,
       touchedMinDate: dateKey
@@ -235,7 +301,7 @@ export function CalendarPanel({
       window.removeEventListener("pointerup", handleDragEnd);
       window.removeEventListener("pointercancel", handleDragEnd);
     };
-  }, [dragState.startDate]);
+  }, [dragState.startDate, handleDragEnd]);
 
   /** 切换日历月份并把当前焦点日期移动到新月份第一天。 */
   function handleChangeMonth(offset: number) {
@@ -248,24 +314,44 @@ export function CalendarPanel({
     onActiveDateChange?.(nextActiveDate);
   }
 
-  /** 单击未查看的日期只切换查看焦点；编辑模式下单击已查看的日期才触发安排/取消安排；滑动刚结束的这次单击会被跳过。 */
+  /** 单击未查看的日期只切换查看焦点；再次单击当前查看日期才切换计划或模板安排。 */
   function handleSelectDate(dateKey: string) {
     if (justDraggedRef.current) {
       justDraggedRef.current = false;
       return;
     }
 
-    const wasViewingClickedDate = activeDate === dateKey;
+    const wasViewingClickedDate = resolvedActiveDate === dateKey;
 
     onActiveDateChange?.(dateKey);
 
     if (mode === "edit" && wasViewingClickedDate) {
       onToggleDate?.(dateKey, selectableDateKeys);
+    } else if (isScheduleTemplateEditing && wasViewingClickedDate && dateKey >= todayKey) {
+      const nextScheduledDateSet = new Set(scheduledDateSet);
+
+      if (nextScheduledDateSet.has(dateKey)) {
+        nextScheduledDateSet.delete(dateKey);
+      } else {
+        nextScheduledDateSet.add(dateKey);
+      }
+      onScheduledDatesChange?.([...nextScheduledDateSet].sort(), [dateKey]);
     }
   }
 
   return (
     <div className="calendar-panel" aria-label="日期面板日历">
+      {onScheduledDatesChange ? (
+        <div className="calendar-panel__template-control flex items-center justify-between gap-[10px]">
+          <span className="calendar-panel__template-label">日程模板</span>
+          <Switch
+            checked={isUsingScheduleTimeTemplate}
+            disabled={!hasScheduleTimeTemplate}
+            label="日程模板"
+            onChange={setIsUsingScheduleTimeTemplate}
+          />
+        </div>
+      ) : null}
       <div className="calendar-panel__toolbar flex items-center justify-between gap-[10px]">
         <button className="ghost-button py-[8px]" onClick={() => handleChangeMonth(-1)} type="button">
           上月
@@ -282,7 +368,7 @@ export function CalendarPanel({
         ))}
       </div>
 
-      <div className={`calendar-panel__grid grid ${mode === "edit" ? "edit-mode" : ""}`}>
+      <div className={`calendar-panel__grid grid ${mode === "edit" || isScheduleTemplateEditing ? "edit-mode" : ""}`}>
         {calendarCells.map((dateKey, index) => {
           if (!dateKey) {
             return <span className="calendar-panel__day empty" key={`empty-${index}`} />;
@@ -290,8 +376,12 @@ export function CalendarPanel({
 
           /** 本次滑动扫过的日期由实时范围决定计划状态，其它日期保持外部传入状态。 */
           const isPlannedDate = dragTouchedDateSet.has(dateKey)
-            ? dragLiveRangeDateSet.has(dateKey)
+            ? dragState.selectionType === "planned"
+              ? dragLiveRangeDateSet.has(dateKey)
+              : plannedDateSet.has(dateKey)
             : plannedDateSet.has(dateKey);
+          const isTemplatePreviewDate =
+            dragState.selectionType === "scheduled" && dragLiveRangeDateSet.has(dateKey) && dateKey >= todayKey;
           const isPastDate = dateKey < todayKey;
           const dayNumber = Number(dateKey.slice(-2));
           const arrangedDataEntry = arrangedDataMap.get(dateKey);
@@ -299,7 +389,7 @@ export function CalendarPanel({
 
           return (
             <button
-              className={`calendar-panel__day ${activeDate === dateKey ? "active" : ""} ${dateKey === todayKey ? "today" : ""} ${isPastDate ? "past" : ""} ${isPlannedDate ? "planned" : ""}`}
+              className={`calendar-panel__day ${resolvedActiveDate === dateKey ? "active" : ""} ${dateKey === todayKey ? "today" : ""} ${isPastDate ? "past" : ""} ${isPlannedDate ? "planned" : ""} ${isTemplatePreviewDate ? "template-preview" : ""}`}
               data-date-key={dateKey}
               key={dateKey}
               onClick={() => handleSelectDate(dateKey)}
@@ -308,7 +398,9 @@ export function CalendarPanel({
             >
               {schedulePeriods.map((period, periodIndex) => {
                 const hasPeriod = Boolean(
-                  testedDataEntry?.has(period) || arrangedDataEntry?.has(period)
+                  testedDataEntry?.has(period) ||
+                  arrangedDataEntry?.has(period) ||
+                  (isTemplatePreviewDate && templatePeriodSet.has(period))
                 );
                 const PeriodIcon = getSchedulePeriodIcon(period, periodIndex);
 

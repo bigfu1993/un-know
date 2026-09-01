@@ -134,12 +134,12 @@ export function useOngoingOrders(role: Role, enabled = true) {
   });
 }
 
-/** 从当前账号的进行中订单缓存读取目标家教需求的计划日期，不触发额外网络请求。 */
-export function useOngoingOrdersSnapshot(role: Role, demandId: string | null): string[] {
+/** 从当前账号的进行中订单缓存读取目标订单快照，不触发额外网络请求。 */
+export function useOngoingOrderSnapshot(role: Role, demandId: string | null): ClientOrder | null {
   const queryClient = useQueryClient();
   const orders = queryClient.getQueryData<ClientOrder[]>(getRoleQueryKey(clientOngoingOrdersQueryKey, role));
 
-  return orders?.find((order) => order.id === demandId)?.plannedDates ?? [];
+  return orders?.find((order) => order.id === demandId) ?? null;
 }
 
 /** 当前账号订单历史，跟 useOngoingOrders 同一套底层数据但不做归档过滤，只服务订单历史页。 */

@@ -122,6 +122,7 @@ declare global {
   const Store: typeof import('lucide-react').Store
   const StrictMode: typeof import('react').StrictMode
   const Suspense: typeof import('react').Suspense
+  const Switch: typeof import('./ui/Switch/index').Switch
   const TimePanel: typeof import('./components/ScheduleCalendar/TimePanel/index').TimePanel
   const TrialSchedulePreview: typeof import('./pages/home/auth/orders/components/TutorWorkflowModals').TrialSchedulePreview
   const TrialSettlementConfirm: typeof import('./pages/home/auth/orders/components/TutorWorkflowModals').TrialSettlementConfirm
@@ -572,4 +573,7 @@ declare global {
   // @ts-ignore
   export type { ModalProps } from './ui/Modal/index'
   import('./ui/Modal/index')
+  // @ts-ignore
+  export type { SwitchSize, SwitchProps } from './ui/Switch/index'
+  import('./ui/Switch/index')
 }

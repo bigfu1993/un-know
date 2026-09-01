@@ -246,6 +246,8 @@ export interface ClientOrder {
   address?: string;
   /** 家教卡片专用：计划周期实际选中的完整日期集合，允许不连续的零散日期；非家教品类为空。 */
   plannedDates?: string[];
+  /** 家教申请专用：家长已提交的试课日期与有效时间段；非家教品类或尚未排期时为空。 */
+  testedDates?: TutorTrialScheduleDate[];
   quoteAmount?: number;
   quoteCount?: number;
   trialCount?: number;

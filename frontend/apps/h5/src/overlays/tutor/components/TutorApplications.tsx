@@ -11,9 +11,8 @@ interface TutorApplicationsProps {
   onCancelTrial?: (payload: { applicationId: string; demandId: string }) => void;
   onConfirm: (payload: ConfirmTutorTrialPayload) => void;
   onReject?: (payload: { applicationId: string; demandId: string }) => void;
-  /** 该家教需求发布时家长选择的日期集合，供试课安排弹窗回显参考；候选人 availability 字段
-   *  自申请试课流程简化后不再由学生真实填写，试课时段真正该参考的是这份需求发布日程。 */
-  plannedDates: string[];
+  /** 当前家教需求对应的进行中订单，计划日期和排期阶段均以此真实卡片为准。 */
+  ongoingOrder: ClientOrder | null;
 }
 
 /** 获取申请卡片中已确认过的试课日程摘要。 */
@@ -42,11 +41,11 @@ function getCandidateInitialTrialScheduleValue(candidate: TutorApplicationCandid
 export function TutorApplications({
   applicationCandidates,
   applicationConfirmationPending = false,
+  ongoingOrder,
   onCancelTrial,
   onClose,
   onConfirm,
-  onReject,
-  plannedDates
+  onReject
 }: TutorApplicationsProps) {
   const [selectedCandidateId, setSelectedCandidateId] = useState("");
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
@@ -69,6 +68,12 @@ export function TutorApplications({
   const selectedCandidateTask = selectedCandidate
     ? createTutorTaskModel({ candidate: selectedCandidate, role: "parent" })
     : null;
+  const canUseScheduleTemplateForDates = Boolean(
+    ongoingOrder &&
+      selectedCandidateTask &&
+      ongoingOrder.id === selectedCandidate?.demandId &&
+      (selectedCandidateTask.can("scheduleTrial") || selectedCandidateTask.can("rescheduleTrial"))
+  );
   const isSelectedCandidateTrialConfirming = selectedCandidateTask?.node === "trialScheduled";
   const selectedCandidateTrialScheduleSummary = getCandidateTrialScheduleSummary(selectedCandidate);
   const isTrialScheduleChanged = Boolean(
@@ -267,14 +272,16 @@ export function TutorApplications({
           }
         >
           <CalendarTime
+            canUseScheduleTemplateForDates={canUseScheduleTemplateForDates}
             initialValue={trialScheduleValue ?? getCandidateInitialTrialScheduleValue(selectedCandidate)}
-            plannedDates={plannedDates}
+            plannedDates={ongoingOrder?.plannedDates ?? []}
             onClose={() => setIsScheduleOpen(false)}
             onConfirm={(value) => {
               setTrialScheduleValue(value);
               setIsScheduleOpen(false);
             }}
             onSubtitleChange={setScheduleSubtitle}
+            scheduleType="tested"
           />
         </Modal>
       ) : null}

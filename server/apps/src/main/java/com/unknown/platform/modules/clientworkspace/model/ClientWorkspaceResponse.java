@@ -45,6 +45,8 @@ public record ClientWorkspaceResponse(
       String address,
       /** 家教卡片专用：计划周期实际选中的完整日期集合，允许不连续的零散日期；非家教品类为 null。 */
       List<String> plannedDates,
+      /** 家教申请专用：已提交的结构化试课日期与时间段；非家教品类或尚未排期时为 null。 */
+      List<TutorScheduleDate> testedDates,
       BigDecimal quoteAmount,
       Integer quoteCount,
       Integer trialCount,
@@ -97,6 +99,7 @@ public record ClientWorkspaceResponse(
       private String subject;
       private String address;
       private List<String> plannedDates;
+      private List<TutorScheduleDate> testedDates;
       private BigDecimal quoteAmount;
       private Integer quoteCount;
       private Integer trialCount;
@@ -193,6 +196,11 @@ public record ClientWorkspaceResponse(
 
       public Builder plannedDates(List<String> plannedDates) {
         this.plannedDates = plannedDates;
+        return this;
+      }
+
+      public Builder testedDates(List<TutorScheduleDate> testedDates) {
+        this.testedDates = testedDates;
         return this;
       }
 
@@ -300,13 +308,28 @@ public record ClientWorkspaceResponse(
       public ClientOrder build() {
         return new ClientOrder(
             id, role, title, status, activeApplicantStatus, amount, contact, detail, risk, amountLabel, category,
-            phoneNumber, subject, address, plannedDates, quoteAmount, quoteCount, trialCount, quoteActionLabel, quoteId,
+            phoneNumber, subject, address, plannedDates, testedDates, quoteAmount, quoteCount, trialCount,
+            quoteActionLabel, quoteId,
             canCall, canMessage, canRequestCancel, canRequestComplete, canConfirmCancel,
             canConfirmComplete, canRepublish, canAgreeTrial, canOpenTrialResult, canOpenTrialSchedule,
             canOpenTutorTrialList, canOpenTutorApplications, canRejectTrial, canCancelTutorApplication, tutorDemand
         );
       }
     }
+  }
+
+  /** 单日结构化家教日程，按日期维护一个或多个有效时间段。 */
+  public record TutorScheduleDate(
+      String date,
+      List<TutorScheduleTimeRange> timeRanges
+  ) {
+  }
+
+  /** 家教日程内的单个有效时间段。 */
+  public record TutorScheduleTimeRange(
+      String start,
+      String end
+  ) {
   }
 
   /** 兼职列表卡片摘要，承接学生兼职和商户招聘工作台展示。 */

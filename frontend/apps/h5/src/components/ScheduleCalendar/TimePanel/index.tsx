@@ -5,7 +5,7 @@ import { Moon, Sun, Sunrise } from "lucide-react";
 /**
  * 单个时段的展示与交互状态。时间边界、是否只读、能不能清空这些具体业务判断
  * （比如日期是否可编辑、是否已被其它安排占用）都由调用方算好再传进来，
- * TimePanel 本身不掺和这些具体判断规则，但顶部标题行的操作和状态分支是试课排期专属逻辑，
+ * TimePanel 本身不掺和这些具体判断规则，但顶部标题行的清空和模板保存是试课排期专属逻辑，
  * 直接内置在组件里（不再走插槽），因为这个组件目前只服务试课/正式课排期这一个场景。
  */
 export interface TimePanelPeriodItem {
@@ -37,14 +37,10 @@ export interface TimePanelProps {
   activeDateHasSchedule: boolean;
   /** 顶部标题，通常是当前查看的日期文案。 */
   activeDateLabel: ReactNode;
-  /** 当前用户是否已经保存可应用的时间模板。 */
-  hasScheduleTimeTemplate: boolean;
   /** 当前查看日期是否已经过去；过去日期只读，不允许改动历史安排。 */
   isActiveDatePast: boolean;
   /** 时间模板是否正在保存。 */
   isSavingScheduleTimeTemplate: boolean;
-  /** 当前查看日期是否因新增日期达到上限而不可安排。 */
-  isScheduleLimitReached: boolean;
   periods: TimePanelPeriodItem[];
   /** 清空当前查看日期的全部安排。 */
   onCancelAll: () => void;
@@ -54,8 +50,6 @@ export interface TimePanelProps {
   onClearPeriod: (periodKey: TrialSchedulePeriodKey) => void;
   /** 将当前查看日期的安排保存为用户时间模板。 */
   onSaveScheduleTimeTemplate: () => void;
-  /** 将用户时间模板整组应用到当前查看日期。 */
-  onUseScheduleTimeTemplate: () => void;
 }
 
 /** 将 HH:mm 时间转换为当天分钟数。 */
@@ -125,7 +119,7 @@ function finishTimeRangePointer(control: HTMLDivElement, pointerId: number) {
 }
 
 /**
- * 试课/正式课排期的时段编辑面板：顶部展示当前日期、整日清空和模板操作，下方按行展示
+ * 试课/正式课排期的时段编辑面板：顶部展示当前日期、整日清空和模板保存，下方按行展示
  * 上午、下午和晚上时段的图标、选中态和双滑块时间范围。
  * 具体哪些时段可选、是否只读、能否清空仍由调用方通过 periods 里每一项的禁用态决定，只有顶部标题行
  * 的状态判断和文案固定内置在这里——这个组件专属服务试课排期场景，不再是跨场景通用组件。
@@ -133,15 +127,12 @@ function finishTimeRangePointer(control: HTMLDivElement, pointerId: number) {
 export function TimePanel({
   activeDateHasSchedule,
   activeDateLabel,
-  hasScheduleTimeTemplate,
   isActiveDatePast,
   isSavingScheduleTimeTemplate,
-  isScheduleLimitReached,
   onCancelAll,
   onChangePeriodRange,
   onClearPeriod,
   onSaveScheduleTimeTemplate,
-  onUseScheduleTimeTemplate,
   periods
 }: TimePanelProps) {
   return (
@@ -149,14 +140,6 @@ export function TimePanel({
       <div className="time-panel__header flex items-center justify-between gap-[10px]">
         <strong className="time-panel__date">{activeDateLabel}</strong>
         <div className="time-panel__actions">
-          <button
-            className="text-button"
-            disabled={isActiveDatePast || !activeDateHasSchedule}
-            onClick={onCancelAll}
-            type="button"
-          >
-            取消全选
-          </button>
           <button
             className="text-button"
             disabled={isActiveDatePast || !activeDateHasSchedule || isSavingScheduleTimeTemplate}
@@ -167,13 +150,11 @@ export function TimePanel({
           </button>
           <button
             className="text-button"
-            disabled={
-              isActiveDatePast || !hasScheduleTimeTemplate || isSavingScheduleTimeTemplate || isScheduleLimitReached
-            }
-            onClick={onUseScheduleTimeTemplate}
+            disabled={isActiveDatePast || !activeDateHasSchedule}
+            onClick={onCancelAll}
             type="button"
           >
-            使用模板
+            重置当日
           </button>
         </div>
       </div>

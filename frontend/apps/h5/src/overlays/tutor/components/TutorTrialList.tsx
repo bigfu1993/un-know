@@ -6,6 +6,8 @@ import { TutorTrialSettlement } from "./TutorTrialSettlement";
 /** 家长端试课中家教列表弹窗属性。 */
 interface TutorTrialListProps {
   applicationCandidates: TutorApplicationCandidate[];
+  /** 当前家教需求对应的进行中订单，排期能力以该卡片与所选申请人状态共同决定。 */
+  ongoingOrder: ClientOrder | null;
   trialListSubmissionPending?: boolean;
   onClose: () => void;
   onWorkflowAction: (
@@ -98,6 +100,7 @@ function getTutorTrialCandidateSchedulePreview(
 /** 家长端查看试课中的家教，并处理试课、正式雇佣、兼职日程和结算链路。 */
 export function TutorTrialList({
   applicationCandidates,
+  ongoingOrder,
   onClose,
   onWorkflowAction,
   trialListSubmissionPending = false
@@ -518,6 +521,11 @@ export function TutorTrialList({
         >
           <CalendarTime
             blockedScheduleSummary={selectedCandidate.trialSchedule}
+            canUseScheduleTemplateForDates={Boolean(
+              ongoingOrder &&
+                ongoingOrder.id === selectedCandidate.demandId &&
+                selectedCandidateTask?.can("submitServiceSchedule")
+            )}
             initialValue={null}
             maxScheduleDates={null}
             onClose={() => setIsTutorScheduleOpen(false)}
@@ -525,6 +533,7 @@ export function TutorTrialList({
               void handleWorkflowAction("submit_service_schedule", { tutorSchedule: value.plan.summary });
               setIsTutorScheduleOpen(false);
             }}
+            plannedDates={ongoingOrder?.plannedDates ?? []}
             scheduleType="arranged"
           />
         </Modal>

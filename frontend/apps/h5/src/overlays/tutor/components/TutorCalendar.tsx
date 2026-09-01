@@ -15,7 +15,6 @@ export interface TutorCalendarTask {
 /** 家教课程日历弹窗属性。 */
 export interface TutorCalendarProps {
   calendarTasks: TutorCalendarTask[];
-  initialDate?: string;
   onClose: () => void;
 }
 
@@ -27,9 +26,8 @@ const arrangedPeriods = ["am", "pm"];
  * 只保留当天详情列表这部分自己的展示逻辑，不再重复实现月份网格、翻页和空格子这些 CalendarPanel
  * 已经提供的能力。
  */
-export function TutorCalendar({ calendarTasks, initialDate, onClose }: TutorCalendarProps) {
-  const todayKey = useMemo(() => getTutorDateKey(new Date()), []);
-  const [activeDate, setActiveDate] = useState(initialDate ?? todayKey);
+export function TutorCalendar({ calendarTasks, onClose }: TutorCalendarProps) {
+  const [activeDate, setActiveDate] = useState(getDefaultTutorScheduleDate);
   const activeDateTasks = calendarTasks.filter((task) => task.date === activeDate);
   /** 按日期归并正式课程分段，使用 arranged 数据通道，不产生试课角标。 */
   const arrangedDatas = useMemo<CalendarPanelScheduleData[]>(() => {

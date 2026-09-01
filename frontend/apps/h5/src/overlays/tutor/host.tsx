@@ -2,7 +2,6 @@ import { TutorCertificationInfo } from "@components/TutorCertificationInfo";
 import { TutorApplications } from "./components/TutorApplications";
 import { TutorCalendar } from "./components/TutorCalendar";
 import { TutorTrialList } from "./components/TutorTrialList";
-import { getTutorDateKey } from "@tools/tutorCalendar";
 import { useTutorOverlayActions, useTutorOverlayHost, useTutorOverlayState } from "./provider";
 
 /** 渲染家教申请、试课列表、认证信息和课程日历四类全局弹层。 */
@@ -14,7 +13,7 @@ export function TutorOverlayHost() {
     applicationConfirmationPending,
     calendarTasks,
     confirmTrial,
-    plannedDates,
+    ongoingOrder,
     profileDraft,
     saveCertificationInfo,
     trialListSubmissionPending,
@@ -30,7 +29,7 @@ export function TutorOverlayHost() {
         onClose={closeApplications}
         onConfirm={confirmTrial}
         onReject={(payload) => void workflow({ ...payload, action: "reject_trial" })}
-        plannedDates={plannedDates}
+        ongoingOrder={ongoingOrder}
       />
     );
   }
@@ -39,6 +38,7 @@ export function TutorOverlayHost() {
     return (
       <TutorTrialList
         applicationCandidates={applicationCandidates}
+        ongoingOrder={ongoingOrder}
         onClose={closeTrialList}
         onWorkflowAction={workflow}
         trialListSubmissionPending={trialListSubmissionPending}
@@ -57,7 +57,7 @@ export function TutorOverlayHost() {
   }
 
   if (activeType === "tutorCalendar") {
-    return <TutorCalendar calendarTasks={calendarTasks} initialDate={getTutorDateKey(new Date())} onClose={closeCalendar} />;
+    return <TutorCalendar calendarTasks={calendarTasks} onClose={closeCalendar} />;
   }
 
   return null;

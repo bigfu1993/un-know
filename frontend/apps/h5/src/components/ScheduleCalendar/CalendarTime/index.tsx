@@ -7,6 +7,8 @@ import { createScheduleTimeTemplateFromDay, getTrialScheduleSubtitle, type Trial
 
 /** 试课/正式课排期编辑区属性；不含 Modal 展示信息（标题/文案/图标），由调用方自己套一层 Modal。 */
 export interface CalendarTimeProps extends UseTrialScheduleOptions {
+  /** 由当前进行中家教卡片和选中申请人的流程能力决定，CalendarPanel 只在该能力存在时显示内部模板开关。 */
+  canUseScheduleTemplateForDates?: boolean;
   confirmLabel?: string;
   isConfirming?: boolean;
   onClose: () => void;
@@ -24,6 +26,7 @@ export interface CalendarTimeProps extends UseTrialScheduleOptions {
  */
 export function CalendarTime({
   blockedScheduleSummary,
+  canUseScheduleTemplateForDates = false,
   confirmLabel = "确认",
   initialValue,
   isConfirming = false,
@@ -44,7 +47,6 @@ export function CalendarTime({
     plannedDates,
     scheduleType
   });
-  const hasScheduleTimeTemplate = Object.values(scheduleTimeTemplate).some(Boolean);
 
   /** 将当前日期的有效安排保存为用户时间模板。 */
   async function handleSaveScheduleTimeTemplate() {
@@ -67,16 +69,17 @@ export function CalendarTime({
     }
   }
 
-  /** 将用户时间模板整组应用到当前日期。 */
-  function handleUseScheduleTimeTemplate() {
-    const result = schedule.applyScheduleTimeTemplate(scheduleTimeTemplate);
+  /** 将一次日历点击或拖拽手势涉及的日期整组同步为用户模板安排。 */
+  function handleScheduleTemplateDatesChange(nextScheduledDates: string[], changedDateKeys: string[]) {
+    const result = schedule.applyScheduleTimeTemplateToDates(
+      nextScheduledDates,
+      changedDateKeys,
+      scheduleTimeTemplate
+    );
 
     if (!result.ok) {
-      showMessage(result.reason ?? "时间模板无法应用到当前日期。", { type: "warning" });
-      return;
+      showMessage(result.reason ?? "时间模板无法应用到所选日期。", { type: "warning" });
     }
-
-    showMessage("时间模板已应用到当前日期。", { type: "success" });
   }
 
   useEffect(() => {
@@ -105,7 +108,11 @@ export function CalendarTime({
           arrangedPeriods={schedule.arrangedPeriods}
           mode="view"
           onActiveDateChange={schedule.setActiveDate}
+          onScheduledDatesChange={canUseScheduleTemplateForDates ? handleScheduleTemplateDatesChange : undefined}
           plannedDates={schedule.plannedDates}
+          scheduleDragLocked={schedule.isScheduleDragLocked}
+          scheduleTimeTemplate={scheduleTimeTemplate}
+          scheduledDates={schedule.scheduledDates}
           testedDatas={schedule.testedDatas}
           testedPeriods={schedule.testedPeriods}
         />
@@ -113,15 +120,12 @@ export function CalendarTime({
         <TimePanel
           activeDateHasSchedule={schedule.activeDateHasSchedule}
           activeDateLabel={schedule.activeDateLabel}
-          hasScheduleTimeTemplate={hasScheduleTimeTemplate}
           isActiveDatePast={schedule.isActiveDatePast}
           isSavingScheduleTimeTemplate={isSavingScheduleTimeTemplate}
-          isScheduleLimitReached={schedule.isScheduleLimitReached}
           onCancelAll={schedule.onClearDaySchedule}
           onChangePeriodRange={schedule.onChangePeriodRange}
           onClearPeriod={schedule.onClearPeriod}
           onSaveScheduleTimeTemplate={handleSaveScheduleTimeTemplate}
-          onUseScheduleTimeTemplate={handleUseScheduleTimeTemplate}
           periods={schedule.periods}
         />
       </div>

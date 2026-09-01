@@ -106,8 +106,8 @@ export interface TutorOverlayHostContextValue {
   applicationConfirmationPending: boolean;
   calendarTasks: TutorCalendarTask[];
   confirmTrial: (payload: ConfirmTutorTrialPayload) => void;
-  /** 当前弹层目标家教需求发布时选择的日期集合（计划范围），供试课安排弹窗回显参考，缺省为空数组。 */
-  plannedDates: string[];
+  /** 当前弹层目标家教需求对应的进行中订单，用于读取计划日期和真实流程阶段。 */
+  ongoingOrder: ClientOrder | null;
   profileDraft: ProfileDraftState;
   saveCertificationInfo: (nextProfileDraft: ProfileDraftState, mode: TutorCertificationInfoSaveMode) => void;
   trialListSubmissionPending: boolean;

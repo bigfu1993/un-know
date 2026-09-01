@@ -75,7 +75,7 @@ export function TutorSchedulePreview({
     () => [...new Set([...testedDatas, ...arrangedDatas].map((data) => data.date))].sort(),
     [arrangedDatas, testedDatas]
   );
-  const defaultActiveDate = getDefaultTutorScheduleDate(scheduledDates) || undefined;
+  const defaultActiveDate = getDefaultTutorScheduleDate();
   const [activeDate, setActiveDate] = useState<string | undefined>(() => defaultActiveDate);
   const activeDateSections = getTutorSchedulePreviewActiveSections(sections, activeDate);
 

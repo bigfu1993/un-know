@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.unknown.platform.common.exception.BusinessException;
 import com.unknown.platform.common.security.ClientSessionService;
 import com.unknown.platform.modules.auth.model.ClientRole;
@@ -38,7 +39,8 @@ class TutorWorkspaceAppServiceTest {
     TutorWorkspaceAppService service = new TutorWorkspaceAppService(
         jdbcTemplate,
         new ClientSessionService(jdbcTemplate),
-        new ClientWorkspaceSupport(jdbcTemplate)
+        new ClientWorkspaceSupport(jdbcTemplate),
+        new ObjectMapper()
     );
     ClientOrder order = ClientOrder.builder()
         .id("TD-1")
@@ -56,13 +58,35 @@ class TutorWorkspaceAppServiceTest {
     TutorWorkspaceAppService service = new TutorWorkspaceAppService(
         jdbcTemplate,
         new ClientSessionService(jdbcTemplate),
-        new ClientWorkspaceSupport(jdbcTemplate)
+        new ClientWorkspaceSupport(jdbcTemplate),
+        new ObjectMapper()
     );
 
     List<TutorDemand> demands = service.recruitingTutorDemandsForJobs(ClientRole.student);
 
     assertEquals(List.of("2099-09-06", "2099-09-08"), demands.get(0).plannedDates());
     assertTrue(jdbcTemplate.tutorDemandQuerySql().contains("td.period_dates AS planned_dates"));
+  }
+
+  @Test
+  void mapsStructuredTestedDatesToStudentOngoingOrder() {
+    TrialEndpointJdbcTemplate jdbcTemplate = TrialEndpointJdbcTemplate.forStudentOngoing(
+        "2099年9月6日 13:00-15:00",
+        "[{\"date\":\"2099-09-06\",\"timeRanges\":[{\"start\":\"13:00\",\"end\":\"15:00\"}]}]"
+    );
+    TutorWorkspaceAppService service = new TutorWorkspaceAppService(
+        jdbcTemplate,
+        new ClientSessionService(jdbcTemplate),
+        new ClientWorkspaceSupport(jdbcTemplate),
+        new ObjectMapper()
+    );
+
+    ClientOrder order = service.tutorOrders(ClientRole.student, 8L).get(0);
+
+    assertEquals(List.of("2099-09-01", "2099-09-06"), order.plannedDates());
+    assertEquals("2099-09-06", order.testedDates().get(0).date());
+    assertEquals("13:00", order.testedDates().get(0).timeRanges().get(0).start());
+    assertTrue(jdbcTemplate.studentOngoingQuerySql().contains("schedule_dates"));
   }
 
   @Test
@@ -73,7 +97,8 @@ class TutorWorkspaceAppServiceTest {
     TutorWorkspaceAppService service = new TutorWorkspaceAppService(
         jdbcTemplate,
         new ClientSessionService(jdbcTemplate),
-        new ClientWorkspaceSupport(jdbcTemplate)
+        new ClientWorkspaceSupport(jdbcTemplate),
+        new ObjectMapper()
     );
 
     TutorDemand demand = service.confirmTutorTrial(
@@ -117,12 +142,14 @@ class TutorWorkspaceAppServiceTest {
             "2099-09-06",
             "2099-09-08",
             "2099年9月6日 13:00-15:00 16:00-17:00；2099年9月8日 18:00-20:00",
+            "[{\"date\":\"2099-09-06\",\"timeRanges\":[{\"start\":\"13:00\",\"end\":\"15:00\"},{\"start\":\"16:00\",\"end\":\"17:00\"}]},{\"date\":\"2099-09-08\",\"timeRanges\":[{\"start\":\"18:00\",\"end\":\"20:00\"}]}]",
             "parent",
             1L,
             "TA-1"
         },
         jdbcTemplate.scheduleUpdateArgs()
     );
+    assertTrue(jdbcTemplate.scheduleUpdateSql().contains("schedule_dates"));
   }
 
   @Test
@@ -131,7 +158,8 @@ class TutorWorkspaceAppServiceTest {
     TutorWorkspaceAppService service = new TutorWorkspaceAppService(
         jdbcTemplate,
         new ClientSessionService(jdbcTemplate),
-        new ClientWorkspaceSupport(jdbcTemplate)
+        new ClientWorkspaceSupport(jdbcTemplate),
+        new ObjectMapper()
     );
 
     BusinessException error = assertThrows(
@@ -177,7 +205,8 @@ class TutorWorkspaceAppServiceTest {
     TutorWorkspaceAppService service = new TutorWorkspaceAppService(
         jdbcTemplate,
         new ClientSessionService(jdbcTemplate),
-        new ClientWorkspaceSupport(jdbcTemplate)
+        new ClientWorkspaceSupport(jdbcTemplate),
+        new ObjectMapper()
     );
 
     BusinessException error = assertThrows(
@@ -197,7 +226,8 @@ class TutorWorkspaceAppServiceTest {
     TutorWorkspaceAppService service = new TutorWorkspaceAppService(
         jdbcTemplate,
         new ClientSessionService(jdbcTemplate),
-        new ClientWorkspaceSupport(jdbcTemplate)
+        new ClientWorkspaceSupport(jdbcTemplate),
+        new ObjectMapper()
     );
 
     TutorDemand demand = service.confirmTutorTrialStart("TA-1", "Bearer student");
@@ -214,7 +244,8 @@ class TutorWorkspaceAppServiceTest {
     TutorWorkspaceAppService service = new TutorWorkspaceAppService(
         jdbcTemplate,
         new ClientSessionService(jdbcTemplate),
-        new ClientWorkspaceSupport(jdbcTemplate)
+        new ClientWorkspaceSupport(jdbcTemplate),
+        new ObjectMapper()
     );
 
     BusinessException error = assertThrows(
@@ -279,26 +310,34 @@ class TutorWorkspaceAppServiceTest {
     private final String historicalAvailability;
     private final String scheduleStage;
     private final boolean studentConfirmation;
+    private final boolean studentOngoing;
     private final String trialSchedule;
+    private final String testedDatesJson;
     private Object[] applicantUpdateArgs = new Object[0];
     private String applicantUpdateSql = "";
     private Object[] scheduleUpdateArgs = new Object[0];
+    private String scheduleUpdateSql = "";
+    private String studentOngoingQuerySql = "";
     private String tutorDemandQuerySql = "";
 
     private TrialEndpointJdbcTemplate(String historicalAvailability) {
-      this(historicalAvailability, false, "", "trial");
+      this(historicalAvailability, false, false, "", "trial", "[]");
     }
 
     private TrialEndpointJdbcTemplate(
         String historicalAvailability,
         boolean studentConfirmation,
+        boolean studentOngoing,
         String trialSchedule,
-        String scheduleStage
+        String scheduleStage,
+        String testedDatesJson
     ) {
       this.historicalAvailability = historicalAvailability;
       this.scheduleStage = scheduleStage;
       this.studentConfirmation = studentConfirmation;
+      this.studentOngoing = studentOngoing;
       this.trialSchedule = trialSchedule;
+      this.testedDatesJson = testedDatesJson;
     }
 
     private static TrialEndpointJdbcTemplate forStudentConfirmation(String trialSchedule) {
@@ -306,7 +345,11 @@ class TutorWorkspaceAppServiceTest {
     }
 
     private static TrialEndpointJdbcTemplate forStudentConfirmation(String scheduleStage, String trialSchedule) {
-      return new TrialEndpointJdbcTemplate("", true, trialSchedule, scheduleStage);
+      return new TrialEndpointJdbcTemplate("", true, false, trialSchedule, scheduleStage, "[]");
+    }
+
+    private static TrialEndpointJdbcTemplate forStudentOngoing(String trialSchedule, String testedDatesJson) {
+      return new TrialEndpointJdbcTemplate("", false, true, trialSchedule, "trial", testedDatesJson);
     }
 
     @Override
@@ -316,6 +359,7 @@ class TutorWorkspaceAppServiceTest {
         applicantUpdateArgs = args;
       }
       if (sql.contains("INSERT INTO tutor_application_schedule")) {
+        scheduleUpdateSql = sql;
         scheduleUpdateArgs = args;
       }
       return 1;
@@ -385,6 +429,32 @@ class TutorWorkspaceAppServiceTest {
               Map.entry("title", "数学家教")
           )), 0));
         }
+        if (studentOngoing && sql.contains("FROM tutor_applicant ta")) {
+          studentOngoingQuerySql = sql;
+          return List.of(rowMapper.mapRow(resultSet(Map.ofEntries(
+              Map.entry("address_label", "教学地址"),
+              Map.entry("availability", ""),
+              Map.entry("budget", "按小时结算"),
+              Map.entry("child", "孩子"),
+              Map.entry("demand_public_id", "TD-1"),
+              Map.entry("demand_status", "RECRUITING"),
+              Map.entry("description", "需求说明"),
+              Map.entry("parent_nickname", "家长"),
+              Map.entry("parent_phone", "18000000000"),
+              Map.entry("period_dates", "2099-09-01、2099-09-06"),
+              Map.entry("period_end", "2099-09-30"),
+              Map.entry("period_start", "2099-09-01"),
+              Map.entry("public_id", "TA-1"),
+              Map.entry("school", "学校"),
+              Map.entry("service_schedule", ""),
+              Map.entry("status", "TRIAL_CONFIRMING"),
+              Map.entry("subject", "math"),
+              Map.entry("tested_dates", testedDatesJson),
+              Map.entry("title", "数学家教"),
+              Map.entry("trial_fee_cents", 0L),
+              Map.entry("trial_schedule", trialSchedule)
+          )), 0));
+        }
         if (sql.contains("FROM tutor_applicant ta")) {
           return List.of();
         }
@@ -406,6 +476,14 @@ class TutorWorkspaceAppServiceTest {
       return scheduleUpdateArgs;
     }
 
+    private String scheduleUpdateSql() {
+      return scheduleUpdateSql;
+    }
+
+    private String studentOngoingQuerySql() {
+      return studentOngoingQuerySql;
+    }
+
     private String tutorDemandQuerySql() {
       return tutorDemandQuerySql;
     }
@@ -424,6 +502,14 @@ class TutorWorkspaceAppServiceTest {
           if ("getLong".equals(methodName)) {
             Object value = values.get(String.valueOf(args[0]));
             return value instanceof Number number ? number.longValue() : 0L;
+          }
+          if ("getInt".equals(methodName)) {
+            Object value = values.get(String.valueOf(args[0]));
+            return value instanceof Number number ? number.intValue() : 0;
+          }
+          if ("getBoolean".equals(methodName)) {
+            Object value = values.get(String.valueOf(args[0]));
+            return value instanceof Boolean bool && bool;
           }
           if ("getObject".equals(methodName)) {
             return values.get(String.valueOf(args[0]));

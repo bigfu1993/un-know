@@ -54,3 +54,27 @@ test("日历和试课排期不再维护 selectedDates", () => {
   assert.match(scheduleHookSource, /schedulePlan\?\.dates/);
   assert.match(scheduleModelSource, /Object\.keys\(scheduleDraft\)/);
 });
+
+test("学生进行中家教只保留一个日程入口并同时消费 plannedDates 与 testedDates", () => {
+  const domainSource = readRepoSource("frontend/apps/packages/domain/src/index.ts");
+  const ongoingOrdersSource = readRepoSource("frontend/apps/h5/src/pages/home/auth/orders/index.tsx");
+  const demandCardSource = readRepoSource("frontend/apps/h5/src/pages/home/job/components/EduDemandCard.tsx");
+  const schedulePreviewSource = readRepoSource(
+    "frontend/apps/h5/src/pages/home/auth/orders/components/TutorWorkflowModals.tsx"
+  );
+  const javaResponseSource = readRepoSource(
+    "server/apps/src/main/java/com/unknown/platform/modules/clientworkspace/model/ClientWorkspaceResponse.java"
+  );
+  const javaServiceSource = readRepoSource(
+    "server/apps/src/main/java/com/unknown/platform/modules/clientworkspace/application/TutorWorkspaceAppService.java"
+  );
+
+  assert.match(domainSource, /interface ClientOrder[\s\S]*?testedDates\?: TutorTrialScheduleDate\[\]/);
+  assert.match(javaResponseSource, /List<TutorScheduleDate> testedDates/);
+  assert.match(javaServiceSource, /schedule_dates/);
+  assert.match(javaServiceSource, /\.testedDates\(/);
+  assert.match(ongoingOrdersSource, /showScheduleAction=\{order\.role !== "student"\}/);
+  assert.match(demandCardSource, /showScheduleAction/);
+  assert.match(schedulePreviewSource, /plannedDates=\{order\.plannedDates \?\? \[\]\}/);
+  assert.match(schedulePreviewSource, /order\.testedDates/);
+});

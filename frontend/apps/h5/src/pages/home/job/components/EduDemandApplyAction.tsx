@@ -15,7 +15,7 @@ function EduJobScheduleView({
   onConfirmApply: () => void;
   plannedDates: string[];
 }) {
-  const [activeDate, setActiveDate] = useState(() => getDefaultTutorScheduleDate(plannedDates));
+  const [activeDate, setActiveDate] = useState(getDefaultTutorScheduleDate);
 
   return (
     <Modal

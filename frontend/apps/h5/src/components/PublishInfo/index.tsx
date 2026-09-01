@@ -31,6 +31,7 @@ import {
   tutorWageModeOptions
 } from "@tools/publishInfo";
 import { getTutorDateKey } from "@tools/tutorCalendar";
+import { Switch } from "@ui/Switch";
 
 /** 发布信息弹窗属性。 */
 export interface PublishInfoProps {
@@ -844,7 +845,7 @@ function TutorPlanPeriodPicker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
-  const [activeDate, setActiveDate] = useState(draft.tutorDateStart || todayKey);
+  const [activeDate, setActiveDate] = useState(todayKey);
   /** 日历计划日期集合可以是不连续的零散日期；开始~结束日期只是从中推导出的连续区间摘要。 */
   const [plannedDateKeys, setPlannedDateKeys] = useState<string[]>(initialPlannedDateKeys);
   const sortedPlannedDateKeys = useMemo(() => [...plannedDateKeys].sort(), [plannedDateKeys]);
@@ -1096,29 +1097,12 @@ function SwitchField({
   onChange: (checked: boolean) => void;
   onLabel: string;
 }) {
-  const nextChecked = !checked;
-
   return (
     <div className="profile-field publish-field publish-switch-field grid gap-[7px]">
       <FieldLabel icon={icon} label={label} />
       <div className="publish-switch-row">
-        <div
-          aria-checked={checked}
-          aria-label={label}
-          className={`publish-switch ${checked ? "active" : ""}`}
-          onClick={() => onChange(nextChecked)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              onChange(nextChecked);
-            }
-          }}
-          role="switch"
-          tabIndex={0}
-        >
-          <span className="publish-switch__thumb" />
-        </div>
-        <span className="publish-switch__value">{checked ? onLabel : offLabel}</span>
+        <Switch checked={checked} label={label} onChange={onChange} />
+        <span className={`publish-switch__value ${checked ? "active" : ""}`}>{checked ? onLabel : offLabel}</span>
       </div>
     </div>
   );

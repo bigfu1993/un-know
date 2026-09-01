@@ -24,6 +24,22 @@
   padding: 4px 8px;
 }
 
+.calendar-panel__template-control {
+  width: 100%;
+  max-width: 310px;
+  min-height: 30px;
+  justify-self: center;
+  border-radius: 6px;
+  background: var(--h5-surface-muted);
+  padding: 3px 8px;
+}
+
+.calendar-panel__template-label {
+  color: var(--h5-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .calendar-panel__weekdays,
 .calendar-panel__grid {
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -83,9 +99,18 @@
   background: var(--h5-accent-soft);
 }
 
-/* 过去日期保留计划和日程原样，仅整体半透明弱化；规则位于 planned 之后，视觉优先级更高。 */
+/* 模板拖拽只做手势预览，不复用 planned 业务状态。 */
+.calendar-panel__day.template-preview {
+  box-shadow: inset 0 0 0 1px var(--h5-accent);
+}
+
+/* 过去日期保留计划和日程原样，通过透明度和灰色日期文字弱化；规则位于 planned 之后，视觉优先级更高。 */
 .calendar-panel__day.past {
   opacity: 0.55;
+}
+
+.calendar-panel__day.past strong {
+  color: var(--h5-subtle);
 }
 
 /* 当前查看态优先级最高：即使日期已经过去，也恢复完整可见度并展示主题线框。 */
@@ -114,6 +139,7 @@
   min-height: 24px;
   place-items: center;
   border-radius: 999px;
+  color: var(--h5-accent);
   font-size: 12px;
 }
 

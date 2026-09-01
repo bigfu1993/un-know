@@ -23,30 +23,57 @@ function getTrialSchedulePreviewPeriod(timeRange: string): TrialSchedulePeriodKe
   return startHour < 18 ? "afternoon" : "evening";
 }
 
+/** 已解析的日程片段；结构化 testedDates 与旧摘要统一收敛成按日时间段。 */
+interface ResolvedTutorSchedulePreviewSection extends TutorSchedulePreviewSection {
+  lines: Array<{ date: string; times: string[] }>;
+}
+
+/** 将接口返回的结构化试课日程转换为预览组件使用的按日时间段。 */
+function getTestedDateScheduleLines(testedDates: NonNullable<ClientOrder["testedDates"]>) {
+  return testedDates.map((testedDate) => ({
+    date: testedDate.date,
+    times: testedDate.timeRanges.map((timeRange) => `${timeRange.start}-${timeRange.end}`)
+  }));
+}
+
+/** 结构化 testedDates 优先，旧数据才回退解析 detail 中的试课摘要。 */
+function resolveTutorSchedulePreviewSections(
+  sections: TutorSchedulePreviewSection[],
+  testedDates: ClientOrder["testedDates"]
+): ResolvedTutorSchedulePreviewSection[] {
+  const structuredTestedDateLines = testedDates?.length ? getTestedDateScheduleLines(testedDates) : null;
+
+  return sections.map((section) => ({
+    ...section,
+    lines:
+      section.dataType === "tested" && structuredTestedDateLines
+        ? structuredTestedDateLines
+        : parseTutorTrialSchedule(section.summary).filter((scheduleLine) => scheduleLine.date)
+  }));
+}
+
 /** 合并同一申请子任务下的多阶段日程，并按试课/正式课程拆分数据通道。 */
-function getTrialSchedulePreviewDatas(sections: TutorSchedulePreviewSection[]) {
+function getTrialSchedulePreviewDatas(sections: ResolvedTutorSchedulePreviewSection[]) {
   const dataMaps = {
     arranged: new Map<string, CalendarPanelScheduleData>(),
     tested: new Map<string, CalendarPanelScheduleData>()
   };
 
   sections.forEach((section) => {
-    parseTutorTrialSchedule(section.summary)
-      .filter((scheduleLine) => scheduleLine.date)
-      .forEach((scheduleLine) => {
-        const dataMap = dataMaps[section.dataType];
-        const currentData = dataMap.get(scheduleLine.date) ?? {
-          date: scheduleLine.date,
-          periods: []
-        };
-        const periods = new Set(currentData.periods);
+    section.lines.forEach((scheduleLine) => {
+      const dataMap = dataMaps[section.dataType];
+      const currentData = dataMap.get(scheduleLine.date) ?? {
+        date: scheduleLine.date,
+        periods: []
+      };
+      const periods = new Set(currentData.periods);
 
-        scheduleLine.times.forEach((timeRange) => periods.add(getTrialSchedulePreviewPeriod(timeRange)));
-        dataMap.set(scheduleLine.date, {
-          date: scheduleLine.date,
-          periods: [...periods]
-        });
+      scheduleLine.times.forEach((timeRange) => periods.add(getTrialSchedulePreviewPeriod(timeRange)));
+      dataMap.set(scheduleLine.date, {
+        date: scheduleLine.date,
+        periods: [...periods]
       });
+    });
   });
 
   return {
@@ -56,11 +83,11 @@ function getTrialSchedulePreviewDatas(sections: TutorSchedulePreviewSection[]) {
 }
 
 /** 获取当前日期在各阶段下的日程明细。 */
-function getActiveScheduleSections(sections: TutorSchedulePreviewSection[], activeDate: string) {
+function getActiveScheduleSections(sections: ResolvedTutorSchedulePreviewSection[], activeDate: string) {
   return sections
     .map((section) => ({
       ...section,
-      lines: parseTutorTrialSchedule(section.summary).filter((scheduleLine) => scheduleLine.date === activeDate)
+      lines: section.lines.filter((scheduleLine) => scheduleLine.date === activeDate)
     }))
     .filter((section) => section.lines.length > 0);
 }
@@ -87,15 +114,18 @@ export function TrialSchedulePreview({
   const [isConflictScheduleOpen, setIsConflictScheduleOpen] = useState(false);
   const [isSubmittingConflictSchedule, setIsSubmittingConflictSchedule] = useState(false);
   const previewConfig = getTutorOrderSchedulePreviewConfig(order, tutorTask);
-  const scheduleSections = previewConfig?.sections ?? [];
+  const scheduleSections = resolveTutorSchedulePreviewSections(previewConfig?.sections ?? [], order.testedDates);
   const availabilitySummary = getTutorTrialAvailabilitySummaryFromOrderDetail(order.detail);
   const { arrangedDatas, testedDatas } = getTrialSchedulePreviewDatas(scheduleSections);
-  const scheduledDates = [...new Set([...testedDatas, ...arrangedDatas].map((data) => data.date))].sort();
+  const actualScheduleDates = [
+    ...new Set([...testedDatas.map((data) => data.date), ...arrangedDatas.map((data) => data.date)])
+  ].sort();
+  const calendarDates = [...new Set([...actualScheduleDates, ...(order.plannedDates ?? [])])].sort();
   const initialConflictScheduleValue = useMemo(
     () => getTrialScheduleValueFromSummary(availabilitySummary),
     [availabilitySummary]
   );
-  const [activeDate, setActiveDate] = useState(() => getDefaultTutorScheduleDate(scheduledDates));
+  const [activeDate, setActiveDate] = useState(getDefaultTutorScheduleDate);
   const previewPeriods: Array<{ key: TrialSchedulePeriodKey; label: string }> = [
     { key: "morning", label: "上午" },
     { key: "afternoon", label: "下午" },
@@ -140,7 +170,7 @@ export function TrialSchedulePreview({
         }
       >
         <em className={`ongoing-status-badge ${tutorTask.statusToneClassName}`}>{tutorTask.statusLabel}</em>
-        {scheduledDates.length > 0 ? (
+        {calendarDates.length > 0 ? (
           <div className="trial-schedule-preview-content grid gap-[12px]">
             <CalendarPanel
               activeDate={activeDate}
@@ -148,6 +178,7 @@ export function TrialSchedulePreview({
               arrangedPeriods={schedulePeriods}
               mode="view"
               onActiveDateChange={setActiveDate}
+              plannedDates={order.plannedDates ?? []}
               testedDatas={testedDatas}
               testedPeriods={schedulePeriods}
             />
@@ -225,6 +256,7 @@ export function TrialSchedulePreview({
             maxScheduleDates={null}
             onClose={() => setIsConflictScheduleOpen(false)}
             onConfirm={handleConfirmConflictSchedule}
+            scheduleType="tested"
           />
         </Modal>
       ) : null}

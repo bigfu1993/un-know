@@ -5,7 +5,7 @@ import { getTutorCalendarTasks } from "@tools/tutorCalendar";
 import {
   useConfirmTutorTrial,
   useHandleTutorWorkflowAction,
-  useOngoingOrdersSnapshot,
+  useOngoingOrderSnapshot,
   useTutorApplication
 } from "@unknown/hooks";
 import { useOverlayActions, useOverlayState } from "../provider";
@@ -83,8 +83,8 @@ export function TutorOverlayProvider({ children, syncProfileDraft }: TutorOverla
     targetDemandId,
     isApplicationsOpen || isTrialListOpen
   );
-  /** 使用进行中订单接口已缓存的计划日期，通过 Provider 统一传给家教弹层。 */
-  const plannedDates = useOngoingOrdersSnapshot(user.role, targetDemandId);
+  /** 使用进行中订单接口的完整缓存快照，为弹层提供计划日期和真实流程阶段。 */
+  const ongoingOrder = useOngoingOrderSnapshot(user.role, targetDemandId);
   const { isPending: confirmTrialPending, mutateAsync: confirmTutorTrial } = useConfirmTutorTrial();
   const { isPending: workflowPending, mutateAsync: submitTutorWorkflowAction } = useHandleTutorWorkflowAction();
   const applicationCandidates = useMemo<TutorApplicationCandidate[]>(
@@ -183,7 +183,7 @@ export function TutorOverlayProvider({ children, syncProfileDraft }: TutorOverla
       applicationConfirmationPending: confirmTrialPending || workflowPending,
       calendarTasks,
       confirmTrial,
-      plannedDates,
+      ongoingOrder,
       profileDraft: user.profileDraft,
       saveCertificationInfo,
       trialListSubmissionPending: workflowPending,
@@ -194,7 +194,7 @@ export function TutorOverlayProvider({ children, syncProfileDraft }: TutorOverla
       calendarTasks,
       confirmTrial,
       confirmTrialPending,
-      plannedDates,
+      ongoingOrder,
       saveCertificationInfo,
       workflow,
       workflowPending,

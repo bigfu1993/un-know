@@ -1,5 +1,8 @@
 package com.unknown.platform.modules.clientworkspace.application;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.unknown.platform.common.api.UserNickname;
 import com.unknown.platform.common.exception.BusinessException;
 import com.unknown.platform.common.security.ClientSessionService;
@@ -8,6 +11,8 @@ import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceRespons
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorApplicant;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorApplicantProfile;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorDemand;
+import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorScheduleDate;
+import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorScheduleTimeRange;
 import com.unknown.platform.modules.clientworkspace.model.ApplyTutorTrialRequest;
 import com.unknown.platform.modules.clientworkspace.model.CompleteTutorTrialEndRequest;
 import com.unknown.platform.modules.clientworkspace.model.ConfirmTutorTrialRequest;
@@ -44,6 +49,8 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class TutorWorkspaceAppService {
+  private static final TypeReference<List<TutorScheduleDate>> TUTOR_SCHEDULE_DATES_TYPE = new TypeReference<>() {
+  };
   private static final DateTimeFormatter TUTOR_TRIAL_TIME_FORMATTER = DateTimeFormatter.ofPattern("H:mm");
   private static final Pattern TUTOR_TRIAL_DATE_PATTERN = Pattern.compile("(\\d{4})年(\\d{1,2})月(\\d{1,2})日");
   private static final Pattern TUTOR_TRIAL_TIME_PATTERN = Pattern.compile("(\\d{1,2}):(\\d{2})");
@@ -114,15 +121,18 @@ public class TutorWorkspaceAppService {
   private final JdbcTemplate jdbcTemplate;
   private final ClientSessionService clientSessionService;
   private final ClientWorkspaceSupport support;
+  private final ObjectMapper objectMapper;
 
   public TutorWorkspaceAppService(
       JdbcTemplate jdbcTemplate,
       ClientSessionService clientSessionService,
-      ClientWorkspaceSupport support
+      ClientWorkspaceSupport support,
+      ObjectMapper objectMapper
   ) {
     this.jdbcTemplate = jdbcTemplate;
     this.clientSessionService = clientSessionService;
     this.support = support;
+    this.objectMapper = objectMapper;
   }
 
   /**
@@ -359,6 +369,7 @@ public class TutorWorkspaceAppService {
         trialSchedule.start(),
         trialSchedule.end(),
         trialSchedule.summary(),
+        serializeTutorScheduleDates(trialSchedule.testedDates()),
         "parent"
     );
     return findTutorDemand(demand.publicId());
@@ -931,6 +942,7 @@ public class TutorWorkspaceAppService {
         """
             SELECT ta.public_id, ta.status, ta.availability, ta.trial_fee_cents,
                    COALESCE(NULLIF(trial_schedule.schedule_summary, ''), '') AS trial_schedule,
+                   COALESCE(trial_schedule.schedule_dates, '[]'::jsonb)::text AS tested_dates,
                    COALESCE(NULLIF(service_schedule.schedule_summary, ''), '') AS service_schedule,
                    td.public_id AS demand_public_id, td.title, td.child, td.subject, td.school, td.budget,
                    td.status AS demand_status, td.address_label, td.description, td.period_start, td.period_end, td.period_dates,
@@ -964,9 +976,13 @@ public class TutorWorkspaceAppService {
           boolean isApplicationPending = isTutorApplicationPendingStatus(status);
           boolean canCancelTutorApplication = isApplicationPending || isTrialConfirmed;
           String trialScheduleText = support.defaultText(rs.getString("trial_schedule"), "");
+          List<TutorScheduleDate> testedDates = parseTutorScheduleDates(
+              support.defaultText(rs.getString("tested_dates"), "[]"),
+              trialScheduleText
+          );
           // 注意：这里是当前申请自身的试课安排是否已填写，粒度与上文按需求聚合的
           // hasTrialSchedule（取自持久化列 has_trial_schedule）不同，命名区分避免误用。
-          boolean hasOwnTrialSchedule = !trialScheduleText.isBlank();
+          boolean hasOwnTrialSchedule = !testedDates.isEmpty();
           String serviceScheduleText = support.defaultText(rs.getString("service_schedule"), "");
           String availabilityLabel = isTutorServiceAvailabilityStatus(status) ? "可家教时间：" : "可试课时间：";
           String feeLabel = isFormalService || isFormalSettlement ? "结算金额：" : "试课结算金额：";
@@ -992,6 +1008,7 @@ public class TutorWorkspaceAppService {
               .subject(rs.getString("subject"))
               .address(support.defaultText(rs.getString("address_label"), "地址待补充"))
               .plannedDates(support.splitTags(rs.getString("period_dates")))
+              .testedDates(testedDates)
               .phoneNumber(support.maskPhone(rs.getString("parent_phone")))
               .canCall(canContact)
               .canMessage(canContact)
@@ -1481,12 +1498,18 @@ public class TutorWorkspaceAppService {
 
     List<LocalDate> sortedDates = scheduleMap.keySet().stream().sorted().toList();
     List<String> scheduleLines = new ArrayList<>();
+    List<TutorScheduleDate> testedDates = new ArrayList<>();
     for (LocalDate date : sortedDates) {
-      List<String> ranges = scheduleMap.get(date).stream()
-          .map((range) -> range.start().format(TUTOR_TRIAL_TIME_FORMATTER)
-              + "-"
-              + range.end().format(TUTOR_TRIAL_TIME_FORMATTER))
+      List<TutorScheduleTimeRange> timeRanges = scheduleMap.get(date).stream()
+          .map((range) -> new TutorScheduleTimeRange(
+              range.start().format(TUTOR_TRIAL_TIME_FORMATTER),
+              range.end().format(TUTOR_TRIAL_TIME_FORMATTER)
+          ))
           .toList();
+      List<String> ranges = timeRanges.stream()
+          .map((range) -> range.start() + "-" + range.end())
+          .toList();
+      testedDates.add(new TutorScheduleDate(date.toString(), timeRanges));
       scheduleLines.add(
           date.getYear() + "年" + date.getMonthValue() + "月" + date.getDayOfMonth() + "日 " + String.join(" ", ranges)
       );
@@ -1495,7 +1518,8 @@ public class TutorWorkspaceAppService {
     return new TutorTrialSchedule(
         sortedDates.get(0).toString(),
         sortedDates.get(sortedDates.size() - 1).toString(),
-        String.join("；", scheduleLines)
+        String.join("；", scheduleLines),
+        List.copyOf(testedDates)
     );
   }
 
@@ -1634,6 +1658,45 @@ public class TutorWorkspaceAppService {
       }
     }
     return scheduleMap;
+  }
+
+
+  /** 将结构化日程序列化为 JSONB 入参；记录字段均为字符串，序列化失败属于不可恢复的服务端错误。 */
+  private String serializeTutorScheduleDates(List<TutorScheduleDate> scheduleDates) {
+    try {
+      return objectMapper.writeValueAsString(scheduleDates);
+    } catch (JsonProcessingException exception) {
+      throw new IllegalStateException("家教日程序列化失败", exception);
+    }
+  }
+
+
+  /** 优先读取结构化日程；旧记录尚未回填 JSON 时兼容解析原有摘要。 */
+  private List<TutorScheduleDate> parseTutorScheduleDates(String scheduleDatesJson, String legacySummary) {
+    String normalizedJson = support.defaultText(scheduleDatesJson, "[]");
+    if (!"[]".equals(normalizedJson)) {
+      try {
+        List<TutorScheduleDate> scheduleDates = objectMapper.readValue(normalizedJson, TUTOR_SCHEDULE_DATES_TYPE);
+        if (scheduleDates != null && !scheduleDates.isEmpty()) {
+          return scheduleDates;
+        }
+      } catch (JsonProcessingException exception) {
+        throw new IllegalStateException("家教日程数据解析失败", exception);
+      }
+    }
+
+    return parseTutorTrialScheduleMap(legacySummary).entrySet().stream()
+        .sorted(Map.Entry.comparingByKey())
+        .map((entry) -> new TutorScheduleDate(
+            entry.getKey().toString(),
+            entry.getValue().stream()
+                .map((range) -> new TutorScheduleTimeRange(
+                    range.start().format(TUTOR_TRIAL_TIME_FORMATTER),
+                    range.end().format(TUTOR_TRIAL_TIME_FORMATTER)
+                ))
+                .toList()
+        ))
+        .toList();
   }
 
 
@@ -1971,6 +2034,7 @@ public class TutorWorkspaceAppService {
       String scheduleStart,
       String scheduleEnd,
       String scheduleSummary,
+      String scheduleDatesJson,
       String createdByRole
   ) {
     int updatedRows = jdbcTemplate.update(
@@ -1981,10 +2045,11 @@ public class TutorWorkspaceAppService {
               schedule_start,
               schedule_end,
               schedule_summary,
+              schedule_dates,
               created_by_role,
               enabled
             )
-            SELECT id, ?, ?, ?, ?, ?, TRUE
+            SELECT id, ?, ?, ?, ?, CAST(? AS jsonb), ?, TRUE
             FROM tutor_applicant
             WHERE tutor_demand_id = ?
               AND public_id = ?
@@ -1993,6 +2058,7 @@ public class TutorWorkspaceAppService {
             SET schedule_start = EXCLUDED.schedule_start,
                 schedule_end = EXCLUDED.schedule_end,
                 schedule_summary = EXCLUDED.schedule_summary,
+                schedule_dates = EXCLUDED.schedule_dates,
                 created_by_role = EXCLUDED.created_by_role,
                 enabled = TRUE,
                 updated_at = NOW()
@@ -2001,6 +2067,7 @@ public class TutorWorkspaceAppService {
         scheduleStart,
         scheduleEnd,
         scheduleSummary,
+        scheduleDatesJson,
         createdByRole,
         demandId,
         applicationPublicId
@@ -2243,7 +2310,12 @@ public class TutorWorkspaceAppService {
 
 
   /** 已标准化的试课日程持久化字段。 */
-  private record TutorTrialSchedule(String start, String end, String summary) {
+  private record TutorTrialSchedule(
+      String start,
+      String end,
+      String summary,
+      List<TutorScheduleDate> testedDates
+  ) {
   }
 
 

@@ -22,6 +22,7 @@ const timePanelStyles = readFileSync(
   new URL("../src/components/ScheduleCalendar/TimePanel/index.less", import.meta.url),
   "utf8"
 );
+const switchStyles = readFileSync(new URL("../src/ui/Switch/index.less", import.meta.url), "utf8");
 const tutorApplicationsSource = readFileSync(
   new URL("../src/overlays/tutor/components/TutorApplications.tsx", import.meta.url),
   "utf8"
@@ -69,7 +70,8 @@ const vite = await createServer({
     alias: {
       "@h5": `${h5Root}/src`,
       "@shared": `${h5Root}/src/shared`,
-      "@tools": `${h5Root}/src/tools`
+      "@tools": `${h5Root}/src/tools`,
+      "@ui": `${h5Root}/src/ui`
     }
   },
   root: h5Root,
@@ -91,6 +93,8 @@ const { TimePanel } = await vite.ssrLoadModule("/src/components/ScheduleCalendar
 globalThis.CalendarPanel = CalendarPanel;
 globalThis.TimePanel = TimePanel;
 const { CalendarTime } = await vite.ssrLoadModule("/src/components/ScheduleCalendar/CalendarTime/index.tsx");
+const { Switch } = await vite.ssrLoadModule("/src/ui/Switch/index.tsx");
+const { getDefaultTutorScheduleDate, getTutorDateKey } = await vite.ssrLoadModule("/src/tools/tutorCalendar.ts");
 const { GlobalProvider, useGlobalUserActions } = await vite.ssrLoadModule("/src/globalProvider.tsx");
 const { getMessageToastSnapshot, hideMessage } = await vite.ssrLoadModule("/src/tools/messageToast.ts");
 const {
@@ -105,12 +109,19 @@ const {
   trialSchedulePeriods
 } = await vite.ssrLoadModule("/src/components/ScheduleCalendar/CalendarTime/model.ts");
 
-/** 在服务端 React 渲染中执行真实 hook，并返回本次渲染产生的日期策略。 */
-function renderTrialSchedule(options) {
+/** 在服务端 React 渲染中执行真实 hook；需要检查特定日期时显式切换查看焦点。 */
+function renderTrialSchedule(options, activeDate) {
   let schedule;
 
   function TrialScheduleProbe() {
-    schedule = useTrialSchedule({ initialValue: null, ...options });
+    const currentSchedule = useTrialSchedule({ initialValue: null, scheduleType: "tested", ...options });
+
+    if (activeDate && currentSchedule.activeDate !== activeDate) {
+      currentSchedule.setActiveDate(activeDate);
+      return React.createElement("div");
+    }
+
+    schedule = currentSchedule;
     return React.createElement("div");
   }
 
@@ -163,16 +174,31 @@ function findReactElements(node, predicate) {
 /** 在真实 Provider 与 DOM 中渲染 CalendarTime，供模板操作交互测试复用。 */
 async function renderCalendarTime({
   blockedScheduleSummary = "",
+  canUseScheduleTemplateForDates = false,
   initialSummary = "2099年9月6日 13:00-15:00",
+  maxScheduleDates = 3,
   scheduleTimeTemplate,
+  scheduleType = "tested",
   onConfirm
 }) {
+  const NativeDate = globalThis.Date;
+  const fixedNow = new NativeDate(2099, 8, 6, 12).getTime();
+  class FixedDate extends NativeDate {
+    constructor(...args) {
+      super(...(args.length > 0 ? args : [fixedNow]));
+    }
+
+    static now() {
+      return fixedNow;
+    }
+  }
   const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
     url: "http://127.0.0.1/"
   });
   const previousGlobals = new Map();
 
   [
+    ["Date", FixedDate],
     ["document", dom.window.document],
     ["Event", dom.window.Event],
     ["HTMLElement", dom.window.HTMLElement],
@@ -213,9 +239,12 @@ async function renderCalendarTime({
         React.createElement(ScheduleTimeTemplateSeed),
         React.createElement(CalendarTime, {
           blockedScheduleSummary,
+          canUseScheduleTemplateForDates,
           initialValue,
+          maxScheduleDates,
           onClose: () => {},
-          onConfirm
+          onConfirm,
+          scheduleType
         })
       )
     );
@@ -236,6 +265,26 @@ async function renderCalendarTime({
       });
     }
   };
+}
+
+/** 向目标元素派发一次点击，并等待 React 完成状态更新。 */
+async function clickElement(element) {
+  assert.ok(element);
+  await act(async () => {
+    element.dispatchEvent(new globalThis.MouseEvent("click", { bubbles: true }));
+    await new Promise((resolve) => globalThis.setTimeout(resolve, 0));
+  });
+}
+
+/** 派发 CalendarPanel 使用的指针事件。 */
+function dispatchCalendarPointer(target, type, pointerId = 1) {
+  const event = new globalThis.MouseEvent(type, { bubbles: true });
+
+  Object.defineProperties(event, {
+    pointerId: { value: pointerId },
+    pointerType: { value: "mouse" }
+  });
+  target.dispatchEvent(event);
 }
 
 /** 查找并点击指定文案的按钮，同时等待 React 刷新完状态。 */
@@ -438,7 +487,7 @@ test("日历始终只切换查看焦点且 hook 暴露原子范围与模板契�
 
   assert.deepEqual(schedule.plannedDates, ["2026-09-06", "2026-09-08"]);
   assert.equal(typeof schedule.onChangePeriodRange, "function");
-  assert.equal(typeof schedule.applyScheduleTimeTemplate, "function");
+  assert.equal(typeof schedule.applyScheduleTimeTemplateToDates, "function");
   assert.ok(schedule.activeDaySchedule);
   assert.ok(!("mode" in schedule));
   assert.ok(!("onToggleDate" in schedule));
@@ -637,7 +686,7 @@ test("已有三天安排时查看已安排日期不会误报天数上限", () =>
   const initialValue = getTrialScheduleValueFromSummary(
     "2099年9月6日 9:00-11:00；2099年9月7日 9:00-11:00；2099年9月8日 9:00-11:00"
   );
-  const schedule = renderTrialSchedule({ initialValue, maxScheduleDates: 3 });
+  const schedule = renderTrialSchedule({ initialValue, maxScheduleDates: 3 }, "2099-09-06");
 
   assert.ok(initialValue);
   assert.equal(schedule.value?.plan.dates.length, 3);
@@ -650,7 +699,7 @@ test("过去日期允许在日历查看且 TimePanel 在试课和正式课程排
 
   assert.ok(initialValue);
   ["tested", "arranged"].forEach((scheduleType) => {
-    const schedule = renderTrialSchedule({ initialValue, scheduleType });
+    const schedule = renderTrialSchedule({ initialValue, scheduleType }, pastDate);
     const selectedPeriod = schedule.periods.find((period) => period.enabled);
 
     assert.equal(schedule.isActiveDatePast, true);
@@ -675,20 +724,211 @@ test("过去日期允许在日历查看且 TimePanel 在试课和正式课程排
   assert.ok(getDateStateClasses(markup, pastDate).has("past"));
 });
 
+test("发布计划日历不显示使用模板开关", () => {
+  const markup = renderToStaticMarkup(
+    React.createElement(CalendarPanel, {
+      activeDate: "2099-09-06",
+      mode: "edit",
+      onActiveDateChange: () => {},
+      onToggleDate: () => {},
+      plannedDates: ["2099-09-06"]
+    })
+  );
+
+  assert.doesNotMatch(markup, /role="switch"/);
+  assert.doesNotMatch(markup, /使用模板/);
+});
+
+test("排期模板开关由 CalendarPanel 内部维护且点击先查看再设置模板", async () => {
+  let confirmedValue;
+  const view = await renderCalendarTime({
+    canUseScheduleTemplateForDates: true,
+    onConfirm: (value) => {
+      confirmedValue = value;
+    },
+    scheduleTimeTemplate: { morning: { start: "08:30", end: "09:30" } }
+  });
+
+  try {
+    const templateSwitch = view.container.querySelector('[role="switch"][aria-label="使用模板"]');
+    const targetDate = view.container.querySelector('[data-date-key="2099-09-07"]');
+
+    assert.ok(templateSwitch);
+    assert.equal(templateSwitch.getAttribute("aria-checked"), "false");
+    await clickElement(templateSwitch);
+    assert.equal(templateSwitch.getAttribute("aria-checked"), "true");
+
+    await clickElement(targetDate);
+    assert.equal(targetDate.classList.contains("active"), true);
+    assert.equal(targetDate.querySelectorAll(".calendar-panel__period.has-data").length, 0);
+
+    await clickElement(targetDate);
+    assert.equal(targetDate.querySelectorAll(".calendar-panel__period.has-data").length, 1);
+
+    await clickButton(view.container, "确认");
+    assert.deepEqual(confirmedValue.scheduleDraft["2099-09-07"], {
+      morning: { enabled: true, start: "08:30", end: "09:30" },
+      afternoon: { enabled: false, start: "", end: "" },
+      evening: { enabled: false, start: "", end: "" }
+    });
+  } finally {
+    await view.cleanup();
+  }
+});
+
+test("排期模板开关开启后拖拽范围为每个日期设置模板", async () => {
+  let confirmedValue;
+  const view = await renderCalendarTime({
+    canUseScheduleTemplateForDates: true,
+    onConfirm: (value) => {
+      confirmedValue = value;
+    },
+    scheduleTimeTemplate: { morning: { start: "08:30", end: "09:30" } }
+  });
+
+  try {
+    await clickElement(view.container.querySelector('[role="switch"][aria-label="使用模板"]'));
+    const rangeStart = view.container.querySelector('[data-date-key="2099-09-07"]');
+    const rangeEnd = view.container.querySelector('[data-date-key="2099-09-08"]');
+    view.container.ownerDocument.elementFromPoint = () => rangeEnd;
+
+    await act(async () => dispatchCalendarPointer(rangeStart, "pointerdown", 7));
+    await act(async () => dispatchCalendarPointer(globalThis.window, "pointermove", 7));
+    await act(async () => dispatchCalendarPointer(globalThis.window, "pointerup", 7));
+    await clickButton(view.container, "确认");
+
+    assert.deepEqual(
+      confirmedValue.plan.dates.map(({ date }) => date),
+      ["2099-09-06", "2099-09-07", "2099-09-08"]
+    );
+    ["2099-09-07", "2099-09-08"].forEach((dateKey) => {
+      assert.deepEqual(confirmedValue.scheduleDraft[dateKey].morning, {
+        enabled: true,
+        start: "08:30",
+        end: "09:30"
+      });
+    });
+  } finally {
+    await view.cleanup();
+  }
+});
+
+test("试课模板安排达到三天后锁定拖拽但仍允许点击取消", async () => {
+  let confirmedValue;
+  const view = await renderCalendarTime({
+    canUseScheduleTemplateForDates: true,
+    initialSummary: "2099年9月6日 9:00-11:00；2099年9月7日 9:00-11:00；2099年9月8日 9:00-11:00",
+    onConfirm: (value) => {
+      confirmedValue = value;
+    },
+    scheduleTimeTemplate: { morning: { start: "08:30", end: "09:30" } }
+  });
+
+  try {
+    await clickElement(view.container.querySelector('[role="switch"][aria-label="使用模板"]'));
+    const rangeStart = view.container.querySelector('[data-date-key="2099-09-09"]');
+    const rangeEnd = view.container.querySelector('[data-date-key="2099-09-10"]');
+    view.container.ownerDocument.elementFromPoint = () => rangeEnd;
+
+    await act(async () => dispatchCalendarPointer(rangeStart, "pointerdown", 8));
+    await act(async () => dispatchCalendarPointer(globalThis.window, "pointermove", 8));
+    await act(async () => dispatchCalendarPointer(globalThis.window, "pointerup", 8));
+    await clickButton(view.container, "确认");
+
+    assert.deepEqual(
+      confirmedValue.plan.dates.map(({ date }) => date),
+      ["2099-09-06", "2099-09-07", "2099-09-08"]
+    );
+
+    const selectedDate = view.container.querySelector('[data-date-key="2099-09-07"]');
+    await clickElement(selectedDate);
+    assert.equal(selectedDate.classList.contains("active"), true);
+    await clickElement(selectedDate);
+    await clickButton(view.container, "确认");
+    assert.deepEqual(
+      confirmedValue.plan.dates.map(({ date }) => date),
+      ["2099-09-06", "2099-09-08"]
+    );
+  } finally {
+    await view.cleanup();
+  }
+});
+
+test("试课模板拖拽超过剩余名额时保留前三天并进入锁定", async () => {
+  let confirmedValue;
+  const view = await renderCalendarTime({
+    canUseScheduleTemplateForDates: true,
+    initialSummary: "2099年9月6日 9:00-11:00；2099年9月7日 9:00-11:00",
+    onConfirm: (value) => {
+      confirmedValue = value;
+    },
+    scheduleTimeTemplate: { morning: { start: "08:30", end: "09:30" } }
+  });
+
+  try {
+    await clickElement(view.container.querySelector('[role="switch"][aria-label="使用模板"]'));
+    const rangeStart = view.container.querySelector('[data-date-key="2099-09-08"]');
+    const rangeEnd = view.container.querySelector('[data-date-key="2099-09-10"]');
+    view.container.ownerDocument.elementFromPoint = () => rangeEnd;
+
+    await act(async () => dispatchCalendarPointer(rangeStart, "pointerdown", 10));
+    await act(async () => dispatchCalendarPointer(globalThis.window, "pointermove", 10));
+    await act(async () => dispatchCalendarPointer(globalThis.window, "pointerup", 10));
+    await clickButton(view.container, "确认");
+
+    assert.deepEqual(
+      confirmedValue.plan.dates.map(({ date }) => date),
+      ["2099-09-06", "2099-09-07", "2099-09-08"]
+    );
+  } finally {
+    await view.cleanup();
+  }
+});
+
+test("正式课程模板安排不受试课三天上限限制", async () => {
+  let confirmedValue;
+  const view = await renderCalendarTime({
+    canUseScheduleTemplateForDates: true,
+    initialSummary: "2099年9月6日 9:00-11:00；2099年9月7日 9:00-11:00；2099年9月8日 9:00-11:00",
+    maxScheduleDates: null,
+    onConfirm: (value) => {
+      confirmedValue = value;
+    },
+    scheduleTimeTemplate: { morning: { start: "08:30", end: "09:30" } },
+    scheduleType: "arranged"
+  });
+
+  try {
+    await clickElement(view.container.querySelector('[role="switch"][aria-label="使用模板"]'));
+    const rangeStart = view.container.querySelector('[data-date-key="2099-09-09"]');
+    const rangeEnd = view.container.querySelector('[data-date-key="2099-09-10"]');
+    view.container.ownerDocument.elementFromPoint = () => rangeEnd;
+
+    await act(async () => dispatchCalendarPointer(rangeStart, "pointerdown", 9));
+    await act(async () => dispatchCalendarPointer(globalThis.window, "pointermove", 9));
+    await act(async () => dispatchCalendarPointer(globalThis.window, "pointerup", 9));
+    await clickButton(view.container, "确认");
+
+    assert.deepEqual(
+      confirmedValue.plan.dates.map(({ date }) => date),
+      ["2099-09-06", "2099-09-07", "2099-09-08", "2099-09-09", "2099-09-10"]
+    );
+  } finally {
+    await view.cleanup();
+  }
+});
+
 test("空时段使用时段图标并渲染带端点时间的两个十分钟滑块", () => {
   const markup = renderToStaticMarkup(
     React.createElement(TimePanel, {
       activeDateHasSchedule: false,
       activeDateLabel: "2026年9月6日",
-      hasScheduleTimeTemplate: true,
       isActiveDatePast: false,
       isSavingScheduleTimeTemplate: false,
-      isScheduleLimitReached: false,
       onCancelAll: () => {},
       onChangePeriodRange: () => {},
       onClearPeriod: () => {},
       onSaveScheduleTimeTemplate: () => {},
-      onUseScheduleTimeTemplate: () => {},
       periods: trialSchedulePeriods.map((period) => ({
         enabled: false,
         end: "",
@@ -718,7 +958,7 @@ test("空时段使用时段图标并渲染带端点时间的两个十分钟滑�
   assert.doesNotMatch(markup, /<button[^>]*>清空<\/button>/);
   assert.match(markup, /取消全选/);
   assert.match(markup, /记为模板/);
-  assert.match(markup, /使用模板/);
+  assert.doesNotMatch(markup, /使用模板/);
   assert.doesNotMatch(markup, />全选</);
 });
 
@@ -727,15 +967,12 @@ test("有效选择范围显示在滑块开始和结束时间之间", () => {
     React.createElement(TimePanel, {
       activeDateHasSchedule: true,
       activeDateLabel: "2026年9月6日",
-      hasScheduleTimeTemplate: false,
       isActiveDatePast: false,
       isSavingScheduleTimeTemplate: false,
-      isScheduleLimitReached: false,
       onCancelAll: () => {},
       onChangePeriodRange: () => {},
       onClearPeriod: () => {},
       onSaveScheduleTimeTemplate: () => {},
-      onUseScheduleTimeTemplate: () => {},
       periods: [
         {
           enabled: true,
@@ -850,15 +1087,12 @@ test("历史异常时段以只读原文行展示并保留重置入口", () => {
     React.createElement(TimePanel, {
       activeDateHasSchedule: true,
       activeDateLabel: "2099年9月6日",
-      hasScheduleTimeTemplate: true,
       isActiveDatePast: false,
       isSavingScheduleTimeTemplate: false,
-      isScheduleLimitReached: false,
       onCancelAll: () => {},
       onChangePeriodRange: () => {},
       onClearPeriod: () => {},
       onSaveScheduleTimeTemplate: () => {},
-      onUseScheduleTimeTemplate: () => {},
       periods: [
         {
           enabled: true,
@@ -913,7 +1147,7 @@ test("已占用的历史异常时段保持只读且不允许清空", () => {
   const schedule = renderTrialSchedule({
     blockedScheduleSummary: "2099年9月6日 8:00-10:00",
     initialValue
-  });
+  }, "2099-09-06");
   const morning = schedule.periods.find((period) => period.key === "morning");
 
   assert.ok(morning);
@@ -926,15 +1160,12 @@ test("双滑块交叉时原子回调将起止值夹紧到同一位置", () => {
   const tree = TimePanel({
     activeDateHasSchedule: true,
     activeDateLabel: "2026年9月6日",
-    hasScheduleTimeTemplate: true,
     isActiveDatePast: false,
     isSavingScheduleTimeTemplate: false,
-    isScheduleLimitReached: false,
     onCancelAll: () => {},
     onChangePeriodRange: (...args) => changes.push(args),
     onClearPeriod: () => {},
     onSaveScheduleTimeTemplate: () => {},
-    onUseScheduleTimeTemplate: () => {},
     periods: [
       {
         enabled: true,
@@ -1046,15 +1277,12 @@ test("十分钟短区间通过轨道指针事件仍可分别调整开始与结�
         React.createElement(TimePanel, {
           activeDateHasSchedule: true,
           activeDateLabel: "2026年9月6日",
-          hasScheduleTimeTemplate: true,
           isActiveDatePast: false,
           isSavingScheduleTimeTemplate: false,
-          isScheduleLimitReached: false,
           onCancelAll: () => {},
           onChangePeriodRange: (...args) => changes.push(args),
           onClearPeriod: () => {},
           onSaveScheduleTimeTemplate: () => {},
-          onUseScheduleTimeTemplate: () => {},
           periods: [
             {
               enabled: true,
@@ -1170,15 +1398,12 @@ test("空上午从重合起点向右拖动时选择结束端并创建十分钟�
         React.createElement(TimePanel, {
           activeDateHasSchedule: false,
           activeDateLabel: "2026年9月6日",
-          hasScheduleTimeTemplate: true,
           isActiveDatePast: false,
           isSavingScheduleTimeTemplate: false,
-          isScheduleLimitReached: false,
           onCancelAll: () => {},
           onChangePeriodRange: (...args) => changes.push(args),
           onClearPeriod: () => {},
           onSaveScheduleTimeTemplate: () => {},
-          onUseScheduleTimeTemplate: () => {},
           periods: [
             {
               enabled: false,
@@ -1258,20 +1483,17 @@ test("空上午从重合起点向右拖动时选择结束端并创建十分钟�
   }
 });
 
-test("过去日期的双滑块和三项操作全部保持禁用", () => {
+test("过去日期的双滑块和 TimePanel 两项操作全部保持禁用", () => {
   const markup = renderToStaticMarkup(
     React.createElement(TimePanel, {
       activeDateHasSchedule: true,
       activeDateLabel: "2020年1月15日",
-      hasScheduleTimeTemplate: true,
       isActiveDatePast: true,
       isSavingScheduleTimeTemplate: false,
-      isScheduleLimitReached: false,
       onCancelAll: () => {},
       onChangePeriodRange: () => {},
       onClearPeriod: () => {},
       onSaveScheduleTimeTemplate: () => {},
-      onUseScheduleTimeTemplate: () => {},
       periods: [
         {
           enabled: true,
@@ -1292,9 +1514,10 @@ test("过去日期的双滑块和三项操作全部保持禁用", () => {
 
   assert.equal(ranges.length, 2);
   ranges.forEach((range) => assert.match(range, /disabled=""/));
-  ["取消全选", "记为模板", "使用模板"].forEach((label) => {
+  ["取消全选", "记为模板"].forEach((label) => {
     assert.match(markup, new RegExp(`<button[^>]*disabled=""[^>]*>${label}<\\/button>`));
   });
+  assert.doesNotMatch(markup, /使用模板/);
 });
 
 test("记为模板通过资料接口保存当前日程并同步全局模板", async () => {
@@ -1311,7 +1534,7 @@ test("记为模板通过资料接口保存当前日程并同步全局模板", as
       { headers: { "Content-Type": "application/json" }, status: 200 }
     );
   };
-  const view = await renderCalendarTime({ onConfirm: () => {} });
+  const view = await renderCalendarTime({ canUseScheduleTemplateForDates: true, onConfirm: () => {} });
 
   try {
     await clickButton(view.container, "记为模板");
@@ -1323,10 +1546,7 @@ test("记为模板通过资料接口保存当前日程并同步全局模板", as
       afternoon: { start: "13:00", end: "15:00" }
     });
     assert.equal(getMessageToastSnapshot()?.content, "时间模板已更新。");
-    assert.equal(
-      [...view.container.querySelectorAll("button")].find((button) => button.textContent === "使用模板")?.disabled,
-      false
-    );
+    assert.equal(view.container.querySelector('[role="switch"][aria-label="使用模板"]')?.disabled, false);
   } finally {
     await view.cleanup();
     globalThis.fetch = originalFetch;
@@ -1363,9 +1583,10 @@ test("历史异常时段保存模板时明确拒绝且不调用资料接口", as
   }
 });
 
-test("使用模板成功后整组覆盖当前日期并清空模板外时段", async () => {
+test("模板开关对重新选入的日期整组覆盖并清空模板外时段", async () => {
   let confirmedValue;
   const view = await renderCalendarTime({
+    canUseScheduleTemplateForDates: true,
     onConfirm: (value) => {
       confirmedValue = value;
     },
@@ -1373,10 +1594,12 @@ test("使用模板成功后整组覆盖当前日期并清空模板外时段", as
   });
 
   try {
-    await clickButton(view.container, "使用模板");
+    await clickElement(view.container.querySelector('[role="switch"][aria-label="使用模板"]'));
+    const activeDate = view.container.querySelector('[data-date-key="2099-09-06"]');
+    await clickElement(activeDate);
+    await clickElement(activeDate);
     await clickButton(view.container, "确认");
 
-    assert.equal(getMessageToastSnapshot()?.content, "时间模板已应用到当前日期。");
     assert.deepEqual(confirmedValue.scheduleDraft["2099-09-06"], {
       morning: { enabled: true, start: "08:30", end: "09:30" },
       afternoon: { enabled: false, start: "", end: "" },
@@ -1390,7 +1613,8 @@ test("使用模板成功后整组覆盖当前日期并清空模板外时段", as
 test("模板命中占用时提示原因并保留当前手工安排", async () => {
   let confirmedValue;
   const view = await renderCalendarTime({
-    blockedScheduleSummary: "2099年9月6日 8:00-10:00",
+    blockedScheduleSummary: "2099年9月7日 8:00-10:00",
+    canUseScheduleTemplateForDates: true,
     onConfirm: (value) => {
       confirmedValue = value;
     },
@@ -1398,7 +1622,10 @@ test("模板命中占用时提示原因并保留当前手工安排", async () =>
   });
 
   try {
-    await clickButton(view.container, "使用模板");
+    await clickElement(view.container.querySelector('[role="switch"][aria-label="使用模板"]'));
+    const blockedDate = view.container.querySelector('[data-date-key="2099-09-07"]');
+    await clickElement(blockedDate);
+    await clickElement(blockedDate);
     await clickButton(view.container, "确认");
 
     assert.equal(getMessageToastSnapshot()?.content, "模板包含已占用时段");
@@ -1420,20 +1647,49 @@ test("试课安排动态副标题使用独立红色提示样式", () => {
   );
 });
 
+test("Switch 支持 mini、small、default、large 四档尺寸且默认保持原尺寸", () => {
+  const sizes = ["mini", "small", "default", "large"];
+
+  sizes.forEach((size) => {
+    const markup = renderToStaticMarkup(
+      React.createElement(Switch, {
+        checked: false,
+        label: `${size} 开关`,
+        onChange: () => {},
+        size
+      })
+    );
+
+    assert.match(markup, new RegExp(`switch-control--${size}`));
+  });
+
+  const defaultMarkup = renderToStaticMarkup(
+    React.createElement(Switch, {
+      checked: false,
+      label: "默认开关",
+      onChange: () => {}
+    })
+  );
+
+  assert.match(defaultMarkup, /switch-control--default/);
+  assert.match(switchStyles, /\.switch-control--mini\s*\{[^}]*--switch-width:\s*30px[^}]*--switch-height:\s*18px/s);
+  assert.match(switchStyles, /\.switch-control--small\s*\{[^}]*--switch-width:\s*36px[^}]*--switch-height:\s*20px/s);
+  assert.match(switchStyles, /\.switch-control--default\s*\{[^}]*--switch-width:\s*42px[^}]*--switch-height:\s*24px/s);
+  assert.match(switchStyles, /\.switch-control--large\s*\{[^}]*--switch-width:\s*50px[^}]*--switch-height:\s*28px/s);
+  assert.match(switchStyles, /transform:\s*translateX\(var\(--switch-thumb-translate\)\)/);
+});
+
 test("TimePanel 不再提供整日全选入口", () => {
   const markup = renderToStaticMarkup(
     React.createElement(TimePanel, {
       activeDateHasSchedule: false,
       activeDateLabel: "2026年9月6日",
-      hasScheduleTimeTemplate: false,
       isActiveDatePast: false,
       isSavingScheduleTimeTemplate: false,
-      isScheduleLimitReached: false,
       onCancelAll: () => {},
       onChangePeriodRange: () => {},
       onClearPeriod: () => {},
       onSaveScheduleTimeTemplate: () => {},
-      onUseScheduleTimeTemplate: () => {},
       periods: []
     })
   );
@@ -1460,6 +1716,28 @@ test("计划日期只由 plannedDates 添加 planned 状态类", () => {
   assert.ok(!anotherPlannedDateClasses.has("arranged"));
 });
 
+test("日历打开时统一查看当天且不被已有计划日期覆盖", () => {
+  const todayKey = getTutorDateKey(new Date());
+  let defaultDate;
+  const schedule = renderTrialSchedule({ plannedDates: ["2099-12-31"] });
+  const markup = renderToStaticMarkup(
+    React.createElement(CalendarPanel, {
+      mode: "view",
+      plannedDates: ["2099-12-31"]
+    })
+  );
+  const [year, month] = todayKey.split("-");
+
+  assert.doesNotThrow(() => {
+    defaultDate = getDefaultTutorScheduleDate();
+  });
+  assert.equal(defaultDate, todayKey);
+  assert.equal(schedule.activeDate, todayKey);
+  assert.match(markup, new RegExp(`${year}年${Number(month)}月`));
+  assert.doesNotMatch(markup, /2099年12月/);
+  assert.ok(getDateStateClasses(markup, todayKey).has("active"));
+});
+
 test("计划日期使用背景色且不再显示圆点标记", () => {
   assert.match(calendarPanelStyles, /\.calendar-panel__day\.planned[^{]*[{][^}]*(?:background|background-color)\s*:/);
   assert.doesNotMatch(calendarPanelStyles, /\.calendar-panel__day\.planned::after/);
@@ -1478,4 +1756,19 @@ test("日期单元格样式优先级为 active 高于 past 高于 planned", () =
   assert.match(calendarPanelStyles, /\.calendar-panel__day\.past\s*\{[^}]*opacity:\s*0\.[0-9]+/);
   assert.match(calendarPanelStyles, /\.calendar-panel__day\.active\s*\{[^}]*opacity:\s*1/);
   assert.doesNotMatch(calendarPanelStyles, /\.calendar-panel__day\.past:not\(\.planned\)/);
+});
+
+test("日历日期文字区分未来、过去和当天状态", () => {
+  assert.match(
+    calendarPanelStyles,
+    /\.calendar-panel__day strong\s*\{[^}]*color:\s*var\(--h5-accent\)/
+  );
+  assert.match(
+    calendarPanelStyles,
+    /\.calendar-panel__day\.past strong\s*\{[^}]*color:\s*var\(--h5-subtle\)/
+  );
+  assert.match(
+    calendarPanelStyles,
+    /\.calendar-panel__day\.today strong\s*\{[^}]*background:\s*var\(--h5-text\)[^}]*color:\s*var\(--h5-surface-solid\)/
+  );
 });

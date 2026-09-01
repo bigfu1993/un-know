@@ -18,7 +18,7 @@ const TRIAL_REQUIRED_SEGMENT = "需要试课";
 
 /** 家教卡片内的计划日程只读弹窗。 */
 function EduJobScheduleView({ onClose, plannedDates }: { onClose: () => void; plannedDates: string[] }) {
-  const [activeDate, setActiveDate] = useState(() => getDefaultTutorScheduleDate(plannedDates));
+  const [activeDate, setActiveDate] = useState(getDefaultTutorScheduleDate);
 
   return (
     <Modal
@@ -77,7 +77,8 @@ export function EduJobBudget({ job }: { job: TutorTrialJob }) {
 }
 
 /**
- * 家教场景通用卡片壳，头部预算区域和底部操作区域均为插槽：日程/消息按钮固定内置在 footer，
+ * 家教场景通用卡片壳，头部预算区域和底部操作区域均为插槽：消息按钮固定内置在 footer，
+ * 计划日程入口默认内置，进行中学生卡片可关闭后改由流程操作区提供统一日程入口；
  * `budgetSlot`（预算展示内容，默认用 `EduJobBudget`）/`footer`（追加操作按钮，如试课申请）
  * 由调用方按具体业务场景装配；`job` 只需满足 `EduDemandCardJob` 的最小字段集合，
  * 兼职列表用完整 TutorTrialJob，其它家教场景（如进行中家教卡片）按需适配真实数据传入即可。
@@ -86,12 +87,15 @@ export function EduDemandCard({
   budgetSlot,
   className,
   footer,
-  job
+  job,
+  showScheduleAction = true
 }: {
   budgetSlot?: ReactNode;
   className?: string;
   footer?: ReactNode;
   job: EduDemandCardJob;
+  /** 是否展示卡片内置的计划日程入口；进行中学生卡片由流程操作区提供统一日程入口。 */
+  showScheduleAction?: boolean;
 }) {
   const [isScheduleViewOpen, setIsScheduleViewOpen] = useState(false);
   const periodDaysLabel = job.plannedDates.length > 0 ? `${job.plannedDates.length} 天` : "待定";
@@ -111,7 +115,7 @@ export function EduDemandCard({
           <div className="edu-job-budget grid gap-[2px] text-right">{budgetSlot}</div>
         </div>
         <div className="edu-job-card-content job-task-fields grid gap-[7px]">
-          <div className="grid grid-cols-2 gap-[7px]">
+          <div className="edu-job-field-row grid grid-cols-2 gap-[7px]">
             <span>
               <Tags size={14} />
               学科：{job.subject}
@@ -137,17 +141,19 @@ export function EduDemandCard({
           >
             <MessageCircle size={15} /> 消息
           </button>
-          <button
-            className="secondary-button accent-text inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
-            onClick={() => setIsScheduleViewOpen(true)}
-            type="button"
-          >
-            <CalendarDays size={15} /> 日程
-          </button>
+          {showScheduleAction ? (
+            <button
+              className="secondary-button accent-text inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+              onClick={() => setIsScheduleViewOpen(true)}
+              type="button"
+            >
+              <CalendarDays size={15} /> 日程
+            </button>
+          ) : null}
           {footer}
         </div>
       </article>
-      {isScheduleViewOpen ? (
+      {showScheduleAction && isScheduleViewOpen ? (
         <EduJobScheduleView onClose={() => setIsScheduleViewOpen(false)} plannedDates={job.plannedDates} />
       ) : null}
     </>

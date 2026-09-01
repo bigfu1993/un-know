@@ -456,12 +456,14 @@ export function OrderActions({
         >
           <CalendarTime
             blockedScheduleSummary={getTutorTrialScheduleSummaryFromOrderDetail(tutorWorkflowTargetOrder.detail)}
+            canUseScheduleTemplateForDates={showParentTutorServiceScheduleAction}
             confirmLabel={isSubmittingServiceSchedule ? "提交中" : "提交日程"}
             initialValue={null}
             isConfirming={isSubmittingServiceSchedule}
             maxScheduleDates={null}
             onClose={() => setIsServiceScheduleOpen(false)}
             onConfirm={handleConfirmServiceSchedule}
+            plannedDates={order.plannedDates ?? []}
             scheduleType="arranged"
           />
         </Modal>

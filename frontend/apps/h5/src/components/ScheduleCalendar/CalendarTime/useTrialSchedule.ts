@@ -32,7 +32,7 @@ export interface UseTrialScheduleOptions {
    */
   plannedDates?: string[];
   /** 当前编辑的是试课还是正式课程，用于把日程数据放入对应的 CalendarPanel 数据通道。 */
-  scheduleType?: "arranged" | "tested";
+  scheduleType: "arranged" | "tested";
 }
 
 /** 试课排期日历要横向拆分的分段顺序，固定按上午、下午、晚上展示。 */
@@ -67,7 +67,7 @@ export function useTrialSchedule({
   initialValue,
   maxScheduleDates = 3,
   plannedDates = [],
-  scheduleType = "tested"
+  scheduleType
 }: UseTrialScheduleOptions) {
   const today = useMemo(() => new Date(), []);
   const todayKey = getTutorDateKey(today);
@@ -78,9 +78,7 @@ export function useTrialSchedule({
   const blockedScheduleDraft = blockedScheduleValue?.scheduleDraft ?? {};
   /** 发布计划日期始终回显，但不参与可选范围、天数上限或实际安排计算。 */
   const normalizedPlannedDates = useMemo(() => [...new Set(plannedDates)].sort(), [plannedDates]);
-  const initialActiveDate =
-    normalizedPlannedDates[0] ?? initialValue?.plan.dates[0]?.date ?? blockedScheduleValue?.plan.dates[0]?.date ?? todayKey;
-  const [activeDate, setActiveDate] = useState(initialActiveDate);
+  const [activeDate, setActiveDate] = useState(todayKey);
   const [scheduleDraft, setScheduleDraft] = useState<TrialScheduleDraft>(() => initialValue?.scheduleDraft ?? {});
   const activeDaySchedule = scheduleDraft[activeDate] ?? createDefaultDaySchedule();
   const activeDateHasSchedule = getEnabledPeriodSummaries(activeDaySchedule).length > 0;
@@ -199,21 +197,76 @@ export function useTrialSchedule({
     });
   }
 
-  /** 将模板整组应用到当前日期；任一模板时段被占用时不修改任何草稿。 */
-  function applyScheduleTimeTemplate(template: ScheduleTimeTemplate): { ok: boolean; reason?: string } {
-    if (isDateDisabledForNewSchedule(activeDate)) {
+  /**
+   * 把一次日历点击或拖拽手势涉及的日期同步为模板安排：最终选中的日期整组覆盖为模板，
+   * 取消选中的日期清空。试课拖拽超过剩余名额时按日期顺序截取到上限；过去日期和占用冲突
+   * 在写入前统一校验，避免同一次手势部分生效。
+   */
+  function applyScheduleTimeTemplateToDates(
+    nextScheduledDates: string[],
+    changedDateKeys: string[],
+    template: ScheduleTimeTemplate
+  ): { ok: boolean; reason?: string } {
+    const requestedScheduledDateSet = new Set(nextScheduledDates);
+    const nextScheduledDateSet = new Set(scheduledDates);
+    const changedDateKeySet = new Set(changedDateKeys);
+    const acceptedChangedDateKeys: string[] = [];
+
+    if (changedDateKeys.some((dateKey) => dateKey < todayKey)) {
       return { ok: false, reason: "当前日期不可安排" };
     }
 
-    const hasBlockedTemplatePeriod = trialSchedulePeriods.some(
-      (period) => template[period.key] && isPeriodBlockedBySchedule(activeDate, period.key)
-    );
+    changedDateKeys.forEach((dateKey) => {
+      if (!requestedScheduledDateSet.has(dateKey)) {
+        nextScheduledDateSet.delete(dateKey);
+        acceptedChangedDateKeys.push(dateKey);
+      }
+    });
+    [...requestedScheduledDateSet]
+      .filter((dateKey) => changedDateKeySet.has(dateKey))
+      .sort()
+      .forEach((dateKey) => {
+        if (
+          nextScheduledDateSet.has(dateKey) ||
+          maxScheduleDates === null ||
+          nextScheduledDateSet.size < maxScheduleDates
+        ) {
+          nextScheduledDateSet.add(dateKey);
+          acceptedChangedDateKeys.push(dateKey);
+        }
+      });
 
-    if (hasBlockedTemplatePeriod) {
+    const datesApplyingTemplate = acceptedChangedDateKeys.filter((dateKey) => nextScheduledDateSet.has(dateKey));
+
+    if (acceptedChangedDateKeys.length === 0) {
+      return {
+        ok: false,
+        reason: maxScheduleDates === null ? "没有可更新的课程日期" : `试课最多安排 ${maxScheduleDates} 天`
+      };
+    }
+    if (
+      datesApplyingTemplate.some((dateKey) =>
+        trialSchedulePeriods.some(
+          (period) => template[period.key] && isPeriodBlockedBySchedule(dateKey, period.key)
+        )
+      )
+    ) {
       return { ok: false, reason: "模板包含已占用时段" };
     }
 
-    syncDaySchedule(activeDate, createTrialScheduleDayFromTemplate(template));
+    setScheduleDraft((currentDraft) => {
+      const nextDraft = { ...currentDraft };
+
+      acceptedChangedDateKeys.forEach((dateKey) => {
+        if (nextScheduledDateSet.has(dateKey)) {
+          nextDraft[dateKey] = createTrialScheduleDayFromTemplate(template);
+        } else {
+          delete nextDraft[dateKey];
+        }
+      });
+
+      return nextDraft;
+    });
 
     return { ok: true };
   }
@@ -263,17 +316,19 @@ export function useTrialSchedule({
     activeDateHasSchedule,
     activeDaySchedule,
     activeDateLabel: formatTrialScheduleDate(activeDate),
-    applyScheduleTimeTemplate,
+    applyScheduleTimeTemplateToDates,
     isActiveDatePast,
     isScheduleLimitReached,
     arrangedDatas,
     arrangedPeriods: arrangedDatas.length > 0 ? trialScheduleDataPeriods : [],
+    isScheduleDragLocked: maxScheduleDates !== null && scheduledDates.length >= maxScheduleDates,
     maxScheduleDates,
     onChangePeriodRange: handleChangePeriodRange,
     onClearDaySchedule: () => handleClearDaySchedule(),
     onClearPeriod: handleClearPeriod,
     periods,
     plannedDates: normalizedPlannedDates,
+    scheduledDates,
     setActiveDate,
     testedDatas,
     testedPeriods: testedDatas.length > 0 ? trialScheduleDataPeriods : [],

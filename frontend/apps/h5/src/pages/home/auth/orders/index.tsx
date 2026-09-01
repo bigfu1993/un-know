@@ -125,6 +125,7 @@ export function OngoingOrders({
                 footer={<OrderActions onOpenCancelConfirmation={openCancelConfirmation} order={order} {...handlers} />}
                 job={demandCardJob}
                 key={order.id}
+                showScheduleAction={order.role !== "student"}
               />
             );
           }
