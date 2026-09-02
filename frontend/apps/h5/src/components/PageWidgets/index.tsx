@@ -171,19 +171,19 @@ export function ProductListCard({
           <span>合计 {formatCurrency(payableAmount)}</span>
           <div className="product-card-action-buttons">
             <button
-              className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+              className="ghost-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-[var(--h5-muted)]"
               type="button"
             >
               <Heart size={15} /> 收藏
             </button>
             <button
-              className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+              className="ghost-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-[var(--h5-muted)]"
               type="button"
             >
               <AlertCircle size={15} /> 举报
             </button>
             <button
-              className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
+              className="primary-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
               disabled={role === "merchant" || purchasePending}
               onClick={() => onOpenCheckout(product)}
               type="button"

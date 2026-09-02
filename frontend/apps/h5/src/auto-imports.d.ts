@@ -106,6 +106,7 @@ declare global {
   const RegisterForm: typeof import('./pages/login/components/RegisterForm').RegisterForm
   const RegistrationGuide: typeof import('./pages/login/components/RegistrationGuide').RegistrationGuide
   const Route: typeof import('react-router-dom').Route
+  const RouteLoading: typeof import('./components/RouteLoading/index').RouteLoading
   const Routes: typeof import('react-router-dom').Routes
   const ScheduleCalendar: typeof import('./components/ScheduleCalendar/index').ScheduleCalendar
   const ScrollingTicker: typeof import('./components/ScrollingTicker/index').ScrollingTicker

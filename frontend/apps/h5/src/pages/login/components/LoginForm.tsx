@@ -144,7 +144,7 @@ export function LoginForm({ onAuthenticated }: LoginFormProps) {
 
         <button
           aria-label={submitLabel}
-          className="primary-button auth-submit-button full inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
+          className="primary-button auth-submit-button full button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
           disabled={loginMutation.isPending}
           type="submit"
         >

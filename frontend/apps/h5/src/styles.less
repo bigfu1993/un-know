@@ -930,6 +930,19 @@ body,
   line-height: 1.2;
 }
 
+/**
+ * 操作按钮的行内布局：图标 + 文案水平居中排列，间距固定 5px。这套组合此前作为
+ * inline-flex/items-center/justify-center/gap-[5px] 在全项目按钮 className 里重复了近百次，
+ * 收敛到这里统一维护；具体高度、内边距仍按场景通过 Tailwind min-h/px/py 表达，因为那些数值
+ * 本身随场景变化，不属于这套固定布局关系。
+ */
+.button-inline-layout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
 .secondary-button:disabled,
 .danger-outline-button:disabled {
   cursor: not-allowed;

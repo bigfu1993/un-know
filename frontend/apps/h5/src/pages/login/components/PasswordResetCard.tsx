@@ -176,7 +176,7 @@ export function PasswordResetCard({ initialPhone = "", onBack, onCompleted }: Pa
 
       <div className="password-reset-actions grid gap-[8px]">
         <button
-          className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+          className="ghost-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-[var(--h5-muted)]"
           disabled={isSubmitting}
           onClick={onBack}
           type="button"
@@ -184,7 +184,7 @@ export function PasswordResetCard({ initialPhone = "", onBack, onCompleted }: Pa
           返回登录
         </button>
         <button
-          className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
+          className="primary-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
           disabled={isSubmitting}
           type="submit"
         >

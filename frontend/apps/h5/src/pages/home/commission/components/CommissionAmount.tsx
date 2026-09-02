@@ -63,7 +63,7 @@ export function CommissionAmount({
       </label>
       <div className="sheet-actions grid gap-[8px]">
         <button
-          className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+          className="primary-button button-inline-layout min-h-[38px] px-[10px] py-[8px] text-white"
           onClick={handleSubmit}
           type="button"
         >

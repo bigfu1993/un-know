@@ -324,7 +324,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
         {nicknameFeedback ? <p className="notice mt-[10px] p-[10px] text-[var(--h5-warning)]">{nicknameFeedback}</p> : null}
         <div className="settings-security-actions mt-[10px] grid gap-[8px]">
           <button
-            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+            className="ghost-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             onClick={handleOpenNicknameChange}
             type="button"
           >
@@ -346,7 +346,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
         {securityFeedback ? <p className="notice mt-[10px] p-[10px] text-[var(--h5-warning)]">{securityFeedback}</p> : null}
         <div className="settings-security-actions mt-[10px] grid gap-[8px]">
           <button
-            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+            className="ghost-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             onClick={handleOpenPhoneChange}
             type="button"
           >
@@ -354,7 +354,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
             变更手机号
           </button>
           <button
-            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+            className="ghost-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             onClick={handleOpenPasswordReset}
             type="button"
           >
@@ -379,7 +379,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
                 <span>查看资格申请信息，学科可在审批后继续补充。</span>
               </div>
               <button
-                className="ghost-button inline-flex min-h-[34px] shrink-0 items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+                className="ghost-button button-inline-layout min-h-[34px] shrink-0 px-[10px] py-[8px] text-[var(--h5-muted)]"
                 onClick={handleOpenTutorInfo}
                 type="button"
               >

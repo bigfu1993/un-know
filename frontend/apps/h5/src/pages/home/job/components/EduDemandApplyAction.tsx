@@ -92,7 +92,7 @@ export function EduDemandApplyAction({
   return (
     <>
       <button
-        className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
+        className="primary-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
         disabled={!onApplyTrial || role !== "student"}
         onClick={() => setIsApplyConfirmOpen(true)}
         type="button"

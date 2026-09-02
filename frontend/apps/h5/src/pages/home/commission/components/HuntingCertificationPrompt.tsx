@@ -31,7 +31,7 @@ export function HuntingCertificationPrompt({
         联系发布方、接受委托和开启狩猎模式前，需要先完成狩猎认证。
       </p>
       <button
-        className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+        className="primary-button button-inline-layout min-h-[38px] px-[10px] py-[8px] text-white"
         onClick={onOpenCertification}
         type="button"
       >

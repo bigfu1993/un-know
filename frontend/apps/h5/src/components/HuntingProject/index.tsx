@@ -122,7 +122,7 @@ export function HuntingProject({
               <span>可拖拽调整系统匹配顺序</span>
             </div>
             <button
-              className="ghost-button inline-flex min-h-[32px] items-center justify-center gap-[5px] px-[9px] py-[6px] text-[var(--h5-muted)]"
+              className="ghost-button button-inline-layout min-h-[32px] px-[9px] py-[6px] text-[var(--h5-muted)]"
               onClick={handleAddStop}
               type="button"
             >
@@ -246,14 +246,14 @@ export function HuntingProject({
 
         <div className="sheet-actions grid gap-[8px]">
           <button
-            className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+            className="ghost-button button-inline-layout min-h-[38px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             onClick={onClose}
             type="button"
           >
             取消
           </button>
           <button
-            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
+            className="primary-button button-inline-layout min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
             disabled={!canSubmit}
             type="submit"
           >

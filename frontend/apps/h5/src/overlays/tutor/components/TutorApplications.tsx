@@ -5,6 +5,13 @@ import { getGenderIconColor } from "@shared/genderModel";
 import { getErrorMessage, showMessage } from "@tools/messageToast";
 import { createTutorTaskModel } from "@tools/tutorTaskWorkflow";
 import { useTutorTrialOccupancy } from "@unknown/hooks";
+import {
+  canSelectApplicationCandidate,
+  getCandidateInitialTrialScheduleValue,
+  getCandidateSchedulePreview,
+  TutorApplicationCardActions,
+  TutorApplicationPrimaryAction
+} from "./TutorApplicationActions";
 import { TutorSchedulePreview } from "./TutorSchedulePreview";
 import { TutorTrialSettlement } from "./TutorTrialSettlement";
 
@@ -23,101 +30,15 @@ interface TutorApplicationsProps {
   submissionPending?: boolean;
 }
 
-/** 过滤空日程片段，保持预览配置为稳定结构。 */
-function compactTutorSchedulePreviewSections(
-  sections: Array<TutorSchedulePreviewSection | null | undefined>
-): TutorSchedulePreviewSection[] {
-  return sections.filter((section): section is TutorSchedulePreviewSection => Boolean(section));
-}
-
-/** 只有没有底部主操作的拒绝正式雇佣卡片不可选，其余阶段均由同一选中态驱动。 */
-function canSelectApplicationCandidate(candidateTask: ReturnType<typeof createTutorTaskModel>) {
-  return !candidateTask.can("removeRejectedServiceOffer");
-}
-
-/** 获取申请卡片中已确认过的试课日程摘要。 */
-function getCandidateTrialScheduleSummary(candidate: TutorApplicationCandidate | undefined) {
-  if (!candidate) {
-    return "";
-  }
-
-  const task = createTutorTaskModel({ candidate, role: "parent" });
-
-  return task.node === "trialScheduled" ? (candidate.trialSchedule ?? "") : "";
-}
-
-/** 已有家长试课排期时回填当前申请，不读取其他申请人的占用时间作为当前草稿。 */
-function getCandidateInitialTrialScheduleValue(candidate: TutorApplicationCandidate | undefined) {
-  const existingTrialScheduleSummary = getCandidateTrialScheduleSummary(candidate);
-
-  return existingTrialScheduleSummary ? getTrialScheduleValueFromSummary(existingTrialScheduleSummary) : null;
-}
-
-/** 根据申请阶段生成卡片日程预览。 */
-function getCandidateSchedulePreview(
-  candidate: TutorApplicationCandidate,
-  candidateTask: ReturnType<typeof createTutorTaskModel>
-): TutorSchedulePreviewState {
-  const trialScheduleSection = candidate.trialSchedule?.trim()
-    ? {
-        dataType: "tested" as const,
-        summary: candidate.trialSchedule.trim(),
-        title: "试课安排"
-      }
-    : null;
-
-  if (candidateTask.node === "serviceSchedulePending") {
-    const sections = compactTutorSchedulePreviewSections([
-      candidate.availability?.trim()
-        ? {
-            dataType: "arranged" as const,
-            summary: candidate.availability.trim(),
-            title: "可家教时间"
-          }
-        : null,
-      trialScheduleSection
-    ]);
-
-    return {
-      buttonLabel: "可家教时间",
-      emptyLabel: "暂无可家教时间",
-      sections,
-      subtitle: "查看学生同意正式雇佣后提交的可家教日期，并据此制定正式雇佣日程。",
-      summary: candidate.availability?.trim() ?? "",
-      title: "可家教时间"
-    };
-  }
-
-  if (candidateTask.node === "formalTutoring") {
-    const sections = compactTutorSchedulePreviewSections([
-      trialScheduleSection,
-      candidate.serviceSchedule?.trim()
-        ? {
-            dataType: "arranged" as const,
-            summary: candidate.serviceSchedule.trim(),
-            title: "课程安排"
-          }
-        : null
-    ]);
-
-    return {
-      buttonLabel: "课程",
-      emptyLabel: "暂无课程安排",
-      sections,
-      subtitle: "查看家长提交的正式雇佣日程。",
-      summary: candidate.serviceSchedule?.trim() || candidate.trialSchedule?.trim() || "",
-      title: "课程安排"
-    };
-  }
-
-  return {
-    buttonLabel: "日程",
-    emptyLabel: "暂无试课安排",
-    sections: trialScheduleSection ? [trialScheduleSection] : [],
-    subtitle: "查看当前学生的试课安排。",
-    summary: candidate.trialSchedule?.trim() ?? "",
-    title: "试课安排"
-  };
+/** 家教日程弹窗能否内部开放"使用模板"开关：目标需求就是当前进行中订单，且候选人当前
+ *  具备对应流程能力（试课排期用 scheduleTrial/rescheduleTrial，正式雇佣日程用
+ *  submitServiceSchedule），试课和正式雇佣两处弹窗共用同一条判断规则。 */
+function canUseScheduleTemplateForOrder(
+  ongoingOrder: ClientOrder | null,
+  targetDemandId: string | undefined,
+  hasScheduleAbility: boolean
+): boolean {
+  return Boolean(ongoingOrder && targetDemandId && ongoingOrder.id === targetDemandId && hasScheduleAbility);
 }
 
 /** 家长端统一处理申请、试课、正式雇佣和结算阶段。 */
@@ -170,25 +91,10 @@ export function TutorApplications({
     canScheduleSelectedCandidate ? (selectedCandidate?.id ?? null) : null,
     canScheduleSelectedCandidate
   );
-  const canUseScheduleTemplateForDates = Boolean(
-    ongoingOrder &&
-      selectedCandidateTask &&
-      ongoingOrder.id === selectedCandidate?.demandId &&
-      canScheduleSelectedCandidate
-  );
-  const isSelectedCandidateTrialConfirming = selectedCandidateTask?.node === "trialScheduled";
-  const selectedCandidateTrialScheduleSummary = getCandidateTrialScheduleSummary(selectedCandidate);
-  const isTrialScheduleChanged = Boolean(
-    isSelectedCandidateTrialConfirming &&
-      trialScheduleValue?.plan.summary &&
-      trialScheduleValue.plan.summary !== selectedCandidateTrialScheduleSummary
-  );
-  const canConfirmTrial = Boolean(
-    selectedCandidate &&
-      trialScheduleValue?.plan &&
-      !submissionPending &&
-      !trialOccupancyPending &&
-      (!isSelectedCandidateTrialConfirming || isTrialScheduleChanged)
+  const canUseScheduleTemplateForDates = canUseScheduleTemplateForOrder(
+    ongoingOrder,
+    selectedCandidate?.demandId,
+    canScheduleSelectedCandidate
   );
 
   useEffect(() => {
@@ -248,9 +154,10 @@ export function TutorApplications({
     setTrialScheduleValue(getCandidateInitialTrialScheduleValue(candidate));
   }
 
-  /** 提交家长为当前申请人制定的独立试课日程。 */
+  /** 提交家长为当前申请人制定的独立试课日程；按钮是否可点由 TutorApplicationPrimaryAction
+   *  内部按同一批状态计算的 canConfirmTrial 控制，这里只做类型收窄。 */
   function handleConfirmTrial() {
-    if (!canConfirmTrial || !selectedCandidate || !trialScheduleValue) {
+    if (!selectedCandidate || !trialScheduleValue) {
       return;
     }
 
@@ -298,250 +205,6 @@ export function TutorApplications({
     }
   }
 
-  /** 获取试课日程提交按钮文案。 */
-  function getConfirmTrialButtonLabel() {
-    if (submissionPending) {
-      return "提交中";
-    }
-    if (!selectedCandidateId) {
-      return "选择试课家教";
-    }
-    if (isTrialScheduleChanged) {
-      return "修改试课安排";
-    }
-
-    return "提交试课日程";
-  }
-
-  /** 渲染单张申请卡的独立操作。 */
-  function renderCandidateCardActions(
-    candidate: TutorApplicationCandidate,
-    candidateTask: ReturnType<typeof createTutorTaskModel>
-  ) {
-    const actionButtons = candidateTask.can("rejectTrial") ? (
-      <button
-        className="danger-outline-button inline-flex min-h-[30px] items-center justify-center gap-[5px] px-[9px] py-[6px] text-[12px]"
-        disabled={submissionPending}
-        onClick={() => void submitCandidateWorkflowAction(candidate, "reject_trial")}
-        type="button"
-      >
-        拒绝试课
-      </button>
-    ) : candidateTask.can("cancelApplication") ? (
-      <button
-        className="text-button danger inline-flex min-h-[30px] items-center justify-center gap-[5px] px-[9px] py-[6px] text-[12px]"
-        disabled={submissionPending}
-        onClick={() =>
-          openCancelConfirmation({
-            confirmLabel: "确认取消",
-            description: "取消后该学生本次试课结束，学生端与申请列表会按真实状态刷新。",
-            onConfirm: () => void submitCandidateWorkflowAction(candidate, "cancel_trial"),
-            title: "取消试课"
-          })
-        }
-        type="button"
-      >
-        取消试课
-      </button>
-    ) : candidateTask.can("cancelServiceConfirmation") ? (
-      <button
-        className="text-button danger inline-flex min-h-[30px] items-center justify-center gap-[5px] px-[9px] py-[6px] text-[12px]"
-        disabled={submissionPending}
-        onClick={() =>
-          openCancelConfirmation({
-            confirmLabel: "确认取消",
-            description: "取消后流程将回到试课结算阶段，需要重新处理正式雇佣确认。",
-            onConfirm: () => void submitCandidateWorkflowAction(candidate, "cancel_service_confirmation"),
-            title: "取消兼职确认"
-          })
-        }
-        type="button"
-      >
-        取消兼职确认
-      </button>
-    ) : candidateTask.can("removeRejectedServiceOffer") ? (
-      <>
-        <button
-          className="ghost-button min-h-[30px] px-[9px] py-[6px] text-[12px] text-[var(--h5-muted)]"
-          disabled={submissionPending}
-          onClick={() => void submitCandidateWorkflowAction(candidate, "remove_rejected_service_offer")}
-          type="button"
-        >
-          移除
-        </button>
-        <button
-          className="primary-button inline-flex min-h-[30px] items-center justify-center gap-[5px] px-[9px] py-[6px] text-[12px] text-white"
-          disabled={submissionPending}
-          onClick={() => void submitCandidateWorkflowAction(candidate, "offer_service")}
-          type="button"
-        >
-          再次委托
-        </button>
-      </>
-    ) : null;
-
-    return actionButtons ? (
-      <div className="tutor-application-actions flex flex-wrap gap-[8px]">{actionButtons}</div>
-    ) : null;
-  }
-
-  /** 按当前选中申请人的流程节点渲染唯一底部主操作。 */
-  function renderSelectedCandidateActions() {
-    if (!selectedCandidate || !selectedCandidateTask) {
-      return (
-        <button
-          className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
-          disabled
-          type="button"
-        >
-          <CheckCircle2 size={16} />
-          选择申请人
-        </button>
-      );
-    }
-
-    if (canScheduleSelectedCandidate) {
-      return (
-        <>
-          <div className="tutor-trial-form grid gap-[8px]">
-            <button
-              className={`tutor-trial-schedule-button ${trialScheduleValue ? "filled" : ""}`}
-              disabled={trialOccupancyPending || Boolean(trialOccupancyError)}
-              onClick={() => setIsTrialScheduleOpen(true)}
-              type="button"
-            >
-              <CalendarClock size={17} />
-              <span>
-                {trialOccupancyPending
-                  ? "加载占用时间"
-                  : isSelectedCandidateTrialConfirming
-                    ? "调整试课计划"
-                    : "制定试课计划"}
-              </span>
-            </button>
-            {trialScheduleValue ? (
-              <div className="tutor-trial-schedule-summary">
-                {getTrialScheduleSummaryLines(trialScheduleValue.plan.summary).map((summaryLine) => (
-                  <span key={summaryLine}>{summaryLine}</span>
-                ))}
-              </div>
-            ) : null}
-          </div>
-          <button
-            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
-            disabled={!canConfirmTrial}
-            onClick={handleConfirmTrial}
-            type="button"
-          >
-            <CheckCircle2 size={16} />
-            {getConfirmTrialButtonLabel()}
-          </button>
-        </>
-      );
-    }
-
-    if (selectedCandidateTask.can("requestTrialResult")) {
-      return (
-        <button
-          className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-          disabled={submissionPending}
-          onClick={() => openSettlementPanel(selectedCandidate, "request_trial_result")}
-          type="button"
-        >
-          <CheckCircle2 size={16} />
-          结束试课
-        </button>
-      );
-    }
-
-    if (selectedCandidateTask.can("confirmTrialEnd")) {
-      return (
-        <button
-          className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-          disabled={submissionPending}
-          onClick={() => openSettlementPanel(selectedCandidate, "confirm_trial_end")}
-          type="button"
-        >
-          <CheckCircle2 size={16} />
-          确认结束试课
-        </button>
-      );
-    }
-
-    if (selectedCandidateTask.can("offerTutorService") || selectedCandidateTask.can("closeTrialContinueRecruiting")) {
-      return (
-        <div className="sheet-actions grid grid-cols-2 gap-[8px]">
-          <button
-            className="ghost-button min-h-[38px] px-[10px] py-[8px]"
-            disabled={submissionPending}
-            onClick={() => void handleSelectNotHire()}
-            type="button"
-          >
-            不正式雇佣
-          </button>
-          <button
-            className="primary-button min-h-[38px] px-[10px] py-[8px] text-white"
-            disabled={submissionPending}
-            onClick={() => void handleWorkflowAction("offer_service")}
-            type="button"
-          >
-            正式雇佣
-          </button>
-        </div>
-      );
-    }
-
-    if (selectedCandidateTask.can("submitServiceSchedule")) {
-      return (
-        <button
-          className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-          disabled={submissionPending}
-          onClick={() => setIsServiceScheduleOpen(true)}
-          type="button"
-        >
-          <CalendarClock size={16} />
-          提交正式雇佣日程
-        </button>
-      );
-    }
-
-    if (selectedCandidateTask.can("requestServiceEnd")) {
-      return (
-        <button
-          className="danger-outline-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
-          disabled={submissionPending}
-          onClick={() => openSettlementPanel(selectedCandidate, "request_service_end", "service")}
-          type="button"
-        >
-          结束
-        </button>
-      );
-    }
-
-    if (selectedCandidateTask.can("resubmitSettlement")) {
-      return (
-        <button
-          className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-          disabled={submissionPending}
-          onClick={() => void handleWorkflowAction("resubmit_settlement")}
-          type="button"
-        >
-          重新提交结算确认
-        </button>
-      );
-    }
-
-    return (
-      <button
-        className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
-        disabled
-        type="button"
-      >
-        等待对方处理
-      </button>
-    );
-  }
-
   return (
     <>
       <Modal
@@ -583,7 +246,13 @@ export function TutorApplications({
                         {hasSchedulePreview ? schedulePreviewConfig.buttonLabel : schedulePreviewConfig.emptyLabel}
                       </button>
                     ) : null}
-                    {renderCandidateCardActions(candidate, candidateTask)}
+                    <TutorApplicationCardActions
+                      candidate={candidate}
+                      candidateTask={candidateTask}
+                      onOpenCancelConfirmation={openCancelConfirmation}
+                      onSubmitAction={(actionCandidate, action) => void submitCandidateWorkflowAction(actionCandidate, action)}
+                      submissionPending={submissionPending}
+                    />
                   </>
                 }
                 icon={<GraduationCap size={18} style={{ color: getGenderIconColor(candidate.gender) }} />}
@@ -630,7 +299,21 @@ export function TutorApplications({
           ) : null}
         </div>
 
-        {renderSelectedCandidateActions()}
+        <TutorApplicationPrimaryAction
+          canScheduleSelectedCandidate={canScheduleSelectedCandidate}
+          onConfirmTrial={handleConfirmTrial}
+          onOpenServiceSchedule={() => setIsServiceScheduleOpen(true)}
+          onOpenSettlement={openSettlementPanel}
+          onOpenTrialSchedule={() => setIsTrialScheduleOpen(true)}
+          onSelectNotHire={() => void handleSelectNotHire()}
+          onWorkflowAction={(action) => void handleWorkflowAction(action)}
+          selectedCandidate={selectedCandidate}
+          selectedCandidateTask={selectedCandidateTask}
+          submissionPending={submissionPending}
+          trialOccupancyError={trialOccupancyError}
+          trialOccupancyPending={trialOccupancyPending}
+          trialScheduleValue={trialScheduleValue}
+        />
       </Modal>
 
       {isTrialScheduleOpen && selectedCandidate ? (
@@ -677,10 +360,10 @@ export function TutorApplications({
         >
           <CalendarTime
             blockedScheduleSummary={selectedCandidate.trialSchedule}
-            canUseScheduleTemplateForDates={Boolean(
-              ongoingOrder &&
-                ongoingOrder.id === selectedCandidate.demandId &&
-                selectedCandidateTask?.can("submitServiceSchedule")
+            canUseScheduleTemplateForDates={canUseScheduleTemplateForOrder(
+              ongoingOrder,
+              selectedCandidate.demandId,
+              Boolean(selectedCandidateTask?.can("submitServiceSchedule"))
             )}
             initialValue={null}
             maxScheduleDates={null}

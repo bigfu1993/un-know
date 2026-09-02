@@ -40,25 +40,25 @@ export function PartTimeJobCard({ job, mode = "student" }: { job: PartTimeJob; m
           <div className="product-actions mt-[12px] flex flex-wrap items-center justify-between gap-[10px]">
             <div className="merchant-job-action-buttons">
               <button
-                className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+                className="ghost-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-[var(--h5-muted)]"
                 type="button"
               >
                 发布
               </button>
               <button
-                className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+                className="ghost-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-[var(--h5-muted)]"
                 type="button"
               >
                 取消发布
               </button>
               <button
-                className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+                className="ghost-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-[var(--h5-muted)]"
                 type="button"
               >
                 招募结束
               </button>
               <button
-                className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+                className="primary-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white"
                 type="button"
               >
                 编辑
@@ -104,13 +104,13 @@ export function PartTimeJobCard({ job, mode = "student" }: { job: PartTimeJob; m
             <span>{job.signRule}</span>
             <div className="student-job-action-buttons">
               <button
-                className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+                className="ghost-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-[var(--h5-muted)]"
                 type="button"
               >
                 <ClipboardCheck size={15} /> 报名快照
               </button>
               <button
-                className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+                className="primary-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white"
                 type="button"
               >
                 <CheckCircle2 size={15} /> 报名

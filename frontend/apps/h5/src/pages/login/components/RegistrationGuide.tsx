@@ -240,7 +240,7 @@ export function RegistrationGuide({ accessToken, ownerPhone, onBack, onCompleted
         </p>
 
         <button
-          className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+          className="ghost-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-[var(--h5-muted)]"
           onClick={onBack}
           type="button"
         >
@@ -274,7 +274,7 @@ export function RegistrationGuide({ accessToken, ownerPhone, onBack, onCompleted
             <span>{description}</span>
           </div>
           <button
-            className="ghost-button inline-flex min-h-[32px] shrink-0 items-center justify-center gap-[5px] px-[10px] py-[7px] text-[var(--h5-muted)]"
+            className="ghost-button button-inline-layout min-h-[32px] shrink-0 px-[10px] py-[7px] text-[var(--h5-muted)]"
             onClick={onToggle}
             type="button"
           >
@@ -423,7 +423,7 @@ export function RegistrationGuide({ accessToken, ownerPhone, onBack, onCompleted
       <div className="registration-profile-footer grid gap-[8px]">
         <div className="registration-profile-actions grid gap-[8px]">
           <button
-            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+            className="ghost-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             disabled={isSubmitting}
             onClick={handleBackToRoleSelection}
             type="button"
@@ -431,7 +431,7 @@ export function RegistrationGuide({ accessToken, ownerPhone, onBack, onCompleted
             返回重选角色
           </button>
           <button
-            className="primary-button inline-flex min-h-[34px] w-full items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
+            className="primary-button button-inline-layout min-h-[34px] w-full px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
             disabled={isSubmitting || isNicknameInvalid || hasInvalidProfileFields}
             form={registrationProfileFormId}
             type="submit"

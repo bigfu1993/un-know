@@ -61,7 +61,7 @@ export function OngoingHuntings({ onClose, onDisable, tasks }: OngoingHuntingsPr
           关闭狩猎
         </button>
         <button
-          className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+          className="primary-button button-inline-layout min-h-[38px] px-[10px] py-[8px] text-white"
           onClick={onClose}
           type="button"
         >

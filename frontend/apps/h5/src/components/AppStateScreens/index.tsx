@@ -1,6 +1,15 @@
+/** 登录页（含注册、找回密码等子流程）懒加载：本文件其余两个整屏替代页由已登录场景下始终
+ *  加载的 ClientLayout 引用，若在这里直接静态引用 Login 会把登录页整条依赖链一起打进主包，
+ *  等于白拆分。 */
+const Login = lazy(() => import("@pages/login").then((module) => ({ default: module.Login })));
+
 /** 未登录一级页面；路由匹配和兜底重定向统一由 App 负责。 */
 export function UnauthenticatedScreen({ onLoginSuccess }: { onLoginSuccess: (session: LoginResponse) => void }) {
-  return <Login onLoginSuccess={onLoginSuccess} />;
+  return (
+    <Suspense fallback={<RouteLoading />}>
+      <Login onLoginSuccess={onLoginSuccess} />
+    </Suspense>
+  );
 }
 
 /** 真实接口连接失败时的整屏替代页，提供退出重登入口。 */
@@ -16,7 +25,7 @@ export function DataErrorScreen({ error, onLogout }: { error: unknown; onLogout:
           {error instanceof Error ? error.message : "请检查后端服务和云数据库连接。"}
         </p>
         <button
-          className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)] w-full full"
+          className="primary-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)] w-full full"
           onClick={onLogout}
           type="button"
         >

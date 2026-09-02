@@ -70,25 +70,25 @@ function MerchantProductCard({ product }: { product: MerchantProduct }) {
         <span>商户发布商品交易责任边界为商户自售。</span>
         <div className="merchant-product-actions">
           <button
-            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+            className="ghost-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             type="button"
           >
             上下架
           </button>
           <button
-            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+            className="ghost-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             type="button"
           >
             隐藏
           </button>
           <button
-            className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+            className="ghost-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             type="button"
           >
             编辑
           </button>
           <button
-            className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+            className="primary-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white"
             type="button"
           >
             价格

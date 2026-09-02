@@ -269,7 +269,7 @@ export function TutorCertificationInfo({
           {mode === "preview" ? (
             <>
               <button
-                className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+                className="ghost-button button-inline-layout min-h-[38px] px-[10px] py-[8px] text-[var(--h5-muted)]"
                 onClick={(event) => {
                   event.preventDefault();
                   handleEnterMode("edit");
@@ -280,7 +280,7 @@ export function TutorCertificationInfo({
                 修改
               </button>
               <button
-                className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+                className="primary-button button-inline-layout min-h-[38px] px-[10px] py-[8px] text-white"
                 onClick={(event) => {
                   event.preventDefault();
                   handleEnterMode("recertify");
@@ -294,7 +294,7 @@ export function TutorCertificationInfo({
           ) : (
             <>
               <button
-                className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+                className="ghost-button button-inline-layout min-h-[38px] px-[10px] py-[8px] text-[var(--h5-muted)]"
                 onClick={(event) => {
                   event.preventDefault();
                   setMode("preview");
@@ -304,7 +304,7 @@ export function TutorCertificationInfo({
                 取消
               </button>
               <button
-                className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
+                className="primary-button button-inline-layout min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
                 disabled={!isFormValid}
                 type="submit"
               >

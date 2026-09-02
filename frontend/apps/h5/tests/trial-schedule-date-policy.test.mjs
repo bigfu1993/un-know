@@ -27,6 +27,12 @@ const tutorApplicationsSource = readFileSync(
   new URL("../src/overlays/tutor/components/TutorApplications.tsx", import.meta.url),
   "utf8"
 );
+// 底部主操作按钮文案的具体分支拆到了 TutorApplicationActions，跟 tutorApplicationsSource
+// 一起纳入源码文本断言范围。
+const tutorApplicationActionsSource = readFileSync(
+  new URL("../src/overlays/tutor/components/TutorApplicationActions.tsx", import.meta.url),
+  "utf8"
+);
 const useTrialScheduleSource = readFileSync(
   new URL("../src/components/ScheduleCalendar/CalendarTime/useTrialSchedule.ts", import.meta.url),
   "utf8"
@@ -533,8 +539,8 @@ test("家长制定试课时由 CalendarTime 固定日历查看模式", () => {
 });
 
 test("家长试课排期主操作使用提交试课日程文案", () => {
-  assert.match(tutorApplicationsSource, /return "提交试课日程";/);
-  assert.doesNotMatch(tutorApplicationsSource, /试课信息确认/);
+  assert.match(tutorApplicationActionsSource, /return "提交试课日程";/);
+  assert.doesNotMatch(tutorApplicationActionsSource, /试课信息确认/);
 });
 
 test("试课数据为日期添加试角标并显示上午下午晚上图标", () => {

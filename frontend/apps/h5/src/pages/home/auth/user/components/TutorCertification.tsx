@@ -209,7 +209,7 @@ export function TutorCertification({ onBack, onSubmitError, onSubmitted }: Tutor
         </div>
         <div className="sheet-actions grid gap-[8px]">
           <button
-            className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+            className="ghost-button button-inline-layout min-h-[38px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             disabled={isSubmitting}
             onClick={onBack}
             type="button"
@@ -217,7 +217,7 @@ export function TutorCertification({ onBack, onSubmitError, onSubmitted }: Tutor
             返回
           </button>
           <button
-            className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
+            className="primary-button button-inline-layout min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
             disabled={!isFormValid || isSubmitting}
             type="submit"
           >

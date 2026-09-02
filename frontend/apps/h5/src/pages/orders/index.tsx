@@ -116,7 +116,7 @@ export function Orders({
               <div className="order-card-actions">
                 {order.canRepublish ? (
                   <button
-                    className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+                    className="primary-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white"
                     onClick={() => onRepublishDelegation?.(order)}
                     type="button"
                   >
@@ -124,13 +124,13 @@ export function Orders({
                   </button>
                 ) : null}
                 <button
-                  className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+                  className="ghost-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-[var(--h5-muted)]"
                   type="button"
                 >
                   售后/投诉
                 </button>
                 <button
-                  className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+                  className="primary-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white"
                   type="button"
                 >
                   查看详情

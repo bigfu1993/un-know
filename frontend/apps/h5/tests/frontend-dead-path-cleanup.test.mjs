@@ -18,6 +18,9 @@ function readPackageSource(relativePath) {
 
 test("家长确认结束试课只保留 workflow-action 前端链路", () => {
   const applicationsSource = readH5Source("overlays/tutor/components/TutorApplications.tsx");
+  // 底部主操作的具体分支（含 confirm_trial_end 提交）拆到了 TutorApplicationActions，
+  // 一并纳入这条契约的读取范围，不因为文件拆分就弱化"真实提交走 workflow-action"的断言。
+  const applicationActionsSource = readH5Source("overlays/tutor/components/TutorApplicationActions.tsx");
   const hostSource = readH5Source("overlays/tutor/host.tsx");
   const providerSource = readH5Source("overlays/tutor/provider.tsx");
   const overlayTypesSource = readH5Source("types/overlay.ts");
@@ -26,6 +29,7 @@ test("家长确认结束试课只保留 workflow-action 前端链路", () => {
   const apiClientSource = readPackageSource("api-client/src/index.ts");
 
   assert.doesNotMatch(applicationsSource, /onConfirmEnd|useCompleteTutorTrialEnd/);
+  assert.doesNotMatch(applicationActionsSource, /onConfirmEnd|useCompleteTutorTrialEnd/);
   [hostSource, providerSource].forEach((source) => {
     assert.doesNotMatch(source, /onConfirmEnd|confirmTrialEnd|useCompleteTutorTrialEnd/);
   });
@@ -33,7 +37,7 @@ test("家长确认结束试课只保留 workflow-action 前端链路", () => {
   assert.doesNotMatch(workflowTypesSource, /CompleteTutorTrialEndPayload/);
   assert.doesNotMatch(hooksSource, /useCompleteTutorTrialEnd|completeTutorTrialEnd|CompleteTutorTrialEndRequest/);
   assert.doesNotMatch(apiClientSource, /completeTutorTrialEnd|CompleteTutorTrialEndRequest/);
-  assert.match(applicationsSource, /"confirm_trial_end"/);
+  assert.match(applicationActionsSource, /"confirm_trial_end"/);
   assert.match(providerSource, /useHandleTutorWorkflowAction/);
 });
 

@@ -95,7 +95,7 @@ export function RegisterForm({ onRegistered }: RegisterFormProps) {
 
         <button
           aria-label={submitLabel}
-          className="primary-button auth-submit-button register-mode full inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
+          className="primary-button auth-submit-button register-mode full button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
           disabled={registerMutation.isPending}
           type="submit"
         >

@@ -154,7 +154,7 @@ export function OngoingQuote({
       </label>
       <div className="commission-quote-actions grid gap-[8px]">
         <button
-          className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
+          className="primary-button button-inline-layout min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
           disabled={!canSubmit}
           onClick={() => void handleSubmit()}
           type="button"
@@ -163,7 +163,7 @@ export function OngoingQuote({
           {actionLabel}
         </button>
         <button
-          className="danger-outline-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+          className="danger-outline-button button-inline-layout min-h-[38px] px-[10px] py-[8px]"
           disabled={!canReject}
           onClick={() => void handleReject()}
           type="button"

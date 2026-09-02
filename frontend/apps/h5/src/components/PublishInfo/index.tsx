@@ -392,14 +392,14 @@ export function PublishInfo({
 
         <div className="sheet-actions publish-info-footer grid gap-[8px]">
           <button
-            className="ghost-button publish-info-footer__cancel inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+            className="ghost-button publish-info-footer__cancel button-inline-layout min-h-[38px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             onClick={onClose}
             type="button"
           >
             取消
           </button>
           <button
-            className="primary-button publish-info-footer__submit inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
+            className="primary-button publish-info-footer__submit button-inline-layout min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
             disabled={!isFormValid || isPublishing}
             type="submit"
           >
@@ -407,7 +407,7 @@ export function PublishInfo({
             {isPublishing ? "发布中" : "发布"}
           </button>
           <button
-            className="ghost-button publish-info-footer__save inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+            className="ghost-button publish-info-footer__save button-inline-layout min-h-[38px] px-[10px] py-[8px] text-[var(--h5-muted)]"
             disabled={isPublishing}
             onClick={() => onSave(draft)}
             type="button"

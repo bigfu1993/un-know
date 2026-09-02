@@ -136,14 +136,14 @@ export function EduDemandCard({
         </div>
         <div className="edu-job-card-footer flex flex-wrap items-center gap-[8px]">
           <button
-            className="secondary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+            className="secondary-button button-inline-layout min-h-[34px] px-[10px] py-[8px]"
             type="button"
           >
             <MessageCircle size={15} /> 消息
           </button>
           {showScheduleAction ? (
             <button
-              className="secondary-button accent-text inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+              className="secondary-button accent-text button-inline-layout min-h-[34px] px-[10px] py-[8px]"
               onClick={() => setIsScheduleViewOpen(true)}
               type="button"
             >

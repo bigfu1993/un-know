@@ -17,6 +17,17 @@ import {
 } from "../model";
 import { ServiceSettlement, TrialSchedulePreview, TrialSettlementConfirm } from "./TutorWorkflowModals";
 
+/** 优先使用家教任务模型的流程能力判断；非家教卡片（tutorTask 为 null）时回退读取订单
+ *  自身的兼容布尔字段——这类字段是接入任务模型之前的历史状态位，仍在部分未接入家教
+ *  流程的卡片类型上使用。 */
+function hasOrderAbility(
+  tutorTask: ReturnType<typeof createTutorTaskModel> | null,
+  ability: TutorTaskAction,
+  legacyFlag: boolean | undefined
+): boolean {
+  return tutorTask ? tutorTask.can(ability) : Boolean(legacyFlag);
+}
+
 /** 进行中卡片状态展示，家教多状态按上下两行展示，不拼接加号；家教卡片和通用卡片共用。 */
 export function OrderStatus({
   order,
@@ -184,7 +195,7 @@ export function OrderActions({
     <>
       {showDelegationQuote ? (
         <button
-          className="primary-button delegation-quote-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+          className="primary-button delegation-quote-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white"
           onClick={() => handlers.onOpenQuoteList?.(order)}
           type="button"
         >
@@ -194,7 +205,7 @@ export function OrderActions({
       ) : null}
       {showHuntingQuote ? (
         <button
-          className="primary-button delegation-quote-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+          className="primary-button delegation-quote-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white"
           onClick={() => handlers.onOpenQuoteList?.(order)}
           type="button"
         >
@@ -203,9 +214,9 @@ export function OrderActions({
       ) : null}
       {showFulfillmentActions ? (
         <>
-          {(tutorTask ? tutorTask.can("openApplications") : order.canOpenTutorApplications) ? (
+          {hasOrderAbility(tutorTask, "openApplications", order.canOpenTutorApplications) ? (
             <button
-              className="primary-button ongoing-action-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+              className="primary-button ongoing-action-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white"
               onClick={() => openApplications(order.id)}
               type="button"
             >
@@ -217,7 +228,7 @@ export function OrderActions({
           ) : null}
           {showParentTutorServiceScheduleAction ? (
             <button
-              className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+              className="primary-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white"
               onClick={() => handleOpenServiceSchedule()}
               type="button"
             >
@@ -228,7 +239,7 @@ export function OrderActions({
           {!showParentTutorServiceScheduleAction &&
           (tutorSchedulePreviewConfig || showParentTutorCourseAction || (!tutorTask && order.canOpenTrialSchedule)) ? (
             <button
-              className="secondary-button accent-text inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+              className="secondary-button accent-text button-inline-layout min-h-[34px] px-[10px] py-[8px]"
               onClick={() => setIsTrialScheduleOpen(true)}
               type="button"
             >
@@ -238,16 +249,16 @@ export function OrderActions({
           ) : null}
           {order.canAgreeTrial && category !== "tutor" ? (
             <button
-              className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+              className="primary-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white"
               onClick={() => showLocalTutorWorkflowMessage("已同意试课，家教兼职进入试课流程。")}
               type="button"
             >
               同意试课
             </button>
           ) : null}
-          {(tutorTask ? tutorTask.can("openTrialResult") : order.canOpenTrialResult) ? (
+          {hasOrderAbility(tutorTask, "openTrialResult", order.canOpenTrialResult) ? (
             <button
-              className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+              className="primary-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white"
               onClick={() => setIsTrialResultOpen(true)}
               type="button"
             >
@@ -256,7 +267,7 @@ export function OrderActions({
           ) : null}
           {tutorTask?.can("cancelServiceConfirmation") ? (
             <button
-              className="text-button danger inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+              className="text-button danger button-inline-layout min-h-[34px] px-[10px] py-[8px]"
               onClick={() =>
                 onOpenCancelConfirmation({
                   confirmLabel: "确认取消",
@@ -272,7 +283,7 @@ export function OrderActions({
           ) : null}
           {tutorTask?.can("acceptServiceOffer") ? (
             <button
-              className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+              className="primary-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white"
               onClick={() => handleOpenServiceAvailability("accept_service_offer")}
               type="button"
             >
@@ -281,7 +292,7 @@ export function OrderActions({
           ) : null}
           {tutorTask?.can("rejectServiceOffer") ? (
             <button
-              className="danger-outline-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+              className="danger-outline-button button-inline-layout min-h-[34px] px-[10px] py-[8px]"
               onClick={() => handlers.onTutorWorkflowAction?.(order, "reject_service_offer")}
               type="button"
             >
@@ -290,7 +301,7 @@ export function OrderActions({
           ) : null}
           {tutorTask?.can("requestServiceScheduleChange") ? (
             <button
-              className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+              className="ghost-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-[var(--h5-muted)]"
               onClick={() => handleOpenServiceAvailability("request_service_schedule_change")}
               type="button"
             >
@@ -299,7 +310,7 @@ export function OrderActions({
           ) : null}
           {tutorTask?.can("requestServiceEnd") ? (
             <button
-              className="danger-outline-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+              className="danger-outline-button button-inline-layout min-h-[34px] px-[10px] py-[8px]"
               onClick={() => {
                 if (order.role === "parent") {
                   setIsServiceSettlementOpen(true);
@@ -315,7 +326,7 @@ export function OrderActions({
           ) : null}
           {tutorTask?.can("confirmSettlement") && !tutorTask.can("openTrialResult") ? (
             <button
-              className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+              className="primary-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white"
               onClick={() => handlers.onTutorWorkflowAction?.(order, "confirm_settlement")}
               type="button"
             >
@@ -324,7 +335,7 @@ export function OrderActions({
           ) : null}
           {tutorTask?.can("cancelApplication") ? (
             <button
-              className="text-button danger inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+              className="text-button danger button-inline-layout min-h-[34px] px-[10px] py-[8px]"
               disabled={cancelTutorApplicationMutation.isPending}
               onClick={() =>
                 onOpenCancelConfirmation({
@@ -339,9 +350,9 @@ export function OrderActions({
               取消申请
             </button>
           ) : null}
-          {(tutorTask ? tutorTask.can("cancelDemand") : order.canRequestCancel) ? (
+          {hasOrderAbility(tutorTask, "cancelDemand", order.canRequestCancel) ? (
             <button
-              className="text-button danger inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+              className="text-button danger button-inline-layout min-h-[34px] px-[10px] py-[8px]"
               onClick={() =>
                 onOpenCancelConfirmation({
                   confirmLabel: category === "tutor" ? "确认取消发布" : "确认取消",
@@ -358,9 +369,9 @@ export function OrderActions({
               {category === "tutor" ? "取消发布" : "取消"}
             </button>
           ) : null}
-          {(tutorTask ? tutorTask.can("requestTrialEnd") : order.canRequestComplete) ? (
+          {hasOrderAbility(tutorTask, "requestTrialEnd", order.canRequestComplete) ? (
             <button
-              className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+              className="primary-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white"
               onClick={() => handlers.onRequestComplete?.(order)}
               type="button"
             >
@@ -369,7 +380,7 @@ export function OrderActions({
           ) : null}
           {order.canConfirmCancel ? (
             <button
-              className="text-button danger inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+              className="text-button danger button-inline-layout min-h-[34px] px-[10px] py-[8px]"
               onClick={() =>
                 onOpenCancelConfirmation({
                   confirmLabel: "确认取消",
@@ -385,7 +396,7 @@ export function OrderActions({
           ) : null}
           {order.canConfirmComplete ? (
             <button
-              className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+              className="primary-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white"
               onClick={() => handlers.onConfirmComplete?.(order)}
               type="button"
             >
@@ -395,7 +406,7 @@ export function OrderActions({
           ) : null}
           {order.canRepublish ? (
             <button
-              className="primary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+              className="primary-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-white"
               onClick={() => handlers.onRepublish?.(order)}
               type="button"
             >

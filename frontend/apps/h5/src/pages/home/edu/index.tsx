@@ -42,14 +42,14 @@ export function Tutor({ students }: { students: TutorCertifiedStudent[] }) {
           footer={
             <>
               <button
-                className="secondary-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px]"
+                className="secondary-button button-inline-layout min-h-[34px] px-[10px] py-[8px]"
                 onClick={() => showMessage(`${tutor.tutor_certification.real_name} 的消息能力后续接入。`, { type: "warning" })}
                 type="button"
               >
                 <MessageCircle size={15} /> 消息
               </button>
               <button
-                className="ghost-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+                className="ghost-button button-inline-layout min-h-[34px] px-[10px] py-[8px] text-[var(--h5-muted)]"
                 type="button"
               >
                 <Heart size={15} /> 收藏学生

@@ -46,14 +46,14 @@ export function PublishDraftConfirm({
       </p>
       <div className="sheet-actions grid gap-[8px]">
         <button
-          className="ghost-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-[var(--h5-muted)]"
+          className="ghost-button button-inline-layout min-h-[38px] px-[10px] py-[8px] text-[var(--h5-muted)]"
           onClick={onDiscardDraft}
           type="button"
         >
           不使用
         </button>
         <button
-          className="primary-button inline-flex min-h-[38px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
+          className="primary-button button-inline-layout min-h-[38px] px-[10px] py-[8px] text-white"
           onClick={onUseDraft}
           type="button"
         >
