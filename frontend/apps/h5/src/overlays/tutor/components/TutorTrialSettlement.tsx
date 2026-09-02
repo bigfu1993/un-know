@@ -6,7 +6,7 @@ interface TutorTrialSettlementProps {
   mode?: "service" | "trial";
   onClose: () => void;
   onConfirm: (payload: TutorTrialSettlementPayload) => Promise<void> | void;
-  trialListSubmissionPending?: boolean;
+  submissionPending?: boolean;
 }
 
 /** 家长端试课结算时可选的正式雇佣决策。 */
@@ -18,7 +18,7 @@ export function TutorTrialSettlement({
   mode = "trial",
   onClose,
   onConfirm,
-  trialListSubmissionPending = false
+  submissionPending = false
 }: TutorTrialSettlementProps) {
   const [trialFee, setTrialFee] = useState(candidate.trialFee === undefined ? "" : String(candidate.trialFee));
   const [hireDecision, setHireDecision] = useState<TutorTrialHireDecision>("");
@@ -33,7 +33,7 @@ export function TutorTrialSettlement({
 
   /** 校验试课结算金额并提交。 */
   function handleConfirm() {
-    if (!isTrialFeeValid || trialListSubmissionPending) {
+    if (!isTrialFeeValid || submissionPending) {
       return;
     }
 
@@ -95,7 +95,7 @@ export function TutorTrialSettlement({
           <div className="tutor-trial-hire-decision__options grid grid-cols-2 gap-[8px]">
             <button
               className={`tutor-trial-hire-decision__option ${hireDecision === "hire" ? "active" : ""}`}
-              disabled={trialListSubmissionPending}
+              disabled={submissionPending}
               onClick={() => handleToggleHireDecision("hire")}
               type="button"
             >
@@ -103,7 +103,7 @@ export function TutorTrialSettlement({
             </button>
             <button
               className={`tutor-trial-hire-decision__option ${hireDecision === "notHire" ? "active danger" : ""}`}
-              disabled={trialListSubmissionPending}
+              disabled={submissionPending}
               onClick={() => handleToggleHireDecision("notHire")}
               type="button"
             >
@@ -116,7 +116,7 @@ export function TutorTrialSettlement({
       <div className="sheet-actions grid grid-cols-2 gap-[8px]">
         <button
           className="ghost-button min-h-[38px] px-[10px] py-[8px]"
-          disabled={trialListSubmissionPending}
+          disabled={submissionPending}
           onClick={onClose}
           type="button"
         >
@@ -124,7 +124,7 @@ export function TutorTrialSettlement({
         </button>
         <button
           className="primary-button min-h-[38px] px-[10px] py-[8px] text-white disabled:text-[var(--h5-subtle)]"
-          disabled={!isTrialFeeValid || trialListSubmissionPending}
+          disabled={!isTrialFeeValid || submissionPending}
           onClick={handleConfirm}
           type="button"
         >

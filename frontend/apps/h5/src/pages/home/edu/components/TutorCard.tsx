@@ -44,7 +44,7 @@ interface TutorCardTutor {
   availability?: string;
 }
 
-/** 家教人物资料卡壳属性，供家长浏览认证学生列表和试课申请列表复用。 */
+/** 家教人物资料卡壳属性，供家长浏览认证学生列表和统一申请列表复用。 */
 interface TutorCardProps {
   /** 头部图标，默认家教学位帽图标。 */
   icon?: ReactNode;

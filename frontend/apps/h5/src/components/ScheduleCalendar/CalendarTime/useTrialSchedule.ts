@@ -1,4 +1,4 @@
-import type { ScheduleTimeTemplate } from "@unknown/domain";
+import type { ScheduleTimeTemplate, TutorTrialScheduleDate } from "@unknown/domain";
 import { getTutorDateKey } from "@tools/tutorCalendar";
 import {
   createDefaultDaySchedule,
@@ -6,6 +6,7 @@ import {
   createTrialSchedulePeriodStateForPeriod,
   formatTrialScheduleDate,
   getEnabledPeriodSummaries,
+  getOccupiedTrialScheduleDraft,
   getTrialScheduleCalendarDatas,
   getTrialSchedulePlan,
   getTrialScheduleValueFromSummary,
@@ -31,6 +32,8 @@ export interface UseTrialScheduleOptions {
    * 只是文字建议，不限制家长选择其它日期，也不自动计入本次实际安排。
    */
   plannedDates?: string[];
+  /** 家长账号下除当前申请外仍有效的试课占用日程，命中任意范围即锁定所在完整时段。 */
+  occupiedTestedDates?: TutorTrialScheduleDate[];
   /** 当前编辑的是试课还是正式课程，用于把日程数据放入对应的 CalendarPanel 数据通道。 */
   scheduleType: "arranged" | "tested";
 }
@@ -66,6 +69,7 @@ export function useTrialSchedule({
   blockedScheduleSummary = "",
   initialValue,
   maxScheduleDates = 3,
+  occupiedTestedDates = [],
   plannedDates = [],
   scheduleType
 }: UseTrialScheduleOptions) {
@@ -75,7 +79,27 @@ export function useTrialSchedule({
     () => getTrialScheduleValueFromSummary(blockedScheduleSummary),
     [blockedScheduleSummary]
   );
-  const blockedScheduleDraft = blockedScheduleValue?.scheduleDraft ?? {};
+  const occupiedScheduleDraft = useMemo(
+    () => getOccupiedTrialScheduleDraft(occupiedTestedDates),
+    [occupiedTestedDates]
+  );
+  const blockedScheduleDraft = useMemo<TrialScheduleDraft>(() => {
+    const summaryScheduleDraft = blockedScheduleValue?.scheduleDraft ?? {};
+    const blockedDates = new Set([...Object.keys(summaryScheduleDraft), ...Object.keys(occupiedScheduleDraft)]);
+
+    return [...blockedDates].reduce<TrialScheduleDraft>((scheduleDraft, dateKey) => {
+      const daySchedule = createDefaultDaySchedule();
+
+      trialSchedulePeriods.forEach((period) => {
+        daySchedule[period.key] =
+          occupiedScheduleDraft[dateKey]?.[period.key] ??
+          summaryScheduleDraft[dateKey]?.[period.key] ??
+          daySchedule[period.key];
+      });
+
+      return { ...scheduleDraft, [dateKey]: daySchedule };
+    }, {});
+  }, [blockedScheduleValue, occupiedScheduleDraft]);
   /** 发布计划日期始终回显，但不参与可选范围、天数上限或实际安排计算。 */
   const normalizedPlannedDates = useMemo(() => [...new Set(plannedDates)].sort(), [plannedDates]);
   const [activeDate, setActiveDate] = useState(todayKey);
@@ -91,8 +115,8 @@ export function useTrialSchedule({
     maxScheduleDates !== null && scheduledDates.length >= maxScheduleDates && !isActiveDateScheduled;
   const scheduleDatas = useMemo(() => getTrialScheduleCalendarDatas(scheduleDraft), [scheduleDraft]);
   const blockedTestedDatas = useMemo(
-    () => (blockedScheduleValue ? getTrialScheduleCalendarDatas(blockedScheduleValue.scheduleDraft) : []),
-    [blockedScheduleValue]
+    () => getTrialScheduleCalendarDatas(blockedScheduleDraft),
+    [blockedScheduleDraft]
   );
   const testedDatas = useMemo(
     () =>

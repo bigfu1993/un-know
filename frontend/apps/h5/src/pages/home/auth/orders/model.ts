@@ -191,7 +191,6 @@ export function hasOngoingOrderActions(order: ClientOrder): boolean {
     order.canOpenTrialResult ||
     order.canRequestCancel ||
     order.canRequestComplete ||
-    order.canOpenTutorTrialList ||
     order.canConfirmCancel ||
     order.canConfirmComplete ||
     order.canRepublish

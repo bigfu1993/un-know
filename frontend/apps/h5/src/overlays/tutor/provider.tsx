@@ -13,7 +13,6 @@ import { useOverlayActions, useOverlayState } from "../provider";
 /** 家教域全部全局弹层类型。 */
 const tutorOverlayTypes: TutorOverlayType[] = [
   "tutorApplications",
-  "tutorTrialList",
   "tutorCalendar",
   "tutorCertificationInfo"
 ];
@@ -30,14 +29,11 @@ export function useTutorOverlayActions(): TutorOverlayActions {
       closeApplications: () => closeOverlay("tutorApplications"),
       closeCalendar: () => closeOverlay("tutorCalendar"),
       closeCertificationInfo: () => closeOverlay("tutorCertificationInfo"),
-      closeTrialList: () => closeOverlay("tutorTrialList"),
       closeTutorOverlays: () => closeOverlays(tutorOverlayTypes),
       openApplications: (demandId: string) =>
         openOverlay({ lane: "secondary", targetId: demandId, type: "tutorApplications" }),
       openCalendar: () => openOverlay({ lane: "secondary", type: "tutorCalendar" }),
-      openCertificationInfo: () => openOverlay({ lane: "secondary", type: "tutorCertificationInfo" }),
-      openTrialList: (demandId: string) =>
-        openOverlay({ lane: "secondary", targetId: demandId, type: "tutorTrialList" })
+      openCertificationInfo: () => openOverlay({ lane: "secondary", type: "tutorCertificationInfo" })
     }),
     [closeOverlay, closeOverlays, openOverlay]
   );
@@ -57,7 +53,6 @@ export function useTutorOverlayState(): TutorOverlayState {
     isApplicationsOpen: activeType === "tutorApplications",
     isCalendarOpen: activeType === "tutorCalendar",
     isCertificationInfoOpen: activeType === "tutorCertificationInfo",
-    isTrialListOpen: activeType === "tutorTrialList",
     targetDemandId: activeType ? (secondaryOverlay?.targetId ?? null) : null
   };
 }
@@ -76,12 +71,12 @@ export function useTutorOverlayHost() {
 /** 管理家教全局弹层的真实查询、mutation、资料草稿和用户反馈。 */
 export function TutorOverlayProvider({ children, syncProfileDraft }: TutorOverlayProviderProps) {
   const user = useGlobalUser();
-  const { isApplicationsOpen, isTrialListOpen, targetDemandId } = useTutorOverlayState();
-  const { closeApplications, closeCertificationInfo } = useTutorOverlayActions();
+  const { isApplicationsOpen, targetDemandId } = useTutorOverlayState();
+  const { closeCertificationInfo } = useTutorOverlayActions();
   const { data: tutorApplicants, error: tutorApplicationError } = useTutorApplication(
     user.role,
     targetDemandId,
-    isApplicationsOpen || isTrialListOpen
+    isApplicationsOpen
   );
   /** 使用进行中订单接口的完整缓存快照，为弹层提供计划日期和真实流程阶段。 */
   const ongoingOrder = useOngoingOrderSnapshot(user.role, targetDemandId);
@@ -125,13 +120,12 @@ export function TutorOverlayProvider({ children, syncProfileDraft }: TutorOverla
     async (payload: ConfirmTutorTrialPayload) => {
       try {
         await confirmTutorTrial(payload);
-        closeApplications();
         showMessage("试课安排已提交，学生端可在进行中查看试课安排。", { type: "success" });
       } catch (error) {
         showMessage(getErrorMessage(error, "试课安排提交失败，请稍后重试。"), { type: "error" });
       }
     },
-    [closeApplications, confirmTutorTrial]
+    [confirmTutorTrial]
   );
 
   /** 提交家教弹层中的流程动作。 */
@@ -180,13 +174,12 @@ export function TutorOverlayProvider({ children, syncProfileDraft }: TutorOverla
   const host = useMemo<TutorOverlayHostContextValue>(
     () => ({
       applicationCandidates,
-      applicationConfirmationPending: confirmTrialPending || workflowPending,
+      applicationSubmissionPending: confirmTrialPending || workflowPending,
       calendarTasks,
       confirmTrial,
       ongoingOrder,
       profileDraft: user.profileDraft,
       saveCertificationInfo,
-      trialListSubmissionPending: workflowPending,
       workflow
     }),
     [

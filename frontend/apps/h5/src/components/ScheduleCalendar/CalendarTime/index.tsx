@@ -31,6 +31,7 @@ export function CalendarTime({
   initialValue,
   isConfirming = false,
   maxScheduleDates,
+  occupiedTestedDates,
   onClose,
   onConfirm,
   onSubtitleChange,
@@ -44,6 +45,7 @@ export function CalendarTime({
     blockedScheduleSummary,
     initialValue,
     maxScheduleDates,
+    occupiedTestedDates,
     plannedDates,
     scheduleType
   });

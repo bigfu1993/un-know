@@ -52,8 +52,7 @@ test("进行中订单快照保留完整卡片数据而不是只切出 plannedDat
     plannedDates: ["2099-09-06", "2099-09-08"],
     role: "parent",
     status: "试课申请中",
-    title: "数学家教",
-    trialCount: 2
+    title: "数学家教"
   };
 
   queryClient.setQueryData([...clientOngoingOrdersQueryKey, "parent"], [ongoingOrder]);

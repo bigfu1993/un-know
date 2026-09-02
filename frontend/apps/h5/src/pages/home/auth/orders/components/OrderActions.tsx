@@ -52,7 +52,7 @@ export function OrderActions({
   onOpenCancelConfirmation: (config: ConfirmActionConfig) => void;
   order: ClientOrder;
 } & OngoingOrderActionHandlers) {
-  const { openApplications, openTrialList } = useTutorOverlayActions();
+  const { openApplications } = useTutorOverlayActions();
   const cancelTutorApplicationMutation = useCancelTutorApplication();
   const [isTrialScheduleOpen, setIsTrialScheduleOpen] = useState(false);
   const [isTrialResultOpen, setIsTrialResultOpen] = useState(false);
@@ -234,20 +234,6 @@ export function OrderActions({
             >
               <CalendarClock size={15} />
               {showParentTutorCourseAction ? "课程" : (tutorSchedulePreviewConfig?.buttonLabel ?? "日程")}
-            </button>
-          ) : null}
-          {!showParentTutorCourseAction &&
-          (tutorTask ? tutorTask.can("openTrialList") : order.canOpenTutorTrialList) ? (
-            <button
-              className="primary-button ongoing-action-button inline-flex min-h-[34px] items-center justify-center gap-[5px] px-[10px] py-[8px] text-white"
-              onClick={() => openTrialList(order.id)}
-              type="button"
-            >
-              <CalendarClock size={15} />
-              试课申请
-              {typeof order.trialCount === "number" ? (
-                <span className="ongoing-action-badge">{order.trialCount}</span>
-              ) : null}
             </button>
           ) : null}
           {order.canAgreeTrial && category !== "tutor" ? (

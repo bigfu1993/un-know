@@ -9,6 +9,7 @@ import com.unknown.platform.modules.clientworkspace.application.TutorWorkspaceAp
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.HuntingTask;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorApplicantProfile;
+import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorTrialOccupancy;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorDemand;
 import com.unknown.platform.modules.clientworkspace.model.ApplyTutorTrialRequest;
 import com.unknown.platform.modules.clientworkspace.model.CompleteTutorTrialEndRequest;
@@ -118,6 +119,19 @@ public class ClientWorkspaceController {
       ClientRequestContext context
   ) {
     return ApiResponse.ok(tutorWorkspaceAppService.getTutorApplication(context.role(), context.authorization(), id));
+  }
+
+  /** 查询家长账号下除当前申请外仍有效的试课占用时间。 */
+  @GetMapping("/workspace/ongoing/tutor/trial-occupancy")
+  public ApiResponse<TutorTrialOccupancy> tutorTrialOccupancy(
+      @RequestParam("excludeApplicationId") String excludeApplicationId,
+      ClientRequestContext context
+  ) {
+    return ApiResponse.ok(tutorWorkspaceAppService.getTutorTrialOccupancy(
+        context.role(),
+        context.authorization(),
+        excludeApplicationId
+    ));
   }
 
   /** 发布委托或回收任务，返回列表可直接展示的任务卡片数据。 */

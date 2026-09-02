@@ -34,7 +34,7 @@ export const tutorDemandStatusLabel: Record<TutorDemandStatus, string> = {
  * `TUTOR_APPLICANT_STATUS_*` 常量一一对应）。成员按业务实际流转顺序排列：
  * 试课申请与确认 → 试课中 → 试课结束与结果处理 → 正式雇佣确认与日程 →
  * 正式服务进行中 → 服务结束与结算 → 结算完成；不在主流程分支上、代表退出/终止的状态
- * 统一收在末尾。所有家教卡片（进行中卡片、兼职列表卡片、试课申请列表等）判断和展示状态时
+ * 统一收在末尾。所有家教卡片（进行中卡片、兼职列表卡片、统一申请列表等）判断和展示状态时
  * 只应引用这里的枚举值，不再各自散落同义的字符串字面量。
  */
 export enum TutorApplicantStatus {

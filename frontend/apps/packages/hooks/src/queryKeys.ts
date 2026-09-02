@@ -46,3 +46,8 @@ export function getRoleQueryKey(baseKey: readonly string[], role: Role) {
 export function getTutorApplicationQueryKey(role: Role, demandId: string) {
   return [...clientTutorApplicationsQueryKey, role, demandId] as const;
 }
+
+/** 家长试课占用查询键，按当前排除的申请隔离编辑态缓存。 */
+export function getTutorTrialOccupancyQueryKey(role: Role, excludeApplicationId: string) {
+  return [...clientTutorApplicationsQueryKey, role, "trial-occupancy", excludeApplicationId] as const;
+}

@@ -13,6 +13,7 @@ import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceRespons
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorDemand;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorScheduleDate;
 import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorScheduleTimeRange;
+import com.unknown.platform.modules.clientworkspace.model.ClientWorkspaceResponse.TutorTrialOccupancy;
 import com.unknown.platform.modules.clientworkspace.model.ApplyTutorTrialRequest;
 import com.unknown.platform.modules.clientworkspace.model.CompleteTutorTrialEndRequest;
 import com.unknown.platform.modules.clientworkspace.model.ConfirmTutorTrialRequest;
@@ -29,6 +30,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +57,9 @@ public class TutorWorkspaceAppService {
   private static final Pattern TUTOR_TRIAL_DATE_PATTERN = Pattern.compile("(\\d{4})年(\\d{1,2})月(\\d{1,2})日");
   private static final Pattern TUTOR_TRIAL_TIME_PATTERN = Pattern.compile("(\\d{1,2}):(\\d{2})");
   private static final Pattern TUTOR_TRIAL_TIME_RANGE_PATTERN = Pattern.compile("(\\d{1,2}:\\d{2})-(\\d{1,2}:\\d{2})");
+  private static final LocalTime TUTOR_TRIAL_SCHEDULE_MIN_TIME = LocalTime.of(8, 0);
+  private static final LocalTime TUTOR_TRIAL_SCHEDULE_MAX_TIME = LocalTime.of(22, 0);
+  private static final int TUTOR_TRIAL_SCHEDULE_MINUTE_STEP = 10;
   private static final int TUTOR_TRIAL_PARENT_MAX_DAYS = 3;
   // 状态值统一改为稳定 KEY（不再是中文展示文案），数据库、常量、API 三层都存/传 KEY；
   // 中文展示文案只在前端维护，详见 docs/家教状态模型治理建议.md。
@@ -137,9 +142,8 @@ public class TutorWorkspaceAppService {
 
   /**
    * {@link #parentTutorDemandApplicants} 的接口层入口，从登录态解析当前用户 ID。按需求 id 精确查询
-   * 单条家教需求的申请人列表（含完整认证资料），供"进行中"弹窗（试课申请列表/试课中列表）点开某一张
-   * 卡片时按需加载，不再一次性拉取家长名下全部家教需求再由前端筛选；只返回申请人列表，不带需求本身的
-   * 展示字段。
+   * 单条家教需求的申请人列表（含完整认证资料），供"进行中"弹窗的统一申请列表点开某一张卡片时按需
+   * 加载，不再一次性拉取家长名下全部家教需求再由前端筛选；只返回申请人列表，不带需求本身的展示字段。
    */
   public List<TutorApplicantProfile> getTutorApplication(ClientRole role, String authorization, String demandId) {
     Long currentUserId = clientSessionService.userIdOrNull(authorization);
@@ -147,6 +151,20 @@ public class TutorWorkspaceAppService {
       throw new BusinessException("TUTOR_DEMAND_NOT_FOUND", "家教需求不存在或已不可用");
     }
     return parentTutorDemandApplicants(currentUserId, demandId);
+  }
+
+  /** 查询家长账号下除当前申请外仍占用时间的试课日程，供排期弹窗提前禁用冲突时段。 */
+  public TutorTrialOccupancy getTutorTrialOccupancy(
+      ClientRole role,
+      String authorization,
+      String excludedApplicationId
+  ) {
+    Long currentUserId = clientSessionService.userIdOrNull(authorization);
+    if (role != ClientRole.parent || currentUserId == null) {
+      throw new BusinessException("TUTOR_TRIAL_OCCUPANCY_FORBIDDEN", "仅家长可以查看试课占用时间");
+    }
+
+    return new TutorTrialOccupancy(tutorTrialOccupiedDates(currentUserId, excludedApplicationId));
   }
 
   /**
@@ -340,6 +358,11 @@ public class TutorWorkspaceAppService {
     }
 
     TutorTrialSchedule trialSchedule = normalizeTutorTrialSchedule(request);
+    lockTutorParentSchedule(currentUserId);
+    assertTutorTrialScheduleNotOccupied(
+        trialSchedule.testedDates(),
+        tutorTrialOccupiedDates(currentUserId, applicationId)
+    );
 
     int updatedRows = jdbcTemplate.update(
         """
@@ -760,7 +783,8 @@ public class TutorWorkspaceAppService {
                         AND ta.enabled = TRUE
                         AND ta.status IN (
                            'TRIAL_CONFIRMING', 'TRIALING', 'TRIAL_END_CONFIRMING', 'TRIAL_RESULT_PROCESSING',
-                           'SETTLEMENT_CONFIRMING', 'SETTLEMENT_REVISING', 'TRIAL_SETTLED_SERVICE_PENDING',
+                           'SETTLEMENT_CONFIRMING', 'SETTLEMENT_REVISING', 'SYSTEM_SETTLING',
+                           'TRIAL_SETTLED_SERVICE_PENDING',
                            'SERVICE_CONFIRMING', 'SERVICE_SCHEDULE_PENDING', 'SERVICE_SCHEDULE_CONFIRMING',
                            'FORMAL_SERVICE', 'SERVICE_END_CONFIRMING', 'FORMAL_SERVICE_INVALID'
                          )
@@ -854,7 +878,7 @@ public class TutorWorkspaceAppService {
             // 与 tutorOrders() 中按单个申请自身文本推导的 hasOwnTrialSchedule 粒度不同。
             boolean hasTrialSchedule = rs.getBoolean("has_trial_schedule");
             int applicantCount = rs.getInt("applicant_count");
-            boolean hasTrialingTutor = rs.getInt("trialing_count") > 0;
+            int applicationCount = applicantCount + rs.getInt("trialing_count");
             String activeApplicationPublicId = support.defaultText(rs.getString("active_application_public_id"), "");
             String activeApplicationStatus = support.defaultText(rs.getString("active_application_status"), "");
             String activeApplicationAvailability = support.defaultText(rs.getString("active_application_availability"), "");
@@ -898,8 +922,7 @@ public class TutorWorkspaceAppService {
                 .subject(rs.getString("subject"))
                 .address(support.defaultText(rs.getString("address_label"), "地址待补充"))
                 .plannedDates(support.splitTags(rs.getString("period_dates")))
-                .quoteCount(rs.getInt("applicant_count"))
-                .trialCount(rs.getInt("trialing_count"))
+                .quoteCount(applicationCount)
                 .quoteId(activeApplicationPublicId)
                 .canCall(canManageRecruitingDemand)
                 .canMessage(canManageRecruitingDemand)
@@ -911,8 +934,7 @@ public class TutorWorkspaceAppService {
                 .canAgreeTrial(false)
                 .canOpenTrialResult(false)
                 .canOpenTrialSchedule(hasActiveApplication && isDemandInProgress)
-                .canOpenTutorTrialList(!isDemandInProgress && hasTrialingTutor)
-                .canOpenTutorApplications(canManageRecruitingDemand && applicantCount > 0)
+                .canOpenTutorApplications(applicationCount > 0)
                 .canRejectTrial(false)
                 .canCancelTutorApplication(false)
                 .tutorDemand(new TutorDemand(
@@ -1020,7 +1042,6 @@ public class TutorWorkspaceAppService {
               .canAgreeTrial(isTrialConfirmed && hasOwnTrialSchedule)
               .canOpenTrialResult(isSettlementConfirming)
               .canOpenTrialSchedule(isTrialConfirmed && hasOwnTrialSchedule)
-              .canOpenTutorTrialList(false)
               .canOpenTutorApplications(false)
               .canRejectTrial(false)
               .canCancelTutorApplication(canCancelTutorApplication)
@@ -1259,11 +1280,9 @@ public class TutorWorkspaceAppService {
   }
 
 
-  /** 家教招募需求下的申请人列表，含完整认证资料，供"进行中"弹窗按需求 id 加载使用；这份数据同时
-   *  服务"试课申请列表"（{@code isApplicationListVisible}）和"试课/正式雇佣列表"
-   *  （{@code isTrialListVisible}）两个前端视图，两者用到的状态集合互不相同，因此这里只在源头
-   *  剔除两个视图都用不到的真正终态申请（已拒绝/已取消/已结束/试课已结束/正式服务已失效），
-   *  不能收窄成只留某一个视图需要的状态子集，否则会把另一个视图需要的候选人一起过滤掉。
+  /** 家教招募需求下的申请人列表，含完整认证资料，供"进行中"统一申请列表按需求 id 加载使用；
+   *  申请卡片从待处理持续更新到试课、正式雇佣和结算阶段，因此这里只在源头剔除列表不再处理的
+   *  终态申请（已拒绝/已取消/已结束/试课已结束）；正式服务失效仍保留重新委托或移除操作。
    *  申请工作流字段（受聘次数、可用时间、状态、试课/正式课安排等）取自 {@code tutor_applicant}；
    *  认证资料字段的取值方式和列名都跟 {@link #tutorExposedStudents} 保持一致，直接联查
    *  {@code tutor_certification}，不使用 {@code tutor_applicant.school/major/gpa}——这三列
@@ -1295,7 +1314,7 @@ public class TutorWorkspaceAppService {
              AND service_schedule.enabled = TRUE
             WHERE ta.tutor_demand_id = ?
               AND ta.enabled = TRUE
-              AND ta.status NOT IN (?, ?, ?, ?, ?)
+              AND ta.status NOT IN (?, ?, ?, ?)
             ORDER BY ta.hired_times DESC, ta.id
             """,
         (rs, rowNum) -> {
@@ -1336,8 +1355,7 @@ public class TutorWorkspaceAppService {
         TUTOR_APPLICANT_STATUS_REJECTED,
         TUTOR_APPLICANT_STATUS_CANCELLED,
         TUTOR_APPLICANT_STATUS_ENDED,
-        TUTOR_APPLICANT_STATUS_TRIAL_ENDED,
-        TUTOR_APPLICANT_STATUS_FORMAL_SERVICE_INVALID
+        TUTOR_APPLICANT_STATUS_TRIAL_ENDED
     );
   }
 
@@ -1447,6 +1465,99 @@ public class TutorWorkspaceAppService {
   }
 
 
+  /** 锁定家长账号的排期写入，避免不同家教需求并发提交时同时通过冲突校验。 */
+  private void lockTutorParentSchedule(long parentUserId) {
+    Long lockedUserId = jdbcTemplate.queryForObject(
+        "SELECT id FROM app_user WHERE id = ? FOR UPDATE",
+        Long.class,
+        parentUserId
+    );
+    if (lockedUserId == null) {
+      throw new BusinessException("TUTOR_TRIAL_PARENT_NOT_FOUND", "家长账号不存在或已不可用");
+    }
+  }
+
+
+  /** 查询家长所有需求中仍处于试课占用阶段的日程，并排除正在编辑的申请。 */
+  private List<TutorScheduleDate> tutorTrialOccupiedDates(long parentUserId, String excludedApplicationId) {
+    List<List<TutorScheduleDate>> scheduleGroups = jdbcTemplate.query(
+        """
+            SELECT COALESCE(tas.schedule_dates, '[]'::jsonb)::text AS occupied_schedule_dates,
+                   COALESCE(NULLIF(tas.schedule_summary, ''), '') AS schedule_summary
+            FROM tutor_application_schedule tas
+            JOIN tutor_applicant ta ON ta.id = tas.tutor_applicant_id
+            JOIN tutor_demand td ON td.id = ta.tutor_demand_id
+            WHERE td.parent_user_id = ?
+              AND td.enabled = TRUE
+              AND ta.enabled = TRUE
+              AND ta.public_id <> ?
+              AND ta.status IN (?, ?, ?)
+              AND tas.stage = ?
+              AND tas.enabled = TRUE
+            ORDER BY tas.id
+            """,
+        (rs, rowNum) -> parseTutorScheduleDates(
+            rs.getString("occupied_schedule_dates"),
+            rs.getString("schedule_summary")
+        ),
+        parentUserId,
+        support.defaultText(excludedApplicationId, ""),
+        TUTOR_APPLICANT_STATUS_TRIAL_CONFIRMED,
+        TUTOR_APPLICANT_STATUS_TRIALING,
+        TUTOR_APPLICANT_STATUS_TRIAL_END_CONFIRMING,
+        TUTOR_APPLICATION_SCHEDULE_STAGE_TRIAL
+    );
+    Map<String, List<TutorScheduleTimeRange>> rangesByDate = new LinkedHashMap<>();
+
+    scheduleGroups.stream().flatMap(List::stream).forEach((scheduleDate) ->
+        rangesByDate.computeIfAbsent(scheduleDate.date(), (ignored) -> new ArrayList<>())
+            .addAll(scheduleDate.timeRanges())
+    );
+
+    return rangesByDate.entrySet().stream()
+        .sorted(Map.Entry.comparingByKey())
+        .map((entry) -> new TutorScheduleDate(entry.getKey(), List.copyOf(entry.getValue())))
+        .toList();
+  }
+
+
+  /** 按日期和上午/下午/晚上三个完整时段校验家长试课排期冲突。 */
+  private void assertTutorTrialScheduleNotOccupied(
+      List<TutorScheduleDate> requestedDates,
+      List<TutorScheduleDate> occupiedDates
+  ) {
+    Set<String> occupiedSlots = tutorTrialScheduleSlots(occupiedDates);
+    boolean hasConflict = tutorTrialScheduleSlots(requestedDates).stream().anyMatch(occupiedSlots::contains);
+
+    if (hasConflict) {
+      throw new BusinessException("TUTOR_TRIAL_SCHEDULE_CONFLICT", "该时段已安排其他试课");
+    }
+  }
+
+
+  /** 将结构化日程转换为日期与三段时段组合，任意时间范围命中某时段即占用完整时段。 */
+  private Set<String> tutorTrialScheduleSlots(List<TutorScheduleDate> scheduleDates) {
+    Set<String> slots = new HashSet<>();
+
+    scheduleDates.forEach((scheduleDate) -> scheduleDate.timeRanges().forEach((timeRange) -> {
+      LocalTime start = LocalTime.parse(timeRange.start(), TUTOR_TRIAL_TIME_FORMATTER);
+      LocalTime end = LocalTime.parse(timeRange.end(), TUTOR_TRIAL_TIME_FORMATTER);
+
+      if (start.isBefore(LocalTime.NOON) && end.isAfter(LocalTime.of(8, 0))) {
+        slots.add(scheduleDate.date() + "|morning");
+      }
+      if (start.isBefore(LocalTime.of(18, 0)) && end.isAfter(LocalTime.NOON)) {
+        slots.add(scheduleDate.date() + "|afternoon");
+      }
+      if (start.isBefore(LocalTime.of(22, 0)) && end.isAfter(LocalTime.of(18, 0))) {
+        slots.add(scheduleDate.date() + "|evening");
+      }
+    }));
+
+    return slots;
+  }
+
+
   /** 校验并标准化家长提交的结构化试课日程。 */
   private TutorTrialSchedule normalizeTutorTrialSchedule(ConfirmTutorTrialRequest request) {
     if (request == null || request.dates() == null || request.dates().isEmpty()) {
@@ -1485,6 +1596,15 @@ public class TutorWorkspaceAppService {
         LocalTime end = parseSubmittedTutorTrialTime(timeRange.end());
         if (!end.isAfter(start)) {
           throw new BusinessException("TUTOR_TRIAL_SCHEDULE_INVALID", "试课结束时间必须晚于开始时间");
+        }
+        if (start.isBefore(TUTOR_TRIAL_SCHEDULE_MIN_TIME) || end.isAfter(TUTOR_TRIAL_SCHEDULE_MAX_TIME)) {
+          throw new BusinessException("TUTOR_TRIAL_SCHEDULE_INVALID", "试课时间必须在 08:00-22:00 内");
+        }
+        if (
+            start.getMinute() % TUTOR_TRIAL_SCHEDULE_MINUTE_STEP != 0 ||
+            end.getMinute() % TUTOR_TRIAL_SCHEDULE_MINUTE_STEP != 0
+        ) {
+          throw new BusinessException("TUTOR_TRIAL_SCHEDULE_INVALID", "试课时间必须按 10 分钟刻度设置");
         }
         timeRanges.add(new TutorTrialTimeRange(start, end));
       }

@@ -23,7 +23,7 @@ export interface TutorTrialJob {
   title: string;
 }
 
-/** 家长端试课申请列表候选人。 */
+/** 家长端统一申请列表候选人。 */
 export interface TutorApplicationCandidate {
   /** 年龄，来自认证资料；申请人未提交认证资料时缺省。 */
   age?: string;

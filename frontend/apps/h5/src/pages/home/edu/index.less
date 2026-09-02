@@ -72,11 +72,8 @@
 }
 
 .tutor-applications-panel {
-  border-radius: 8px 8px 0 0;
-}
-
-.tutor-trial-list-panel {
   height: min(76vh, 620px);
+  border-radius: 8px 8px 0 0;
   grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
@@ -89,7 +86,6 @@
   overscroll-behavior: contain;
 }
 
-.tutor-application-card,
 .tutor-card-container {
   border: 1px solid var(--h5-border);
   border-radius: 8px;
@@ -97,13 +93,11 @@
   color: var(--h5-text);
 }
 
-.tutor-application-card.active,
 .tutor-card-container.selected {
   border-color: var(--h5-success);
   box-shadow: 0 0 0 3px rgba(29, 122, 92, 0.16);
 }
 
-.tutor-application-card.trial-confirming,
 .tutor-card-container.trial-confirming {
   border-color: color-mix(in srgb, var(--h5-danger) 24%, transparent);
   background: var(--h5-danger-soft);
@@ -117,11 +111,7 @@
   justify-content: flex-end;
 }
 
-.tutor-application-card.trial-confirming .tutor-application-select {
-  cursor: pointer;
-}
-
-.tutor-application-card.trialing {
+.tutor-card-container.trialing {
   border-color: color-mix(in srgb, var(--h5-success) 24%, transparent);
   background: var(--h5-success-soft);
 }
@@ -133,22 +123,6 @@
   padding: 0;
 }
 
-
-.tutor-application-select {
-  min-width: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  padding: 0;
-}
-
-.tutor-application-name-row {
-  min-width: 0;
-}
-
-.tutor-application-name-row strong {
-  min-width: 0;
-}
 
 .tutor-application-status {
   flex: 0 0 auto;
@@ -178,8 +152,8 @@
 }
 
 .tutor-application-actions button,
-.tutor-trial-list-panel > button,
-.tutor-trial-list-panel > .sheet-actions button {
+.tutor-applications-panel > button,
+.tutor-applications-panel > .sheet-actions button {
   min-width: 0;
   line-height: 1.25;
   text-align: center;
@@ -187,23 +161,17 @@
   word-break: normal;
 }
 
-.tutor-trial-list-panel > button {
+.tutor-applications-panel > button {
   width: 100%;
 }
 
-.tutor-application-card.trialing .tutor-application-status {
+.tutor-card-container.trialing .tutor-application-status {
   background: var(--h5-success-soft);
   color: var(--h5-success);
 }
 
-.tutor-trial-list-card {
-  width: 100%;
-}
-
-.tutor-trial-list-card.not-selectable .tutor-application-select:disabled {
-  color: inherit;
+.tutor-card-container.not-selectable {
   cursor: default;
-  opacity: 1;
 }
 
 .tutor-time-preview-button {

@@ -219,6 +219,7 @@ declare global {
   const getLatestLocalPublishInfoDraft: typeof import('./tools/publishInfo').getLatestLocalPublishInfoDraft
   const getLocalPublishInfoDrafts: typeof import('./tools/publishInfo').getLocalPublishInfoDrafts
   const getMessageToastSnapshot: typeof import('./tools/messageToast').getMessageToastSnapshot
+  const getOccupiedTrialScheduleDraft: typeof import('./components/ScheduleCalendar/CalendarTime/model').getOccupiedTrialScheduleDraft
   const getOngoingOrderCategory: typeof import('./pages/home/auth/orders/model').getOngoingOrderCategory
   const getOngoingOrderDisplayDetail: typeof import('./pages/home/auth/orders/model').getOngoingOrderDisplayDetail
   const getOrderModuleCounts: typeof import('./components/OrderModuleCard/model').getOrderModuleCounts
@@ -306,7 +307,6 @@ declare global {
   const isTutorTerminalStatus: typeof import('./tools/tutorTrial').isTutorTerminalStatus
   const isTutorTrialConfirmingStatus: typeof import('./tools/tutorTrial').isTutorTrialConfirmingStatus
   const isTutorTrialEndConfirmingStatus: typeof import('./tools/tutorTrial').isTutorTrialEndConfirmingStatus
-  const isTutorTrialListStatus: typeof import('./tools/tutorTrial').isTutorTrialListStatus
   const isTutorTrialResultProcessingStatus: typeof import('./tools/tutorTrial').isTutorTrialResultProcessingStatus
   const isTutorTrialSettledServicePendingStatus: typeof import('./tools/tutorTrial').isTutorTrialSettledServicePendingStatus
   const isTutorTrialingStatus: typeof import('./tools/tutorTrial').isTutorTrialingStatus

@@ -90,6 +90,22 @@ class TutorWorkspaceAppServiceTest {
   }
 
   @Test
+  void exposesOneApplicationEntryAndCountWhenOnlyTrialStageApplicantsRemain() {
+    TrialEndpointJdbcTemplate jdbcTemplate = new TrialEndpointJdbcTemplate("");
+    TutorWorkspaceAppService service = new TutorWorkspaceAppService(
+        jdbcTemplate,
+        new ClientSessionService(jdbcTemplate),
+        new ClientWorkspaceSupport(jdbcTemplate),
+        new ObjectMapper()
+    );
+
+    ClientOrder order = service.tutorOrders(ClientRole.parent, 7L).get(0);
+
+    assertTrue(order.canOpenTutorApplications());
+    assertEquals(2, order.quoteCount());
+  }
+
+  @Test
   void allowsCurrentTrialScheduleOutsideNonEmptyHistoricalAvailability() {
     TrialEndpointJdbcTemplate jdbcTemplate = new TrialEndpointJdbcTemplate(
         "2099年9月6日 8:00-9:00"
@@ -150,6 +166,59 @@ class TutorWorkspaceAppServiceTest {
         jdbcTemplate.scheduleUpdateArgs()
     );
     assertTrue(jdbcTemplate.scheduleUpdateSql().contains("schedule_dates"));
+  }
+
+  @Test
+  void rejectsTrialScheduleWhenAnotherDemandAlreadyOccupiesTheSameParentPeriod() {
+    TrialEndpointJdbcTemplate jdbcTemplate = TrialEndpointJdbcTemplate.withOccupiedTrialSchedule(
+        "[{\"date\":\"2099-09-06\",\"timeRanges\":[{\"start\":\"08:30\",\"end\":\"09:30\"}]}]"
+    );
+    TutorWorkspaceAppService service = new TutorWorkspaceAppService(
+        jdbcTemplate,
+        new ClientSessionService(jdbcTemplate),
+        new ClientWorkspaceSupport(jdbcTemplate),
+        new ObjectMapper()
+    );
+
+    BusinessException error = assertThrows(
+        BusinessException.class,
+        () -> service.confirmTutorTrial(
+            "TD-1",
+            "TA-1",
+            new ConfirmTutorTrialRequest(List.of(trialScheduleDate("2099-09-06", "10:00", "11:00"))),
+            "Bearer parent"
+        )
+    );
+
+    assertEquals("TUTOR_TRIAL_SCHEDULE_CONFLICT", error.code());
+    assertTrue(jdbcTemplate.parentScheduleLockSql().contains("FOR UPDATE"));
+    assertTrue(jdbcTemplate.occupiedScheduleQuerySql().contains("td.parent_user_id = ?"));
+    assertArrayEquals(
+        new Object[]{7L, "TA-1", "TRIAL_CONFIRMING", "TRIALING", "TRIAL_END_CONFIRMING", "trial"},
+        jdbcTemplate.occupiedScheduleQueryArgs()
+    );
+  }
+
+  @Test
+  void allowsTrialScheduleInAnotherPeriodOnTheSameDate() {
+    TrialEndpointJdbcTemplate jdbcTemplate = TrialEndpointJdbcTemplate.withOccupiedTrialSchedule(
+        "[{\"date\":\"2099-09-06\",\"timeRanges\":[{\"start\":\"08:30\",\"end\":\"09:30\"}]}]"
+    );
+    TutorWorkspaceAppService service = new TutorWorkspaceAppService(
+        jdbcTemplate,
+        new ClientSessionService(jdbcTemplate),
+        new ClientWorkspaceSupport(jdbcTemplate),
+        new ObjectMapper()
+    );
+
+    TutorDemand demand = service.confirmTutorTrial(
+        "TD-1",
+        "TA-1",
+        new ConfirmTutorTrialRequest(List.of(trialScheduleDate("2099-09-06", "13:00", "14:00"))),
+        "Bearer parent"
+    );
+
+    assertEquals("TD-1", demand.id());
   }
 
   @Test
@@ -290,6 +359,21 @@ class TutorWorkspaceAppServiceTest {
             "起止时间相同",
             new ConfirmTutorTrialRequest(List.of(trialScheduleDate("2099-09-06", "9:00", "9:00"))),
             "TUTOR_TRIAL_SCHEDULE_INVALID"
+        ),
+        Arguments.of(
+            "早于上午窗口",
+            new ConfirmTutorTrialRequest(List.of(trialScheduleDate("2099-09-06", "7:00", "8:00"))),
+            "TUTOR_TRIAL_SCHEDULE_INVALID"
+        ),
+        Arguments.of(
+            "晚于晚上窗口",
+            new ConfirmTutorTrialRequest(List.of(trialScheduleDate("2099-09-06", "22:00", "23:00"))),
+            "TUTOR_TRIAL_SCHEDULE_INVALID"
+        ),
+        Arguments.of(
+            "非十分钟刻度",
+            new ConfirmTutorTrialRequest(List.of(trialScheduleDate("2099-09-06", "8:05", "9:00"))),
+            "TUTOR_TRIAL_SCHEDULE_INVALID"
         )
     );
   }
@@ -313,15 +397,19 @@ class TutorWorkspaceAppServiceTest {
     private final boolean studentOngoing;
     private final String trialSchedule;
     private final String testedDatesJson;
+    private final String occupiedScheduleDatesJson;
     private Object[] applicantUpdateArgs = new Object[0];
     private String applicantUpdateSql = "";
+    private Object[] occupiedScheduleQueryArgs = new Object[0];
+    private String occupiedScheduleQuerySql = "";
+    private String parentScheduleLockSql = "";
     private Object[] scheduleUpdateArgs = new Object[0];
     private String scheduleUpdateSql = "";
     private String studentOngoingQuerySql = "";
     private String tutorDemandQuerySql = "";
 
     private TrialEndpointJdbcTemplate(String historicalAvailability) {
-      this(historicalAvailability, false, false, "", "trial", "[]");
+      this(historicalAvailability, false, false, "", "trial", "[]", "[]");
     }
 
     private TrialEndpointJdbcTemplate(
@@ -330,9 +418,11 @@ class TutorWorkspaceAppServiceTest {
         boolean studentOngoing,
         String trialSchedule,
         String scheduleStage,
-        String testedDatesJson
+        String testedDatesJson,
+        String occupiedScheduleDatesJson
     ) {
       this.historicalAvailability = historicalAvailability;
+      this.occupiedScheduleDatesJson = occupiedScheduleDatesJson;
       this.scheduleStage = scheduleStage;
       this.studentConfirmation = studentConfirmation;
       this.studentOngoing = studentOngoing;
@@ -345,11 +435,15 @@ class TutorWorkspaceAppServiceTest {
     }
 
     private static TrialEndpointJdbcTemplate forStudentConfirmation(String scheduleStage, String trialSchedule) {
-      return new TrialEndpointJdbcTemplate("", true, false, trialSchedule, scheduleStage, "[]");
+      return new TrialEndpointJdbcTemplate("", true, false, trialSchedule, scheduleStage, "[]", "[]");
     }
 
     private static TrialEndpointJdbcTemplate forStudentOngoing(String trialSchedule, String testedDatesJson) {
-      return new TrialEndpointJdbcTemplate("", false, true, trialSchedule, "trial", testedDatesJson);
+      return new TrialEndpointJdbcTemplate("", false, true, trialSchedule, "trial", testedDatesJson, "[]");
+    }
+
+    private static TrialEndpointJdbcTemplate withOccupiedTrialSchedule(String occupiedScheduleDatesJson) {
+      return new TrialEndpointJdbcTemplate("", false, false, "", "trial", "[]", occupiedScheduleDatesJson);
     }
 
     @Override
@@ -373,6 +467,10 @@ class TutorWorkspaceAppServiceTest {
       if (sql.contains("SELECT role FROM app_user")) {
         return requiredType.cast("student");
       }
+      if (sql.contains("FROM app_user") && sql.contains("FOR UPDATE")) {
+        parentScheduleLockSql = sql;
+        return requiredType.cast(7L);
+      }
       throw new AssertionError("未覆盖的单值查询：" + sql);
     }
 
@@ -381,6 +479,16 @@ class TutorWorkspaceAppServiceTest {
       try {
         if (sql.contains("SELECT availability")) {
           return List.of(rowMapper.mapRow(resultSet(Map.of("availability", historicalAvailability)), 0));
+        }
+        if (sql.contains("occupied_schedule_dates")) {
+          occupiedScheduleQuerySql = sql;
+          occupiedScheduleQueryArgs = args;
+          return "[]".equals(occupiedScheduleDatesJson)
+              ? List.of()
+              : List.of(rowMapper.mapRow(resultSet(Map.ofEntries(
+                  Map.entry("occupied_schedule_dates", occupiedScheduleDatesJson),
+                  Map.entry("schedule_summary", "")
+              )), 0));
         }
         if (sql.contains("FROM tutor_application_schedule")) {
           boolean matchesStage = args.length > 1 && scheduleStage.equals(args[1]);
@@ -406,6 +514,30 @@ class TutorWorkspaceAppServiceTest {
               "parent_user_id", 7L,
               "public_id", "TD-1",
               "status", "RECRUITING"
+          )), 0));
+        }
+        if (sql.contains("AS applicant_count") && sql.contains("AS trialing_count")) {
+          return List.of(rowMapper.mapRow(resultSet(Map.ofEntries(
+              Map.entry("active_application_availability", ""),
+              Map.entry("active_application_public_id", ""),
+              Map.entry("active_application_schedule", ""),
+              Map.entry("active_application_status", ""),
+              Map.entry("active_application_trial_schedule", ""),
+              Map.entry("address_label", "教学地址"),
+              Map.entry("applicant_count", 0),
+              Map.entry("budget", "按小时结算"),
+              Map.entry("child", "孩子"),
+              Map.entry("description", "需求说明"),
+              Map.entry("has_trial_schedule", true),
+              Map.entry("period_dates", "2099-09-01、2099-09-06"),
+              Map.entry("period_end", "2099-09-30"),
+              Map.entry("period_start", "2099-09-01"),
+              Map.entry("public_id", "TD-1"),
+              Map.entry("school", "学校"),
+              Map.entry("status", "RECRUITING"),
+              Map.entry("subject", "math"),
+              Map.entry("title", "数学家教"),
+              Map.entry("trialing_count", 2)
           )), 0));
         }
         if (sql.contains("FROM tutor_demand td")) {
@@ -466,6 +598,18 @@ class TutorWorkspaceAppServiceTest {
 
     private String applicantUpdateSql() {
       return applicantUpdateSql;
+    }
+
+    private Object[] occupiedScheduleQueryArgs() {
+      return occupiedScheduleQueryArgs;
+    }
+
+    private String occupiedScheduleQuerySql() {
+      return occupiedScheduleQuerySql;
+    }
+
+    private String parentScheduleLockSql() {
+      return parentScheduleLockSql;
     }
 
     private Object[] applicantUpdateArgs() {

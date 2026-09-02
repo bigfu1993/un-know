@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 import { URL } from "node:url";
 
@@ -17,7 +17,7 @@ function readPackageSource(relativePath) {
 }
 
 test("家长确认结束试课只保留 workflow-action 前端链路", () => {
-  const trialListSource = readH5Source("overlays/tutor/components/TutorTrialList.tsx");
+  const applicationsSource = readH5Source("overlays/tutor/components/TutorApplications.tsx");
   const hostSource = readH5Source("overlays/tutor/host.tsx");
   const providerSource = readH5Source("overlays/tutor/provider.tsx");
   const overlayTypesSource = readH5Source("types/overlay.ts");
@@ -25,7 +25,7 @@ test("家长确认结束试课只保留 workflow-action 前端链路", () => {
   const hooksSource = readPackageSource("hooks/src/index.ts");
   const apiClientSource = readPackageSource("api-client/src/index.ts");
 
-  assert.doesNotMatch(trialListSource, /onConfirmEnd|useCompleteTutorTrialEnd/);
+  assert.doesNotMatch(applicationsSource, /onConfirmEnd|useCompleteTutorTrialEnd/);
   [hostSource, providerSource].forEach((source) => {
     assert.doesNotMatch(source, /onConfirmEnd|confirmTrialEnd|useCompleteTutorTrialEnd/);
   });
@@ -33,7 +33,7 @@ test("家长确认结束试课只保留 workflow-action 前端链路", () => {
   assert.doesNotMatch(workflowTypesSource, /CompleteTutorTrialEndPayload/);
   assert.doesNotMatch(hooksSource, /useCompleteTutorTrialEnd|completeTutorTrialEnd|CompleteTutorTrialEndRequest/);
   assert.doesNotMatch(apiClientSource, /completeTutorTrialEnd|CompleteTutorTrialEndRequest/);
-  assert.match(trialListSource, /"confirm_trial_end"/);
+  assert.match(applicationsSource, /"confirm_trial_end"/);
   assert.match(providerSource, /useHandleTutorWorkflowAction/);
 });
 
@@ -63,4 +63,31 @@ test("注册角色选择复用共享 hook 而不是手写请求", () => {
   assert.match(registrationGuideSource, /useSelectClientRole/);
   assert.doesNotMatch(registrationGuideSource, /selectClientRoleAfterRegistration/);
   assert.doesNotMatch(registrationGuideSource, /fetch\(`\$\{getH5ApiBaseUrl\(\)\}\/client\/auth\/select-role`/);
+});
+
+test("家长端申请列表承接试课阶段且不保留第二套试课列表入口", () => {
+  const trialListUrl = new URL("overlays/tutor/components/TutorTrialList.tsx", h5SourceRoot);
+  const hostSource = readH5Source("overlays/tutor/host.tsx");
+  const providerSource = readH5Source("overlays/tutor/provider.tsx");
+  const overlayTypesSource = readH5Source("types/overlay.ts");
+  const orderActionsSource = readH5Source("pages/home/auth/orders/components/OrderActions.tsx");
+  const workflowSource = readH5Source("tools/tutorTaskWorkflow.ts");
+
+  assert.equal(existsSync(trialListUrl), false);
+  [hostSource, providerSource, overlayTypesSource, orderActionsSource, workflowSource].forEach((source) => {
+    assert.doesNotMatch(source, /TutorTrialList|tutorTrialList|openTrialList|canOpenTutorTrialList/);
+  });
+  assert.match(hostSource, /<TutorApplications/);
+  assert.match(orderActionsSource, /申请列表/);
+});
+
+test("试课占用查询复用申请列表查询前缀并由流程 mutation 统一失效", () => {
+  const apiClientSource = readPackageSource("api-client/src/index.ts");
+  const hooksSource = readPackageSource("hooks/src/index.ts");
+  const queryKeysSource = readPackageSource("hooks/src/queryKeys.ts");
+
+  assert.match(apiClientSource, /workspace\/ongoing\/tutor\/trial-occupancy\?excludeApplicationId=/);
+  assert.match(queryKeysSource, /\.\.\.clientTutorApplicationsQueryKey, role, "trial-occupancy"/);
+  assert.match(hooksSource, /useTutorTrialOccupancy/);
+  assert.match(hooksSource, /invalidateQueries\(\{ queryKey: clientTutorApplicationsQueryKey \}\)/);
 });

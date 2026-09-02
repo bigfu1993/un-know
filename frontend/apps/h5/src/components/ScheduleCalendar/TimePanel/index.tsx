@@ -146,7 +146,7 @@ export function TimePanel({
             onClick={onSaveScheduleTimeTemplate}
             type="button"
           >
-            记为模板
+            更新模板
           </button>
           <button
             className="text-button"

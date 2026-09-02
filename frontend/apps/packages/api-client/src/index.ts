@@ -40,6 +40,7 @@ import {
   TutorCertifiedStudent,
   TutorDemand,
   TutorExposureResponse,
+  TutorTrialOccupancy,
   UpdateNicknameRequest,
   UserNickname
 } from "@unknown/domain";
@@ -349,6 +350,13 @@ export async function getTutorCertifiedStudents(): Promise<TutorCertifiedStudent
 export async function getTutorApplication(demandId: string): Promise<TutorApplicantProfile[]> {
   return requestJson<TutorApplicantProfile[]>(
     `/client/workspace/ongoing/tutor/application?id=${encodeURIComponent(demandId)}`
+  );
+}
+
+/** 获取家长账号下除当前申请外仍有效的试课占用日程。 */
+export async function getTutorTrialOccupancy(excludeApplicationId: string): Promise<TutorTrialOccupancy> {
+  return requestJson<TutorTrialOccupancy>(
+    `/client/workspace/ongoing/tutor/trial-occupancy?excludeApplicationId=${encodeURIComponent(excludeApplicationId)}`
   );
 }
 

@@ -2,7 +2,6 @@ import {
   getTutorTrialStatusLabel,
   isTutorApplicationPendingStatus,
   isTutorApplicationListStatus,
-  isTutorTrialListStatus,
   isTutorFormalServiceStatus,
   isTutorServiceConfirmingStatus,
   isTutorServiceEndConfirmingStatus,
@@ -46,7 +45,6 @@ export type TutorTaskAction =
   | "rescheduleTrial"
   | "openTrialSchedule"
   | "confirmTrialStart"
-  | "openTrialList"
   | "requestTrialEnd"
   | "completeTrialEnd"
   | "cancelApplication"
@@ -88,7 +86,6 @@ export interface TutorTaskModel {
    *  多处候选人/订单卡片都要展示状态角标，这里统一算好，调用方不用各自重复同一段 fallback 逻辑。 */
   displayStatusLabels: string[];
   isApplicationListVisible: boolean;
-  isTrialListVisible: boolean;
   node: TutorTaskNode;
   statusLabel: string;
   statusLabels: string[];
@@ -215,13 +212,12 @@ function isParentRecruitingTutorOrder(order: ClientOrder, role: Role) {
   return role === "parent" && order.category === "tutor" && order.status === TutorDemandStatus.Recruiting;
 }
 
-/** 创建家教任务纯模型，供订单卡片、申请列表和试课列表统一消费。 */
+/** 创建家教任务纯模型，供订单卡片和统一申请列表消费。 */
 export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelOptions): TutorTaskModel {
   const status = order?.status ?? candidate?.status;
   const node = getTutorTaskNode(status);
   const statusTone = getTutorTaskStatusTone(node);
   const isApplicationListVisible = candidate ? isTutorApplicationListStatus(candidate.status) : false;
-  const isTrialListVisible = candidate ? isTutorTrialListStatus(candidate.status) : false;
   const statusLabel = getTutorTrialStatusLabel(status);
   const actions = new Set<TutorTaskAction>();
 
@@ -237,9 +233,6 @@ export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelO
     }
     if (order.canAgreeTrial && node === "trialScheduled") {
       actions.add("confirmTrialStart");
-    }
-    if (order.canOpenTutorTrialList) {
-      actions.add("openTrialList");
     }
     if (order.canRequestComplete && node === "trialing") {
       actions.add("requestTrialEnd");
@@ -283,8 +276,9 @@ export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelO
     if (node === "trialScheduled") {
       actions.add("rescheduleTrial");
       actions.add("cancelApplication");
-    } else if (isApplicationListVisible) {
+    } else if (node === "applicationPending") {
       actions.add("scheduleTrial");
+      actions.add("rejectTrial");
     }
     if (node === "trialing") {
       actions.add("requestTrialResult");
@@ -324,7 +318,6 @@ export function createTutorTaskModel({ candidate, order, role }: TutorTaskModelO
     can: (action) => actions.has(action),
     displayStatusLabels: statusLabels.length > 0 ? statusLabels : [statusLabel].filter(Boolean),
     isApplicationListVisible,
-    isTrialListVisible,
     node,
     statusLabel,
     statusLabels,

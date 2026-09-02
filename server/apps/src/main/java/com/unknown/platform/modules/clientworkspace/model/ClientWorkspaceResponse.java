@@ -49,7 +49,6 @@ public record ClientWorkspaceResponse(
       List<TutorScheduleDate> testedDates,
       BigDecimal quoteAmount,
       Integer quoteCount,
-      Integer trialCount,
       String quoteActionLabel,
       String quoteId,
       Boolean canCall,
@@ -62,7 +61,6 @@ public record ClientWorkspaceResponse(
       Boolean canAgreeTrial,
       Boolean canOpenTrialResult,
       Boolean canOpenTrialSchedule,
-      Boolean canOpenTutorTrialList,
       Boolean canOpenTutorApplications,
       Boolean canRejectTrial,
       Boolean canCancelTutorApplication,
@@ -102,7 +100,6 @@ public record ClientWorkspaceResponse(
       private List<TutorScheduleDate> testedDates;
       private BigDecimal quoteAmount;
       private Integer quoteCount;
-      private Integer trialCount;
       private String quoteActionLabel;
       private String quoteId;
       private Boolean canCall;
@@ -115,7 +112,6 @@ public record ClientWorkspaceResponse(
       private Boolean canAgreeTrial;
       private Boolean canOpenTrialResult;
       private Boolean canOpenTrialSchedule;
-      private Boolean canOpenTutorTrialList;
       private Boolean canOpenTutorApplications;
       private Boolean canRejectTrial;
       private Boolean canCancelTutorApplication;
@@ -214,11 +210,6 @@ public record ClientWorkspaceResponse(
         return this;
       }
 
-      public Builder trialCount(Integer trialCount) {
-        this.trialCount = trialCount;
-        return this;
-      }
-
       public Builder quoteActionLabel(String quoteActionLabel) {
         this.quoteActionLabel = quoteActionLabel;
         return this;
@@ -279,11 +270,6 @@ public record ClientWorkspaceResponse(
         return this;
       }
 
-      public Builder canOpenTutorTrialList(Boolean canOpenTutorTrialList) {
-        this.canOpenTutorTrialList = canOpenTutorTrialList;
-        return this;
-      }
-
       public Builder canOpenTutorApplications(Boolean canOpenTutorApplications) {
         this.canOpenTutorApplications = canOpenTutorApplications;
         return this;
@@ -308,11 +294,11 @@ public record ClientWorkspaceResponse(
       public ClientOrder build() {
         return new ClientOrder(
             id, role, title, status, activeApplicantStatus, amount, contact, detail, risk, amountLabel, category,
-            phoneNumber, subject, address, plannedDates, testedDates, quoteAmount, quoteCount, trialCount,
+            phoneNumber, subject, address, plannedDates, testedDates, quoteAmount, quoteCount,
             quoteActionLabel, quoteId,
             canCall, canMessage, canRequestCancel, canRequestComplete, canConfirmCancel,
             canConfirmComplete, canRepublish, canAgreeTrial, canOpenTrialResult, canOpenTrialSchedule,
-            canOpenTutorTrialList, canOpenTutorApplications, canRejectTrial, canCancelTutorApplication, tutorDemand
+            canOpenTutorApplications, canRejectTrial, canCancelTutorApplication, tutorDemand
         );
       }
     }
@@ -329,6 +315,12 @@ public record ClientWorkspaceResponse(
   public record TutorScheduleTimeRange(
       String start,
       String end
+  ) {
+  }
+
+  /** 家长账号下除当前申请外仍有效的试课占用日程。 */
+  public record TutorTrialOccupancy(
+      List<TutorScheduleDate> occupiedTestedDates
   ) {
   }
 

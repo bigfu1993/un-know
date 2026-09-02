@@ -250,7 +250,6 @@ export interface ClientOrder {
   testedDates?: TutorTrialScheduleDate[];
   quoteAmount?: number;
   quoteCount?: number;
-  trialCount?: number;
   quoteActionLabel?: string;
   quoteId?: string;
   canCall?: boolean;
@@ -263,7 +262,6 @@ export interface ClientOrder {
   canAgreeTrial?: boolean;
   canOpenTrialResult?: boolean;
   canOpenTrialSchedule?: boolean;
-  canOpenTutorTrialList?: boolean;
   canOpenTutorApplications?: boolean;
   canRejectTrial?: boolean;
   canCancelTutorApplication?: boolean;
@@ -484,6 +482,11 @@ export interface ApplyTutorTrialRequest {
 export interface TutorTrialScheduleDate {
   date: string;
   timeRanges: ScheduleTimeRange[];
+}
+
+/** 家长账号下除当前申请外仍有效的试课占用日程。 */
+export interface TutorTrialOccupancy {
+  occupiedTestedDates: TutorTrialScheduleDate[];
 }
 
 /** 家长提交家教试课日程请求。 */

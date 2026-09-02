@@ -1,22 +1,20 @@
 import { TutorCertificationInfo } from "@components/TutorCertificationInfo";
 import { TutorApplications } from "./components/TutorApplications";
 import { TutorCalendar } from "./components/TutorCalendar";
-import { TutorTrialList } from "./components/TutorTrialList";
 import { useTutorOverlayActions, useTutorOverlayHost, useTutorOverlayState } from "./provider";
 
-/** 渲染家教申请、试课列表、认证信息和课程日历四类全局弹层。 */
+/** 渲染家教申请、认证信息和课程日历三类全局弹层。 */
 export function TutorOverlayHost() {
   const { activeType } = useTutorOverlayState();
-  const { closeApplications, closeCalendar, closeCertificationInfo, closeTrialList } = useTutorOverlayActions();
+  const { closeApplications, closeCalendar, closeCertificationInfo } = useTutorOverlayActions();
   const {
     applicationCandidates,
-    applicationConfirmationPending,
+    applicationSubmissionPending,
     calendarTasks,
     confirmTrial,
     ongoingOrder,
     profileDraft,
     saveCertificationInfo,
-    trialListSubmissionPending,
     workflow
   } = useTutorOverlayHost();
 
@@ -24,24 +22,11 @@ export function TutorOverlayHost() {
     return (
       <TutorApplications
         applicationCandidates={applicationCandidates}
-        applicationConfirmationPending={applicationConfirmationPending}
-        onCancelTrial={(payload) => void workflow({ ...payload, action: "cancel_trial" })}
         onClose={closeApplications}
-        onConfirm={confirmTrial}
-        onReject={(payload) => void workflow({ ...payload, action: "reject_trial" })}
-        ongoingOrder={ongoingOrder}
-      />
-    );
-  }
-
-  if (activeType === "tutorTrialList") {
-    return (
-      <TutorTrialList
-        applicationCandidates={applicationCandidates}
-        ongoingOrder={ongoingOrder}
-        onClose={closeTrialList}
+        onConfirmTrial={confirmTrial}
         onWorkflowAction={workflow}
-        trialListSubmissionPending={trialListSubmissionPending}
+        ongoingOrder={ongoingOrder}
+        submissionPending={applicationSubmissionPending}
       />
     );
   }

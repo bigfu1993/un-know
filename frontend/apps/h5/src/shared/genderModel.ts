@@ -11,7 +11,7 @@ export function getGenderLabel(gender?: string | null): string {
 }
 
 /** 性别对应的图标颜色，男生蓝色、女生粉色，其余性别（含未填写）沿用调用方图标默认色；
- *  供家教浏览列表和试课申请列表两处头像图标共用。返回值要用内联 style 而不是 Tailwind 类名，
+ *  供家教浏览列表和统一申请列表两处头像图标共用。返回值要用内联 style 而不是 Tailwind 类名，
  *  因为全局 `.card-title svg { color: #1d6f55 }` 比单个 class 选择器优先级更高，
  *  className 会被它覆盖，必须用内联样式才能真正生效。 */
 export function getGenderIconColor(gender?: string | null) {

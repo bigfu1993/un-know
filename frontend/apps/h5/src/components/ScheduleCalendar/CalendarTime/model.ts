@@ -277,6 +277,42 @@ export function getTrialScheduleCalendarDatas(
     });
 }
 
+/** 将家长账号下已占用的结构化试课日程转换为三段完整锁定状态。 */
+export function getOccupiedTrialScheduleDraft(occupiedTestedDates: TutorTrialScheduleDate[]): TrialScheduleDraft {
+  return occupiedTestedDates.reduce<TrialScheduleDraft>((scheduleDraft, scheduleDate) => {
+    const daySchedule = scheduleDraft[scheduleDate.date] ?? createDefaultDaySchedule();
+
+    scheduleDate.timeRanges.forEach((timeRange) => {
+      const startMinutes = getTrialScheduleTimeMinutes(timeRange.start);
+      const endMinutes = getTrialScheduleTimeMinutes(timeRange.end);
+
+      if (startMinutes === null || endMinutes === null || endMinutes <= startMinutes) {
+        return;
+      }
+
+      trialSchedulePeriods.forEach((period) => {
+        const minMinutes = getTrialScheduleTimeMinutes(period.minTime);
+        const maxMinutes = getTrialScheduleTimeMinutes(period.maxTime);
+
+        if (
+          minMinutes !== null &&
+          maxMinutes !== null &&
+          startMinutes < maxMinutes &&
+          endMinutes > minMinutes
+        ) {
+          daySchedule[period.key] = {
+            enabled: true,
+            end: period.maxTime,
+            start: period.minTime
+          };
+        }
+      });
+    });
+
+    return { ...scheduleDraft, [scheduleDate.date]: daySchedule };
+  }, {});
+}
+
 /** 基于试课排期草稿生成结构化试课提交计划。 */
 export function getTrialSchedulePlan(
   scheduleDraft: TrialScheduleDraft

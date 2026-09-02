@@ -48,6 +48,14 @@ const vite = await createServer({
           "@h5/db/tutorSubject": ["TutorSubject", "tutorSubjectLabel"]
         },
         {
+          "@h5/db/tutorStatus": [
+            "TutorApplicantStatus",
+            "TutorDemandStatus",
+            "tutorApplicantStatusLabel",
+            "tutorDemandStatusLabel"
+          ]
+        },
+        {
           "lucide-react": [
             "AlertCircle",
             "BriefcaseBusiness",
@@ -94,6 +102,7 @@ globalThis.CalendarPanel = CalendarPanel;
 globalThis.TimePanel = TimePanel;
 const { CalendarTime } = await vite.ssrLoadModule("/src/components/ScheduleCalendar/CalendarTime/index.tsx");
 const { Switch } = await vite.ssrLoadModule("/src/ui/Switch/index.tsx");
+const { createTutorTaskModel } = await vite.ssrLoadModule("/src/tools/tutorTaskWorkflow.ts");
 const { getDefaultTutorScheduleDate, getTutorDateKey } = await vite.ssrLoadModule("/src/tools/tutorCalendar.ts");
 const { GlobalProvider, useGlobalUserActions } = await vite.ssrLoadModule("/src/globalProvider.tsx");
 const { getMessageToastSnapshot, hideMessage } = await vite.ssrLoadModule("/src/tools/messageToast.ts");
@@ -177,6 +186,7 @@ async function renderCalendarTime({
   canUseScheduleTemplateForDates = false,
   initialSummary = "2099年9月6日 13:00-15:00",
   maxScheduleDates = 3,
+  occupiedTestedDates = [],
   scheduleTimeTemplate,
   scheduleType = "tested",
   onConfirm
@@ -242,6 +252,7 @@ async function renderCalendarTime({
           canUseScheduleTemplateForDates,
           initialValue,
           maxScheduleDates,
+          occupiedTestedDates,
           onClose: () => {},
           onConfirm,
           scheduleType
@@ -1153,6 +1164,77 @@ test("已占用的历史异常时段保持只读且不允许清空", () => {
   assert.ok(morning);
   assert.equal(morning.isTimeInputDisabled, true);
   assert.equal(morning.isClearDisabled, true);
+});
+
+test("其他家教需求占用上午任意时间后锁定当天整个上午", () => {
+  const schedule = renderTrialSchedule(
+    {
+      occupiedTestedDates: [
+        {
+          date: "2099-09-06",
+          timeRanges: [{ start: "08:30", end: "09:30" }]
+        }
+      ]
+    },
+    "2099-09-06"
+  );
+  const morning = schedule.periods.find((period) => period.key === "morning");
+  const afternoon = schedule.periods.find((period) => period.key === "afternoon");
+
+  assert.equal(morning?.isUnavailable, true);
+  assert.equal(morning?.isTimeInputDisabled, true);
+  assert.equal(afternoon?.isUnavailable, false);
+  assert.equal(afternoon?.isTimeInputDisabled, false);
+});
+
+test("统一申请列表按申请状态暴露对应流程动作", () => {
+  const cases = [
+    ["APPLICATION_PENDING", ["scheduleTrial", "rejectTrial"]],
+    ["TRIAL_CONFIRMING", ["rescheduleTrial", "cancelApplication"]],
+    ["TRIALING", ["requestTrialResult"]],
+    ["TRIAL_END_CONFIRMING", ["confirmTrialEnd"]],
+    ["TRIAL_RESULT_PROCESSING", ["offerTutorService", "closeTrialContinueRecruiting"]],
+    ["TRIAL_SETTLED_SERVICE_PENDING", ["offerTutorService", "closeTrialContinueRecruiting"]],
+    ["SERVICE_CONFIRMING", ["cancelServiceConfirmation"]],
+    ["SERVICE_SCHEDULE_PENDING", ["submitServiceSchedule", "cancelServiceConfirmation"]],
+    ["SERVICE_SCHEDULE_CONFIRMING", ["requestServiceEnd"]],
+    ["FORMAL_SERVICE", ["requestServiceEnd"]],
+    ["SERVICE_END_CONFIRMING", ["requestServiceEnd"]],
+    ["SETTLEMENT_CONFIRMING", []],
+    ["SETTLEMENT_REVISING", ["resubmitSettlement"]],
+    ["SYSTEM_SETTLING", []],
+    ["FORMAL_SERVICE_INVALID", ["offerTutorService", "removeRejectedServiceOffer"]]
+  ];
+
+  cases.forEach(([status, expectedActions]) => {
+    const task = createTutorTaskModel({ candidate: { status }, role: "parent" });
+
+    assert.equal(task.isApplicationListVisible, true, status);
+    assert.deepEqual(task.availableActions, expectedActions, status);
+  });
+});
+
+test("模板包含家长账号已占用时段时整次应用失败", () => {
+  const schedule = renderTrialSchedule(
+    {
+      occupiedTestedDates: [
+        {
+          date: "2099-09-06",
+          timeRanges: [{ start: "10:00", end: "11:00" }]
+        }
+      ]
+    },
+    "2099-09-06"
+  );
+
+  assert.deepEqual(
+    schedule.applyScheduleTimeTemplateToDates(
+      ["2099-09-06"],
+      ["2099-09-06"],
+      { morning: { start: "08:00", end: "09:00" } }
+    ),
+    { ok: false, reason: "模板包含已占用时段" }
+  );
 });
 
 test("双滑块交叉时原子回调将起止值夹紧到同一位置", () => {

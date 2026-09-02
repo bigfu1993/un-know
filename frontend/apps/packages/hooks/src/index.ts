@@ -19,6 +19,7 @@ import {
   getOngoingOrders,
   getOrderHistory,
   getTutorApplication,
+  getTutorTrialOccupancy,
   getTutorCertifiedStudents,
   getChatConversations,
   getChatMessages,
@@ -80,7 +81,8 @@ import {
   clientTutorCertifiedStudentsQueryKey,
   clientWorkspaceQueryKey,
   getRoleQueryKey,
-  getTutorApplicationQueryKey
+  getTutorApplicationQueryKey,
+  getTutorTrialOccupancyQueryKey
 } from "./queryKeys";
 
 export {
@@ -183,6 +185,15 @@ export function useTutorApplication(role: Role, demandId: string | null, enabled
     queryKey: getTutorApplicationQueryKey(role, demandId ?? ""),
     queryFn: () => getTutorApplication(demandId as string),
     enabled: enabled && !!demandId
+  });
+}
+
+/** 排期弹窗按当前申请查询家长账号级试课占用，当前申请自身日程由服务端排除。 */
+export function useTutorTrialOccupancy(role: Role, excludeApplicationId: string | null, enabled = true) {
+  return useQuery({
+    queryKey: getTutorTrialOccupancyQueryKey(role, excludeApplicationId ?? ""),
+    queryFn: () => getTutorTrialOccupancy(excludeApplicationId as string),
+    enabled: enabled && role === "parent" && !!excludeApplicationId
   });
 }
 

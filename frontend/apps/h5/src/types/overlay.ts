@@ -2,7 +2,7 @@
 export type OverlayLane = "primary" | "secondary" | "confirm";
 
 /** 当前已接入全局调度器的弹层类型。 */
-export type TutorOverlayType = "tutorApplications" | "tutorTrialList" | "tutorCalendar" | "tutorCertificationInfo";
+export type TutorOverlayType = "tutorApplications" | "tutorCalendar" | "tutorCertificationInfo";
 export type PublishOverlayType = "publishInfo" | "publishDraftConfirm";
 export type GlobalOverlayType = "checkout" | PublishOverlayType | TutorOverlayType;
 
@@ -82,12 +82,10 @@ export interface TutorOverlayActions {
   closeApplications: () => void;
   closeCalendar: () => void;
   closeCertificationInfo: () => void;
-  closeTrialList: () => void;
   closeTutorOverlays: () => void;
   openApplications: (demandId: string) => void;
   openCalendar: () => void;
   openCertificationInfo: () => void;
-  openTrialList: (demandId: string) => void;
 }
 
 /** 当前家教弹层及其目标需求。 */
@@ -96,21 +94,19 @@ export interface TutorOverlayState {
   isApplicationsOpen: boolean;
   isCalendarOpen: boolean;
   isCertificationInfoOpen: boolean;
-  isTrialListOpen: boolean;
   targetDemandId: string | null;
 }
 
 /** 家教 Host 消费的真实数据、提交状态和业务动作。 */
 export interface TutorOverlayHostContextValue {
   applicationCandidates: TutorApplicationCandidate[];
-  applicationConfirmationPending: boolean;
+  applicationSubmissionPending: boolean;
   calendarTasks: TutorCalendarTask[];
   confirmTrial: (payload: ConfirmTutorTrialPayload) => void;
   /** 当前弹层目标家教需求对应的进行中订单，用于读取计划日期和真实流程阶段。 */
   ongoingOrder: ClientOrder | null;
   profileDraft: ProfileDraftState;
   saveCertificationInfo: (nextProfileDraft: ProfileDraftState, mode: TutorCertificationInfoSaveMode) => void;
-  trialListSubmissionPending: boolean;
   workflow: (payload: TutorWorkflowActionPayload) => Promise<boolean>;
 }
 
@@ -120,7 +116,7 @@ export interface TutorOverlayProviderProps {
   syncProfileDraft: (draft: ProfileDraftState) => void;
 }
 
-/** 家长端试课列表卡片时间预览弹窗状态，TutorTrialList 组装、TutorSchedulePreview 消费。 */
+/** 家长端申请卡片时间预览弹窗状态，TutorApplications 组装、TutorSchedulePreview 消费。 */
 export interface TutorSchedulePreviewState {
   buttonLabel: string;
   emptyLabel: string;
@@ -137,7 +133,7 @@ export interface TutorSchedulePreviewSection {
   title: string;
 }
 
-/** 家长端提交结算金额时支持的流程动作，TutorTrialList 触发、TutorTrialSettlement 消费。 */
+/** 家长端提交结算金额时支持的流程动作，TutorApplications 触发、TutorTrialSettlement 消费。 */
 export type TutorSettlementAction = Extract<
   TutorWorkflowAction,
   "confirm_trial_end" | "request_service_end" | "request_trial_result"
